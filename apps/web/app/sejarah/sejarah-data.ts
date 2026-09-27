@@ -24,9 +24,9 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     title: 'Prakarsa di Seminari Mertoyudan',
     location: 'Seminari Menengah St. Petrus Canisius, Mertoyudan',
     description:
-      'Rm. Martinus Hadisiswoyo, SJ bersama para frater dan seminaris mulai merintis latihan pencak silat yang dipadukan dengan olah batin dan spiritualitas Katolik sebagai sarana melatih kedisiplinan raga dan ketahanan mental para calon imam.',
+      'Rm. Martinus Hadiwijoyo, Pr. bersama para frater dan seminaris mulai merintis latihan pencak silat yang dipadukan dengan olah batin dan spiritualitas Katolik sebagai sarana melatih kedisiplinan raga dan ketahanan mental para calon imam.',
     highlights: [
-      'Diprakarsai oleh Rm. Martinus Hadisiswoyo, SJ',
+      'Diprakarsai oleh Rm. Martinus Hadiwijoyo, Pr.',
       'Latihan rutin bagi para siswa Seminari Menengah',
       'Penyelarasan jurus pencak silat dengan doa & olah rohani',
     ],

@@ -76,7 +76,7 @@ export const translations = {
       quickFacts: {
         title: 'Fakta Cepat Sejarah',
         founder: 'Pendiri Utama',
-        founderVal: 'Rm. Martinus Hadisiswoyo, SJ & Rekan Perintis',
+        founderVal: 'Rm. Martinus Hadiwijoyo, Pr. & Rekan Perintis',
         firstPlace: 'Tempat Perintisan',
         firstPlaceVal: 'Seminari Mertoyudan & Paroki FX Tanjung Priok',
         spiritualPatron: 'Pelindung Rohani',
@@ -228,7 +228,7 @@ export const translations = {
       quickFacts: {
         title: 'Historical Quick Facts',
         founder: 'Primary Founder',
-        founderVal: 'Fr. Martinus Hadisiswoyo, SJ & Co-Pioneers',
+        founderVal: 'Fr. Martinus Hadiwijoyo, Pr. & Co-Pioneers',
         firstPlace: 'First Training Grounds',
         firstPlaceVal: 'Mertoyudan Minor Seminary & St. FX Tanjung Priok Parish',
         spiritualPatron: 'Spiritual Patrons',

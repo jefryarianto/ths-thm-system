@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/context';
 import {
   BookOpen, ChevronRight, Shield, Heart, Award, Calendar, Users,
   Cross, Sparkles, MapPin, Flame, CheckCircle2, ArrowRight,
-  Landmark, Building2, Share2, Check,
+  Landmark, Building2, Share2, Check, Maximize2, Shrink,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import { TIMELINE_EVENTS } from './sejarah-data';
@@ -19,6 +19,7 @@ export default function SejarahPage() {
   const [data, setData] = useState<{ konten: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('timeline');
+  const [cmsWide, setCmsWide] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -238,8 +239,8 @@ export default function SejarahPage() {
 
       {/* ── 3. Main Content & Sidebar Layout ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        <div className="grid lg:grid-cols-4 gap-8">
-          <main className="lg:col-span-3 space-y-8">
+        <div className={activeTab === 'cms' ? 'space-y-8' : 'grid lg:grid-cols-4 gap-8'}>
+          <main className={activeTab === 'cms' ? 'space-y-8' : 'lg:col-span-3 space-y-8'}>
             {loading ? (
               <div className="min-h-[45vh] flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 dark:border-gold-400 border-t-transparent mb-4" />
@@ -331,22 +332,59 @@ export default function SejarahPage() {
                       </div>
 
                       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 to-navy-950 text-white p-6 sm:p-8 border border-gold-400/30 mb-8 shadow-md">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                          <div className="w-20 h-20 rounded-2xl bg-gold-400/20 border-2 border-gold-400 flex items-center justify-center text-gold-300 shrink-0 shadow-lg">
-                            <Cross size={36} />
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-gold-400/10 rounded-full blur-3xl pointer-events-none" />
+                        <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                          <div className="flex-shrink-0">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 p-1.5 shadow-lg">
+                              <div className="w-full h-full rounded-full bg-navy-900 flex items-center justify-center overflow-hidden border-2 border-navy-950">
+                                <img
+                                  src="/images/martinus-hadiwijoyo.jpg"
+                                  alt="Potret Rm. Martinus Hadiwijoyo, Pr."
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
+                                    if (fb) fb.style.display = 'flex';
+                                  }}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="hidden w-full h-full flex-col items-center justify-center text-gold-400" style={{ display: 'none' }}>
+                                  <Cross size={36} className="mb-0.5" />
+                                  <span className="text-[9px] uppercase tracking-wider text-gold-300/80">Rm. MH, Pr.</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div>
                             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gold-400/20 text-gold-300 text-xs font-semibold tracking-wider uppercase mb-1.5">
                               <Sparkles size={12} /> Pendiri Utama THS-THM
                             </div>
                             <h3 className="text-2xl font-bold font-serif text-white mb-1">
-                              Romo Martinus Hadisiswoyo, SJ
+                              Romo Martinus Hadiwijoyo, Pr.
                             </h3>
                             <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed">
-                              Imam Serikat Yesus (Yesuit) yang merintis latihan pencak silat rohani di Seminari Mertoyudan dan Paroki Tanjung Priok.
+                              Imam Projo (Diosesan) Keuskupan Agung Jakarta yang merintis latihan pencak silat rohani di Seminari Mertoyudan dan Paroki Tanjung Priok, serta mendirikan THS (1985) dan THM (1986).
                             </p>
                           </div>
                         </div>
+
+                        <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-5 border-t border-white/10 text-xs sm:text-sm">
+                          <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Calendar size={13} /> Masa Hidup</span>
+                            <span className="font-semibold text-white">1954 &ndash; 2020</span>
+                          </div>
+                          <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Cross size={13} /> Tahbisan Imamat</span>
+                            <span className="font-semibold text-white">18 Agustus 1983</span>
+                          </div>
+                          <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><MapPin size={13} /> Perintisan</span>
+                            <span className="font-semibold text-white">Mertoyudan &amp; Jakarta</span>
+                          </div>
+                        </div>
+
+                        <p className="relative mt-4 text-white/80 text-xs sm:text-sm font-light italic">
+                          &ldquo;Pro Patria et Ecclesia &mdash; Untuk Tanah Air dan Gereja&rdquo; <span className="text-gold-300 font-serif not-italic">Fortiter in Re, Suaviter in Modo</span>
+                        </p>
                       </div>
 
                       <h3 className="text-xl font-bold font-serif text-navy-900 dark:text-white mb-4">
@@ -576,7 +614,7 @@ export default function SejarahPage() {
                         <div className="w-10 h-10 rounded-2xl bg-gold-50 dark:bg-gold-950/40 border border-gold-400/30 flex items-center justify-center text-navy-800 dark:text-gold-400">
                           <BookOpen size={20} />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <h2 className="text-2xl font-bold font-serif text-navy-900 dark:text-white">
                             Naskah Resmi Dokumen Sejarah
                           </h2>
@@ -584,13 +622,31 @@ export default function SejarahPage() {
                             Arsip narasi resmi yang tercatat di basis data organisasi.
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setCmsWide((v) => !v)}
+                          className="flex items-center gap-1.5 shrink-0 rounded-full border border-gold-400/40 bg-gold-50 dark:bg-gold-950/40 px-3 py-1.5 text-xs font-semibold text-navy-800 dark:text-gold-300 transition hover:bg-gold-100 dark:hover:bg-gold-900/40"
+                          title="Ubah lebar naskah"
+                        >
+                          {cmsWide ? (
+                            <>
+                              <Shrink size={14} /> Lebar Standar
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 size={14} /> Lebar Penuh
+                            </>
+                          )}
+                        </button>
                       </div>
 
                       {data?.konten && data.konten.trim().length > 0 ? (
                         <article
-                          className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
+                          className={`prose prose-navy dark:prose-invert prose-lg text-gray-700 dark:text-gray-300 leading-relaxed
                             prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
-                            prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
+                            prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white ${
+                            cmsWide ? 'max-w-none' : 'max-w-4xl mx-auto'
+                          }`}
                           dangerouslySetInnerHTML={{ __html: data.konten }}
                         />
                       ) : (
@@ -606,7 +662,7 @@ export default function SejarahPage() {
                             Organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria (THS-THM) lahir dari kerinduan mendalam untuk membina kaum muda Katolik melalui perpaduan harmonis antara kekayaan budaya bela diri pencak silat dan kedalaman rohani Katolik.
                           </p>
                           <p>
-                            Bermula pada tahun 1983 di Seminari Menengah St. Petrus Canisius Mertoyudan, Jawa Tengah, Romo Martinus Hadisiswoyo, SJ memperkenalkan latihan pencak silat bagi para siswa seminaris.
+                            Bermula pada tahun 1983 di Seminari Menengah St. Petrus Canisius Mertoyudan, Jawa Tengah, Romo Martinus Hadiwijoyo, Pr. memperkenalkan latihan pencak silat bagi para siswa seminaris.
                           </p>
 
                           <h3 className="text-xl font-serif font-bold text-navy-900 dark:text-white">
@@ -633,7 +689,7 @@ export default function SejarahPage() {
 
 
           {/* ── Sidebar ── */}
-          <aside className="space-y-6">
+          <aside className={activeTab === 'cms' ? 'grid sm:grid-cols-2 xl:grid-cols-4 gap-6' : 'space-y-6'}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
               <h3 className="font-bold text-navy-900 dark:text-white mb-4 text-xs uppercase tracking-wider font-serif flex items-center gap-2">
                 <Sparkles size={16} className="text-gold-500" />
