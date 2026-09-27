@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ForbiddenException,
 import { PrismaService } from '../../prisma/prisma.service';
 import { validateImageUploadSecurity } from '../../common/utils/image-upload.util';
 import { CacheService } from '../../common/services/cache.service';
-import { existsSync, unlinkSync } from 'fs';
+import { existsSync, unlinkSync, writeFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 
 /** Warna overlay: hex (3-8 digit) atau rgba()/rgb() CSS. */
@@ -197,7 +197,13 @@ export class CardTemplatesService {
     }
   }
 
-  /** Validasi magic bytes + resolusi/rasio kartu (856:540, toleransi 12%). */
+  /**
+   * Validasi keamanan + normalisasi otomatis gambar kartu.
+   * Sejak 2026-09-27: rasio apa pun diterima — gambar di-resize otomatis ke
+   * ukuran standar kartu 856×540 px (fit cover, memotong overflow NON distorsi)
+   * agar siap dipakai renderer tanpa distorsi.
+   * Hanya resolusi yang terlalu kecil yang ditolak (hasil cetak bakal buram).
+   */
   private async validateCardImage(file: Express.Multer.File): Promise<string> {
     try {
       await validateImageUploadSecurity(file.path, file.originalname);
@@ -212,21 +218,28 @@ export class CardTemplatesService {
       const w = meta.width ?? 0;
       const h = meta.height ?? 0;
       if (w < 500 || h < 300) {
-        throw new BadRequestException(`Resolusi gambar terlalu kecil (${w}×${h}). Minimal 500×300 px.`);
-      }
-      const ratio = w / h;
-      const target = 856 / 540;
-      if (Math.abs(ratio - target) / target > 0.12) {
         throw new BadRequestException(
-          `Rasio gambar harus mendekati kartu ID (856:540 ≈ 1,58). Diterima ${w}×${h} (rasio ${ratio.toFixed(2)}).`,
+          `Resolusi gambar terlalu kecil (${w}×${h}). Minimal 500×300 px agar hasil cetak tetap tajam.`,
         );
       }
+      // Auto-resize ke standar kartu 856×540 (fit cover = memotong overflow,
+      // tidak melar/gepeng). Pertahankan format asli agar ekstensi tetap cocok
+      // dengan isi file (mime diturunkan dari ekstensi saat dibaca renderer).
+      const fmt = meta.format === 'png' || meta.format === 'webp' ? meta.format : 'jpeg';
+      const resized = await sharp(file.path)
+        .resize(856, 540, { fit: 'cover', position: 'centre' })
+        .toFormat(fmt, fmt === 'jpeg' ? { quality: 92 } : {})
+        .toBuffer();
+      // Tulis hasil resize kembali ke file yang sama (nama file tidak berubah).
+      writeFileSync(file.path, resized);
+      // eslint-disable-next-line no-param-reassign
+      file.size = resized.length;
     } catch (err) {
       if (err instanceof BadRequestException) {
         this.unlinkQuietly(file.filename);
         throw err;
       }
-      // sharp tidak tersedia → lewati pemeriksaan rasio
+      // sharp tidak tersedia → biarkan gambar apa adanya (tanpa resize)
     }
     return file.filename;
   }

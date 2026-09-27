@@ -10,19 +10,30 @@ jest.mock('../../common/utils/image-upload.util', () => ({
   validateImageUploadSecurity: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock sharp - biarkan metadata 856×540 sepanjang rasio kartu
-jest.mock('sharp', () => () => ({ metadata: jest.fn().mockResolvedValue({ width: 856, height: 540 }) }));
+// Mock sharp — instance SHARED (dihoist, prefix `mock`) agar test bisa memeriksa
+// instance yang sama yang dipakai service. `mockSharpState` mengontrol metadata.
+// eslint-disable-next-line no-var
+var mockSharpState: { width: number; height: number; format: string } = { width: 856, height: 540, format: 'png' };
+// eslint-disable-next-line no-var
+var mockSharpInstance = {
+  metadata: jest.fn().mockImplementation(() => Promise.resolve(mockSharpState)),
+  resize: jest.fn().mockReturnThis(),
+  toFormat: jest.fn().mockReturnThis(),
+  toBuffer: jest.fn().mockResolvedValue(Buffer.from('resized-bytes')),
+};
+jest.mock('sharp', () => () => mockSharpInstance);
 
-// Mock fs PARSIAL — hanya existsSync & unlinkSync; method lain (untuk Prisma client)
-// tetap memakai fs asli agar modul service bisa dimuat dengan aman.
+// Mock fs PARSIAL — only existsSync, unlinkSync, writeFileSync; method lain (untuk
+// Prisma client) tetap memakai fs asli agar modul service bisa dimuat dengan aman.
 jest.mock('fs', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const actual = jest.requireActual('fs');
-  return { ...actual, unlinkSync: jest.fn(), existsSync: jest.fn(() => true) };
+  return { ...actual, unlinkSync: jest.fn(), existsSync: jest.fn(() => true), writeFileSync: jest.fn() };
 });
 
 import * as fsMocked from 'fs';
 const mockUnlink = (fsMocked as unknown as { unlinkSync: jest.Mock }).unlinkSync;
+const writeFileSync = (fsMocked as unknown as { writeFileSync: jest.Mock }).writeFileSync;
 
 describe('CardTemplatesService', () => {
   let service: CardTemplatesService;
@@ -64,6 +75,7 @@ describe('CardTemplatesService', () => {
     }).compile();
     service = module.get<CardTemplatesService>(CardTemplatesService);
     jest.clearAllMocks();
+    mockSharpState = { width: 856, height: 540, format: 'png' };
     (validateImageUploadSecurity as jest.Mock).mockResolvedValue(undefined);
   });
 
@@ -180,6 +192,32 @@ describe('CardTemplatesService', () => {
     it('menolak overlayConfig yang bukan objek', async () => {
       mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
       await expect(service.create({ name: 'kta-x', overlayConfig: '[1,2]' })).rejects.toThrow(BadRequestException);
+    });
+
+    it('menolak gambar resolusi terlalu kecil (< 500×300)', async () => {
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
+      mockSharpState = { width: 300, height: 200, format: 'png' };
+      const small = mockFile('small.png');
+      small.size = 100;
+      await expect(service.create({ name: 'kta-small' }, { front: small })).rejects.toThrow(/terlalu kecil/);
+      expect(mockPrisma.cardTemplate.create).not.toHaveBeenCalled();
+    });
+
+    it('menerima rasio apa pun & otomatis resize ke 856×540 (fit cover)', async () => {
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
+      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't1', ...data }));
+      // Gambar rasio berbeda (mis. 1920×1080 ≈ 1,78) — sebelumnya ditolak
+      mockSharpState = { width: 1920, height: 1080, format: 'jpeg' };
+
+      const wideFile = mockFile('wide.jpg');
+      wideFile.size = 5000;
+      const result = await service.create({ name: 'kta-wide' }, { front: wideFile });
+
+      expect(result.frontImage).toBe('wide.jpg');
+      // Resize dipanggil ke dimensi tepat 856×540 pada instance yang sama dgn service
+      expect(mockSharpInstance.resize).toHaveBeenCalledWith(856, 540, { fit: 'cover', position: 'centre' });
+      // Hasil resize ditulis kembali ke file
+      expect(writeFileSync as jest.Mock).toHaveBeenCalledWith('/tmp/wide.jpg', Buffer.from('resized-bytes'));
     });
   });
 
