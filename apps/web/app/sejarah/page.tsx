@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/context';
 import {
   BookOpen, ChevronRight, Shield, Heart, Award, Calendar, Users,
   Cross, Sparkles, MapPin, Flame, CheckCircle2, ArrowRight,
-  Landmark, Building2, Share2, Check, Maximize2, Shrink,
+  Landmark, Building2, Share2, Check,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import { TIMELINE_EVENTS } from './sejarah-data';
@@ -19,7 +19,6 @@ export default function SejarahPage() {
   const [data, setData] = useState<{ konten: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('timeline');
-  const [cmsWide, setCmsWide] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -239,8 +238,8 @@ export default function SejarahPage() {
 
       {/* ── 3. Main Content & Sidebar Layout ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        <div className={activeTab === 'cms' ? 'space-y-8' : 'grid lg:grid-cols-4 gap-8'}>
-          <main className={activeTab === 'cms' ? 'space-y-8' : 'lg:col-span-3 space-y-8'}>
+        <div className="grid lg:grid-cols-4 gap-8">
+          <main className="lg:col-span-3 space-y-8">
             {loading ? (
               <div className="min-h-[45vh] flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 dark:border-gold-400 border-t-transparent mb-4" />
@@ -614,7 +613,7 @@ export default function SejarahPage() {
                         <div className="w-10 h-10 rounded-2xl bg-gold-50 dark:bg-gold-950/40 border border-gold-400/30 flex items-center justify-center text-navy-800 dark:text-gold-400">
                           <BookOpen size={20} />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div>
                           <h2 className="text-2xl font-bold font-serif text-navy-900 dark:text-white">
                             Naskah Resmi Dokumen Sejarah
                           </h2>
@@ -622,31 +621,13 @@ export default function SejarahPage() {
                             Arsip narasi resmi yang tercatat di basis data organisasi.
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setCmsWide((v) => !v)}
-                          className="flex items-center gap-1.5 shrink-0 rounded-full border border-gold-400/40 bg-gold-50 dark:bg-gold-950/40 px-3 py-1.5 text-xs font-semibold text-navy-800 dark:text-gold-300 transition hover:bg-gold-100 dark:hover:bg-gold-900/40"
-                          title="Ubah lebar naskah"
-                        >
-                          {cmsWide ? (
-                            <>
-                              <Shrink size={14} /> Lebar Standar
-                            </>
-                          ) : (
-                            <>
-                              <Maximize2 size={14} /> Lebar Penuh
-                            </>
-                          )}
-                        </button>
                       </div>
 
                       {data?.konten && data.konten.trim().length > 0 ? (
                         <article
-                          className={`prose prose-navy dark:prose-invert prose-lg text-gray-700 dark:text-gray-300 leading-relaxed
+                          className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
                             prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
-                            prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white ${
-                            cmsWide ? 'max-w-none' : 'max-w-4xl mx-auto'
-                          }`}
+                            prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
                           dangerouslySetInnerHTML={{ __html: data.konten }}
                         />
                       ) : (
@@ -689,7 +670,7 @@ export default function SejarahPage() {
 
 
           {/* ── Sidebar ── */}
-          <aside className={activeTab === 'cms' ? 'grid sm:grid-cols-2 xl:grid-cols-4 gap-6' : 'space-y-6'}>
+          <aside className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
               <h3 className="font-bold text-navy-900 dark:text-white mb-4 text-xs uppercase tracking-wider font-serif flex items-center gap-2">
                 <Sparkles size={16} className="text-gold-500" />
