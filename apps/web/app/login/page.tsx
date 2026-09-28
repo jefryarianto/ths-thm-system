@@ -495,7 +495,7 @@ export default function LoginPage() {
                   aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="username"
                   placeholder="nama@email.com / 08xxxxxxxxxx"
-                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm font-medium text-text placeholder:text-surface-400 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 ${
+                  className={`block h-[54px] w-full rounded-xl border bg-surface pl-11 pr-4 text-sm font-medium text-text placeholder:text-surface-500 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 dark:bg-surface dark:border-surface-600 dark:text-text dark:placeholder:text-surface-400 ${
                     error
                       ? 'border-error focus:border-error focus:ring-error/15'
                       : 'border-border hover:border-surface-400 focus:border-primary focus:ring-primary/15'
@@ -532,7 +532,7 @@ export default function LoginPage() {
                   aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-11 text-sm font-medium text-text placeholder:text-surface-400 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 ${
+                  className={`block h-[54px] w-full rounded-xl border bg-surface pl-11 pr-11 text-sm font-medium text-text placeholder:text-surface-500 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 dark:bg-surface dark:border-surface-600 dark:text-text dark:placeholder:text-surface-400 ${
                     error
                       ? 'border-error focus:border-error focus:ring-error/15'
                       : 'border-border hover:border-surface-400 focus:border-primary focus:ring-primary/15'
