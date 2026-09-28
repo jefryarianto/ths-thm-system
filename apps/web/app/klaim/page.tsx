@@ -21,16 +21,6 @@ interface Ranting {
   id: string;
   nama: string;
 }
-interface Wilayah {
-  id: string;
-  nama: string;
-  rantings: Ranting[];
-}
-interface Distrik {
-  id: string;
-  nama: string;
-  wilayahs: Wilayah[];
-}
 
 interface BuktiItem {
   tipe: 'sertifikat' | 'kartu_anggota';
@@ -46,13 +36,10 @@ export default function KlaimPage() {
   const { t } = useI18n();
   const [step, setStep] = useState<'form' | 'success' | 'error'>('form');
   const [loading, setLoading] = useState(false);
-  const [loadingTree, setLoadingTree] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const [tree, setTree] = useState<Distrik[]>([]);
-  const [distrikId, setDistrikId] = useState('');
-  const [wilayahId, setWilayahId] = useState('');
+  const [rantings, setRantings] = useState<Ranting[]>([]);
   const [rantingId, setRantingId] = useState('');
 
   const [form, setForm] = useState({
@@ -72,28 +59,17 @@ export default function KlaimPage() {
   };
 
   useEffect(() => {
-    fetch(`${API_URL}/api/org-structure/public-tree`)
+    fetch(`${API_URL}/api/public/struktur/ranting`)
       .then((r) => r.json())
       .then((res) => {
-        setTree(res?.data || []);
+        setRantings(res?.data || []);
       })
-      .catch(() => setTree([]))
-      .finally(() => setLoadingTree(false));
+      .catch(() => {
+        setRantings([]);
+      });
   }, []);
 
-  const distrik = tree.find((d) => d.id === distrikId);
-  const wilayah = distrik?.wilayahs.find((w) => w.id === wilayahId);
-  const rantings = wilayah?.rantings || [];
-
-  const handleDistrikChange = (id: string) => {
-    setDistrikId(id);
-    setWilayahId('');
-    setRantingId('');
-  };
-  const handleWilayahChange = (id: string) => {
-    setWilayahId(id);
-    setRantingId('');
-  };
+  
 
   const addBukti = (tipe: BuktiItem['tipe']) => {
     setBuktiDokumen((prev) => [...prev, { tipe, url: '' }]);
@@ -406,59 +382,21 @@ export default function KlaimPage() {
             <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ranting Asal <span className="text-red-500">*</span>
             </span>
-            {loadingTree ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-2.5">
-                <Loader2 size={16} className="animate-spin" />
-                Memuat daftar organisasi...
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <select
-                  value={distrikId}
-                  onChange={(e) => handleDistrikChange(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                >
-                  <option value="">Pilih Distrik</option>
-                  {tree.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.nama}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={wilayahId}
-                  onChange={(e) => handleWilayahChange(e.target.value)}
-                  disabled={!distrikId}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
-                >
-                  <option value="">Pilih Wilayah</option>
-                  {distrik?.wilayahs.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.nama}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={rantingId}
-                  onChange={(e) => {
-                    setRantingId(e.target.value);
-                    if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
-                  }}
-                  disabled={!wilayahId}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
-                >
-                  <option value="">Pilih Ranting</option>
-                  {rantings.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nama}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {fieldErrors.rantingId && (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.rantingId}</p>
-            )}
+            <select
+              value={rantingId}
+              onChange={(e) => {
+                setRantingId(e.target.value);
+                if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
+              }}
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+            >
+              <option value="">Pilih Ranting</option>
+              {rantings.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nama}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Bukti Keanggotaan */}
