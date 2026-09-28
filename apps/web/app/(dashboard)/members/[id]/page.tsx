@@ -1451,25 +1451,24 @@ export default function MemberDetailPage() {
                         )}
 
                         {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20 */}
-                        <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right }}>
+                        <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right, position: 'relative' }}>
                           <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
                           <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
-                          <div className="flex">
-                            <div className="min-w-0">
-                              <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
-                            </div>
-                            <div style={{ marginLeft: FRONT.info.jk.marginLeft, width: FRONT.info.jk.w }}>
-                              <div style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}>
-                                JK
-                              </div>
-                              <div className="font-ocr" style={{ fontSize: FRONT.info.value.fontSize, fontWeight: 700, color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop }}>
-                                {member.jenisKelamin === 'P' ? 'P' : 'L'}
-                              </div>
-                            </div>
-                          </div>
+                          <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
                           <InfoPreview label="Tempat, Tanggal Lahir" value={ttl.toUpperCase()} />
                           <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
                           <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
+                          {/* JK kolom sejajar label Nama (offset absolut 340 = infoX+340, mengikuti spec SVG/API) */}
+                          <div className="absolute" style={{ left: 340, top: FRONT.info.top }}>
+                            <div
+                              style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}
+                            >
+                              JK
+                            </div>
+                            <div className="font-ocr" style={{ fontSize: FRONT.info.value.fontSize, fontWeight: 700, color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop }}>
+                              {member.jenisKelamin === 'P' ? 'P' : 'L'}
+                            </div>
+                          </div>
                         </div>
 
                         {/* Bottom - jarak bawah sama dengan jarak atas header */}
