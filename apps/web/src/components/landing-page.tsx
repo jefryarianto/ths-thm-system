@@ -12,12 +12,12 @@ import {
   Shield,
   Heart,
   Users,
-  Award,
   Building2,
   Newspaper,
   BookOpen,
   Flame,
   CheckCircle2,
+  UserPlus,
 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
 
@@ -35,6 +35,7 @@ interface Stats {
   totalWilayah: number;
   totalRanting: number;
   totalAnggota: number;
+  totalCalonAnggota: number;
 }
 
 export function LandingPageContent() {
@@ -59,7 +60,8 @@ export function LandingPageContent() {
         }
         if (berandaRes.ok) {
           const json = await berandaRes.json();
-          setStats(json.stats || null);
+          const data = json.data ?? json;
+          setStats(data.stats || null);
         }
       } catch (e) {
         console.error('Failed to fetch landing data', e);
@@ -246,14 +248,16 @@ export function LandingPageContent() {
               </div>
             </div>
 
-            {/* Tahun Berdiri */}
+            {/* Calon Anggota */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400">
-                <Award size={24} />
+                <UserPlus size={24} />
               </div>
-              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">1985</div>
+              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">
+                {stats?.totalCalonAnggota ?? '—'}
+              </div>
               <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">
-                {t.home.stats?.tahunBerdiri || 'Tahun Berdiri'}
+                {t.home.stats?.calonAnggota || 'Calon Anggota'}
               </div>
             </div>
           </div>

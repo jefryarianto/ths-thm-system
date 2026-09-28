@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   UserPlus,
@@ -16,6 +16,19 @@ import { useI18n } from '@/i18n/context';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+interface Distrik {
+  id: string;
+  nama: string;
+}
+interface Wilayah {
+  id: string;
+  nama: string;
+}
+interface Ranting {
+  id: string;
+  nama: string;
+}
+
 const registrationSchema = z.object({
   namaLengkap: z.string().min(3, 'Nama lengkap minimal 3 karakter'),
   jenisKelamin: z.enum(['L', 'P']),
@@ -25,6 +38,7 @@ const registrationSchema = z.object({
   tanggalLahir: z.string().optional(),
   alamat: z.string().optional(),
   sumberInfo: z.string().optional(),
+  rantingId: z.string().min(1, 'Ranting asal harus dipilih'),
 });
 
 export default function DaftarPage() {
@@ -41,7 +55,85 @@ export default function DaftarPage() {
     noHp: '',
     email: '',
     sumberInfo: '',
+    rantingId: '',
   });
+  // State for cascading dropdowns
+  const [distriks, setDistriks] = useState<Distrik[]>([]);
+  const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
+  const [rantings, setRantings] = useState<Ranting[]>([]);
+  const [selectedDistrikId, setSelectedDistrikId] = useState('');
+  const [selectedWilayahId, setSelectedWilayahId] = useState('');
+
+  // Fetch distriks on mount
+  useEffect(() => {
+    fetchDistriks();
+  }, []);
+
+  const fetchDistriks = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+      if (res.ok) {
+        const data = await res.json();
+        setDistriks(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch distriks', err);
+    }
+  };
+
+  const fetchWilayahs = async (distrikId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/public/struktur/wilayah?distrikId=${distrikId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWilayahs(data.data || []);
+        // Reset wilayah and ranting when distrik changes
+        setSelectedWilayahId('');
+        setRantings([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch wilayahs', err);
+    }
+  };
+
+  const fetchRantings = async (wilayahId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/public/struktur/ranting?wilayahId=${wilayahId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRantings(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch rantings', err);
+    }
+  };
+
+  const handleDistrikChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const distrikId = e.target.value;
+    setSelectedDistrikId(distrikId);
+    if (distrikId) {
+      fetchWilayahs(distrikId);
+    } else {
+      setWilayahs([]);
+      setRantings([]);
+      setSelectedWilayahId('');
+    }
+  };
+
+  const handleWilayahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const wilayahId = e.target.value;
+    setSelectedWilayahId(wilayahId);
+    if (wilayahId) {
+      fetchRantings(wilayahId);
+    } else {
+      setRantings([]);
+    }
+  };
+
+  const handleRantingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const rantingId = e.target.value;
+    setForm((prev) => ({ ...prev, rantingId }));
+  };
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -292,6 +384,65 @@ export default function DaftarPage() {
                 className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                 placeholder="Teman, media sosial, brosur, dll."
               />
+            </div>
+
+            {/* Distrik */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Distrik
+              </label>
+              <select
+                value={selectedDistrikId}
+                onChange={handleDistrikChange}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+              >
+                <option value="">Pilih Distrik</option>
+                {distriks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Wilayah */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Wilayah
+              </label>
+              <select
+                value={selectedWilayahId}
+                onChange={handleWilayahChange}
+                disabled={!selectedDistrikId}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600"
+              >
+                <option value="">Pilih Wilayah</option>
+                {wilayahs.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ranting Asal */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Ranting Asal <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.rantingId}
+                onChange={handleRantingChange}
+                disabled={!selectedWilayahId}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600"
+              >
+                <option value="">Pilih Ranting</option>
+                {rantings.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nama}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

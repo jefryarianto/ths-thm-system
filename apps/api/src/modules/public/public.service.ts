@@ -53,7 +53,7 @@ export class PublicService {
   }
 
   async getBeranda() {
-    const [sambutan, berita, donasi, totalDistrik, totalWilayah, totalRanting, totalAnggota] =
+    const [sambutan, berita, donasi, totalDistrik, totalWilayah, totalRanting, totalAnggota, totalCalonAnggota] =
       await Promise.all([
         this.getSambutan(),
         this.prisma.berita.findMany({
@@ -74,6 +74,7 @@ export class PublicService {
             deletedAt: null,
           },
         }),
+        this.prisma.calonAnggota.count(),
       ]);
 
     return {
@@ -85,6 +86,7 @@ export class PublicService {
         totalWilayah,
         totalRanting,
         totalAnggota,
+        totalCalonAnggota,
       },
     };
   }
