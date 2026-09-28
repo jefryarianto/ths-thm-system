@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   // Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama
   infoPair: {
     flexDirection: 'row',
-    marginBottom: 13,
+    marginBottom: FRONT.info.rowMarginBottom,
   },
   infoPairLeft: {
     flexShrink: 1,
@@ -236,6 +236,8 @@ const styles = StyleSheet.create({
     color: FRONT.info.label.color,
     textTransform: 'uppercase',
     letterSpacing: FRONT.info.label.letterSpacing,
+    // Samakan dengan infoLabel: gaya cetak PDF memakai serif utk semua label
+    fontFamily: 'Times-Bold',
   },
   jkValue: {
     fontSize: FRONT.info.value.fontSize,
