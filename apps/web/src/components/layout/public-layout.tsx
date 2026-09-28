@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   BadgeCheck,
   Heart,
+  UserPlus,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useI18n } from '@/i18n/context';
@@ -147,6 +148,12 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           label: t.nav.klaim || 'Klaim Akun Anggota',
           desc: 'Aktivasi akun digital untuk anggota yang sudah terdaftar',
           icon: BadgeCheck,
+        },
+        {
+          href: '/daftar',
+          label: t.nav.daftar || 'Daftar Calon Anggota',
+          desc: 'Pendaftaran untuk menjadi calon anggota THS-THM',
+          icon: UserPlus,
         },
       ],
     },

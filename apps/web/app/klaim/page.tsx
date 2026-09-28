@@ -10,7 +10,10 @@ import {
   Loader2,
   PlusCircle,
   XCircle,
+  ChevronRight,
 } from 'lucide-react';
+import { PublicLayout } from '@/components';
+import { useI18n } from '@/i18n/context';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -40,6 +43,7 @@ const BUKTI_LABEL: Record<BuktiItem['tipe'], string> = {
 };
 
 export default function KlaimPage() {
+  const { t } = useI18n();
   const [step, setStep] = useState<'form' | 'success' | 'error'>('form');
   const [loading, setLoading] = useState(false);
   const [loadingTree, setLoadingTree] = useState(true);
@@ -116,41 +120,41 @@ export default function KlaimPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
     setLoading(true);
     setErrorMsg('');
 
     try {
-      const payload: Record<string, unknown> = {
-        tipe: 'keanggotaan',
-        namaLengkap: form.namaLengkap.trim(),
-        jenisKelamin: form.jenisKelamin,
-        rantingId,
-      };
-      if (form.tempatLahir.trim()) payload.tempatLahir = form.tempatLahir.trim();
-      if (form.tanggalLahir) payload.tanggalLahir = form.tanggalLahir;
-      if (form.alamat.trim()) payload.alamat = form.alamat.trim();
-      if (form.noHp.trim()) payload.noHp = form.noHp.trim();
-      if (form.email.trim()) payload.email = form.email.trim();
-      if (form.catatan.trim()) payload.catatan = form.catatan.trim();
-      const bukti = buktiDokumen.filter((b) => b.url.trim());
-      if (bukti.length > 0) payload.buktiDokumen = bukti;
-
       const res = await fetch(`${API_URL}/api/claims`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          namaLengkap: form.namaLengkap,
+          jenisKelamin: form.jenisKelamin,
+          tempatLahir: form.tempatLahir,
+          tanggalLahir: form.tanggalLahir,
+          alamat: form.alamat,
+          noHp: form.noHp,
+          email: form.email,
+          catatan: form.catatan,
+          rantingId,
+          bukti: buktiDokumen.map((b) => ({
+            tipe: b.tipe,
+            url: b.url,
+          })),
+        }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Pengajuan klaim gagal. Silakan coba lagi.');
+        throw new Error(data.message || 'Klaim gagal diajukan. Silakan coba lagi.');
       }
 
       setStep('success');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
       setErrorMsg(message);
-      setStep('error');
+      setStep('form'); // Keep us on the form to show error
     } finally {
       setLoading(false);
     }
@@ -158,55 +162,82 @@ export default function KlaimPage() {
 
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={36} className="text-green-600 dark:text-green-400" />
+      <PublicLayout>
+        <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+              <Link href="/" className="hover:text-white transition-colors">
+                Beranda
+              </Link>
+              <ChevronRight size={14} />
+              <span className="text-gold-400">{t.nav.klaim}</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+              Klaim Berhasil!
+            </h1>
+            <p className="text-white/70 mt-3 max-w-2xl text-base">
+              Klaim Anda telah kami terima. Tim admin akan memproses klaim Anda dan menghubungi
+              melalui nomor HP atau email yang didaftarkan.
+            </p>
+            <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Klaim Keanggotaan Terkirim!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Pengajuan klaim Anda telah kami terima. Admin akan memproses dan menghubungi Anda
-            melalui email atau nomor HP yang didaftarkan.
-          </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            <ArrowLeft size={18} />
-            Kembali ke Login
-          </Link>
         </div>
-      </div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={36} className="text-green-600 dark:text-green-400" />
+            </div>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
+            >
+              <ArrowLeft size={18} />
+              Kembali ke Login
+            </Link>
+          </div>
+        </div>
+      </PublicLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-2xl w-full">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-            <IdCard size={28} className="text-blue-600 dark:text-blue-400" />
+    <PublicLayout>
+      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+            <Link href="/" className="hover:text-white transition-colors">
+              Beranda
+            </Link>
+            <ChevronRight size={14} />
+            <span className="text-gold-400">{t.nav.klaim}</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Klaim Keanggotaan</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Sudah menjadi anggota THS-THM tapi belum terdaftar di sistem? Ajukan klaim di sini.
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+            Klaim Akun Anggota
+          </h1>
+          <p className="text-white/70 mt-3 max-w-2xl text-base">
+            Ajukan klaim untuk mengaktifkan akun digital Anda sebagai anggota THS-THM yang sudah terdaftar
           </p>
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
+      </div>
 
-        {/* Info Banner */}
-        <div className="mb-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800/50 dark:bg-blue-900/20">
-          <AlertCircle size={18} className="mt-0.5 shrink-0 text-blue-500" />
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            Jika memungkinkan, lampirkan bukti keanggotaan (sertifikat pendadaran dan/atau kartu
-            anggota) untuk mempercepat proses verifikasi.
-          </p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Tab Switcher */}
+        <div className="flex items-center space-x-4 mb-8 border-b border-gray-200 dark:border-gray-700">
+          <Link
+            href="/daftar"
+            className="px-4 py-2 rounded-t-lg font-medium text-gray-500 hover:text-navy-600 transition-colors border-b-2 border-transparent"
+          >
+            Daftar Calon Anggota
+          </Link>
+          <span className="px-4 py-2 font-medium text-navy-600 border-b-2 border-navy-600">
+            Klaim Anggota
+          </span>
         </div>
 
         {/* Error Alert */}
-        {step === 'error' && (
+        {errorMsg && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
             <AlertCircle size={18} className="text-red-500 mt-0.5 shrink-0" />
             <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
@@ -214,7 +245,20 @@ export default function KlaimPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg w-full">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-navy-100 dark:bg-navy-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <IdCard size={28} className="text-navy-600 dark:text-navy-400" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Ajukan Klaim Keanggotaan
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Isi formulir berikut untuk mengajukan klaim akun digital Anda
+              </p>
+            </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Nama Lengkap */}
             <div className="sm:col-span-2">
@@ -229,7 +273,7 @@ export default function KlaimPage() {
                   updateField('namaLengkap', e.target.value);
                   if (fieldErrors.namaLengkap) setFieldErrors((x) => ({ ...x, namaLengkap: '' }));
                 }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm ${
+                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
                   fieldErrors.namaLengkap
                     ? 'border-red-400 dark:border-red-600'
                     : 'border-gray-300 dark:border-gray-600'
@@ -256,7 +300,7 @@ export default function KlaimPage() {
                     onClick={() => updateField('jenisKelamin', jk)}
                     className={`flex-1 py-2.5 text-sm font-medium transition ${
                       form.jenisKelamin === jk
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-navy-600 text-white'
                         : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                     }`}
                   >
@@ -275,7 +319,7 @@ export default function KlaimPage() {
                 type="text"
                 value={form.tempatLahir}
                 onChange={(e) => updateField('tempatLahir', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                 placeholder="Kota lahir"
               />
             </div>
@@ -290,7 +334,7 @@ export default function KlaimPage() {
                 max={new Date().toISOString().split('T')[0]}
                 value={form.tanggalLahir}
                 onChange={(e) => updateField('tanggalLahir', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
               />
             </div>
 
@@ -306,7 +350,7 @@ export default function KlaimPage() {
                   updateField('noHp', e.target.value);
                   if (fieldErrors.noHp) setFieldErrors((x) => ({ ...x, noHp: '' }));
                 }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm ${
+                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
                   fieldErrors.noHp
                     ? 'border-red-400 dark:border-red-600'
                     : 'border-gray-300 dark:border-gray-600'
@@ -330,7 +374,7 @@ export default function KlaimPage() {
                   updateField('email', e.target.value);
                   if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: '' }));
                 }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm ${
+                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
                   fieldErrors.email
                     ? 'border-red-400 dark:border-red-600'
                     : 'border-gray-300 dark:border-gray-600'
@@ -351,7 +395,7 @@ export default function KlaimPage() {
                 value={form.alamat}
                 onChange={(e) => updateField('alamat', e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm resize-none"
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
                 placeholder="Alamat lengkap"
               />
             </div>
@@ -372,7 +416,7 @@ export default function KlaimPage() {
                 <select
                   value={distrikId}
                   onChange={(e) => handleDistrikChange(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                 >
                   <option value="">Pilih Distrik</option>
                   {tree.map((d) => (
@@ -385,7 +429,7 @@ export default function KlaimPage() {
                   value={wilayahId}
                   onChange={(e) => handleWilayahChange(e.target.value)}
                   disabled={!distrikId}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm disabled:opacity-50"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
                 >
                   <option value="">Pilih Wilayah</option>
                   {distrik?.wilayahs.map((w) => (
@@ -401,7 +445,7 @@ export default function KlaimPage() {
                     if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
                   }}
                   disabled={!wilayahId}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm disabled:opacity-50"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
                 >
                   <option value="">Pilih Ranting</option>
                   {rantings.map((r) => (
@@ -428,7 +472,7 @@ export default function KlaimPage() {
                   key={tipe}
                   type="button"
                   onClick={() => addBukti(tipe)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-navy-700 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-900/20 transition"
                 >
                   <PlusCircle size={16} />
                   {tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}
@@ -446,7 +490,7 @@ export default function KlaimPage() {
                       type="url"
                       value={b.url}
                       onChange={(e) => updateBukti(i, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                       placeholder="URL tautan dokumen (opsional)"
                     />
                     <button
@@ -472,7 +516,7 @@ export default function KlaimPage() {
               value={form.catatan}
               onChange={(e) => updateField('catatan', e.target.value)}
               rows={2}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm resize-none"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
               placeholder="Catatan tambahan (opsional)"
             />
           </div>
@@ -481,7 +525,7 @@ export default function KlaimPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition flex items-center justify-center gap-2 text-sm"
+            className="w-full py-3 bg-navy-600 hover:bg-navy-700 disabled:bg-navy-400 text-white font-medium rounded-lg transition flex items-center justify-center gap-2 text-sm"
           >
             {loading ? (
               <>
@@ -495,26 +539,27 @@ export default function KlaimPage() {
               </>
             )}
           </button>
-        </form>
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
           Sudah punya akun?{' '}
           <Link
             href="/login"
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
           >
             Masuk
           </Link>{' '}
           · Belum menjadi anggota?{' '}
           <Link
             href="/daftar"
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
           >
             Daftar Calon Anggota
           </Link>
         </p>
       </div>
-    </div>
+    </form>
+      </div>
+    </PublicLayout>
   );
 }
