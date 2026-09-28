@@ -129,6 +129,15 @@
     @apply bg-background text-text font-sans antialiased;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   /* Smooth font rendering */
   * {
     -webkit-font-smoothing: antialiased;
@@ -307,3 +316,37 @@
 .prose > div {
   @apply w-full;
 }
+
+/* ── Naskah Lengkap (Tab 5 Sejarah) structured document ── */
+.naskah-lengkap h2 {
+  @apply text-xl sm:text-2xl font-bold font-serif text-navy-900 dark:text-white mt-10 mb-4 scroll-mt-28;
+  position: relative;
+  padding-left: 3rem;
+}
+.naskah-lengkap h2::before {
+  content: "";
+  @apply absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-gold-400/15 border border-gold-400/40 flex items-center justify-center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b98a2e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1'/%3E%3Cpath d='M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+}
+.naskah-lengkap h2:first-of-type {
+  @apply mt-0;
+}
+.naskah-lengkap p {
+  @apply text-gray-700 dark:text-gray-300 leading-relaxed mb-5 text-[15px] sm:text-base;
+}
+.naskah-lengkap p:last-of-type {
+  @apply mb-0;
+}
+/* Ornamental divider between sections */
+.naskah-lengkap h2 + p {
+  position: relative;
+  padding-top: 1rem;
+}
+.naskah-lengkap h2 + p::before {
+  content: "";
+  @apply block w-24 h-0.5 bg-gradient-to-r from-gold-400 to-transparent rounded-full my-4;
+}
+

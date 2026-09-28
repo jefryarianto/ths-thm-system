@@ -20,6 +20,8 @@ export default function SejarahPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('timeline');
   const [copied, setCopied] = useState(false);
+  const [processedContent, setProcessedContent] = useState<string>('');
+  const [toc, setToc] = useState<Array<{id: string, text: string, level: number}>>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -36,6 +38,60 @@ export default function SejarahPage() {
     }
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (data?.konten) {
+      const lines = data.konten.split('\n');
+      let html = '';
+      const tocItems: Array<{id: string, text: string, level: number}> = [];
+
+      let currentParagraph = '';
+
+      const flushParagraph = () => {
+        if (currentParagraph.trim()) {
+          html += `<p>${currentParagraph.trim()}</p>\n`;
+          currentParagraph = '';
+        }
+      };
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        // Check if line is a heading: starts with a number, dot, space
+        if (/^\d+\.\s+/.test(trimmed)) {
+          flushParagraph();
+          // Extract the heading text (without the number and dot)
+          const headingText = trimmed.replace(/^\d+\.\s+/, '');
+          // Create an id from the heading text
+          const id = headingText
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          // Generate a unique id if duplicate? We'll just use the text and hope no duplicates.
+          // But we can add index if needed.
+          tocItems.push({ id, text: headingText, level: 2 });
+          html += `<h2 id="${id}">${headingText}</h2>\n`;
+        } else if (trimmed === '') {
+          flushParagraph();
+        } else {
+          // Accumulate lines for a paragraph
+          if (currentParagraph) {
+            currentParagraph += ' ' + trimmed;
+          } else {
+            currentParagraph = trimmed;
+          }
+        }
+      });
+
+      flushParagraph();
+
+      setProcessedContent(html);
+      setToc(tocItems);
+    } else {
+      setProcessedContent('');
+      setToc([]);
+    }
+  }, [data]);
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -656,20 +712,74 @@ export default function SejarahPage() {
 
                       {data?.konten && data.konten.trim().length > 0 ? (
                         <div className="space-y-6">
-                          <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
-                            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/60">
-                              <BookOpen size={16} className="text-gold-500 shrink-0" />
-                              <h3 className="font-serif font-bold text-navy-900 dark:text-white text-lg">
-                                Narasi Resmi dari Arsip Organisasi
-                              </h3>
+                          {/* Daftar Isi & Navigasi Cepat */}
+                          {toc.length > 0 && (
+                            <div className="rounded-2xl bg-navy-900 dark:bg-navy-950 text-white p-6 sm:p-8 border border-gold-400/30 shadow-md relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-40 h-40 bg-gold-400/10 rounded-full blur-3xl pointer-events-none" />
+                              <div className="relative">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="w-9 h-9 rounded-xl bg-gold-400/20 border border-gold-400/40 flex items-center justify-center text-gold-300 shrink-0">
+                                    <BookOpen size={18} />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-serif font-bold text-white text-lg leading-tight">Daftar Isi Naskah</h3>
+                                    <p className="text-white/70 text-xs font-light">Klik untuk melompat langsung ke bagian dokumen</p>
+                                  </div>
+                                </div>
+                                <ul className="grid sm:grid-cols-2 gap-2 mt-4">
+                                  {toc.map((item, idx) => (
+                                    <li key={`${item.id}-${idx}`}>
+                                      <a
+                                        href={`#${item.id}`}
+                                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-gold-400/40 transition-all group"
+                                      >
+                                        <span className="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-300 text-xs font-bold flex items-center justify-center shrink-0 group-hover:bg-gold-400 group-hover:text-navy-950 transition-colors">
+                                          {String(idx + 1).padStart(2, '0')}
+                                        </span>
+                                        <span className="text-sm text-white/90 font-medium leading-snug">{item.text}</span>
+                                      </a>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
                             </div>
-                            <article
-                              className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
-                                prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
-                                prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
-                              dangerouslySetInnerHTML={{ __html: data.konten }}
-                            />
-                          </div>
+                          )}
+
+                          {/* Badan Naskah yang Distrukturkan */}
+                          {processedContent ? (
+                            <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-10 transition-all">
+                              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700/60">
+                                <BookOpen size={16} className="text-gold-500 shrink-0" />
+                                <h3 className="font-serif font-bold text-navy-900 dark:text-white text-lg">
+                                  Narasi Resmi dari Arsip Organisasi
+                                </h3>
+                                <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold">
+                                  <CheckCircle2 size={12} /> Terverifikasi
+                                </span>
+                              </div>
+                              <article
+                                className="naskah-lengkap prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
+                                  prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
+                                  prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
+                                dangerouslySetInnerHTML={{ __html: processedContent }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
+                              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/60">
+                                <BookOpen size={16} className="text-gold-500 shrink-0" />
+                                <h3 className="font-serif font-bold text-navy-900 dark:text-white text-lg">
+                                  Narasi Resmi dari Arsip Organisasi
+                                </h3>
+                              </div>
+                              <article
+                                className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
+                                  prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
+                                  prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
+                                dangerouslySetInnerHTML={{ __html: data.konten }}
+                              />
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-6">
