@@ -20,6 +20,21 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 interface Ranting {
   id: string;
   nama: string;
+  kodeRanting?: string;
+  wilayahId?: string;
+}
+
+interface Wilayah {
+  id: string;
+  nama: string;
+  kodeWilayah?: string;
+  distrikId?: string;
+}
+
+interface Distrik {
+  id: string;
+  nama: string;
+  kodeDistrik?: string;
 }
 
 interface BuktiItem {
@@ -39,8 +54,13 @@ export default function KlaimPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Cascade dropdown states
+  const [distriks, setDistriks] = useState<Distrik[]>([]);
+  const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
   const [rantings, setRantings] = useState<Ranting[]>([]);
-  const [rantingId, setRantingId] = useState('');
+  const [selectedDistrikId, setSelectedDistrikId] = useState<string>('');
+  const [selectedWilayahId, setSelectedWilayahId] = useState<string>('');
+  const [rantingId, setRantingId] = useState<string>('');
 
   const [form, setForm] = useState({
     namaLengkap: '',
@@ -54,20 +74,87 @@ export default function KlaimPage() {
   });
   const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
 
+  // Loading states for each dropdown
+  const [distrikLoading, setDistrikLoading] = useState<boolean>(true);
+  const [wilayahLoading, setWilayahLoading] = useState<boolean>(false);
+  const [rantingLoading, setRantingLoading] = useState<boolean>(false);
+
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Fetch all distriks on mount
   useEffect(() => {
-    fetch(`${API_URL}/api/public/struktur/ranting`)
-      .then((r) => r.json())
-      .then((res) => {
-        setRantings(res?.data || []);
-      })
-      .catch(() => {
-        setRantings([]);
-      });
+    const fetchDistriks = async () => {
+      setDistrikLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+        const data = await res.json();
+        setDistriks(data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch distriks:', err);
+        setDistriks([]);
+      } finally {
+        setDistrikLoading(false);
+      }
+    };
+
+    fetchDistriks();
   }, []);
+
+  // Fetch wilayahs when distrik changes
+  useEffect(() => {
+    const fetchWilayahs = async () => {
+      if (!selectedDistrikId) {
+        setWilayahs([]);
+        setSelectedWilayahId('');
+        setRantings([]);
+        setRantingId('');
+        setWilayahLoading(false);
+        return;
+      }
+
+      setWilayahLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`);
+        const data = await res.json();
+        setWilayahs(data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch wilayahs:', err);
+        setWilayahs([]);
+      } finally {
+        setWilayahLoading(false);
+      }
+    };
+
+    fetchWilayahs();
+  }, [selectedDistrikId]);
+
+  // Fetch rantings when wilayah changes
+  useEffect(() => {
+    const fetchRantings = async () => {
+      if (!selectedWilayahId) {
+        setRantings([]);
+        setRantingId('');
+        setRantingLoading(false);
+        return;
+      }
+
+      setRantingLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`);
+        const data = await res.json();
+        setRantings(data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch rantings:', err);
+        setRantings([]);
+      } finally {
+        setRantingLoading(false);
+      }
+    };
+
+    fetchRantings();
+  }, [selectedWilayahId]);
 
   
 
@@ -84,7 +171,9 @@ export default function KlaimPage() {
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (form.namaLengkap.trim().length < 3) errs.namaLengkap = 'Nama lengkap minimal 3 karakter';
-    if (!rantingId) errs.rantingId = 'Pilih ranting asal keanggotaan';
+    if (!selectedDistrikId) errs.distrikId = 'Pilih distrik';
+    if (!selectedWilayahId) errs.wilayahId = 'Pilih wilayah';
+    if (!rantingId) errs.rantingId = 'Pilih ranting';
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       errs.email = 'Format email tidak valid';
     if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
@@ -221,7 +310,7 @@ export default function KlaimPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex items-center justify-center space-y-6 min-h-[400px]">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg w-full">
             {/* Header */}
             <div className="text-center mb-6">
@@ -377,26 +466,104 @@ export default function KlaimPage() {
             </div>
           </div>
 
-          {/* Ranting Asal */}
-          <div>
-            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Ranting Asal <span className="text-red-500">*</span>
-            </span>
-            <select
-              value={rantingId}
-              onChange={(e) => {
-                setRantingId(e.target.value);
-                if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
-              }}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-            >
-              <option value="">Pilih Ranting</option>
-              {rantings.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.nama}
+          {/* Struktur Organisasi (Cascade: Distrik → Wilayah → Ranting) */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Distrik <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedDistrikId}
+                onChange={(e) => {
+                  setSelectedDistrikId(e.target.value);
+                  setSelectedWilayahId('');
+                  setRantingId('');
+                  setWilayahs([]);
+                  setRantings([]);
+                  if (fieldErrors.distrikId || fieldErrors.wilayahId || fieldErrors.rantingId)
+                    setFieldErrors((x) => ({ ...x, distrikId: '', wilayahId: '', rantingId: '' }));
+                }}
+                disabled={distrikLoading}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+              >
+                <option value="">
+                  {distrikLoading ? 'Memuat distrik...' : 'Pilih Distrik'}
                 </option>
-              ))}
-            </select>
+                {distriks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.distrikId && (
+                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.distrikId}</span>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Wilayah <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedWilayahId}
+                onChange={(e) => {
+                  setSelectedWilayahId(e.target.value);
+                  setRantingId('');
+                  setRantings([]);
+                  if (fieldErrors.wilayahId || fieldErrors.rantingId)
+                    setFieldErrors((x) => ({ ...x, wilayahId: '', rantingId: '' }));
+                }}
+                disabled={!selectedDistrikId || wilayahLoading}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+              >
+                <option value="">
+                  {!selectedDistrikId
+                    ? 'Pilih Distrik terlebih dahulu'
+                    : wilayahLoading
+                      ? 'Memuat wilayah...'
+                      : 'Pilih Wilayah'}
+                </option>
+                {wilayahs.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.nama}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.wilayahId && (
+                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.wilayahId}</span>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Ranting Asal <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={rantingId}
+                onChange={(e) => {
+                  setRantingId(e.target.value);
+                  if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
+                }}
+                disabled={!selectedWilayahId || rantingLoading}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+              >
+                <option value="">
+                  {!selectedWilayahId
+                    ? 'Pilih Wilayah terlebih dahulu'
+                    : rantingLoading
+                      ? 'Memuat ranting...'
+                      : 'Pilih Ranting'}
+                </option>
+                {rantings.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nama}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.rantingId && (
+                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.rantingId}</span>
+              )}
+            </div>
           </div>
 
           {/* Bukti Keanggotaan */}
@@ -497,7 +664,7 @@ export default function KlaimPage() {
         </p>
       </div>
     </form>
-      </div>
+    </div>
     </PublicLayout>
   );
 }
