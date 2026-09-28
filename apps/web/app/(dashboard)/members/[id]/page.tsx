@@ -1459,7 +1459,7 @@ export default function MemberDetailPage() {
                           <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
                           <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
                           {/* JK kolom sejajar label Nama (offset absolut 340 = infoX+340, mengikuti spec SVG/API) */}
-                          <div className="absolute" style={{ left: 340, top: FRONT.info.top }}>
+                          <div className="absolute" style={{ left: 340, top: 0 }}>
                             <div
                               style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}
                             >
