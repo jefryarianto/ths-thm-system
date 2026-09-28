@@ -193,7 +193,7 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
                   color: FRONT.info.value.color,
                   marginTop: FRONT.info.value.marginTop,
                 }),
-            lineHeight: FRONT.info.value.lineHeight,
+            lineHeight: `${FRONT.info.value.lineHeight}px`,
             // Jaga satu baris (sama dgn renderer SVG resmi — text SVG tidak wrap) agar
             // nilai panjang tidak mendorong baris berikutnya turun menimpa area
             // penandatangan / "Berlaku sampai".
@@ -837,12 +837,14 @@ export default function MemberDetailPage() {
 
   if (!member) return null;
 
-  const totalPaid = member.iuran
+  const iuranList = member.iuran ?? [];
+  const dokumenList = member.dokumen ?? [];
+  const totalPaid = iuranList
     .filter((d: DuesItem) => d.status === 'lunas')
     .reduce((sum: number, d: DuesItem) => sum + Number(d.jumlah), 0);
 
-  const totalDues = member.iuran.length;
-  const paidDues = member.iuran.filter((d: DuesItem) => d.status === 'lunas').length;
+  const totalDues = iuranList.length;
+  const paidDues = iuranList.filter((d: DuesItem) => d.status === 'lunas').length;
 
   const orgPath =
     [member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama]
@@ -983,7 +985,7 @@ export default function MemberDetailPage() {
               {/* ── Summary Cards ── */}
               <DetailStats
                 createdAt={member.createdAt}
-                dokumenCount={member.dokumen.length}
+                dokumenCount={dokumenList.length}
                 paidDues={paidDues}
                 totalDues={totalDues}
                 rantingNama={member.ranting?.nama || '-'}
@@ -994,7 +996,7 @@ export default function MemberDetailPage() {
                 <div className="flex gap-6">
                   {[
                     { key: 'info', label: 'Informasi Pribadi', icon: User },
-                    { key: 'documents', label: `Dokumen (${member.dokumen.length})`, icon: FileText },
+                    { key: 'documents', label: `Dokumen (${dokumenList.length})`, icon: FileText },
                     { key: 'dues', label: `Riwayat Iuran (${totalDues})`, icon: CreditCard },
                     { key: 'card', label: `Kartu Digital`, icon: IdCard },
                   ].map((tab) => {
@@ -1131,7 +1133,7 @@ export default function MemberDetailPage() {
                   {/* Ringkasan per tipe dokumen */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {(['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] as const).map((t) => {
-                      const count = member.dokumen.filter((d: DocumentItem) => d.tipe === t).length;
+                      const count = dokumenList.filter((d: DocumentItem) => d.tipe === t).length;
                       return (
                         <div key={t} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                           <p className="text-xs text-gray-500 dark:text-gray-400">{DOKUMEN_TIPE_LABEL[t]}</p>
@@ -1147,9 +1149,9 @@ export default function MemberDetailPage() {
                         <FileText size={18} className="text-blue-500" />
                         Daftar Dokumen
                       </h3>
-                      <span className="text-xs text-gray-400">{member.dokumen.length} dokumen</span>
+                      <span className="text-xs text-gray-400">{dokumenList.length} dokumen</span>
                     </div>
-                    {member.dokumen.length > 0 ? (
+                    {dokumenList.length > 0 ? (
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
@@ -1395,7 +1397,7 @@ export default function MemberDetailPage() {
                             <img src="/logo.svg" alt="THS-THM" style={{ width: FRONT.logo.img, height: FRONT.logo.img, objectFit: 'contain' }} />
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
                           </div>
-                          <div style={{ lineHeight: FRONT.header.row.lineHeight }}>
+                          <div style={{ lineHeight: `${FRONT.header.row.lineHeight}px` }}>
                             {[
                               { t: 'KARTU TANDA ANGGOTA', sp: FRONT.header.row.spacing[0] },
                               { t: 'ORGANISASI PENCAK SILAT PENDIDIKAN', sp: FRONT.header.row.spacing[1] },
@@ -1450,25 +1452,33 @@ export default function MemberDetailPage() {
                           </div>
                         )}
 
-                        {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20 */}
-                        <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right, position: 'relative' }}>
+                        {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20.
+                            Murni absolute sesuai spec (left 250 / top 164 / right 176) — JANGAN timpa dengan
+                            position relative, itu menggeser blok info ke bawah dan menimpa area bawah kartu. */}
+                        <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right }}>
                           <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
                           <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
-                          <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
+                          {/* Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama.
+                              Struktur sesuai CSS kanonik packages/card-design (.info-pair): kolom kiri flex:1,
+                              jk-box 44px + marginLeft 40 → JK mulai di x = infoW-84 = 346 (sama dgn mobile, PDF, SVG API). */}
+                          <div className="flex">
+                            <div className="min-w-0" style={{ flex: 1 }}>
+                              <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
+                            </div>
+                            <div style={{ width: FRONT.info.jk.w, marginLeft: FRONT.info.jk.marginLeft, flexShrink: 0 }}>
+                              <div
+                                style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}
+                              >
+                                JK
+                              </div>
+                              <div className="font-ocr" style={{ fontSize: FRONT.info.value.fontSize, fontWeight: 700, color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop, lineHeight: `${FRONT.info.value.lineHeight}px` }}>
+                                {member.jenisKelamin === 'P' ? 'P' : 'L'}
+                              </div>
+                            </div>
+                          </div>
                           <InfoPreview label="Tempat, Tanggal Lahir" value={ttl.toUpperCase()} />
                           <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
                           <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
-                          {/* JK kolom sejajar label Nama (offset absolut 340 = infoX+340, mengikuti spec SVG/API) */}
-                          <div className="absolute" style={{ left: 340, top: 0 }}>
-                            <div
-                              style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}
-                            >
-                              JK
-                            </div>
-                            <div className="font-ocr" style={{ fontSize: FRONT.info.value.fontSize, fontWeight: 700, color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop }}>
-                              {member.jenisKelamin === 'P' ? 'P' : 'L'}
-                            </div>
-                          </div>
                         </div>
 
                         {/* Bottom - jarak bawah sama dengan jarak atas header */}

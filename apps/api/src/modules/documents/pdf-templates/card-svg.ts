@@ -254,8 +254,10 @@ function frontSide(d: CardSvgData): string {
   ];
   s += `<g>`;
   let infoY = infoTop;
+  let namaLabelBaseline = -1; // -1 = baris Nama belum dirender
   infoRows.forEach((r) => {
     const labelBaseline = infoY + FRONT.info.label.fontSize;
+    if (r.label === 'Nama') namaLabelBaseline = labelBaseline;
     s += txt(infoX, labelBaseline, r.label, { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
     if (r.strong) {
       s += txt(infoX, labelBaseline + FRONT.info.valueStrong.marginTop + FRONT.info.valueStrong.fontSize, r.value, {
@@ -275,14 +277,19 @@ function frontSide(d: CardSvgData): string {
     }
     infoY = labelBaseline + FRONT.info.value.fontSize + FRONT.info.value.marginTop + FRONT.info.rowMarginBottom + FRONT.info.label.fontSize * 0.2;
   });
-  // JK kolom sejajar label Nama
-  s += txt(infoX + 340, infoTop + FRONT.info.label.fontSize, 'JK', { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
-  s += txt(infoX + 340, infoTop + FRONT.info.label.fontSize + FRONT.info.value.marginTop + FRONT.info.value.fontSize, member.jenisKelamin === 'P' ? 'P' : 'L', {
-    size: FRONT.info.value.fontSize,
-    weight: 900,
-    fill: FRONT.info.value.color,
-    family: FONTS.ocrA,
-  });
+  // JK kolom sejajar label Nama — geometri sama dgn flex web/PDF/mobile (spec .info-pair):
+  // kolom JK mulai di x = infoX + infoW - jk.w - jk.marginLeft (spec: 250+430-44-40 = 636).
+  const infoW = CARD.W - FRONT.info.left - FRONT.info.right;
+  const jkX = infoX + infoW - FRONT.info.jk.w - FRONT.info.jk.marginLeft;
+  if (namaLabelBaseline >= 0) {
+    s += txt(jkX, namaLabelBaseline, 'JK', { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
+    s += txt(jkX, namaLabelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize, member.jenisKelamin === 'P' ? 'P' : 'L', {
+      size: FRONT.info.value.fontSize,
+      weight: 900,
+      fill: FRONT.info.value.color,
+      family: FONTS.ocrA,
+    });
+  }
   s += `</g>`;
 
   // Bottom — masa berlaku
