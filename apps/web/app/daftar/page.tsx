@@ -63,12 +63,14 @@ export default function DaftarPage() {
   useEffect(() => {
     const fetchRantings = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/ranting`);
+        // Endpoint publik ranting (paritas dgn halaman klaim) — envelope {success,data}.
+        // JANGAN memanggil /api/ranting: endpoint itu tidak ada di API.
+        const res = await fetch(`${API_URL}/api/public/struktur/ranting`);
         if (!res.ok) {
           throw new Error('Failed to fetch rantings');
         }
-        const data: Ranting[] = await res.json();
-        setRantings(data);
+        const json = await res.json();
+        setRantings(json?.data ?? []);
       } catch (err) {
         console.error('Error fetching rantings:', err);
       }

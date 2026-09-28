@@ -36,7 +36,7 @@ interface PublicPage {
  */
 const PUBLIC_PAGES: PublicPage[] = [
   { path: '/landing', heading: /TUNGGAL HATI/i },
-  { path: '/sejarah', heading: /Sejarah THS-THM/i },
+  { path: '/sejarah', heading: /Sejarah Tunggal Hati/i },
   { path: '/organisasi', heading: /Struktur Organisasi/i },
   { path: '/kepengurusan', heading: /Kepengurusan/i },
   { path: '/struktur-organisasi', heading: /Struktur Organisasi/i },
@@ -44,8 +44,8 @@ const PUBLIC_PAGES: PublicPage[] = [
   { path: '/galeri', heading: /Galeri/i },
   { path: '/donasi', heading: /Donasi/i },
   { path: '/login', heading: /THS-THM/ },
-  { path: '/daftar', heading: /Pendaftaran Anggota Baru/i },
-  { path: '/klaim', heading: /Klaim Keanggotaan/i },
+  { path: '/daftar', heading: /Pendaftaran Calon Anggota/i },
+  { path: '/klaim', heading: /Klaim Akun Anggota/i },
   { path: '/forgot-password', heading: /^THS-THM$/ },
   { path: '/reset-password', heading: /THS-THM/ },
   // Publik sejak fix loop kick mustChangePassword — login halaman ini
