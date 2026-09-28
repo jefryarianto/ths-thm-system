@@ -1459,8 +1459,9 @@ export default function MemberDetailPage() {
                           <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
                           <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
                           {/* Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama.
-                              Struktur sesuai CSS kanonik packages/card-design (.info-pair): kolom kiri flex:1,
-                              jk-box 44px + marginLeft 40 → JK mulai di x = infoW-84 = 346 (sama dgn mobile, PDF, SVG API). */}
+                              Struktur sesuai CSS kanonik packages/card-design (.info-pair): kolom kiri flex:1
+                              (= infoW - jk.w - jk.marginLeft = 346), jk-box 44px + marginLeft 40 → teks JK
+                              mulai di x = infoX + infoW - jk.w = 636 (sama dgn mobile, PDF, SVG API). */}
                           <div className="flex">
                             <div className="min-w-0" style={{ flex: 1 }}>
                               <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />

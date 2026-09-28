@@ -278,9 +278,10 @@ function frontSide(d: CardSvgData): string {
     infoY = labelBaseline + FRONT.info.value.fontSize + FRONT.info.value.marginTop + FRONT.info.rowMarginBottom + FRONT.info.label.fontSize * 0.2;
   });
   // JK kolom sejajar label Nama — geometri sama dgn flex web/PDF/mobile (spec .info-pair):
-  // kolom JK mulai di x = infoX + infoW - jk.w - jk.marginLeft (spec: 250+430-44-40 = 636).
+  // kolom kiri = infoW - jk.w - jk.marginLeft = 346, lalu jkBox mulai setelah margin 40
+  // → teks JK di x = infoX + (infoW - jk.w) = 250 + 430 - 44 = 636.
   const infoW = CARD.W - FRONT.info.left - FRONT.info.right;
-  const jkX = infoX + infoW - FRONT.info.jk.w - FRONT.info.jk.marginLeft;
+  const jkX = infoX + infoW - FRONT.info.jk.w;
   if (namaLabelBaseline >= 0) {
     s += txt(jkX, namaLabelBaseline, 'JK', { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
     s += txt(jkX, namaLabelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize, member.jenisKelamin === 'P' ? 'P' : 'L', {
