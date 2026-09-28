@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState, useCallback } from 'react';
 import { PublicLayout } from '@/components';
 import {
@@ -15,6 +16,8 @@ import {
   Building2,
   Newspaper,
   BookOpen,
+  Flame,
+  CheckCircle2,
 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
 
@@ -105,50 +108,96 @@ export function LandingPageContent() {
           <div className="absolute bottom-0 left-0 w-70 h-70 bg-gold-500/10 rounded-full blur-2xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
-          <div className="max-w-4xl mx-auto sm:mx-0">
-            {/* Tagline Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs sm:text-sm font-semibold tracking-wider uppercase mb-4 shadow-sm">
-              <Shield size={14} className="text-gold-400" />
-              <span>{t.home.tagline || 'Pro Patria et Ecclesia'}</span>
-            </div>
-
-            <h1 className="mb-4 text-3xl sm:text-5xl font-serif font-bold leading-tight tracking-tight text-white drop-shadow-md">
-              TUNGGAL HATI SEMINARI &mdash; TUNGGAL HATI MARIA
-            </h1>
-
-            <p className="mb-4 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
-              {t.home.description || 'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
-            </p>
-
-            {/* Motto */}
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-gold-400/20 mb-8 shadow-sm">
-              <span className="text-gold-400 text-xl leading-none">“</span>
-              <div>
-                <p className="text-gold-300 font-serif font-semibold text-sm sm:text-base italic">
-                  {t.home.motto || 'Fortiter in Re, Suaviter in Modo'}
-                </p>
-                <p className="text-white/60 text-xs sm:text-sm">
-                  {t.home.mottoMeaning || 'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya'}
-                </p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* ── Teks Hero (Kiri) ── */}
+            <div className="lg:col-span-7 text-center sm:text-left">
+              {/* Tagline Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs sm:text-sm font-semibold tracking-wider uppercase mb-4 shadow-sm">
+                <Shield size={14} className="text-gold-400" />
+                <span>{t.home.tagline || 'Pro Patria et Ecclesia'}</span>
               </div>
-              <span className="text-gold-400 text-xl leading-none">”</span>
+
+              <h1 className="mb-4 text-3xl sm:text-5xl font-serif font-bold leading-tight tracking-tight text-white drop-shadow-md">
+                TUNGGAL HATI SEMINARI &mdash; TUNGGAL HATI MARIA
+              </h1>
+
+              <p className="mb-4 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
+                {t.home.description || 'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
+              </p>
+
+              {/* Motto */}
+              <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-gold-400/20 mb-8 shadow-sm">
+                <span className="text-gold-400 text-xl leading-none">“</span>
+                <div>
+                  <p className="text-gold-300 font-serif font-semibold text-sm sm:text-base italic">
+                    {t.home.motto || 'Fortiter in Re, Suaviter in Modo'}
+                  </p>
+                  <p className="text-white/60 text-xs sm:text-sm">
+                    {t.home.mottoMeaning || 'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya'}
+                  </p>
+                </div>
+                <span className="text-gold-400 text-xl leading-none">”</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Link
+                  href="/daftar"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-950 px-6 py-3.5 rounded-xl text-base font-bold hover:bg-gold-300 shadow-lg hover:shadow-gold-400/20 transition-all duration-200"
+                >
+                  Daftar Anggota Baru
+                  <ArrowRight size={18} />
+                </Link>
+                <Link
+                  href="/login"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/30 text-white px-6 py-3.5 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-200"
+                >
+                  Masuk ke Dashboard
+                </Link>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <Link
-                href="/daftar"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-950 px-6 py-3.5 rounded-xl text-base font-bold hover:bg-gold-300 shadow-lg hover:shadow-gold-400/20 transition-all duration-200"
-              >
-                Daftar Anggota Baru
-                <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/login"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/30 text-white px-6 py-3.5 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-200"
-              >
-                Masuk ke Dashboard
-              </Link>
+            {/* ── Visual Hero (Kanan) ── */}
+            <div className="lg:col-span-5 relative group">
+              {/* Glow Backdrop */}
+              <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gold-400/10 rounded-3xl blur-3xl" />
+                <div className="absolute inset-0 bg-navy-600/40 rounded-3xl blur-[50px] opacity-30" />
+              </div>
+
+              {/* Floating Card: Badge Atas Kanan */}
+              <div className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-navy-900/80 backdrop-blur-md border border-gold-400/30 shadow-lg">
+                <Flame size={16} className="text-gold-400" />
+                <div className="text-sm font-medium text-white/90">
+                  <span className="block">Pencak Silat Katolik</span>
+                  <span className="block text-xs text-white/70">Est. 1985</span>
+                </div>
+              </div>
+
+              {/* Floating Card: Info Bawah Kiri */}
+              <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 shadow-lg">
+                <Heart size={18} className="text-emerald-400" />
+                <div className="space-y-1 text-sm font-medium text-white/90">
+                  <span className="block">Pembinaan Mental & Rohani</span>
+                  <span className="flex items-center gap-1 text-xs text-emerald-400">
+                    <CheckCircle2 size={12} /> Aktif
+                  </span>
+                </div>
+              </div>
+
+              {/* Gambar Utama Kegiatan */}
+              <div className="relative z-10 aspect-square rounded-3xl overflow-hidden border border-gold-400/30 shadow-2xl shadow-navy-950/80 group-hover:scale-105 transition-transform duration-700">
+                {/* Gradient overlay untuk kontras teks (jika diperlukan di masa depan) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-navy-950/60 to-transparent pointer-events-none" />
+                <Image
+                  src="/images/martinus-hadiwijoyo.jpg"
+                  alt="Kegiatan latihan THS-THM"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>
