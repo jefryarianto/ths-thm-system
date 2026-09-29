@@ -7387,6 +7387,10 @@ export interface components {
             tempatLahir?: string;
             /** @description Tanggal lahir (ISO string) */
             tanggalLahir?: string;
+            /** @description Tempat pendadaran (dadar) */
+            tempatDadar?: string;
+            /** @description Tahun pendadaran (dadar) */
+            tahunDadar?: string;
             /** @description Alamat lengkap */
             alamat?: string;
             /** @description Nomor HP */

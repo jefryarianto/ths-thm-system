@@ -17083,6 +17083,14 @@
             "type": "string",
             "description": "Tanggal lahir (ISO string)"
           },
+          "tempatDadar": {
+            "type": "string",
+            "description": "Tempat pendadaran (dadar)"
+          },
+          "tahunDadar": {
+            "type": "string",
+            "description": "Tahun pendadaran (dadar)"
+          },
           "alamat": {
             "type": "string",
             "description": "Alamat lengkap"
