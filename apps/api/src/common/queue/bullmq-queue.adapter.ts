@@ -6,6 +6,7 @@ import {
   JobLifecycleCallbacks,
   QueueOptions,
 } from './queue.interface';
+import { resolveRedisConnection } from './redis-connection';
 
 /**
  * BullMQ queue adapter for persistent, Redis-backed job processing.
@@ -75,19 +76,9 @@ export class BullMQQueueAdapter implements IJobQueue {
     this.callbacks = callbacks;
     this.concurrency = options?.concurrency ?? 3;
     this.maxRetries = options?.maxRetries ?? 3;
-    // If the caller passed an existing Redis-like instance (has `duplicate`), use it directly.
-    // Otherwise treat it as connection details { host, port }.
-    const rawConn = options?.connection;
-    if (rawConn && typeof (rawConn as Record<string, unknown>).duplicate === 'function') {
-      // Pre-existing Redis/ioredis-mock instance — use as-is
-      this.connection = rawConn;
-    } else {
-      const conn = rawConn as { host?: string; port?: string | number } | undefined;
-      this.connection = {
-        host: conn?.host || process.env.REDIS_HOST || 'localhost',
-        port: (conn?.port ? Number(conn.port) : parseInt(process.env.REDIS_PORT || '6379', 10)) || 6379,
-      };
-    }
+    // Resolusi terpusat: instance eksplisit → host pemanggil → REDIS_URL →
+    // REDIS_HOST/PORT → default (lihat redis-connection.ts).
+    this.connection = resolveRedisConnection(options);
     this.queueName = options?.queueName || 'document-generation';
 
     this.initialize();

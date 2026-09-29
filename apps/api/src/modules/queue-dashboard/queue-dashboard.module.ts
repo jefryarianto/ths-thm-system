@@ -5,6 +5,7 @@ import { ExpressAdapter } from '@bull-board/express';
 import type { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { QueueStatsController } from './queue-stats.controller';
+import { resolveRedisConnection } from '../../common/queue/redis-connection';
 
 /** Minimal interface for the BullMQ Queue methods used by the dashboard. */
 interface BullMqQueueLike {
@@ -128,10 +129,7 @@ export class QueueDashboardModule implements OnModuleInit, OnModuleDestroy {
       const adapter = new ExpressAdapter();
       adapter.setBasePath('/api/admin/queues');
 
-      const connection = {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      };
+      const connection = resolveRedisConnection() as { host: string; port: number };
 
       const documentQueue = new Queue('document-generation', { connection });
       QueueDashboardModule.documentQueue = documentQueue;

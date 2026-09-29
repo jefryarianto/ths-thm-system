@@ -15,6 +15,7 @@ import {
 } from '../../common/queue/queue.interface';
 import { InProcessQueueAdapter } from '../../common/queue/in-process-queue.adapter';
 import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
+import { resolveRedisConnection } from '../../common/queue/redis-connection';
 import { EventsGateway } from '../notifications/events.gateway';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 
@@ -139,15 +140,14 @@ export class ImportBatchService implements OnModuleDestroy {
     const opts = { concurrency: 4, maxRetries: 1 };
 
     if (process.env.USE_BULLMQ === 'true') {
+      // Koneksi dari REDIS_URL / REDIS_HOST / default — lihat redis-connection.ts
+      const conn = resolveRedisConnection() as { host: string; port: number };
       this.queue = new BullMQQueueAdapter(callbacks, {
         ...opts,
-        connection: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        },
+        connection: conn,
         queueName: 'bulk-import',
       });
-      this.logger.log('BullMQ queue "bulk-import" initialized');
+      this.logger.log(`BullMQ queue "bulk-import" initialized (Redis ${conn.host}:${conn.port})`);
     } else {
       this.queue = new InProcessQueueAdapter(callbacks, opts);
       this.logger.log('In-process bulk import queue initialized (concurrency: 4)');

@@ -10,6 +10,7 @@ import { EventsGateway } from '../modules/notifications/events.gateway';
 import { createHash } from 'crypto';
 import type { Request, Response } from 'express';
 import { QueueDashboardModule } from '../modules/queue-dashboard/queue-dashboard.module';
+import { resolveRedisConnection } from './queue/redis-connection';
 import { MonitoringService } from '../modules/monitoring/monitoring.service';
 import { statSync } from 'fs';
 import * as os from 'os';
@@ -677,10 +678,7 @@ export class HealthController implements OnApplicationBootstrap {
           type: 'bullmq',
           status: 'disconnected',
           queueName: 'document-generation',
-          connection: {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379', 10),
-          },
+          connection: resolveRedisConnection() as { host: string; port: number },
           workerStatus: 'stopped',
           latencyMs: null,
           error: 'BullMQ queue not initialized. Check that redis is reachable and bullmq is installed.',
@@ -713,10 +711,7 @@ export class HealthController implements OnApplicationBootstrap {
           type: 'bullmq',
           status: 'connected',
           queueName: 'document-generation',
-          connection: {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379', 10),
-          },
+          connection: resolveRedisConnection() as { host: string; port: number },
           latencyMs,
           workerStatus: isIdle ? 'idle' : 'running',
           counts: {
@@ -735,10 +730,7 @@ export class HealthController implements OnApplicationBootstrap {
           type: 'bullmq',
           status: 'disconnected',
           queueName: 'document-generation',
-          connection: {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379', 10),
-          },
+          connection: resolveRedisConnection() as { host: string; port: number },
           latencyMs,
           workerStatus: 'stopped',
           error: (error as Error).message,

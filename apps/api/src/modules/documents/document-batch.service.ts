@@ -8,6 +8,7 @@ import {
 } from '../../common/queue/queue.interface';
 import { InProcessQueueAdapter } from '../../common/queue/in-process-queue.adapter';
 import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
+import { resolveRedisConnection } from '../../common/queue/redis-connection';
 import { EventsGateway } from '../notifications/events.gateway';
 import { MailService } from '../../mail/mail.service';
 import { batchCompletionEmail } from '../../mail/email-templates';
@@ -72,16 +73,15 @@ export class DocumentBatchService implements OnApplicationShutdown {
 
     // Use BullMQ when USE_BULLMQ=true env var is set (requires Redis)
     if (process.env.USE_BULLMQ === 'true') {
+      // Koneksi dari REDIS_URL / REDIS_HOST / default — lihat redis-connection.ts
+      const conn = resolveRedisConnection() as { host: string; port: number };
       this.queue = new BullMQQueueAdapter(callbacks, {
         ...opts,
-        connection: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        },
+        connection: conn,
         queueName: 'document-generation',
       });
       this.logger.log(
-        `BullMQ queue "document-generation" initialized (Redis ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'})`,
+        `BullMQ queue "document-generation" initialized (Redis ${conn.host}:${conn.port})`,
       );
     } else {
       this.queue = new InProcessQueueAdapter(callbacks, opts);
