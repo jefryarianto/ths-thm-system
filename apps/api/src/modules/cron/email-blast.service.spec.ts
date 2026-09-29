@@ -6,6 +6,7 @@ process.env.USE_BULLMQ = 'false';
 describe('EmailBlastService', () => {
   let service: EmailBlastService;
   let notificationsSend: jest.Mock;
+  let mailSend: jest.Mock;
   let notifCreate: jest.Mock;
   let auditLog: jest.Mock;
   let loggerDebug: jest.Mock;
@@ -14,12 +15,14 @@ describe('EmailBlastService', () => {
     new EmailBlastService(
       { notifikasi: { create: notifCreate } } as never,
       { send: notificationsSend } as never,
+      { sendMail: mailSend } as never,
       auditLog.mock.calls.length >= 0 ? ({ log: auditLog } as never) : (undefined as never),
     );
 
   beforeEach(() => {
     jest.clearAllMocks();
     notificationsSend = jest.fn().mockResolvedValue(undefined);
+    mailSend = jest.fn().mockResolvedValue(true);
     notifCreate = jest.fn().mockResolvedValue({});
     auditLog = jest.fn().mockResolvedValue(undefined);
     service = buildService();
@@ -81,6 +84,43 @@ describe('EmailBlastService', () => {
         isi: 'I',
       },
     });
+  });
+
+  it('jalur email langsung: kirim via MailService tanpa notifikasi user', async () => {
+    await service.enqueue('data_incomplete', '2026-09-29', [
+      {
+        email: 'anggota@contoh.id',
+        subject: 'Data Belum Lengkap',
+        html: '<p>Lengkapi data</p>',
+        judul: 'Data Belum Lengkap',
+        isi: 'Lengkapi data',
+      },
+    ]);
+    await (service as unknown as { queue: { onIdle?: () => Promise<void> } }).queue.onIdle?.();
+
+    expect(mailSend).toHaveBeenCalledTimes(1);
+    expect(mailSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'anggota@contoh.id',
+        subject: 'Data Belum Lengkap',
+        html: '<p>Lengkapi data</p>',
+        metadata: { module: 'email-blast', template: 'data_incomplete' },
+      }),
+    );
+    expect(notificationsSend).not.toHaveBeenCalled();
+    expect(notifCreate).not.toHaveBeenCalled();
+  });
+
+  it('jalur email gagal kirim di-lempar agar adapter me-retry', async () => {
+    mailSend.mockResolvedValue(false);
+
+    await service.enqueue('data_incomplete', '2026-09-29', [
+      { email: 'gagal@contoh.id', subject: 'S', html: '<p/>', judul: 'J', isi: 'I' },
+    ]);
+    await (service as unknown as { queue: { onIdle?: () => Promise<void> } }).queue.onIdle?.();
+
+    expect(mailSend).toHaveBeenCalled();
+    expect(loggerDebug).not.toHaveBeenCalled(); // tidak pernah sukses
   });
 
   it('mengembalikan 0 untuk daftar kosong tanpa menyentuh antrean', async () => {

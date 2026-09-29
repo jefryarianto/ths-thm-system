@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationShutdown, Optional } from '@nestjs/common';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import {
@@ -19,18 +20,19 @@ export type EmailBlastKategori =
   | 'data_incomplete'
   | 'umum';
 
-/** Satu item blast per penerima. */
+/**
+ * Satu item blast per penerima.
+ *  - Jalur user (userId): notifikasi in-app + email + FCM via NotificationsService.
+ *  - Jalur email langsung (email + subject/html): kirim email ke alamat anggota
+ *    yang belum punya akun user (MailService). Pilih SALAH SATU jalur.
+ */
 export interface EmailBlastItem {
-  userId: string;
+  userId?: string;
+  email?: string;
+  subject?: string;
+  html?: string;
   judul: string;
   isi: string;
-}
-
-/** Bentuk payload di dalam antrean. */
-interface EmailBlastJobData extends EmailBlastItem {
-  kategori: EmailBlastKategori;
-  /** Tanggal target YYYY-MM-DD — bagian dari jobId deterministik. */
-  tanggal: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export class EmailBlastService implements OnApplicationShutdown {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly mailService: MailService,
     @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {
     this.initQueue();
@@ -118,7 +121,7 @@ export class EmailBlastService implements OnApplicationShutdown {
     const payloads: JobPayload[] = items.map((item, i) => ({
       // Deterministik: cron yang terpicu ulang di hari yang sama tidak
       // menduplikasi job (BullMQ menolak jobId yang sudah ada).
-      jobId: `email-blast:${kategori}:${tanggal}:${item.userId}:${i}`,
+      jobId: `email-blast:${kategori}:${tanggal}:${item.userId ?? item.email ?? i}:${i}`,
       type: kategori,
       data: { ...item, kategori, tanggal } as unknown as Record<string, unknown>,
     }));
@@ -128,9 +131,29 @@ export class EmailBlastService implements OnApplicationShutdown {
     return payloads.length;
   }
 
-  /** Eksekusi satu item: kirim notifikasi, fallback in-app bila gagal. */
+  /** Eksekusi satu item: email langsung ATAU notifikasi user + fallback in-app. */
   private async processJob(payload: JobPayload): Promise<void> {
-    const job = payload.data as unknown as EmailBlastJobData;
+    const job = payload.data as unknown as EmailBlastItem & { kategori: EmailBlastKategori };
+
+    // ── Jalur email langsung (anggota tanpa akun user) ──
+    if (job.email) {
+      const ok = await this.mailService.sendMail({
+        to: job.email,
+        subject: job.subject || job.judul,
+        html: job.html,
+        text: job.isi,
+        metadata: { module: 'email-blast', template: job.kategori },
+      });
+      // Gagal kirim → lempar agar adapter me-retry (backoff bawaan);
+      // habis retry → onFailed ter-audit (EMAIL_BLAST_FAILED).
+      if (!ok) {
+        throw new Error(`Gagal kirim email-blast ke ${job.email}`);
+      }
+      return;
+    }
+
+    // ── Jalur user (notifikasi in-app + email + FCM) ──
+    if (!job.userId) return;
     try {
       await this.notificationsService.send(job.userId, {
         userId: job.userId,

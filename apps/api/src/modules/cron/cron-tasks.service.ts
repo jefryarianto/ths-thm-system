@@ -5,6 +5,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { EmailBlastService, EmailBlastItem } from './email-blast.service';
+import { dataIncompleteEmail } from '../../mail/email-templates';
 
 /** Batas retensi sesi tidak aktif (hari). Bisa dioverride via env SESSION_RETENTION_DAYS. */
 const SESSION_RETENTION_DAYS = 14;
@@ -365,24 +366,31 @@ export class CronTasksService {
 
     let sent = 0;
     let emailed = 0;
-
-    // Send batch emails via existing service (this handles all email dispatch)
-    try {
-      const emailResult = await this.notificationsService.sendIncompleteNotifications();
-      emailed = emailResult?.sent || 0;
-    } catch (error) {
-      this.logger.warn(`Incomplete data email batch failed: ${(error as Error).message}`);
-    }
+    const emailItems: EmailBlastItem[] = [];
 
     for (const member of incompleteMembers) {
       const missing = (member.missingFields as string[]) || ['data diri'];
       const missingList = missing.map((f: string) => f.replace(/_/g, ' ')).join(', ');
 
+      // Email langsung ke anggota (bisa jadi belum punya akun user) —
+      // dikirim via antrean email-blast (batching, retry per-item),
+      // menggantikan Promise.allSettled paralel tanpa batas (temuan P0 audit).
+      if (member.email) {
+        const tpl = dataIncompleteEmail(member.namaLengkap, missing);
+        emailItems.push({
+          email: member.email,
+          subject: tpl.subject,
+          html: tpl.html,
+          judul: '📋 Data Anggota Belum Lengkap',
+          isi: `Data keanggotaan Anda masih belum lengkap. Segera lengkapi: ${missingList}.`,
+        });
+      }
+
       // Resolve anggota → user for in-app notification
       const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
       if (!userId) continue;
 
-      // In-app notification only (emails handled by batch above)
+      // In-app notification tetap langsung (murah, tanpa email/FCM)
       await this.createNotification(
         userId, 'data_incomplete',
         '📋 Data Anggota Belum Lengkap',
@@ -391,8 +399,12 @@ export class CronTasksService {
       sent++;
     }
 
+    if (emailItems.length > 0) {
+      emailed = await this.emailBlast.enqueue('data_incomplete', dateKey(new Date()), emailItems);
+    }
+
     this.logger.log(
-      `Incomplete data reminders: ${sent} in-app sent, ${emailed} emails sent (${incompleteMembers.length} total incomplete)`,
+      `Incomplete data reminders: ${sent} in-app sent, ${emailed} emails queued (${incompleteMembers.length} total incomplete)`,
     );
   }
 

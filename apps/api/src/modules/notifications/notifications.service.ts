@@ -524,6 +524,9 @@ export class NotificationsService {
     const members = await this.prisma.anggota.findMany({
       where: where as Prisma.AnggotaWhereInput,
       select: { id: true, namaLengkap: true, email: true, missingFields: true },
+      // Guard audit 2026-09: tanpa take, endpoint admin bisa menembak ratusan
+      // email paralel sekaligus (Promise.allSettled) — batasi per pemanggilan.
+      take: 500,
     });
 
     const noEmail = members.filter((m) => !m.email).length;
