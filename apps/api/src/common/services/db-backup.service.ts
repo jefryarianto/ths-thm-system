@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, createReadStream, createWriteStream } from 'fs';
 import { join } from 'path';
 import { createGzip } from 'zlib';
+import { createOverlapGuard } from '../utils/overlap-guard';
 
 const execFileAsync = promisify(execFile);
 
@@ -49,6 +50,8 @@ export class DbBackupService implements OnApplicationBootstrap {
   private readonly pgDumpPath =
     process.env.PG_DUMP_PATH ||
     (process.platform === 'win32' ? 'pg_dump.exe' : 'pg_dump');
+  /** Overlap guard: backup tidak boleh bertumpuk (pg_dump berat & lama). */
+  private readonly guard = createOverlapGuard(this.logger);
 
   constructor() {}
 
@@ -64,7 +67,9 @@ export class DbBackupService implements OnApplicationBootstrap {
   @Cron('0 3 * * *', { name: 'db-backup' })
   async scheduledBackup(): Promise<void> {
     if (process.env.BACKUP_ENABLED === 'false') return;
-    await this.runBackup();
+    // Guard: runBackup manual (endpoint admin) dan jadwal ini saling mengunci
+    // dalam satu proses — backup ganda hanya membuang I/O dan disk.
+    await this.guard('db-backup', () => this.runBackup());
   }
 
   async runBackup(): Promise<BackupFileInfo> {

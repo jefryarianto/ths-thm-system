@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { createOverlapGuard } from '../../common/utils/overlap-guard';
 import { EmailBlastService, EmailBlastItem } from './email-blast.service';
 import { dataIncompleteEmail } from '../../mail/email-templates';
 
@@ -28,6 +29,9 @@ function dateKey(d: Date): string {
 export class CronTasksService {
   private readonly logger = new Logger(CronTasksService.name);
 
+  /** Overlap guard: cron yang sama tidak dijalankan ganda dalam satu proses. */
+  private readonly guard = createOverlapGuard(this.logger);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
@@ -42,6 +46,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async autoGenerateMonthlyDues(): Promise<void> {
+    return this.guard('autoGenerateMonthlyDues', () => this.autoGenerateMonthlyDuesImpl());
+  }
+
+  private async autoGenerateMonthlyDuesImpl(): Promise<void> {
     const today = new Date();
     if (today.getDate() !== 1) return;
 
@@ -116,6 +124,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_7AM)
   async sendDuesReminders(): Promise<void> {
+    return this.guard('sendDuesReminders', () => this.sendDuesRemindersImpl());
+  }
+
+  private async sendDuesRemindersImpl(): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -302,6 +314,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_6AM)
   async sendTrainingReminders(): Promise<void> {
+    return this.guard('sendTrainingReminders', () => this.sendTrainingRemindersImpl());
+  }
+
+  private async sendTrainingRemindersImpl(): Promise<void> {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
@@ -360,6 +376,10 @@ export class CronTasksService {
 
   @Cron('0 9 * * 1')
   async sendIncompleteDataReminders(): Promise<void> {
+    return this.guard('sendIncompleteDataReminders', () => this.sendIncompleteDataRemindersImpl());
+  }
+
+  private async sendIncompleteDataRemindersImpl(): Promise<void> {
     this.logger.log('Checking for members with incomplete data...');
 
     const incompleteMembers = await this.prisma.anggota.findMany({
@@ -432,6 +452,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async sendBirthdayGreetings(): Promise<void> {
+    return this.guard('sendBirthdayGreetings', () => this.sendBirthdayGreetingsImpl());
+  }
+
+  private async sendBirthdayGreetingsImpl(): Promise<void> {
     const today = new Date();
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
@@ -472,6 +496,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async markOverdueDues(): Promise<void> {
+    return this.guard('markOverdueDues', () => this.markOverdueDuesImpl());
+  }
+
+  private async markOverdueDuesImpl(): Promise<void> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -494,6 +522,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_5AM)
   async sendGraduationInvitationsH7(): Promise<void> {
+    return this.guard('sendGraduationInvitationsH7', () => this.sendGraduationInvitationsH7Impl());
+  }
+
+  private async sendGraduationInvitationsH7Impl(): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -538,6 +570,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async cleanupStaleSessions(): Promise<void> {
+    return this.guard('cleanupStaleSessions', () => this.cleanupStaleSessionsImpl());
+  }
+
+  private async cleanupStaleSessionsImpl(): Promise<void> {
     const retentionDays =
       Number(process.env.SESSION_RETENTION_DAYS) || SESSION_RETENTION_DAYS;
 
@@ -584,6 +620,10 @@ export class CronTasksService {
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async cleanupOldEmailLogs(): Promise<void> {
+    return this.guard('cleanupOldEmailLogs', () => this.cleanupOldEmailLogsImpl());
+  }
+
+  private async cleanupOldEmailLogsImpl(): Promise<void> {
     const retentionDays =
       Number(process.env.EMAIL_LOG_RETENTION_DAYS) || EMAIL_LOG_RETENTION_DAYS;
 

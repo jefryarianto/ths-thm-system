@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailService } from './mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../modules/notifications/notifications.service';
+import { createOverlapGuard } from '../common/utils/overlap-guard';
 
 /** Baca env integer positif; fallback ke default (paritas dengan MailService). */
 function positiveIntEnv(name: string, fallback: number): number {
@@ -17,6 +18,8 @@ export class MailCronService {
   /** Jendela usia email yang layak auto-retry — harus SAMA dengan MailService (env sama). */
   private readonly maxAgeMs =
     positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
+  /** Overlap guard: siklus retry 30-menit tidak boleh menumpuk (pelajaran insiden 2026-09). */
+  private readonly guard = createOverlapGuard(this.logger);
 
   constructor(
     private readonly mailService: MailService,
@@ -31,6 +34,10 @@ export class MailCronService {
    */
   @Cron(CronExpression.EVERY_30_MINUTES)
   async handleAutoRetry(): Promise<void> {
+    return this.guard('mail-auto-retry', () => this.handleAutoRetryImpl());
+  }
+
+  private async handleAutoRetryImpl(): Promise<void> {
     // Hitung dengan filter usia yang sama dengan mode otomatis MailService,
     // supaya angka yang dilaporkan = yang benar-benar akan diproses.
     // (Guard attempts/backoff/batch ada di dalam retryFailedEmails.)
