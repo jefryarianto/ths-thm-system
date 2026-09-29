@@ -19,6 +19,21 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 interface Ranting {
   id: string;
   nama: string;
+  kodeRanting?: string;
+  wilayahId?: string;
+}
+
+interface Wilayah {
+  id: string;
+  nama: string;
+  kodeWilayah?: string;
+  distrikId?: string;
+}
+
+interface Distrik {
+  id: string;
+  nama: string;
+  kodeDistrik?: string;
 }
 
 const registrationSchema = z.object({
@@ -60,24 +75,92 @@ export default function DaftarPage() {
   });
   const [rantings, setRantings] = useState<Ranting[]>([]);
 
+  // Cascade: Distrik → Wilayah → Ranting
+  const [distriks, setDistriks] = useState<Distrik[]>([]);
+  const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
+  const [selectedDistrikId, setSelectedDistrikId] = useState<string>('');
+  const [selectedWilayahId, setSelectedWilayahId] = useState<string>('');
+
+  // Loading states per dropdown
+  const [distrikLoading, setDistrikLoading] = useState<boolean>(true);
+  const [wilayahLoading, setWilayahLoading] = useState<boolean>(false);
+  const [rantingLoading, setRantingLoading] = useState<boolean>(false);
+
+  // Fetch all distriks on mount
+  useEffect(() => {
+    const fetchDistriks = async () => {
+      setDistrikLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+        if (!res.ok) throw new Error('Failed to fetch distriks');
+        const json = await res.json();
+        setDistriks(json?.data ?? []);
+      } catch (err) {
+        console.error('Error fetching distriks:', err);
+        setDistriks([]);
+      } finally {
+        setDistrikLoading(false);
+      }
+    };
+
+    fetchDistriks();
+  }, []); // API_URL is from process.env, treated as constant
+
+  // Fetch wilayahs when distrik changes
+  useEffect(() => {
+    const fetchWilayahs = async () => {
+      if (!selectedDistrikId) {
+        setWilayahs([]);
+        setSelectedWilayahId('');
+        setRantings([]);
+        setWilayahLoading(false);
+        return;
+      }
+
+      setWilayahLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`);
+        if (!res.ok) throw new Error('Failed to fetch wilayahs');
+        const json = await res.json();
+        setWilayahs(json?.data ?? []);
+      } catch (err) {
+        console.error('Error fetching wilayahs:', err);
+        setWilayahs([]);
+      } finally {
+        setWilayahLoading(false);
+      }
+    };
+
+    fetchWilayahs();
+  }, [selectedDistrikId]);
+
+  // Fetch rantings when wilayah changes
   useEffect(() => {
     const fetchRantings = async () => {
+      if (!selectedWilayahId) {
+        setRantings([]);
+        setRantingLoading(false);
+        return;
+      }
+
+      setRantingLoading(true);
       try {
-        // Endpoint publik ranting (paritas dgn halaman klaim) — envelope {success,data}.
+        // Endpoint publik ranting (filter by wilayahId) — envelope {success,data}.
         // JANGAN memanggil /api/ranting: endpoint itu tidak ada di API.
-        const res = await fetch(`${API_URL}/api/public/struktur/ranting`);
-        if (!res.ok) {
-          throw new Error('Failed to fetch rantings');
-        }
+        const res = await fetch(`${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`);
+        if (!res.ok) throw new Error('Failed to fetch rantings');
         const json = await res.json();
         setRantings(json?.data ?? []);
       } catch (err) {
         console.error('Error fetching rantings:', err);
+        setRantings([]);
+      } finally {
+        setRantingLoading(false);
       }
     };
 
     fetchRantings();
-  }, []); // API_URL is from process.env, treated as constant
+  }, [selectedWilayahId]);
 
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -85,6 +168,19 @@ export default function DaftarPage() {
 
   const handleRantingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateField('rantingId', e.target.value);
+  };
+
+  const handleDistrikChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedDistrikId(e.target.value);
+    setSelectedWilayahId('');
+    setRantings([]);
+    updateField('rantingId', '');
+  };
+
+  const handleWilayahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedWilayahId(e.target.value);
+    setRantings([]);
+    updateField('rantingId', '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -386,7 +482,53 @@ return (
                     placeholder="Teman, media sosial, brosur, dll."
                   />
                 </div>
-{/* Ranting Asal */}
+{/* Distrik Asal (Cascade) */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Distrik <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedDistrikId}
+                    onChange={handleDistrikChange}
+                    disabled={distrikLoading}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                  >
+                    <option value="">
+                      {distrikLoading ? 'Memuat distrik...' : 'Pilih Distrik'}
+                    </option>
+                    {distriks.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Wilayah Asal (Cascade) */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Wilayah <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedWilayahId}
+                    onChange={handleWilayahChange}
+                    disabled={!selectedDistrikId || wilayahLoading}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                  >
+                    <option value="">
+                      {!selectedDistrikId
+                        ? 'Pilih Distrik terlebih dahulu'
+                        : wilayahLoading
+                          ? 'Memuat wilayah...'
+                          : 'Pilih Wilayah'}
+                    </option>
+                    {wilayahs.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Ranting Asal (Cascade) */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Ranting Asal <span className="text-red-500">*</span>
@@ -394,9 +536,16 @@ return (
                   <select
                     value={form.rantingId}
                     onChange={handleRantingChange}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                    disabled={!selectedWilayahId || rantingLoading}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
                   >
-                    <option value="">Pilih Ranting</option>
+                    <option value="">
+                      {!selectedWilayahId
+                        ? 'Pilih Wilayah terlebih dahulu'
+                        : rantingLoading
+                          ? 'Memuat ranting...'
+                          : 'Pilih Ranting'}
+                    </option>
                     {rantings.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.nama}

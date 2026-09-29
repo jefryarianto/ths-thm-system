@@ -141,6 +141,8 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
           jenisKelamin: claim.jenisKelamin as 'L' | 'P',
           tempatLahir: claim.tempatLahir,
           tanggalLahir: claim.tanggalLahir,
+          tempatDadar: claim.tempatDadar,
+          tahunDadar: claim.tahunDadar,
           alamat: claim.alamat,
           noHp: claim.noHp,
           noHpNormalized: normalizePhone(claim.noHp),

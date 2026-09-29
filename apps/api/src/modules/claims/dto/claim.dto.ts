@@ -42,6 +42,16 @@ export class CreateClaimDto {
   @IsString()
   tanggalLahir?: string;
 
+  @ApiPropertyOptional({ description: 'Tempat pendadaran (dadar)' })
+  @IsOptional()
+  @IsString()
+  tempatDadar?: string;
+
+  @ApiPropertyOptional({ description: 'Tahun pendadaran (dadar)' })
+  @IsOptional()
+  @IsString()
+  tahunDadar?: string;
+
   @ApiPropertyOptional({ description: 'Alamat lengkap' })
   @IsOptional()
   @IsString()

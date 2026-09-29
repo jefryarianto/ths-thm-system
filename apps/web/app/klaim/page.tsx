@@ -67,6 +67,8 @@ export default function KlaimPage() {
     jenisKelamin: 'L',
     tempatLahir: '',
     tanggalLahir: '',
+    tempatDadar: '',
+    tahunDadar: '',
     alamat: '',
     noHp: '',
     email: '',
@@ -198,12 +200,14 @@ export default function KlaimPage() {
           jenisKelamin: form.jenisKelamin,
           tempatLahir: form.tempatLahir,
           tanggalLahir: form.tanggalLahir,
+          tempatDadar: form.tempatDadar,
+          tahunDadar: form.tahunDadar,
           alamat: form.alamat,
           noHp: form.noHp,
           email: form.email,
           catatan: form.catatan,
           rantingId,
-          bukti: buktiDokumen.map((b) => ({
+          buktiDokumen: buktiDokumen.map((b) => ({
             tipe: b.tipe,
             url: b.url,
           })),
@@ -400,6 +404,37 @@ export default function KlaimPage() {
                 value={form.tanggalLahir}
                 onChange={(e) => updateField('tanggalLahir', e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+              />
+            </div>
+
+            {/* Tempat Pendadaran (Dadar) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Tempat Pendadaran (Dadar)
+              </label>
+              <input
+                type="text"
+                value={form.tempatDadar}
+                onChange={(e) => updateField('tempatDadar', e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                placeholder="Kota pendadaran"
+              />
+            </div>
+
+            {/* Tahun Pendadaran (Dadar) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Tahun Pendadaran (Dadar)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{4}"
+                maxLength={4}
+                value={form.tahunDadar}
+                onChange={(e) => updateField('tahunDadar', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                placeholder="2024"
               />
             </div>
 

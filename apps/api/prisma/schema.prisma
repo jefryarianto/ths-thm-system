@@ -546,6 +546,8 @@ model Klaim {
   jenisKelamin    String?     @map("jenis_kelamin")  // L atau P
   tempatLahir     String?     @map("tempat_lahir")
   tanggalLahir    DateTime?   @map("tanggal_lahir")
+  tempatDadar     String?     @map("tempat_dadar")
+  tahunDadar      String?     @map("tahun_dadar")
   alamat          String?
   noHp            String?     @map("no_hp")
   email           String?
