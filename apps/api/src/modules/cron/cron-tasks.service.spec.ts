@@ -13,6 +13,7 @@ describe('CronTasksService — cleanupStaleSessions', () => {
       { userSession: { deleteMany }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
+      { enqueue: jest.fn().mockResolvedValue(0) } as never,
       audit,
     );
 
@@ -100,6 +101,7 @@ describe('CronTasksService — cleanupStaleSessions', () => {
       { userSession: { deleteMany }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
+      { enqueue: jest.fn().mockResolvedValue(0) } as never,
       undefined,
     );
 
@@ -119,6 +121,7 @@ describe('CronTasksService — cleanupOldEmailLogs', () => {
       { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
+      { enqueue: jest.fn().mockResolvedValue(0) } as never,
       audit,
     );
 
@@ -188,10 +191,83 @@ describe('CronTasksService — cleanupOldEmailLogs', () => {
       { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
+      { enqueue: jest.fn().mockResolvedValue(0) } as never,
       undefined,
     );
 
     await expect(service.cleanupOldEmailLogs()).resolves.toBeUndefined();
     expect(emailDeleteMany).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CronTasksService — sendDuesReminders (email blast)', () => {
+  let service: CronTasksService;
+  let emailBlastEnqueue: jest.Mock;
+  let notificationsSend: jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    emailBlastEnqueue = jest.fn().mockResolvedValue(1);
+    notificationsSend = jest.fn().mockResolvedValue(undefined);
+  });
+
+  const buildWith = (prisma: Record<string, unknown>) =>
+    new CronTasksService(
+      prisma as never,
+      { send: notificationsSend } as never,
+      {} as never,
+      { enqueue: emailBlastEnqueue } as never,
+      undefined,
+    );
+
+  it('menyiapkan item aktif ke antrean email-blast (bukan kirim langsung)', async () => {
+    // Hanya jendela H-7 (call pertama iuranRecurring.findMany) yang berisi data;
+    // H-1/H+7/pengingat bulan-ini sengaja kosong agar assertion presisi.
+    const prisma: Record<string, unknown> = {
+      iuranRecurring: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([
+            {
+              id: 'r1',
+              anggota: { id: 'a1', namaLengkap: 'A', email: 'a@x.co', statusKeanggotaan: 'aktif' },
+            },
+            {
+              id: 'r2',
+              anggota: { id: 'a2', namaLengkap: 'B', email: 'b@x.co', statusKeanggotaan: 'nonaktif' },
+            },
+          ])
+          .mockResolvedValue([]),
+      },
+      iuran: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
+    // resolveUserIdFromAnggotaId: anggota a1 → user u1 via email
+    prisma.anggota = {
+      findUnique: jest.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+        where.id === 'a1'
+          ? { id: 'a1', email: 'a@x.co', noHp: null, namaLengkap: 'A', rantingId: null }
+          : null,
+      ),
+      findMany: jest.fn().mockResolvedValue([]),
+    };
+    prisma.user = { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }), create: jest.fn() };
+    service = buildWith(prisma);
+
+    await service.sendDuesReminders();
+
+    // Hanya satu pemanggilan enqueue (H-7; H-1/H+7/bulan-ini kosong)
+    expect(emailBlastEnqueue).toHaveBeenCalledTimes(1);
+    const [kategori, tanggal, items] = emailBlastEnqueue.mock.calls[0];
+    expect(kategori).toBe('reminder_iuran');
+    expect(tanggal).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Anggota nonaktif tidak ikut
+    expect(items).toEqual([
+      { userId: 'u1', judul: expect.stringContaining('H-7'), isi: expect.any(String) },
+    ]);
+    // Tidak ada lagi pengiriman langsung di dalam cron
+    expect(notificationsSend).not.toHaveBeenCalled();
   });
 });

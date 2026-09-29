@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { EmailBlastService, EmailBlastItem } from './email-blast.service';
 
 /** Batas retensi sesi tidak aktif (hari). Bisa dioverride via env SESSION_RETENTION_DAYS. */
 const SESSION_RETENTION_DAYS = 14;
@@ -13,6 +14,14 @@ const EMAIL_LOG_RETENTION_DAYS = 90;
 /** Sesi yang sudah direvoke dihapus setelah berapa hari. */
 const SESSION_REVOKED_RETENTION_DAYS = 1;
 
+/** Format tanggal YYYY-MM-DD lokal — bagian dari jobId deterministik blast. */
+function dateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 @Injectable()
 export class CronTasksService {
   private readonly logger = new Logger(CronTasksService.name);
@@ -21,6 +30,7 @@ export class CronTasksService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly graduationsService: GraduationsService,
+    private readonly emailBlast: EmailBlastService,
     @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
 
@@ -142,7 +152,9 @@ export class CronTasksService {
       take: 200,
     });
 
-    let sent = 0;
+    // Cron hanya MENYIAPKAN item — pengiriman dieksekusi antrean email-blast
+    // (tahan restart, retry per-item, jobId deterministik anti-duplikat).
+    const items: EmailBlastItem[] = [];
     for (const rec of recurrings) {
       if (rec.anggota.statusKeanggotaan !== 'aktif') continue;
 
@@ -150,25 +162,12 @@ export class CronTasksService {
       const userId = await this.resolveUserIdFromAnggotaId(rec.anggota.id, rec.anggota.email);
       if (!userId) continue;
 
-      // Create in-app notification + email + FCM via NotificationsService
-      try {
-        await this.notificationsService.send(userId, {
-          userId,
-          judul: title,
-          isi: message,
-          tipe: 'reminder_iuran',
-        });
-      } catch {
-        // Fallback: direct in-app notification
-        await this.createNotification(
-          userId, 'reminder_iuran', title, message,
-        );
-      }
-      sent++;
+      items.push({ userId, judul: title, isi: message });
     }
 
-    if (sent > 0) {
-      this.logger.log(`Dues reminder [${label}]: ${sent} sent`);
+    if (items.length > 0) {
+      const enqueued = await this.emailBlast.enqueue('reminder_iuran', dateKey(targetDate), items);
+      this.logger.log(`Dues reminder [${label}]: ${enqueued} antrean kirim`);
     }
   }
 
@@ -187,37 +186,36 @@ export class CronTasksService {
       take: 200,
     });
 
+    // Tandai menunggak tetap sinkron (murah & harus konsisten), tapi
+    // PENGIRIMAN notifikasinya lewat antrean email-blast.
     let escalated = 0;
+    const items: EmailBlastItem[] = [];
     for (const due of overdueDues) {
-      // Mark as overdue
       await this.prisma.iuran.update({
         where: { id: due.id },
         data: { status: 'menunggak' },
       });
 
-      // Resolve anggota → user
       const userId = await this.resolveUserIdFromAnggotaId(due.anggota.id, due.anggota.email);
       if (!userId) continue;
 
-      try {
-        await this.notificationsService.send(userId, {
-          userId,
-          judul: '⚠️ Iuran Menunggak — Segera Bayar!',
-          isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran untuk menghindari sanksi.`,
-          tipe: 'reminder_iuran',
-        });
-      } catch {
-        await this.createNotification(
-          userId, 'reminder_iuran',
-          '⚠️ Iuran Menunggak — Segera Bayar!',
-          `Iuran periode ${due.periode} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran.`,
-        );
-      }
+      items.push({
+        userId,
+        judul: '⚠️ Iuran Menunggak — Segera Bayar!',
+        isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran untuk menghindari sanksi.`,
+      });
       escalated++;
     }
 
-    if (escalated > 0) {
-      this.logger.log(`Dues escalation [H+7]: ${escalated} marked as menunggak`);
+    if (items.length > 0) {
+      const enqueued = await this.emailBlast.enqueue(
+        'reminder_iuran',
+        dateKey(thresholdDate),
+        items,
+      );
+      this.logger.log(
+        `Dues escalation [H+7]: ${escalated} marked as menunggak, ${enqueued} antrean kirim`,
+      );
     }
   }
 
@@ -240,7 +238,7 @@ export class CronTasksService {
       take: 100,
     });
 
-    let sent = 0;
+    const items: EmailBlastItem[] = [];
     for (const due of unpaidMembers) {
       const alreadyReminded = await this.prisma.iuranReminder.findFirst({
         where: {
@@ -256,30 +254,25 @@ export class CronTasksService {
         data: { iuranId: due.id, channel: 'system', status: 'sent' },
       });
 
-      // Resolve anggota → user
       const userId = await this.resolveUserIdFromAnggotaId(due.anggota.id, due.anggota.email);
       if (!userId) continue;
 
-      try {
-        await this.notificationsService.send(userId, {
-          userId,
-          judul: '💳 Iuran Bulan Ini Belum Dibayar',
-          isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} belum dibayar. Segera lakukan pembayaran.`,
-          tipe: 'reminder_iuran',
-        });
-      } catch {
-        // Fallback: direct in-app notification
-        await this.createNotification(
-          userId, 'reminder_iuran',
-          '💳 Iuran Bulan Ini Belum Dibayar',
-          `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} belum dibayar.`,
-        );
-      }
-      sent++;
+      items.push({
+        userId,
+        judul: '💳 Iuran Bulan Ini Belum Dibayar',
+        isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} belum dibayar. Segera lakukan pembayaran.`,
+      });
     }
 
-    if (sent > 0) {
-      this.logger.log(`Dues reminder [current month]: ${sent}/${unpaidCount} sent`);
+    if (items.length > 0) {
+      const enqueued = await this.emailBlast.enqueue(
+        'reminder_iuran',
+        dateKey(new Date()),
+        items,
+      );
+      this.logger.log(
+        `Dues reminder [current month]: ${enqueued}/${unpaidCount} antrean kirim`,
+      );
     }
   }
 
@@ -308,7 +301,8 @@ export class CronTasksService {
       take: 50,
     });
 
-    let remindersSent = 0;
+    const items: EmailBlastItem[] = [];
+    const todayKey = dateKey(tomorrow);
     for (const training of upcomingTrainings) {
       const members = await this.prisma.anggota.findMany({
         where: { rantingId: training.rantingId, statusKeanggotaan: 'aktif' },
@@ -323,30 +317,20 @@ export class CronTasksService {
       const materi = training.jenisMateri ? ` (${training.jenisMateri})` : '';
 
       for (const member of members) {
-        // Resolve anggota → user
         const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
         if (!userId) continue;
 
-        try {
-          await this.notificationsService.send(userId, {
-            userId,
-            judul: '🏋️ Latihan Besok!',
-            isi: `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir tepat waktu!`,
-            tipe: 'reminder_latihan',
-          });
-        } catch {
-          await this.createNotification(
-            userId, 'reminder_latihan',
-            '🏋️ Latihan Besok!',
-            `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir!`,
-          );
-        }
-        remindersSent++;
+        items.push({
+          userId,
+          judul: '🏋️ Latihan Besok!',
+          isi: `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir tepat waktu!`,
+        });
       }
     }
 
-    if (remindersSent > 0) {
-      this.logger.log(`Training reminders sent: ${remindersSent}`);
+    if (items.length > 0) {
+      const enqueued = await this.emailBlast.enqueue('reminder_latihan', todayKey, items);
+      this.logger.log(`Training reminders: ${enqueued} antrean kirim`);
     }
   }
 
@@ -432,31 +416,21 @@ export class CronTasksService {
       todayDay,
     );
 
-    let greetingsSent = 0;
+    const items: EmailBlastItem[] = [];
     for (const member of members) {
-      // Resolve anggota → user
       const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
       if (!userId) continue;
 
-      try {
-        await this.notificationsService.send(userId, {
-          userId,
-          judul: '🎂 Selamat Ulang Tahun!',
-          isi: `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati dan semakin bersemangat dalam berlatih. 🎉`,
-          tipe: 'umum',
-        });
-      } catch {
-        await this.createNotification(
-          userId, 'umum',
-          '🎂 Selamat Ulang Tahun!',
-          `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati.`,
-        );
-      }
-      greetingsSent++;
+      items.push({
+        userId,
+        judul: '🎂 Selamat Ulang Tahun!',
+        isi: `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati dan semakin bersemangat dalam berlatih. 🎉`,
+      });
     }
 
-    if (greetingsSent > 0) {
-      this.logger.log(`Birthday greetings sent: ${greetingsSent}`);
+    if (items.length > 0) {
+      const enqueued = await this.emailBlast.enqueue('umum', dateKey(today), items);
+      this.logger.log(`Birthday greetings: ${enqueued} antrean kirim`);
     }
   }
 
