@@ -37,7 +37,7 @@ interface PublicPage {
 const PUBLIC_PAGES: PublicPage[] = [
   { path: '/landing', heading: /TUNGGAL HATI/i },
   { path: '/sejarah', heading: /Sejarah Tunggal Hati/i },
-  { path: '/organisasi', heading: /Struktur Organisasi/i },
+  { path: '/organisasi', heading: /(Profil.*Organisasi|Struktur Organisasi)/i },
   { path: '/kepengurusan', heading: /Kepengurusan/i },
   { path: '/struktur-organisasi', heading: /Struktur Organisasi/i },
   { path: '/berita', heading: /Berita & Artikel/i },
