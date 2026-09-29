@@ -10,6 +10,10 @@ on:
         description: 'Image tag to deploy (default: latest)'
         required: false
         default: 'latest'
+      api_url:
+        description: 'Production API URL for web build'
+        required: false
+        default: 'https://ths-thm.cloud'
 
 # Deploy produksi menulis ke VPS yang sama (docker compose, migrasi DB) —
 # dua deploy paralel saling menabrak di server. Push beruntun: deploy baru
@@ -23,6 +27,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: jefryarianto/ths-thm-system
   IMAGE_TAG: ${{ inputs.image_tag || 'latest' }}
+  NEXT_PUBLIC_API_URL: ${{ inputs.api_url || 'https://ths-thm.cloud' }}
 
 jobs:
   build-and-push:
@@ -171,6 +176,7 @@ jobs:
           retry docker buildx build \
             "${TAG_FLAGS[@]}" \
             "${LABEL_FLAGS[@]}" \
+            --build-arg NEXT_PUBLIC_API_URL="${{ env.NEXT_PUBLIC_API_URL }}" \
             --file apps/web/Dockerfile \
             --cache-from type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/web:buildcache \
             --cache-to type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/web:buildcache,mode=max \

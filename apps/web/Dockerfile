@@ -17,6 +17,8 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store,id=web-pnpm-store pr
     pnpm install --frozen-lockfile --fetch-timeout 1200000
 
 # Build with realtime features enabled for production
+ARG NEXT_PUBLIC_API_URL=https://ths-thm.cloud
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN NEXT_PUBLIC_ENABLE_REALTIME=true pnpm --filter @ths-thm/web build
 
 # Production Stage
@@ -39,6 +41,8 @@ RUN corepack enable && corepack prepare pnpm@11.18.0 --activate && \
     printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\npreferOffline: true\nfetchRetries: 10\nfetchRetryFactor: 2\nfetchRetryMinTimeout: 5000\nfetchRetryMaxTimeout: 60000\nnetworkConcurrency: 4\n" >> pnpm-workspace.yaml && \
     pnpm install --frozen-lockfile --prod --ignore-scripts
 
+ARG NEXT_PUBLIC_API_URL=https://ths-thm.cloud
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NODE_ENV=production
 EXPOSE 3000
 
