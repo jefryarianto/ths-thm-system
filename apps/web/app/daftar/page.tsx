@@ -196,19 +196,19 @@ export default function DaftarPage() {
     }
 
     try {
-      const registrationData = {
-        namaLengkap: form.namaLengkap,
+      const registrationData: Record<string, unknown> = {
+        namaLengkap: form.namaLengkap.trim(),
         jenisKelamin: form.jenisKelamin,
-        tempatLahir: form.tempatLahir,
-        tanggalLahir: form.tanggalLahir,
-        alamat: form.alamat,
-        noHp: form.noHp,
-        email: form.email,
-        sumberInfo: form.sumberInfo,
         rantingId: form.rantingId,
       };
+      if (form.tempatLahir.trim()) registrationData.tempatLahir = form.tempatLahir.trim();
+      if (form.tanggalLahir) registrationData.tanggalLahir = form.tanggalLahir;
+      if (form.alamat.trim()) registrationData.alamat = form.alamat.trim();
+      if (form.noHp.trim()) registrationData.noHp = form.noHp.trim();
+      if (form.email.trim()) registrationData.email = form.email.trim();
+      if (form.sumberInfo.trim()) registrationData.sumberInfo = form.sumberInfo.trim();
 
-      const res = await fetch(`${API_URL}/api/pendaftaran`, {
+      const res = await fetch(`${API_URL}/api/registrations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

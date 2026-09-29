@@ -12,7 +12,7 @@ import {
 } from './dto/registration.dto';
 
 @ApiTags('Registrations')
-@Controller('registrations')
+@Controller(['registrations', 'pendaftaran'])
 export class RegistrationsController {
   constructor(private readonly service: RegistrationsService) {}
 

@@ -10,7 +10,7 @@ import { Page } from '@playwright/test';
  * Route pattern cocok dengan URL berisi path tsb apa pun port-nya.
  */
 export async function registerRegistrationMocks(page: Page) {
-  await page.route(/\/api\/pendaftaran/, async (route) => {
+  await page.route(/\/api\/(registrations|pendaftaran)/, async (route) => {
     if (route.request().method() === 'POST') {
       await route.fulfill({
         status: 201,
