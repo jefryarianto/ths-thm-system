@@ -270,4 +270,87 @@ describe('CronTasksService — sendDuesReminders (email blast)', () => {
     // Tidak ada lagi pengiriman langsung di dalam cron
     expect(notificationsSend).not.toHaveBeenCalled();
   });
+
+  it('eskalasi menunggak memakai updateMany set-based (tanpa N+1)', async () => {
+    const prisma = {
+      iuranRecurring: { findMany: jest.fn().mockResolvedValue([]) },
+      iuran: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([
+            {
+              id: 'd1',
+              periode: '2026-08',
+              jumlah: 50000,
+              anggota: { id: 'a1', namaLengkap: 'A', email: 'a@x.co' },
+            },
+            {
+              id: 'd2',
+              periode: '2026-08',
+              jumlah: 60000,
+              anggota: { id: 'a2', namaLengkap: 'B', email: 'b@x.co' },
+            },
+          ])
+          .mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
+      anggota: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'a1', email: 'a@x.co', noHp: null, namaLengkap: 'A', rantingId: null }),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      user: { findUnique: jest.fn().mockResolvedValue({ id: 'uX' }), create: jest.fn() },
+    };
+    service = buildWith(prisma);
+
+    await service.sendDuesReminders();
+
+    // Set-based: SATU updateMany untuk semua iuran (bukan update per baris)
+    expect(prisma.iuran.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['d1', 'd2'] } },
+      data: { status: 'menunggak' },
+    });
+    // Keduanya masuk antrean blast
+    const [kategori, , items] = emailBlastEnqueue.mock.calls[0];
+    expect(kategori).toBe('reminder_iuran');
+    expect(items).toHaveLength(2);
+    expect(notificationsSend).not.toHaveBeenCalled();
+  });
+
+  it('autoGenerateMonthlyDues memakai paging + createMany (tanggal 1)', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-01T12:00:00Z') });
+    try {
+      const prisma = {
+        iuranRecurring: {
+          findMany: jest
+            .fn()
+            // Halaman tunggal (< PAGE_SIZE) → loop selesai setelah 1 iterasi
+            .mockResolvedValue([
+              { id: 'r1', anggotaId: 'a1', amount: 50000 },
+              { id: 'r2', anggotaId: 'a2', amount: 60000 },
+            ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+        iuran: {
+          findMany: jest.fn().mockResolvedValue([{ anggotaId: 'a1' }]), // a1 sudah punya
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      service = buildWith(prisma);
+
+      await service.autoGenerateMonthlyDues();
+
+      // Hanya yang belum punya iuran yang dibuat (a2), periode dari fake time
+      expect(prisma.iuran.createMany).toHaveBeenCalledWith({
+        data: [{ anggotaId: 'a2', periode: '2026-10', jumlah: 60000, status: 'belum_dibayar' }],
+      });
+      // nextDueDate dimajukan set-based untuk yang dibuat
+      expect(prisma.iuranRecurring.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['r2'] } },
+        data: { nextDueDate: expect.any(Date) },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

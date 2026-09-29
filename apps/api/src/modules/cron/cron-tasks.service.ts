@@ -1,5 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
@@ -47,43 +48,59 @@ export class CronTasksService {
     const periode = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     this.logger.log(`Auto-generating dues for period: ${periode}`);
 
-    const recurrings = await this.prisma.iuranRecurring.findMany({
-      where: { isActive: true, nextDueDate: { lte: today } },
-      include: { anggota: { select: { id: true, statusKeanggotaan: true } } },
-    });
+    // Paging + set-based (temuan audit menengah 2026-09): dulu scan tanpa take
+    // lalu 3 query per baris (findFirst + create + update). Kini per halaman:
+    // 1 findMany + 1 cek existing + createMany + updateMany. Anggota nonaktif
+    // difilter di query level.
+    const PAGE_SIZE = 500;
+    const nextDue = new Date(today);
+    nextDue.setMonth(nextDue.getMonth() + 1);
 
     let generated = 0;
     let skipped = 0;
+    let cursor: string | undefined;
 
-    for (const rec of recurrings) {
-      if (rec.anggota.statusKeanggotaan !== 'aktif') {
-        skipped++;
-        continue;
-      }
-
-      const existing = await this.prisma.iuran.findFirst({
-        where: { anggotaId: rec.anggotaId, periode },
+    for (;;) {
+      const recurrings = await this.prisma.iuranRecurring.findMany({
+        where: {
+          isActive: true,
+          nextDueDate: { lte: today },
+          anggota: { statusKeanggotaan: 'aktif' },
+        },
+        select: { id: true, anggotaId: true, amount: true },
+        orderBy: { id: 'asc' },
+        take: PAGE_SIZE,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (existing) {
-        skipped++;
-        continue;
-      }
+      if (recurrings.length === 0) break;
+      cursor = recurrings[recurrings.length - 1].id;
 
-      try {
-        await this.prisma.iuran.create({
-          data: { anggotaId: rec.anggotaId, periode, jumlah: rec.amount, status: 'belum_dibayar' },
+      // Yang sudah punya iuran periode ini → skip (idempoten terhadap rerun)
+      const existing = await this.prisma.iuran.findMany({
+        where: { anggotaId: { in: recurrings.map((r) => r.anggotaId) }, periode },
+        select: { anggotaId: true },
+      });
+      const existingSet = new Set(existing.map((e) => e.anggotaId));
+      const toCreate = recurrings.filter((r) => !existingSet.has(r.anggotaId));
+      skipped += recurrings.length - toCreate.length;
+
+      if (toCreate.length > 0) {
+        await this.prisma.iuran.createMany({
+          data: toCreate.map((r) => ({
+            anggotaId: r.anggotaId,
+            periode,
+            jumlah: r.amount,
+            status: 'belum_dibayar',
+          })),
         });
-
-        const nextDue = new Date(today);
-        nextDue.setMonth(nextDue.getMonth() + 1);
-        await this.prisma.iuranRecurring.update({
-          where: { id: rec.id },
+        await this.prisma.iuranRecurring.updateMany({
+          where: { id: { in: toCreate.map((r) => r.id) } },
           data: { nextDueDate: nextDue },
         });
-        generated++;
-      } catch (error) {
-        this.logger.error(`Failed to generate due for ${rec.anggotaId}: ${(error as Error).message}`);
+        generated += toCreate.length;
       }
+
+      if (recurrings.length < PAGE_SIZE) break;
     }
     this.logger.log(`Dues generation: ${generated} created, ${skipped} skipped`);
   }
@@ -187,16 +204,18 @@ export class CronTasksService {
       take: 200,
     });
 
-    // Tandai menunggak tetap sinkron (murah & harus konsisten), tapi
-    // PENGIRIMAN notifikasinya lewat antrean email-blast.
-    let escalated = 0;
+    // Tandai menunggak SET-based via updateMany (temuan audit menengah:
+    // dulu N+1 update per baris) — PENGIRIMAN tetap lewat antrean email-blast.
+    const marked =
+      overdueDues.length > 0
+        ? await this.prisma.iuran.updateMany({
+            where: { id: { in: overdueDues.map((d) => d.id) } },
+            data: { status: 'menunggak' },
+          })
+        : { count: 0 };
+
     const items: EmailBlastItem[] = [];
     for (const due of overdueDues) {
-      await this.prisma.iuran.update({
-        where: { id: due.id },
-        data: { status: 'menunggak' },
-      });
-
       const userId = await this.resolveUserIdFromAnggotaId(due.anggota.id, due.anggota.email);
       if (!userId) continue;
 
@@ -205,7 +224,6 @@ export class CronTasksService {
         judul: '⚠️ Iuran Menunggak — Segera Bayar!',
         isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran untuk menghindari sanksi.`,
       });
-      escalated++;
     }
 
     if (items.length > 0) {
@@ -215,7 +233,7 @@ export class CronTasksService {
         items,
       );
       this.logger.log(
-        `Dues escalation [H+7]: ${escalated} marked as menunggak, ${enqueued} antrean kirim`,
+        `Dues escalation [H+7]: ${marked.count} marked as menunggak, ${enqueued} antrean kirim`,
       );
     }
   }
@@ -418,14 +436,16 @@ export class CronTasksService {
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
 
-    const members = await this.prisma.$queryRawUnsafe<Array<{ id: string; namaLengkap: string; email: string | null }>>(
-      `SELECT id, "nama_lengkap", "email" FROM anggota 
-       WHERE EXTRACT(MONTH FROM "tanggal_lahir") = $1 
-       AND EXTRACT(DAY FROM "tanggal_lahir") = $2
+    // Tagged template + LIMIT (temuan audit menengah: *Unsafe tanpa LIMIT)
+    const members = await this.prisma.$queryRaw<
+      Array<{ id: string; namaLengkap: string; email: string | null }>
+    >(
+      Prisma.sql`SELECT id, "nama_lengkap", "email" FROM anggota
+       WHERE EXTRACT(MONTH FROM "tanggal_lahir") = ${todayMonth}
+       AND EXTRACT(DAY FROM "tanggal_lahir") = ${todayDay}
        AND "status_keanggotaan" = 'aktif'
-       AND "deleted_at" IS NULL`,
-      todayMonth,
-      todayDay,
+       AND "deleted_at" IS NULL
+       LIMIT 500`,
     );
 
     const items: EmailBlastItem[] = [];
