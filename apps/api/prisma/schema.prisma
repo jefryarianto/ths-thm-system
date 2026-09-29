@@ -1426,6 +1426,8 @@ model EmailLog {
   error     String?
   content   String? // HTML/text body for retry capability
   metadata  Json? // { module?: string, template?: string, userId?: string }
+  retryCount Int      @default(0) @map("retry_count") // jumlah percobaan retry (guard anti-loop)
+  lastRetryAt DateTime? @map("last_retry_at") // waktu percobaan retry terakhir (untuk backoff)
   createdAt DateTime @default(now()) @map("created_at")
 
   events EmailEvent[]

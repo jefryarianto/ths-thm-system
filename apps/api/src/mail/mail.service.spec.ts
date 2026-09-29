@@ -21,6 +21,7 @@ describe('MailService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
     suppressedEmail: {
       findUnique: jest.fn(),
@@ -31,6 +32,7 @@ describe('MailService', () => {
   };
 
   const originalResendKey = process.env.RESEND_API_KEY;
+  const originalResendDomain = process.env.RESEND_DOMAIN;
 
   beforeEach(async () => {
     // Clear env vars that might affect test results
@@ -53,10 +55,15 @@ describe('MailService', () => {
 
   afterEach(async () => {
     await moduleRef?.close();
-    // Restore original env vars
+    delete process.env.RESEND_API_KEY;
     if (originalResendKey) {
       process.env.RESEND_API_KEY = originalResendKey;
     }
+    delete process.env.RESEND_DOMAIN;
+    if (originalResendDomain) {
+      process.env.RESEND_DOMAIN = originalResendDomain;
+    }
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -119,159 +126,172 @@ describe('MailService', () => {
   });
 
   describe('retryFailedEmails', () => {
+    const baseLog = (overrides: Record<string, unknown> = {}) => ({
+      id: 'log1',
+      to: 'user@test.com',
+      subject: 'Welcome',
+      content: '<html>Body</html>',
+      metadata: { module: 'members', template: 'welcomeMemberEmail' },
+      retryCount: 0,
+      ...overrides,
+    });
+
     it('should return zeros when no failed emails exist', async () => {
       mockPrisma.emailLog.findMany.mockResolvedValue([]);
 
       const result = await service.retryFailedEmails();
 
-      expect(result).toEqual({ retried: 0, succeeded: 0, failed: 0 });
-      expect(mockPrisma.emailLog.findMany).toHaveBeenCalledWith({
-        where: { status: 'failed' },
-      });
+      expect(result).toEqual({ retried: 0, succeeded: 0, failed: 0, abandoned: 0 });
+      expect(mockPrisma.emailLog.update).not.toHaveBeenCalled();
     });
 
-    it('should filter by specific IDs when provided', async () => {
+    it('should apply auto-mode guards (age, attempts, backoff) with a small batch', async () => {
+      mockPrisma.emailLog.findMany.mockResolvedValue([]);
+
+      await service.retryFailedEmails();
+
+      const arg = mockPrisma.emailLog.findMany.mock.calls[0][0];
+      // Guard anti-loop (insiden retry-loop 2026-09)
+      expect(arg.where.status).toBe('failed');
+      expect(arg.where.retryCount).toEqual({ lt: 3 });
+      expect(arg.where.createdAt.gte).toBeInstanceOf(Date);
+      expect(arg.where.OR).toHaveLength(2); // lastRetryAt null ATAU sudah lewat backoff
+      // Batch kecil + content tidak dimuat massal tanpa batas
+      expect(arg.take).toBe(25);
+      expect(arg.orderBy).toEqual({ createdAt: 'asc' });
+      expect(arg.select).toEqual(
+        expect.objectContaining({ id: true, to: true, subject: true, content: true }),
+      );
+    });
+
+    it('should skip age/backoff filters for manual retry by ids', async () => {
       mockPrisma.emailLog.findMany.mockResolvedValue([]);
 
       await service.retryFailedEmails(['id1', 'id2']);
 
-      expect(mockPrisma.emailLog.findMany).toHaveBeenCalledWith({
-        where: { status: 'failed', id: { in: ['id1', 'id2'] } },
+      const arg = mockPrisma.emailLog.findMany.mock.calls[0][0];
+      expect(arg.where.id).toEqual({ in: ['id1', 'id2'] });
+      // Retry manual eksplisit: tanpa filter usia & backoff, tapi tetap dibatasi batch
+      expect(arg.where.createdAt).toBeUndefined();
+      expect(arg.where.OR).toBeUndefined();
+      expect(arg.take).toBe(25);
+    });
+
+    it('should update the ORIGINAL log to sent on success (no new log row)', async () => {
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'resend-123' }),
+      }) as jest.Mock;
+      mockPrisma.emailLog.findMany.mockResolvedValue([baseLog()]);
+      mockPrisma.emailLog.update.mockResolvedValue({ id: 'log1' });
+
+      const result = await service.retryFailedEmails();
+
+      expect(result).toEqual({ retried: 1, succeeded: 1, failed: 0, abandoned: 0 });
+      expect(mockPrisma.emailLog.update).toHaveBeenCalledWith({
+        where: { id: 'log1' },
+        data: expect.objectContaining({
+          status: 'sent',
+          provider: 'resend',
+          error: null,
+          retryCount: { increment: 1 },
+          lastRetryAt: expect.any(Date),
+          metadata: expect.objectContaining({ resendId: 'resend-123' }),
+        }),
+      });
+      // Tidak lagi membuat baris log baru per percobaan (akar loop 131 ribu baris)
+      expect(mockPrisma.emailLog.create).not.toHaveBeenCalled();
+    });
+
+    it('should keep the log failed and bump retryCount on failure', async () => {
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: { message: 'rate limited' } }),
+      }) as jest.Mock;
+      mockPrisma.emailLog.findMany.mockResolvedValue([baseLog()]);
+      mockPrisma.emailLog.update.mockResolvedValue({ id: 'log1' });
+
+      const result = await service.retryFailedEmails();
+
+      expect(result).toEqual({ retried: 1, succeeded: 0, failed: 1, abandoned: 0 });
+      expect(mockPrisma.emailLog.update).toHaveBeenCalledWith({
+        where: { id: 'log1' },
+        data: expect.objectContaining({
+          status: 'failed',
+          error: expect.stringContaining('providers failed'),
+          retryCount: { increment: 1 },
+          lastRetryAt: expect.any(Date),
+        }),
       });
     });
 
-    it('should attempt to retry a single failed email', async () => {
-      const failedLog = {
-        id: 'log1',
-        to: 'user@test.com',
-        subject: 'Welcome',
-        content: '<html>Body</html>',
-        metadata: { module: 'members', template: 'welcomeMemberEmail' },
-        status: 'failed',
-        provider: null,
-        error: 'Timeout',
-        createdAt: new Date(),
-      };
-      mockPrisma.emailLog.findMany.mockResolvedValue([failedLog]);
-      mockPrisma.emailLog.create.mockResolvedValue({ id: 'new-log' });
+    it('should mark exhausted retries as abandoned (out of auto-retry queue)', async () => {
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: { message: 'rate limited' } }),
+      }) as jest.Mock;
+      mockPrisma.emailLog.findMany.mockResolvedValue([baseLog({ retryCount: 2 })]); // +1 = MAX 3
+      mockPrisma.emailLog.update.mockResolvedValue({ id: 'log1' });
 
-      // Mock sendMail to succeed by making sendViaResend return true
-      // We need to mock the sendViaResend behavior. Since RESEND_API_KEY is not set,
-      // sendViaResend returns false, then sendViaSmtp also returns false (no creds).
-      // To test a successful retry, we need to mock the env or the send methods.
-      // For this test, let's just verify the flow without sendMail succeeding.
+      const result = await service.retryFailedEmails();
 
-      const result = await service.retryFailedEmails(['log1']);
-
-      // It should find the failed log and attempt to send
-      expect(mockPrisma.emailLog.findMany).toHaveBeenCalled();
-      // The retried count should be 1 (attempt made)
-      expect(result.retried).toBe(1);
-      // In this environment (no SMTP, no Resend), sendMail will fail
-      expect(result.succeeded).toBe(0);
-      expect(result.failed).toBe(1);
+      expect(result.abandoned).toBe(1);
+      expect(mockPrisma.emailLog.update).toHaveBeenCalledWith({
+        where: { id: 'log1' },
+        data: expect.objectContaining({
+          status: 'abandoned',
+          retryCount: { increment: 1 },
+        }),
+      });
     });
 
-    it('should retry multiple failed emails and track partial success', async () => {
-      const failedLogs = [
-        {
-          id: 'log1',
-          to: 'user1@test.com',
-          subject: 'Email 1',
-          content: '<html>Body 1</html>',
-          metadata: { module: 'members' },
-          status: 'failed',
-          provider: null,
-          error: null,
-          createdAt: new Date(),
-        },
-        {
-          id: 'log2',
-          to: 'user2@test.com',
-          subject: 'Email 2',
-          content: '<html>Body 2</html>',
-          metadata: { module: 'activities' },
-          status: 'failed',
-          provider: null,
-          error: null,
-          createdAt: new Date(),
-        },
-      ];
-      mockPrisma.emailLog.findMany.mockResolvedValue(failedLogs);
-      mockPrisma.emailLog.create.mockResolvedValue({ id: 'new-log' });
+    it('should skip suppressed recipients during retry', async () => {
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      global.fetch = jest.fn();
+      mockPrisma.emailLog.findMany.mockResolvedValue([baseLog({ to: 'bounced@test.com' })]);
+      mockPrisma.emailLog.update.mockResolvedValue({ id: 'log1' });
+      mockPrisma.suppressedEmail.findUnique.mockResolvedValue({
+        email: 'bounced@test.com',
+        reason: 'bounced',
+      });
+
+      const result = await service.retryFailedEmails();
+
+      expect(result).toEqual({ retried: 1, succeeded: 0, failed: 0, abandoned: 0 });
+      expect(mockPrisma.emailLog.update).toHaveBeenCalledWith({
+        where: { id: 'log1' },
+        data: expect.objectContaining({ status: 'skipped' }),
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should continue the batch when one update fails', async () => {
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'resend-1' }),
+      }) as jest.Mock;
+      mockPrisma.emailLog.findMany.mockResolvedValue([
+        baseLog({ id: 'log1' }),
+        baseLog({ id: 'log2' }),
+      ]);
+      mockPrisma.emailLog.update
+        .mockRejectedValueOnce(new Error('DB error'))
+        .mockResolvedValueOnce({ id: 'log2' });
 
       const result = await service.retryFailedEmails();
 
       expect(result.retried).toBe(2);
-      // Both should fail since no Resend/SMTP configured in test env
-      expect(result.succeeded).toBe(0);
-      expect(result.failed).toBe(2);
-    });
-
-    it('should handle empty content gracefully (fallback to undefined)', async () => {
-      const failedLog = {
-        id: 'log1',
-        to: 'user@test.com',
-        subject: 'No content',
-        content: null,
-        metadata: null,
-        status: 'failed',
-        provider: null,
-        error: null,
-        createdAt: new Date(),
-      };
-      mockPrisma.emailLog.findMany.mockResolvedValue([failedLog]);
-      mockPrisma.emailLog.create.mockResolvedValue({ id: 'new-log' });
-
-      const result = await service.retryFailedEmails();
-
-      expect(result.retried).toBe(1);
-      // sendMail should be called with html: undefined since content is null
-      expect(mockPrisma.emailLog.create).toHaveBeenCalled();
-    });
-
-    it('should handle errors during sendMail gracefully (continue loop)', async () => {
-      const failedLogs = [
-        {
-          id: 'log1',
-          to: 'user1@test.com',
-          subject: 'Email 1',
-          content: '<html>Body 1</html>',
-          metadata: null,
-          status: 'failed',
-          provider: null,
-          error: null,
-          createdAt: new Date(),
-        },
-        {
-          id: 'log2',
-          to: 'user2@test.com',
-          subject: 'Email 2',
-          content: '<html>Body 2</html>',
-          metadata: null,
-          status: 'failed',
-          provider: null,
-          error: null,
-          createdAt: new Date(),
-        },
-      ];
-      mockPrisma.emailLog.findMany.mockResolvedValue(failedLogs);
-
-      // Make the first create succeed but the second throw
-      mockPrisma.emailLog.create
-        .mockResolvedValueOnce({ id: 'new-1' })
-        .mockRejectedValueOnce(new Error('DB Error'));
-
-      const result = await service.retryFailedEmails();
-
-      // Both should be retried
-      expect(result.retried).toBe(2);
-      // Both fail because Resend/SMTP not configured
-      // The create calls are for the log entries, not the send
-      // sendMail itself will try Resend (no key) and SMTP (no creds) and fail
-      // Then logToDb creates the "failed" log entry
-      expect(result.succeeded).toBe(0);
-      expect(result.failed).toBe(2);
+      expect(result.succeeded).toBe(1);
+      expect(loggerSpy.error).toHaveBeenCalledWith(expect.stringContaining('log1'));
     });
   });
 

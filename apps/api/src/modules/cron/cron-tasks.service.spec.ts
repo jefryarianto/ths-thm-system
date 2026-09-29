@@ -4,12 +4,13 @@ import { PersistentAuditService } from '../../common/services/persistent-audit.s
 describe('CronTasksService — cleanupStaleSessions', () => {
   let service: CronTasksService;
   let deleteMany: jest.Mock;
+  let emailDeleteMany: jest.Mock;
   let auditLog: jest.Mock;
   let audit: PersistentAuditService;
 
   const buildService = () =>
     new CronTasksService(
-      { userSession: { deleteMany } } as never,
+      { userSession: { deleteMany }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
       audit,
@@ -18,7 +19,9 @@ describe('CronTasksService — cleanupStaleSessions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     delete process.env.SESSION_RETENTION_DAYS;
+    delete process.env.EMAIL_LOG_RETENTION_DAYS;
     deleteMany = jest.fn().mockResolvedValue({ count: 0 });
+    emailDeleteMany = jest.fn().mockResolvedValue({ count: 0 });
     auditLog = jest.fn().mockResolvedValue(undefined);
     audit = { log: auditLog } as unknown as PersistentAuditService;
     service = buildService();
@@ -94,7 +97,7 @@ describe('CronTasksService — cleanupStaleSessions', () => {
   it('tetap jalan tanpa PersistentAuditService (opsional)', async () => {
     deleteMany = jest.fn().mockResolvedValue({ count: 2 });
     service = new CronTasksService(
-      { userSession: { deleteMany } } as never,
+      { userSession: { deleteMany }, emailLog: { deleteMany: emailDeleteMany } } as never,
       {} as never,
       {} as never,
       undefined,
@@ -102,5 +105,93 @@ describe('CronTasksService — cleanupStaleSessions', () => {
 
     await expect(service.cleanupStaleSessions()).resolves.toBeUndefined();
     expect(deleteMany).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('CronTasksService — cleanupOldEmailLogs', () => {
+  let service: CronTasksService;
+  let emailDeleteMany: jest.Mock;
+  let auditLog: jest.Mock;
+  let audit: PersistentAuditService;
+
+  const buildService = () =>
+    new CronTasksService(
+      { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
+      {} as never,
+      {} as never,
+      audit,
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    delete process.env.EMAIL_LOG_RETENTION_DAYS;
+    emailDeleteMany = jest.fn().mockResolvedValue({ count: 0 });
+    auditLog = jest.fn().mockResolvedValue(undefined);
+    audit = { log: auditLog } as unknown as PersistentAuditService;
+    service = buildService();
+  });
+
+  /** Selisih tanggal terhadap kira-kira `days` hari lalu (toleransi 1 menit). */
+  const expectRoughlyDaysAgo = (received: Date, days: number) => {
+    const expected = new Date();
+    expected.setDate(expected.getDate() - days);
+    expect(Math.abs(received.getTime() - expected.getTime())).toBeLessThan(60_000);
+  };
+
+  it('menghapus email_logs lebih dari 90 hari', async () => {
+    emailDeleteMany.mockResolvedValue({ count: 42 });
+
+    await service.cleanupOldEmailLogs();
+
+    expect(emailDeleteMany).toHaveBeenCalledTimes(1);
+    const where = emailDeleteMany.mock.calls[0][0].where;
+    expect(where).toEqual({ createdAt: { lt: expect.any(Date) } });
+    expectRoughlyDaysAgo(where.createdAt.lt, 90);
+  });
+
+  it('menghormati override env EMAIL_LOG_RETENTION_DAYS', async () => {
+    process.env.EMAIL_LOG_RETENTION_DAYS = '30';
+    service = buildService();
+
+    await service.cleanupOldEmailLogs();
+
+    const where = emailDeleteMany.mock.calls[0][0].where;
+    expectRoughlyDaysAgo(where.createdAt.lt, 30);
+  });
+
+  it('mencatat audit EMAIL_LOG_CLEANUP ketika ada log dihapus', async () => {
+    emailDeleteMany.mockResolvedValue({ count: 7 });
+
+    await service.cleanupOldEmailLogs();
+
+    expect(auditLog).toHaveBeenCalledTimes(1);
+    expect(auditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'EMAIL_LOG_CLEANUP',
+        entity: 'EmailLog',
+        details: expect.objectContaining({ deleted: 7, retentionDays: 90 }),
+      }),
+    );
+  });
+
+  it('tidak mencatat audit ketika tidak ada log dihapus', async () => {
+    emailDeleteMany.mockResolvedValue({ count: 0 });
+
+    await service.cleanupOldEmailLogs();
+
+    expect(auditLog).not.toHaveBeenCalled();
+  });
+
+  it('tetap jalan tanpa PersistentAuditService (opsional)', async () => {
+    emailDeleteMany.mockResolvedValue({ count: 3 });
+    service = new CronTasksService(
+      { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
+      {} as never,
+      {} as never,
+      undefined,
+    );
+
+    await expect(service.cleanupOldEmailLogs()).resolves.toBeUndefined();
+    expect(emailDeleteMany).toHaveBeenCalledTimes(1);
   });
 });

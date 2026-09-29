@@ -7,6 +7,9 @@ import { PersistentAuditService } from '../../common/services/persistent-audit.s
 
 /** Batas retensi sesi tidak aktif (hari). Bisa dioverride via env SESSION_RETENTION_DAYS. */
 const SESSION_RETENTION_DAYS = 14;
+
+/** Batas retensi log email (hari). Bisa dioverride via env EMAIL_LOG_RETENTION_DAYS. */
+const EMAIL_LOG_RETENTION_DAYS = 90;
 /** Sesi yang sudah direvoke dihapus setelah berapa hari. */
 const SESSION_REVOKED_RETENTION_DAYS = 1;
 
@@ -563,6 +566,41 @@ export class CronTasksService {
       entityId: null,
       userId: null,
       details: { stale: stale.count, revoked: revoked.count, retentionDays },
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  EMAIL LOG RETENTION: hapus log email kedaluwarsa (daily @ 3AM)
+  //  - email_logs lebih tua dari EMAIL_LOG_RETENTION_DAYS hari (default 90) → dihapus
+  //  Tanpa ini, email_logs tumbuh tanpa batas (kasus prod 2026-09: 132 ribu baris
+  //  dari insiden retry-loop; lihat docs/INCIDENT-2026-09-EMAIL-RETRY-LOOP.md).
+  // ─────────────────────────────────────────────────────────
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async cleanupOldEmailLogs(): Promise<void> {
+    const retentionDays =
+      Number(process.env.EMAIL_LOG_RETENTION_DAYS) || EMAIL_LOG_RETENTION_DAYS;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+
+    const deleted = await this.prisma.emailLog.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    });
+
+    if (deleted.count === 0) return;
+
+    this.logger.log(
+      `Email log cleanup: ${deleted.count} baris (>${retentionDays} hari) dihapus`,
+    );
+
+    // Catat ke audit log (best-effort) agar eksekusi cron dapat diaudit
+    await this.persistentAudit?.log({
+      action: 'EMAIL_LOG_CLEANUP',
+      entity: 'EmailLog',
+      entityId: null,
+      userId: null,
+      details: { deleted: deleted.count, retentionDays },
     });
   }
 

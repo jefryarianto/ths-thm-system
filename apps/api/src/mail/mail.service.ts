@@ -22,10 +22,54 @@ interface ResendResponse {
   error?: { message: string; name?: string };
 }
 
+/** Hasil satu siklus retry (dipakai cron & endpoint manual). */
+export interface RetryResult {
+  retried: number;
+  succeeded: number;
+  failed: number;
+  /** Email yang melebihi batas percobaan → status `abandoned` (keluar dari auto-retry). */
+  abandoned: number;
+}
+
+/** Hasil pengiriman ke provider tanpa logging (dipakai sendMail & retry). */
+interface DeliveryResult {
+  ok: boolean;
+  provider: 'resend' | 'smtp' | null;
+  resendId?: string;
+  reason?: string;
+}
+
+/** Kolom minimal untuk retry — batch kecil sehingga content ikut aman dimuat. */
+const RETRY_SELECT = {
+  id: true,
+  to: true,
+  subject: true,
+  content: true,
+  metadata: true,
+  retryCount: true,
+};
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly RESEND_API_URL = 'https://api.resend.com/emails';
+
+  // ── Konfigurasi auto-retry (insiden retry-loop 2026-09) ──
+  // Guard anti-loop: email yang lama / sering gagal tidak diulang terus-menerus.
+  /** Batas usia email yang boleh di-retry otomatis (env EMAIL_RETRY_MAX_AGE_HOURS, default 48). */
+  private readonly RETRY_MAX_AGE_MS = MailService.positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
+  /** Ukuran batch per siklus (env EMAIL_RETRY_BATCH_SIZE, default 25). */
+  private readonly RETRY_BATCH_SIZE = MailService.positiveIntEnv('EMAIL_RETRY_BATCH_SIZE', 25);
+  /** Batas percobaan retry sebelum email ditandai `abandoned` (env EMAIL_RETRY_MAX_ATTEMPTS, default 3). */
+  private readonly RETRY_MAX_ATTEMPTS = MailService.positiveIntEnv('EMAIL_RETRY_MAX_ATTEMPTS', 3);
+  /** Jeda minimal antar percobaan per email (env EMAIL_RETRY_BACKOFF_MINUTES, default 60). */
+  private readonly RETRY_BACKOFF_MS = MailService.positiveIntEnv('EMAIL_RETRY_BACKOFF_MINUTES', 60) * 60_000;
+
+  /** Baca env integer positif; fallback ke default bila tidak valid. */
+  private static positiveIntEnv(name: string, fallback: number): number {
+    const parsed = parseInt(process.env[name] || '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -55,22 +99,14 @@ export class MailService {
       return true;
     }
 
-    // Try Resend first (primary provider — uses native fetch, no packages needed)
-    let provider = 'resend';
-    let sent: boolean;
-    const { success: resendSent, resendId } = await this.sendViaResend(to, subject, text, html);
-    sent = resendSent;
-    if (sent) {
-      const enrichedMetadata = { ...(metadata || {}), ...(resendId ? { resendId } : {}) };
-      await this.logToDb(to, subject, 'sent', provider, null, enrichedMetadata, html || text);
-      return true;
-    }
-
-    // Fallback to SMTP
-    provider = 'smtp';
-    sent = await this.sendViaSmtp(to, subject, text, html);
-    if (sent) {
-      await this.logToDb(to, subject, 'sent', provider, null, metadata, html || text);
+    // Kirim via provider utama (Resend) lalu fallback SMTP
+    const attempt = await this.deliver(to, subject, text, html);
+    if (attempt.ok) {
+      const enrichedMetadata = {
+        ...(metadata || {}),
+        ...(attempt.resendId ? { resendId: attempt.resendId } : {}),
+      };
+      await this.logToDb(to, subject, 'sent', attempt.provider, null, enrichedMetadata, html || text);
       return true;
     }
 
@@ -80,11 +116,32 @@ export class MailService {
       subject,
       'failed',
       null,
-      'All email providers failed (Resend + SMTP)',
+      attempt.reason || 'All email providers failed (Resend + SMTP)',
       metadata,
       html || text,
     );
     return false;
+  }
+
+  /**
+   * Kirim email ke provider TANPA menulis log: Resend dulu, fallback SMTP.
+   * Dipakai sendMail (hasilnya di-log) dan retryFailedEmails (log asli di-update).
+   */
+  private async deliver(
+    to: string,
+    subject: string,
+    text?: string,
+    html?: string,
+  ): Promise<DeliveryResult> {
+    // Try Resend first (primary provider — uses native fetch, no packages needed)
+    const { success: resendSent, resendId } = await this.sendViaResend(to, subject, text, html);
+    if (resendSent) return { ok: true, provider: 'resend', resendId };
+
+    // Fallback to SMTP
+    const smtpSent = await this.sendViaSmtp(to, subject, text, html);
+    if (smtpSent) return { ok: true, provider: 'smtp' };
+
+    return { ok: false, provider: null, reason: 'All email providers failed (Resend + SMTP)' };
   }
 
   /**
@@ -129,15 +186,48 @@ export class MailService {
     return defaultRender();
   }
 
-  async retryFailedEmails(
-    ids?: string[],
-  ): Promise<{ retried: number; succeeded: number; failed: number }> {
-    const where: Record<string, unknown> = { status: 'failed' };
-    if (ids && ids.length > 0) where.id = { in: ids };
+  /**
+   * Coba kirim ulang email yang gagal.
+   *
+   * Perbaikan insiden retry-loop 2026-09:
+   *  - Baris log ASLI di-update in-place (status/retryCount/lastRetryAt) — tidak
+   *    lagi membuat baris log baru per percobaan, sehingga email yang selalu
+   *    gagal tidak membanjiri tabel email_logs (dulu 131 ribu baris duplikat).
+   *  - Mode otomatis (dipakai cron, tanpa `ids`): hanya email muda (≤ RETRY_MAX_AGE),
+   *    belum kehabisan kuota percobaan, sudah melewati backoff, dibatasi RETRY_BATCH_SIZE.
+   *  - Mode manual via `ids` (tombol UI): melewati filter usia & backoff karena
+   *    eksplisit diminta operator; tetap di-batch & tetap update status.
+   *  - Gagal terus sampai RETRY_MAX_ATTEMPTS → status `abandoned` (keluar dari
+   *    antrean auto-retry; operator masih bisa mengaktifkan lagi via retry manual).
+   */
+  async retryFailedEmails(ids?: string[]): Promise<RetryResult> {
+    const now = new Date();
+    const where: Record<string, unknown> = {
+      status: ids && ids.length > 0 ? { in: ['failed', 'abandoned'] } : 'failed',
+      content: { not: null },
+    };
+    if (ids && ids.length > 0) {
+      where.id = { in: ids };
+    } else {
+      // Guard mode otomatis: usia, kuota percobaan, dan backoff.
+      where.retryCount = { lt: this.RETRY_MAX_ATTEMPTS };
+      where.createdAt = { gte: new Date(now.getTime() - this.RETRY_MAX_AGE_MS) };
+      where.OR = [
+        { lastRetryAt: null },
+        { lastRetryAt: { lt: new Date(now.getTime() - this.RETRY_BACKOFF_MS) } },
+      ];
+    }
 
-    const failedLogs = await this.prisma.emailLog.findMany({ where });
+    const failedLogs = await this.prisma.emailLog.findMany({
+      where,
+      select: RETRY_SELECT,
+      orderBy: { createdAt: 'asc' },
+      take: this.RETRY_BATCH_SIZE,
+    });
     let succeeded = 0;
     let retried = 0;
+    let failed = 0;
+    let abandoned = 0;
 
     for (const log of failedLogs) {
       retried++;
@@ -151,17 +241,66 @@ export class MailService {
         );
       }
 
-      const metadata = (log.metadata as Record<string, unknown> | null) || undefined;
-      const sent = await this.sendMail({
-        to: log.to,
-        subject: log.subject,
-        html: log.content || undefined,
-        metadata,
-      });
-      if (sent) succeeded++;
+      try {
+        // Penerima yang sudah di-suppress (bounce/complaint) tidak dikirim ulang.
+        const suppressed = await this.prisma.suppressedEmail.findUnique({
+          where: { email: log.to },
+        });
+        if (suppressed) {
+          await this.prisma.emailLog.update({
+            where: { id: log.id },
+            data: {
+              status: 'skipped',
+              error: `Suppressed: ${suppressed.reason}`,
+              lastRetryAt: now,
+            },
+          });
+          continue;
+        }
+
+        const attempt = await this.deliver(log.to, log.subject, undefined, log.content || undefined);
+        // Counter di-update SETELAH update DB sukses — bila update gagal, hasil
+        // tidak dihitung agar angka cron mencerminkan outcome yang benar-benar
+        // tercatat (kegagalan update dicatat via logger di catch).
+        if (attempt.ok) {
+          await this.prisma.emailLog.update({
+            where: { id: log.id },
+            data: {
+              status: 'sent',
+              provider: attempt.provider,
+              error: null,
+              retryCount: { increment: 1 },
+              lastRetryAt: now,
+              metadata: {
+                ...((log.metadata as Record<string, unknown> | null) || {}),
+                ...(attempt.resendId ? { resendId: attempt.resendId } : {}),
+                retriedAt: now.toISOString(),
+              },
+            },
+          });
+          succeeded++;
+        } else {
+          const exhausted = log.retryCount + 1 >= this.RETRY_MAX_ATTEMPTS;
+          await this.prisma.emailLog.update({
+            where: { id: log.id },
+            data: {
+              // Habis kuota percobaan → abandoned (keluar dari antrean auto-retry).
+              status: exhausted ? 'abandoned' : 'failed',
+              error: attempt.reason || 'All email providers failed (Resend + SMTP)',
+              retryCount: { increment: 1 },
+              lastRetryAt: now,
+            },
+          });
+          if (exhausted) abandoned++;
+          failed++;
+        }
+      } catch (err) {
+        // Satu kegagalan DB/update tidak boleh membatalkan sisa batch.
+        this.logger.error(`Gagal memproses retry log ${log.id}: ${(err as Error).message}`);
+      }
     }
 
-    return { retried, succeeded, failed: retried - succeeded };
+    return { retried, succeeded, failed, abandoned };
   }
 
   /**

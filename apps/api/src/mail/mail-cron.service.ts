@@ -4,9 +4,19 @@ import { MailService } from './mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../modules/notifications/notifications.service';
 
+/** Baca env integer positif; fallback ke default (paritas dengan MailService). */
+function positiveIntEnv(name: string, fallback: number): number {
+  const parsed = parseInt(process.env[name] || '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 @Injectable()
 export class MailCronService {
   private readonly logger = new Logger(MailCronService.name);
+
+  /** Jendela usia email yang layak auto-retry — harus SAMA dengan MailService (env sama). */
+  private readonly maxAgeMs =
+    positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
 
   constructor(
     private readonly mailService: MailService,
@@ -21,8 +31,15 @@ export class MailCronService {
    */
   @Cron(CronExpression.EVERY_30_MINUTES)
   async handleAutoRetry(): Promise<void> {
+    // Hitung dengan filter usia yang sama dengan mode otomatis MailService,
+    // supaya angka yang dilaporkan = yang benar-benar akan diproses.
+    // (Guard attempts/backoff/batch ada di dalam retryFailedEmails.)
     const failedCount = await this.prisma.emailLog.count({
-      where: { status: 'failed', content: { not: null } },
+      where: {
+        status: 'failed',
+        content: { not: null },
+        createdAt: { gte: new Date(Date.now() - this.maxAgeMs) },
+      },
     });
 
     if (failedCount === 0) {
@@ -36,7 +53,8 @@ export class MailCronService {
       const result = await this.mailService.retryFailedEmails();
 
       this.logger.log(
-        `[Auto-Retry] Complete: ${result.retried} retried, ${result.succeeded} succeeded, ${result.failed} failed`,
+        `[Auto-Retry] Complete: ${result.retried} retried, ${result.succeeded} succeeded, ` +
+          `${result.failed} failed, ${result.abandoned} abandoned`,
       );
 
       // Notify all superadmins about auto-retry result
