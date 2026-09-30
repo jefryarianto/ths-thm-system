@@ -2121,6 +2121,7 @@ export interface paths {
         /** Daftar semua registrasi */
         get: operations["RegistrationsController_findAll"];
         put?: never;
+        /** Pendaftaran anggota baru (publik) */
         post: operations["RegistrationsController_create"];
         delete?: never;
         options?: never;
@@ -2138,6 +2139,7 @@ export interface paths {
         /** Daftar semua registrasi */
         get: operations["RegistrationsController_findAll"];
         put?: never;
+        /** Pendaftaran anggota baru (publik) */
         post: operations["RegistrationsController_create"];
         delete?: never;
         options?: never;
