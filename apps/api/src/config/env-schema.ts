@@ -39,6 +39,9 @@ const baseEnvSchema = z.object({
   REDIS_HOST: z.string().optional(),
   REDIS_PORT: z.coerce.number().int().positive().optional(),
   USE_BULLMQ: z.enum(['true', 'false']).optional().default('false'),
+  // Distributed lock SETNX (Valkey) untuk cron — bila 'false'/'tidak diset',
+  // cron memakai guard in-memory per-proses (cukup utk single-instance).
+  CRON_DISTRIBUTED_LOCK: z.enum(['true', 'false']).optional().default('false'),
 
   // SMTP
   SMTP_HOST: z.string().default('smtp.gmail.com'),

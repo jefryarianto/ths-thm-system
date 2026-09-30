@@ -64,6 +64,9 @@ services:
       DATABASE_URL: postgresql://ths_thm:${DB_PASSWORD}@postgres:5432/ths_thm_db
       REDIS_URL: redis://valkey:6379
       USE_BULLMQ: 'true'
+      # Distributed lock SETNX (Valkey) untuk cron — aman multi-instance.
+      # Bila Redis mati → fail-open ke guard in-memory per-proses.
+      CRON_DISTRIBUTED_LOCK: 'true'
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: 15m

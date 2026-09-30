@@ -5,7 +5,10 @@ import { promisify } from 'util';
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, createReadStream, createWriteStream } from 'fs';
 import { join } from 'path';
 import { createGzip } from 'zlib';
-import { createOverlapGuard } from '../utils/overlap-guard';
+import {
+  createDistributedLock,
+  createCronLockClient,
+} from '../utils/distributed-lock';
 
 const execFileAsync = promisify(execFile);
 
@@ -50,8 +53,13 @@ export class DbBackupService implements OnApplicationBootstrap {
   private readonly pgDumpPath =
     process.env.PG_DUMP_PATH ||
     (process.platform === 'win32' ? 'pg_dump.exe' : 'pg_dump');
-  /** Overlap guard: backup tidak boleh bertumpuk (pg_dump berat & lama). */
-  private readonly guard = createOverlapGuard(this.logger);
+  /**
+   * Guard overlap backup (pg_dump berat & lama — juga mengunci backup manual);
+   * dengan CRON_DISTRIBUTED_LOCK=true jadi lock SETNX via Valkey.
+   */
+  private readonly guard = createDistributedLock(this.logger, {
+    lockClient: createCronLockClient(this.logger),
+  });
 
   constructor() {}
 

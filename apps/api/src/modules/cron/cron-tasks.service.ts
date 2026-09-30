@@ -5,7 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
-import { createOverlapGuard } from '../../common/utils/overlap-guard';
+import {
+  createDistributedLock,
+  createCronLockClient,
+} from '../../common/utils/distributed-lock';
 import { EmailBlastService, EmailBlastItem } from './email-blast.service';
 import { dataIncompleteEmail } from '../../mail/email-templates';
 
@@ -29,8 +32,13 @@ function dateKey(d: Date): string {
 export class CronTasksService {
   private readonly logger = new Logger(CronTasksService.name);
 
-  /** Overlap guard: cron yang sama tidak dijalankan ganda dalam satu proses. */
-  private readonly guard = createOverlapGuard(this.logger);
+  /**
+   * Guard overlap: in-memory per-proses; dengan CRON_DISTRIBUTED_LOCK=true
+   * menjadi lock SETNX terdistribusi via Valkey (aman multi-instance).
+   */
+  private readonly guard = createDistributedLock(this.logger, {
+    lockClient: createCronLockClient(this.logger),
+  });
 
   constructor(
     private readonly prisma: PrismaService,

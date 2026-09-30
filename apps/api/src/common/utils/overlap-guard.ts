@@ -6,8 +6,9 @@
  * selesai, atau rerun terpicu saat loop panjang).
  *
  * Batasan (penting): flag ini PER-PROSES. Bila API di-scale multi-instance,
- * tiap instance punya flag sendiri — untuk keamanan antar-instance butuh
- * distributed lock (mis. SETNX di Valkey). Lihat audit cron 2026-09.
+ * tiap instance punya flag sendiri — untuk keamanan antar-instance gunakan
+ * `createDistributedLock` (SETNX Valkey) di `distributed-lock.ts`, yang
+ * otomatis fallback ke guard ini saat Redis tidak tersedia.
  */
 
 interface LoggerLike {
