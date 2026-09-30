@@ -23,22 +23,22 @@ test.describe("Public Registration Flow", () => {
   test("can fill registration form", async ({ page }) => {
     await page.goto("/daftar");
 
-    await page.fill("input[placeholder="Masukkan nama lengkap"]", "Test User E2E");
+    await page.fill("input[placeholder='Masukkan nama lengkap']", "Test User E2E");
     await page.locator("select").first().selectOption("L");
-    await page.fill("input[placeholder="08xxxxxxxxxx"]", "081234567890");
-    await page.fill("input[placeholder="Kota lahir"]", "Jakarta");
-    await page.fill("input[type="date"]", "2000-01-15");
-    await page.fill("input[placeholder="email@contoh.com"]", "testuser-e2e@example.com");
+    await page.fill("input[placeholder='08xxxxxxxxxx']", "081234567890");
+    await page.fill("input[placeholder='Kota lahir']", "Jakarta");
+    await page.fill("input[type='date']", "2000-01-15");
+    await page.fill("input[placeholder='email@contoh.com']", "testuser-e2e@example.com");
     await page.fill("textarea", "Jl. Testing No. 123");
-    await page.fill("input[placeholder="Teman, media sosial, brosur, dll."]", "E2E Test");
+    await page.fill("input[placeholder='Teman, media sosial, brosur, dll.']", "E2E Test");
 
-    const nameValue = await page.inputValue("input[placeholder="Masukkan nama lengkap"]");
+    const nameValue = await page.inputValue("input[placeholder='Masukkan nama lengkap']");
     expect(nameValue).toBe("Test User E2E");
   });
 
   test("has link back to login page", async ({ page }) => {
     await page.goto("/daftar");
-    const loginLink = page.locator("a[href="/login"]").first();
+    const loginLink = page.locator("a[href='/login']").first();
     await expect(loginLink).toBeVisible();
     await expect(loginLink).toContainText("Login");
   });
@@ -53,14 +53,14 @@ test.describe("Public Registration Flow", () => {
     await expect(page.locator('button[type="submit"]')).toContainText("Daftar Sekarang");
 
     // Fill the form
-    await page.fill("input[placeholder="Masukkan nama lengkap"]", "Success Test User");
+    await page.fill("input[placeholder='Masukkan nama lengkap']", "Success Test User");
     await page.locator("select").first().selectOption("P");
-    await page.fill("input[placeholder="08xxxxxxxxxx"]", "089876543210");
-    await page.fill("input[placeholder="Kota lahir"]", "Bandung");
-    await page.fill("input[type="date"]", "1995-06-20");
-    await page.fill("input[placeholder="email@contoh.com"]", "success-test@example.com");
+    await page.fill("input[placeholder='08xxxxxxxxxx']", "089876543210");
+    await page.fill("input[placeholder='Kota lahir']", "Bandung");
+    await page.fill("input[type='date']", "1995-06-20");
+    await page.fill("input[placeholder='email@contoh.com']", "success-test@example.com");
     await page.fill("textarea", "Jl. Sukses No. 456");
-    await page.fill("input[placeholder="Teman, media sosial, brosur, dll."]", "Website");
+    await page.fill("input[placeholder='Teman, media sosial, brosur, dll.']", "Website");
 
     // Cascade dropdowns: Distrik -> Wilayah -> Ranting
     const distrikSelect = page.locator("select").nth(1);

@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, type Route } from "@playwright/test";
 
 /**
  * Mock endpoint alur pendaftaran publik.
@@ -7,7 +7,7 @@ import { Page } from "@playwright/test";
  *  - GET  /api/public/struktur/distrik  — daftar distrik
  *  - GET  /api/public/struktur/wilayah  — daftar wilayah
  *  - GET  /api/public/struktur/ranting  — daftar ranting
- *  - POST /api/pendaftaran              — kirim pendaftaran (dulu: /api/registrations)
+ *  - POST /api/registrations            — kirim pendaftaran (dulu: /api/pendaftaran)
  */
 export async function registerRegistrationMocks(page: Page) {
   await page.route("**/api/public/struktur/distrik**", async (route) => {
@@ -64,7 +64,8 @@ export async function registerRegistrationMocks(page: Page) {
     }
   });
 
-  await page.route("**/api/(registrations|pendaftaran)**", async (route) => {
+  // Catatan: glob Playwright tidak mendukung alternasi "(a|b)" — dua route eksplisit.
+  const mockRegistrationPost = async (route: Route) => {
     if (route.request().method() === "POST") {
       await route.fulfill({
         status: 201,
@@ -77,7 +78,9 @@ export async function registerRegistrationMocks(page: Page) {
     } else {
       await route.continue();
     }
-  });
+  };
+  await page.route("**/api/registrations", mockRegistrationPost);
+  await page.route("**/api/pendaftaran", mockRegistrationPost);
 
   await page.route("**/api/auth/set-session-cookie**", async (route) => {
     if (route.request().method() === "POST") {
