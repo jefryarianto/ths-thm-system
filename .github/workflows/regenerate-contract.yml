@@ -1,0 +1,56 @@
+name: Regenerate Contract
+
+# One-off: meregenerasi swagger.json + api.d.ts di lingkungan CI (Node 22)
+# — regenerasi dari mesin lokal (Node 26) terbukti menghasilkan metadata
+# dekorator yang berbeda, sehingga kontrak tidak pernah sinkron menurut CI.
+# Jalankan manual: gh workflow run regenerate-contract.yml
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # pastikan push tidak mengabaikan commit lain yang masuk duluan
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install
+
+      - run: pnpm --filter @ths-thm/shared-types build
+      - run: pnpm --filter @ths-thm/api prisma:generate
+
+      - name: Regenerate kontrak API
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
+          JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+          JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+        run: |
+          pnpm --filter @ths-thm/api swagger:export
+          pnpm --filter @ths-thm/api generate:client
+
+      - name: Commit & push bila ada perubahan
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- apps/api/swagger.json apps/web/src/types/api.d.ts; then
+            echo "Kontrak sudah sinkron — tidak ada yang di-commit"
+          else
+            git add apps/api/swagger.json apps/web/src/types/api.d.ts
+            git commit -m "chore: regenerasi kontrak API di lingkungan CI (Node 22)"
+            git pull --rebase origin master
+            git push origin HEAD:master
+            echo "✅ Kontrak baru ter-push — CI/CD + Deploy akan berjalan ulang"
+          fi
