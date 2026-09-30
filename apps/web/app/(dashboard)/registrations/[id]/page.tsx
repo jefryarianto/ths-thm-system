@@ -50,7 +50,7 @@ export default function RegistrationDetailPage() {
   const handleReject = async () => {
     const catatan = prompt('Alasan penolakan:');
     if (!catatan) return;
-    try { await apiClient.post(`/registrations/${id}/reject`, { catatan }); router.push('/registrations'); }
+    try { await apiClient.post(`/registrations/${id}/reject`, { reason: catatan }); router.push('/registrations'); }
     catch { toast('error', 'Gagal menolak'); }
   };
 
