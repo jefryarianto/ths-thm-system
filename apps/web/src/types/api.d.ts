@@ -6745,6 +6745,23 @@ export interface paths {
         patch: operations["ContentController_updateBerita"];
         trace?: never;
     };
+    "/content/berita/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit berita untuk persetujuan admin */
+        post: operations["ContentController_submitBerita"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/berita/{id}/image": {
         parameters: {
             query?: never;
@@ -7437,7 +7454,7 @@ export interface components {
         };
         UpdateCandidateDto: {
             namaLengkap?: string;
-            jenisKelamin?: string;
+            jenisKelamin?: Record<string, never>;
             tempatLahir?: string;
             tanggalLahir?: string;
             alamat?: string;
@@ -17613,7 +17630,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                level: string;
                 unitId: string;
             };
             cookie?: never;
@@ -18064,6 +18080,23 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ContentController_submitBerita: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -14862,14 +14862,6 @@
         "summary": "Hapus periode aktif untuk unit",
         "parameters": [
           {
-            "name": "level",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "unitId",
             "required": true,
             "in": "path",
@@ -15517,6 +15509,26 @@
         ],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Content"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/content/berita/submit": {
+      "post": {
+        "operationId": "ContentController_submitBerita",
+        "summary": "Submit berita untuk persetujuan admin",
+        "parameters": [],
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -17221,7 +17233,7 @@
             "type": "string"
           },
           "jenisKelamin": {
-            "type": "string"
+            "type": "object"
           },
           "tempatLahir": {
             "type": "string"
