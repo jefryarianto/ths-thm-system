@@ -13,12 +13,24 @@ jest.mock('./pdf-generator', () => ({
   buildPdfDocument: jest.fn().mockReturnValue({}),
 }));
 
+jest.mock('./pdf-templates/certificate', () => ({
+  buildCertificatePdf: jest.fn().mockReturnValue({}),
+}));
+
 jest.mock('@react-pdf/renderer', () => ({
   renderToStream: jest.fn().mockResolvedValue({
     pipe: jest.fn((writeStream) => {
       process.nextTick(() => writeStream.emit('finish'));
     }),
   }),
+  renderToBuffer: jest.fn().mockResolvedValue(Buffer.from('fake-pdf-buffer')),
+}));
+
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  existsSync: jest.fn().mockReturnValue(true),
 }));
 
 describe('DocumentsService', () => {
@@ -43,6 +55,9 @@ describe('DocumentsService', () => {
     },
     anggota: {
       findUnique: jest.fn(),
+    },
+    setting: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
     $transaction: jest.fn((arg: any) =>
       Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma),
@@ -80,6 +95,11 @@ describe('DocumentsService', () => {
   const mockPenandatanganService = {
     findActive: jest.fn().mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' }),
     resolveActive: jest.fn().mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }),
+    resolveSigners: jest.fn().mockResolvedValue([
+      { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik', signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' },
+    ]),
+    hasDocSigners: jest.fn().mockResolvedValue(true),
+    resolveAssets: jest.fn().mockResolvedValue({ signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' }),
   };
 
   beforeEach(async () => {
@@ -98,6 +118,14 @@ describe('DocumentsService', () => {
     service = module.get<DocumentsService>(DocumentsService);
     jest.clearAllMocks();
     mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({});
+    mockPrisma.setting.findMany.mockResolvedValue([]);
+    mockPenandatanganService.findActive.mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' });
+    mockPenandatanganService.resolveActive.mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' });
+    mockPenandatanganService.resolveSigners.mockResolvedValue([
+      { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik', signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' },
+    ]);
+    mockPenandatanganService.hasDocSigners.mockResolvedValue(true);
+    mockPenandatanganService.resolveAssets.mockResolvedValue({ signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' });
   });
 
   it('should be defined', () => {
@@ -330,6 +358,43 @@ describe('DocumentsService', () => {
       const result = await service.verifyByToken('t1');
       expect(result.data.valid).toBe(true);
       expect(result.data.scanCount).toBe(25);
+    });
+  });
+
+  describe('generateCertificate & signing pipeline', () => {
+    it('should generate certificate document and resolve signers with digital assets', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'm1',
+        namaLengkap: 'Budi Santoso',
+        ranting: {
+          nama: 'Ranting A',
+          wilayah: {
+            nama: 'Wilayah B',
+            distrik: { id: 'distrik-1', nama: 'Distrik C' },
+          },
+        },
+      });
+
+      mockPrisma.dokumen.create.mockResolvedValue({
+        id: 'doc-cert-1',
+        nomorDokumen: 'SPD-2026-001',
+        tipe: 'sertifikat_pendadaran',
+      });
+      mockPrisma.setting = { findMany: jest.fn().mockResolvedValue([]) };
+
+      const dto = {
+        memberId: 'm1',
+        eventTitle: 'Pendadaran Nasional 2026',
+        location: 'Yogyakarta',
+        finalScore: 88,
+        predicate: 'Baik Sekali',
+        aspects: [{ name: 'Jurus', score: 90, items: ['Item 1'] }],
+      };
+
+      const result = await service.generateCertificate(dto);
+      expect(result.id).toBe('doc-cert-1');
+      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith('sertifikat_pendadaran', 'distrik-1');
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalled();
     });
   });
 });
