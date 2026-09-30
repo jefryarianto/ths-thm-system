@@ -4454,6 +4454,7 @@
       },
       "post": {
         "operationId": "RegistrationsController_create",
+        "summary": "Pendaftaran anggota baru (publik)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -4523,6 +4524,7 @@
       },
       "post": {
         "operationId": "RegistrationsController_create",
+        "summary": "Pendaftaran anggota baru (publik)",
         "parameters": [],
         "requestBody": {
           "required": true,
