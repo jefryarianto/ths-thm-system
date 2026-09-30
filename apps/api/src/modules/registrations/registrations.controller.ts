@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
@@ -32,6 +33,8 @@ export class RegistrationsController {
 
   @Post()
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60 } })
+  @ApiOperation({ summary: 'Pendaftaran anggota baru (publik)' })
   create(@Body() dto: CreateRegistrationDto) {
     return this.service.create(dto);
   }

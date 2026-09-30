@@ -291,6 +291,7 @@ model Distrik {
   // ── Template kartu anggota per distrik (NULL = global) ──
   cardTemplates CardTemplate[]
 
+  @@index([nasionalId])
   @@map("distrik")
 }
 
@@ -348,6 +349,7 @@ model UnitLatihan {
 
   distrik Distrik @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
+  @@index([distrikId])
   @@map("unit_latihan")
 }
 
@@ -399,6 +401,9 @@ model User {
   anggotaUpdated              Anggota[]      @relation("AnggotaUpdatedBy")
   kegiatanUpdated             Kegiatan[]     @relation("KegiatanUpdatedBy")
 
+  @@index([role])
+  @@index([rantingId])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -480,6 +485,11 @@ model Anggota {
 
   @@index([statusData])
   @@index([noHpNormalized])
+  @@index([rantingId])
+  @@index([statusKeanggotaan])
+  @@index([deletedAt])
+  @@index([createdAt(sort: Desc)])
+  @@index([rantingId, statusKeanggotaan])
   @@map("anggota")
 }
 
@@ -506,6 +516,9 @@ model CalonAnggota {
   pesertaPendadarans PesertaPendadaran[]
   sesiUjianPesertas  SesiUjianPeserta[]
 
+  @@index([rantingId])
+  @@index([status])
+  @@index([usulOlehUserId])
   @@map("calon_anggota")
 }
 
@@ -606,6 +619,11 @@ model Kegiatan {
   aspekPenilaians   AspekPenilaian[]     @relation("AspekPenilaianKegiatan")
   pesertaPendadarans PesertaPendadaran[]
 
+  @@index([scopeType, scopeId])
+  @@index([tipe])
+  @@index([status])
+  @@index([tanggalMulai])
+  @@index([createdBy])
   @@map("kegiatan")
 }
 
@@ -628,6 +646,8 @@ model UndanganPendadaran {
   anggota  Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@unique([kegiatanId, anggotaId])
+  @@index([anggotaId])
+  @@index([status])
   @@map("undangan_pendadaran")
 }
 
@@ -659,6 +679,9 @@ model Latihan {
   materi   MateriLatihan[]
 
   @@index([rantingId])
+  @@index([kegiatanId])
+  @@index([pelatihId])
+  @@index([hariTanggal])
   @@map("latihan")
 }
 
@@ -748,6 +771,7 @@ model DokumenKegiatan {
 
   kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
 
+  @@index([kegiatanId])
   @@map("dokumen_kegiatan")
 }
 
@@ -791,6 +815,9 @@ model PenugasanPenguji {
   pengujiUser   User                   @relation(fields: [pengujiUserId], references: [id])
   kegiatan      Kegiatan               @relation(fields: [kegiatanId], references: [id])
 
+  @@index([kegiatanId])
+  @@index([pengujiUserId])
+  @@index([status])
   @@map("penugasan_penguji")
 }
 
@@ -1005,6 +1032,8 @@ model Dokumen {
   qrValidations QRValidation[]
 
   @@index([anggotaId])
+  @@index([anggotaId, tipe])
+  @@index([tipe, status])
   @@map("dokumen")
 }
 
@@ -1098,6 +1127,8 @@ model DokumenOrganisasi {
   kategori KategoriDokumen @relation(fields: [kategoriId], references: [id])
   uploader User            @relation("DokumenOrgUploader", fields: [uploadedBy], references: [id])
 
+  @@index([kategoriId])
+  @@index([uploadedBy])
   @@map("dokumen_organisasi")
 }
 
@@ -1129,6 +1160,8 @@ model SuratMasuk {
 
   disposisis Disposisi[]
 
+  @@index([status])
+  @@index([tanggalSurat])
   @@map("surat_masuk")
 }
 
@@ -1144,6 +1177,8 @@ model SuratKeluar {
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
+  @@index([status])
+  @@index([tanggalSurat])
   @@map("surat_keluar")
 }
 
@@ -1352,6 +1387,7 @@ model ImportBatchItem {
   batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   @@index([batchId])
+  @@index([status])
   @@map("import_batch_items")
 }
 
@@ -1810,7 +1846,10 @@ model CheckIn {
   latihan  Latihan?  @relation(fields: [latihanId], references: [id], onDelete: Cascade)
   kegiatan Kegiatan? @relation(fields: [kegiatanId], references: [id])
 
+  @@index([qrCodeId])
   @@index([anggotaId])
+  @@index([latihanId])
+  @@index([kegiatanId])
   @@index([checkedAt(sort: Desc)])
   @@map("check_ins")
 }
@@ -2076,6 +2115,9 @@ model TransferRequest {
   toRanting   Ranting            @relation("TransferTo", fields: [toRantingId], references: [id], onDelete: Cascade)
   approvals   TransferApproval[]
 
+  @@index([anggotaId])
+  @@index([fromRantingId])
+  @@index([toRantingId])
   @@index([status])
   @@map("transfer_requests")
 }

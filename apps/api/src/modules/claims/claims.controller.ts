@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ClaimsService } from './claims.service';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto, RejectClaimDto } from './dto/claim.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
@@ -26,6 +27,7 @@ export class ClaimsController {
 
   @Post()
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @ApiOperation({ summary: 'Tambah klaim baru (publik — pendaftaran mandiri anggota belum terdaftar)' })
   create(@Body() dto: CreateClaimDto) {
     return this.service.create(dto);
