@@ -7454,7 +7454,7 @@ export interface components {
         };
         UpdateCandidateDto: {
             namaLengkap?: string;
-            jenisKelamin?: Record<string, never>;
+            jenisKelamin?: string;
             tempatLahir?: string;
             tanggalLahir?: string;
             alamat?: string;
@@ -17630,6 +17630,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                level: string;
                 unitId: string;
             };
             cookie?: never;
