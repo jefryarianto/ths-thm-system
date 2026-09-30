@@ -52,7 +52,6 @@ playwright-report/
 **/playwright-report/
 
 # ─── Mobile (not used in Docker builds) ──────────────────────
-apps/mobile/
 apps/mobile_flutter/
 
 # ─── Documentation & Planning ────────────────────────────────
