@@ -15,7 +15,7 @@ test.describe("Public Registration Flow", () => {
 
   test("shows validation for required fields", async ({ page }) => {
     await page.goto("/daftar");
-    const submitBtn = page.locator("button[type="submit"]");
+    const submitBtn = page.locator('button[type="submit"]');
     await expect(submitBtn).toBeVisible();
     await expect(submitBtn).toContainText("Daftar Sekarang");
   });
@@ -50,7 +50,7 @@ test.describe("Public Registration Flow", () => {
 
     // Verify form UI renders
     await expect(page.locator("h1").first()).toContainText("Pendaftaran Calon Anggota");
-    await expect(page.locator("button[type="submit"]")).toContainText("Daftar Sekarang");
+    await expect(page.locator('button[type="submit"]')).toContainText("Daftar Sekarang");
 
     // Fill the form
     await page.fill("input[placeholder="Masukkan nama lengkap"]", "Success Test User");
@@ -76,7 +76,7 @@ test.describe("Public Registration Flow", () => {
     await rantingSelect.selectOption({ label: "Ranting E2E Satu" });
 
     // Submit
-    await page.locator("button[type="submit"]").click();
+    await page.locator('button[type="submit"]').click();
 
     // Should see success page
     await expect(page.locator("h1").first()).toContainText("Pendaftaran Berhasil", { timeout: 10000 });
