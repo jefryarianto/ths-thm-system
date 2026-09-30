@@ -6,7 +6,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 export interface SubmitApprovalDto {
-  requestType: 'member_create' | 'member_update' | 'claim' | 'letter' | 'certificate';
+  requestType: 'member_create' | 'member_update' | 'claim' | 'letter' | 'certificate' | 'berita';
   itemId: string;
   note?: string;
 }
@@ -126,6 +126,22 @@ export class ApprovalService {
       await this.finalizeApproval(request);
       this.logger.log(`Approval completed: ${requestId}`);
       this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: true, note });
+      // Notify submitter for berita approval
+      if (request.requestType === 'berita' && this.notificationsService) {
+        const beritaTitle = await this.prisma.berita.findUnique({
+          where: { id: request.itemId },
+          select: { judul: true },
+        });
+        this.notificationsService.send(request.submittedBy, {
+          judul: '✅ Berita Disetujui',
+          isi: `Berita Anda "${beritaTitle?.judul || ''}" telah disetujui dan kini tampil di publik.`,
+          tipe: 'approval_result',
+          data: {
+            screen: 'berita',
+            beritaId: request.itemId,
+          },
+        }).catch((err) => this.logger.error(`Failed to notify berita approval: ${err.message}`));
+      }
     } else {
       // Notify next level approvers
       const nextLevel = remainingLevels[0];
@@ -164,6 +180,23 @@ export class ApprovalService {
 
     this.logger.log(`Approval rejected: ${requestId}`);
     this.audit('APPROVAL_REJECT', requestId, userId, { note });
+
+    // Notify submitter for berita rejection
+    if (request.requestType === 'berita' && this.notificationsService) {
+      const beritaTitle = await this.prisma.berita.findUnique({
+        where: { id: request.itemId },
+        select: { judul: true },
+      });
+      this.notificationsService.send(request.submittedBy, {
+        judul: '❌ Berita Ditolak',
+        isi: `Berita Anda "${beritaTitle?.judul || ''}" ditolak${note ? ` (alasan: ${note})` : ''}. Silakan perbaiki dan ajukan ulang.`,
+        tipe: 'approval_result',
+        data: {
+          screen: 'berita',
+          beritaId: request.itemId,
+        },
+      }).catch((err) => this.logger.error(`Failed to notify berita rejection: ${err.message}`));
+    }
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -236,7 +269,8 @@ export class ApprovalService {
       member_update: 'Perubahan Data Anggota',
       claim: 'Klaim',
       letter: 'Surat',
-      certificate: 'Sertifikat',
+certificate: 'Sertifikat',
+       berita: 'Berita',
     };
     return labels[type] || type;
   }
@@ -271,6 +305,13 @@ export class ApprovalService {
         await this.prisma.suratKeluar.update({
           where: { id: request.itemId },
           data: { status: 'terkirim' },
+        });
+        break;
+      case 'berita':
+        // Set isVisible ke true ketika berita disetujui
+        await this.prisma.berita.update({
+          where: { id: request.itemId },
+          data: { isVisible: true },
         });
         break;
       case 'certificate':
@@ -309,4 +350,14 @@ export class ApprovalService {
       this.logger.error(`Failed to notify member ${anggotaId}: ${(error as Error).message}`);
     }
   }
+
+   async submitBeritaForApproval(beritaId: string, userId: string) {
+     return this.submit(
+       {
+         requestType: 'berita',
+         itemId: beritaId,
+       },
+       userId
+     );
+   }
 }

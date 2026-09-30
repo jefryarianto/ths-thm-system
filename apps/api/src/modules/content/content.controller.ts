@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -20,6 +21,7 @@ import {
   validateImageMagicBytes,
 } from '../../common/utils/image-upload.util';
 import { unlinkSync } from 'fs';
+import type { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Content')
 @Controller('content')
@@ -62,8 +64,40 @@ export class ContentController {
       slug: string;
       isVisible?: boolean;
     },
+    @Req() req: ScopedRequest,
   ) {
-    return this.contentService.createBerita(body);
+    return this.contentService.createBerita({
+      ...body,
+      submittedBy: req.user?.id,
+    });
+  }
+
+  // ── Pengajuan berita oleh anggota ──
+  @Post('berita/submit')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', {
+    scope: 'self',
+    summary: 'Submit berita untuk persetujuan admin',
+  })
+  async submitBerita(
+    @Body()
+    body: {
+      judul: string;
+      ringkasan: string;
+      konten: string;
+      gambar?: string;
+      slug: string;
+    },
+    @Req() req: ScopedRequest,
+  ) {
+    if (!req.user?.id) {
+      throw new BadRequestException('User tidak ditemukan');
+    }
+    // Berita dari anggota selalu disimpan sebagai draft (isVisible=false)
+    return this.contentService.createBerita({
+      ...body,
+      isVisible: false,
+      submittedBy: req.user.id,
+    });
   }
 
   @Patch('berita/:id')

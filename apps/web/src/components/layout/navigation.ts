@@ -124,6 +124,7 @@ export const menuGroups: MenuGroup[] = [
       { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
       { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
       { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
+      { href: '/content/berita/submit', label: 'Pengajuan Berita', icon: Newspaper, minRole: 'anggota' },
       { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
       { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
     ],
