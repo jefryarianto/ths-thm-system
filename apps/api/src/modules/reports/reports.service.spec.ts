@@ -136,7 +136,7 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
-      const result = await service.dashboardStats();
+      const result = await service.dashboardStats(undefined, undefined);
       expect(result.totalMembers).toBe(100);
       expect(result.totalCandidates).toBe(20);
       expect(result.totalGraduated).toBe(12);
@@ -155,7 +155,7 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
-      await service.dashboardStats({ rantingId: 'r1' });
+      await service.dashboardStats({ rantingId: 'r1' }, undefined);
       // First call: totalMembers — should include ranting filter
       expect(mockPrisma.anggota.count).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),

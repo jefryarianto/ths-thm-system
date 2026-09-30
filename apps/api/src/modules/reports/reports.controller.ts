@@ -33,7 +33,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Ambil data dashboard' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   async getDashboardData(@Req() req: ScopedRequest) {
-    return this.reportsService.dashboardStats(req.scope);
+    return this.reportsService.dashboardStats(req.scope, req.user.id);
   }
 
   @Get('scan-stats')

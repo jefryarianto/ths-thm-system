@@ -68,16 +68,16 @@ export class ReportsService {
     return data;
   }
 
-  async dashboardStats(scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}dashboard:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}`;
+  async dashboardStats(scope?: UserScope, userId?: string) {
+    const cacheKey = `${this.CACHE_PREFIX}dashboard:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${userId || 'anon'}`;
     return this.cache.getOrSet(
       cacheKey,
-      async () => this.computeDashboardStats(scope),
+      async () => this.computeDashboardStats(scope, userId),
       this.CACHE_TTL,
     );
   }
 
-  private async computeDashboardStats(scope?: UserScope) {
+  private async computeDashboardStats(scope?: UserScope, userId?: string) {
     // Build scope-aware where clauses
     const anggotaWhere: Record<string, unknown> = { deletedAt: null };
     const iuranWhere: Record<string, unknown> = { status: 'lunas' };
@@ -125,7 +125,7 @@ export class ReportsService {
       this.prisma.dokumen.count({ where: { status: 'generated' } }),
       this.prisma.pendaftaran.count({ where: { status: 'pending' } }),
       this.prisma.user.count({ where: { isActive: true } }),
-      this.getRecentNotifications(),
+      this.getRecentNotifications(userId),
       this.getEmailSummary(),
     ]);
 
@@ -149,7 +149,7 @@ export class ReportsService {
     };
   }
 
-  private async getRecentNotifications(): Promise<
+  private async getRecentNotifications(userId?: string): Promise<
     Array<{
       id: string;
       judul: string;
@@ -159,8 +159,13 @@ export class ReportsService {
       createdAt: Date;
     }>
   > {
+    const where: Record<string, unknown> = {};
+    if (userId) {
+      where.userId = userId;
+    }
     try {
       return await this.prisma.notifikasi.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         take: 10,
         select: { id: true, judul: true, isi: true, tipe: true, isRead: true, createdAt: true },
