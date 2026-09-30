@@ -50,6 +50,9 @@ class _AssessmentScoreBodyState extends State<AssessmentScoreBody> {
             aspects: state.aspects,
             participants: state.participants,
             skorByItem: state.skorByItem,
+            pendingOutboxCount: state.pendingOutboxCount,
+            pendingCandidateIds: state.pendingCandidateIds,
+            isOfflineMode: state.isOfflineMode,
           );
         }
         if (state is AssessmentError) {
@@ -98,6 +101,9 @@ class _ScoringReadyView extends StatelessWidget {
   final List<AssessmentAspect> aspects;
   final List<GraduationParticipant> participants;
   final Map<String, ({double skor, String? komentar})> skorByItem;
+  final int pendingOutboxCount;
+  final Set<String> pendingCandidateIds;
+  final bool isOfflineMode;
 
   const _ScoringReadyView({
     required this.kegiatanId,
@@ -106,27 +112,90 @@ class _ScoringReadyView extends StatelessWidget {
     required this.aspects,
     required this.participants,
     required this.skorByItem,
+    this.pendingOutboxCount = 0,
+    this.pendingCandidateIds = const {},
+    this.isOfflineMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasOutbox = pendingOutboxCount > 0;
+    final extraHeaderCount = (isOfflineMode || hasOutbox) ? 1 : 0;
+    final totalItems = participants.length + 1 + extraHeaderCount;
+
     return RefreshIndicator(
       onRefresh: () async {
-        // force: data/sesi bisa berubah — ambil ulang semua dari server.
         context.read<AssessmentBloc>().add(
               AssessmentScoreCardRequested(kegiatanId, force: true),
             );
       },
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: participants.length + 1,
+        itemCount: totalItems,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          if (index == participants.length) {
+          if (extraHeaderCount > 0 && index == 0) {
+            return _buildOfflineBanner(context);
+          }
+          final adjustedIndex = index - extraHeaderCount;
+          if (adjustedIndex == participants.length) {
             return _buildSessionInfo();
           }
-          return _buildParticipantCard(context, participants[index]);
+          final participant = participants[adjustedIndex];
+          final isPendingSync = pendingCandidateIds.contains(participant.id);
+          return _buildParticipantCard(context, participant, isPendingSync: isPendingSync);
         },
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isOfflineMode
+            ? AppTheme.warning.withValues(alpha: 0.15)
+            : AppTheme.primaryContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isOfflineMode ? AppTheme.warning : AppTheme.primary,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isOfflineMode ? Icons.cloud_off : Icons.cloud_upload_outlined,
+            color: isOfflineMode ? AppTheme.warning : AppTheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isOfflineMode ? 'Mode Offline' : 'Antrean Outbox',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                Text(
+                  pendingOutboxCount > 0
+                      ? '$pendingOutboxCount nilai tersimpan lokal dan siap disinkronkan'
+                      : 'Data diambil dari cache lokal',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          if (pendingOutboxCount > 0)
+            FilledButton.tonal(
+              onPressed: () {
+                context.read<AssessmentBloc>().add(
+                      AssessmentOutboxSyncRequested(kegiatanId: kegiatanId),
+                    );
+              },
+              child: const Text('Sinkron', style: TextStyle(fontSize: 12)),
+            ),
+        ],
       ),
     );
   }
@@ -150,18 +219,55 @@ class _ScoringReadyView extends StatelessWidget {
     );
   }
 
-  Widget _buildParticipantCard(BuildContext context, GraduationParticipant p) {
+  Widget _buildParticipantCard(BuildContext context, GraduationParticipant p, {bool isPendingSync = false}) {
     final hasSession = ujianPraktekId != null;
     return Card(
       margin: EdgeInsets.zero,
       child: ListTile(
-        leading: CircleAvatar(
-          radius: 20,
-          child: Text(
-            p.namaLengkap.isNotEmpty ? p.namaLengkap[0].toUpperCase() : '?',
-          ),
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              child: Text(
+                p.namaLengkap.isNotEmpty ? p.namaLengkap[0].toUpperCase() : '?',
+              ),
+            ),
+            if (isPendingSync)
+              const Positioned(
+                right: 0,
+                bottom: 0,
+                child: CircleAvatar(
+                  radius: 6,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 5,
+                    backgroundColor: AppTheme.warning,
+                  ),
+                ),
+              ),
+          ],
         ),
-        title: Text(p.namaLengkap),
+        title: Row(
+          children: [
+            Expanded(child: Text(p.namaLengkap)),
+            if (isPendingSync)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Offline Draft',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.warning,
+                  ),
+                ),
+              ),
+          ],
+        ),
         subtitle: Text(
           '${p.nomorAnggota.isEmpty ? '—' : p.nomorAnggota} · ${aspects.length} aspek penilaian',
           style: const TextStyle(fontSize: 12),

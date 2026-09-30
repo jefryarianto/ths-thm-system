@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/assessment_outbox_service.dart';
 import '../../data/models/graduation.dart';
 import 'assessment_event.dart';
 import 'assessment_state.dart';
@@ -15,6 +16,7 @@ import 'assessment_state.dart';
 /// — request tanpa token selalu dibalas 401 oleh backend.
 class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
   final ApiClient _apiClient;
+  final AssessmentOutboxService _outboxService;
   String? _aktifKegiatanId;
 
   /// Cache supaya aspek & peserta bisa hidup berdampingan dalam satu state
@@ -24,8 +26,11 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
   List<GraduationParticipant> _cachedParticipants = const [];
   String? _cachedParticipantsForKegiatan;
 
-  AssessmentBloc({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient(),
+  AssessmentBloc({
+    ApiClient? apiClient,
+    AssessmentOutboxService? outboxService,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _outboxService = outboxService ?? AssessmentOutboxService(),
         super(const AssessmentInitial()) {
     on<AssessmentAspectsRequested>(_onAspectsRequested);
     on<AssessmentAspectCreateRequested>(_onAspectCreate);
@@ -41,6 +46,7 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
     on<AssessmentUjianResolveRequested>(_onUjianResolve);
     on<AssessmentBulkScoreSubmitRequested>(_onBulkScoreSubmit);
     on<AssessmentScoreCardRequested>(_onScoreCardRequested);
+    on<AssessmentOutboxSyncRequested>(_onOutboxSync);
   }
 
   /// Cache id ujian praktek aktif per kegiatan — resolve ulang memakai
@@ -331,9 +337,13 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
   /// F3+ - Muat SEMUA data layar input nilai via endpoint agregat
   /// my-score-card: ujian aktif + aspek/item + peserta + skor penguji.
   /// Satu request menggantikan (aspek + peserta + resolve ujian).
+  /// F3+ - Muat SEMUA data layar input nilai via endpoint agregat
+  /// my-score-card: ujian aktif + aspek/item + peserta + skor penguji.
+  /// Mendukung offline cache dan outbox status indicator.
   Future<void> _onScoreCardRequested(
       AssessmentScoreCardRequested event, Emitter<AssessmentState> emit) async {
     emit(const AssessmentLoading());
+    _aktifKegiatanId = event.kegiatanId;
     try {
       final res = await _apiClient.dio.get(
         AppConstants.graduationMyScoreCard(event.kegiatanId),
@@ -343,6 +353,8 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
         emit(const AssessmentError('Respons my-score-card tidak valid'));
         return;
       }
+
+      await _outboxService.cacheScoreCard(event.kegiatanId, data);
 
       final ujian = data['ujianAktif'];
       final ujianId =
@@ -372,10 +384,14 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
         });
       }
 
-      // Isi cache id ujian agar jalur lama (resolve) tetap sinkron.
       if (ujianId != null && ujianId.isNotEmpty) {
         _ujianCache[event.kegiatanId] = ujianId;
       }
+
+      final pendingCount =
+          await _outboxService.getPendingCount(kegiatanId: event.kegiatanId);
+      final pendingCandidates = await _outboxService.getPendingCandidateIds(
+          kegiatanId: event.kegiatanId);
 
       emit(AssessmentScoreCardReady(
         ujianPraktekId: ujianId,
@@ -383,10 +399,95 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
         aspects: aspects,
         participants: participants,
         skorByItem: skorByItem,
+        pendingOutboxCount: pendingCount,
+        pendingCandidateIds: pendingCandidates,
+        isOfflineMode: false,
       ));
     } on DioException catch (e) {
+      final cached = await _outboxService.getCachedScoreCard(event.kegiatanId);
+      if (cached != null) {
+        final ujian = cached['ujianAktif'];
+        final ujianId =
+            ujian is Map<String, dynamic> ? _strOrNull(ujian['id']) : null;
+        final ujianStatus =
+            ujian is Map<String, dynamic> ? _strOrNull(ujian['status']) : null;
+
+        final aspects = _listOf(cached['aspects'])
+            .whereType<Map<String, dynamic>>()
+            .map(AssessmentAspect.fromJson)
+            .toList();
+        final participants = _listOf(cached['participants'])
+            .whereType<Map<String, dynamic>>()
+            .map(GraduationParticipant.fromJson)
+            .toList();
+
+        final rawScores = cached['myScores'];
+        final skorByItem = <String, ({double skor, String? komentar})>{};
+        if (rawScores is Map<String, dynamic>) {
+          rawScores.forEach((itemId, v) {
+            if (v is Map<String, dynamic>) {
+              skorByItem[itemId] = (
+                skor: (v['skor'] as num?)?.toDouble() ?? 0,
+                komentar: v['komentar']?.toString(),
+              );
+            }
+          });
+        }
+
+        final pendingCount =
+            await _outboxService.getPendingCount(kegiatanId: event.kegiatanId);
+        final pendingCandidates = await _outboxService.getPendingCandidateIds(
+            kegiatanId: event.kegiatanId);
+
+        emit(AssessmentScoreCardReady(
+          ujianPraktekId: ujianId,
+          ujianStatus: ujianStatus,
+          aspects: aspects,
+          participants: participants,
+          skorByItem: skorByItem,
+          pendingOutboxCount: pendingCount,
+          pendingCandidateIds: pendingCandidates,
+          isOfflineMode: true,
+        ));
+        return;
+      }
+
       emit(AssessmentError(_messageFromError(e, 'Gagal memuat data penilaian')));
     } catch (_) {
+      final cached = await _outboxService.getCachedScoreCard(event.kegiatanId);
+      if (cached != null) {
+        final ujian = cached['ujianAktif'];
+        final ujianId =
+            ujian is Map<String, dynamic> ? _strOrNull(ujian['id']) : null;
+        final ujianStatus =
+            ujian is Map<String, dynamic> ? _strOrNull(ujian['status']) : null;
+
+        final aspects = _listOf(cached['aspects'])
+            .whereType<Map<String, dynamic>>()
+            .map(AssessmentAspect.fromJson)
+            .toList();
+        final participants = _listOf(cached['participants'])
+            .whereType<Map<String, dynamic>>()
+            .map(GraduationParticipant.fromJson)
+            .toList();
+
+        final pendingCount =
+            await _outboxService.getPendingCount(kegiatanId: event.kegiatanId);
+        final pendingCandidates = await _outboxService.getPendingCandidateIds(
+            kegiatanId: event.kegiatanId);
+
+        emit(AssessmentScoreCardReady(
+          ujianPraktekId: ujianId,
+          ujianStatus: ujianStatus,
+          aspects: aspects,
+          participants: participants,
+          skorByItem: const {},
+          pendingOutboxCount: pendingCount,
+          pendingCandidateIds: pendingCandidates,
+          isOfflineMode: true,
+        ));
+        return;
+      }
       emit(const AssessmentError('Terjadi kesalahan koneksi'));
     }
   }
@@ -442,7 +543,7 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
   }
 
   /// F3 - Submit bulk SEMUA item satu peserta via endpoint ujian praktek.
-  /// pengujiUserId diambil dari token (req.user) oleh backend.
+  /// Jika koneksi offline / gagal jaringan, simpan ke antrean lokal outbox.
   Future<void> _onBulkScoreSubmit(
       AssessmentBulkScoreSubmitRequested event, Emitter<AssessmentState> emit) async {
     try {
@@ -467,9 +568,68 @@ class AssessmentBloc extends Bloc<AssessmentEvent, AssessmentState> {
       );
       emit(const AssessmentScoreSaved("Nilai berhasil disimpan"));
     } on DioException catch (e) {
+      final isConnectionIssue = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.response == null;
+
+      if (isConnectionIssue) {
+        await _outboxService.enqueue(AssessmentOutboxItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          kegiatanId: event.kegiatanId,
+          ujianPraktekId: event.ujianPraktekId,
+          calonAnggotaId: event.calonAnggotaId,
+          skorByItem: event.skorByItem,
+          catatanByItem: event.catatanByItem,
+        ));
+        emit(const AssessmentScoreSaved(
+          "Koneksi offline: Nilai disimpan di antrean lokal dan akan disinkronkan saat online.",
+          isOffline: true,
+        ));
+        return;
+      }
+
       emit(AssessmentError(_messageFromError(e, 'Gagal simpan nilai')));
     } catch (_) {
-      emit(const AssessmentError("Terjadi kesalahan koneksi"));
+      await _outboxService.enqueue(AssessmentOutboxItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        kegiatanId: event.kegiatanId,
+        ujianPraktekId: event.ujianPraktekId,
+        calonAnggotaId: event.calonAnggotaId,
+        skorByItem: event.skorByItem,
+        catatanByItem: event.catatanByItem,
+      ));
+      emit(const AssessmentScoreSaved(
+        "Koneksi offline: Nilai disimpan di antrean lokal dan akan disinkronkan saat online.",
+        isOffline: true,
+      ));
+    }
+  }
+
+  /// Sinkronisasi antrean outbox offline ke backend.
+  Future<void> _onOutboxSync(
+      AssessmentOutboxSyncRequested event, Emitter<AssessmentState> emit) async {
+    try {
+      final result =
+          await _outboxService.syncAll(_apiClient, kegiatanId: event.kegiatanId);
+
+      final msg = result.failedCount == 0
+          ? '${result.syncedCount} nilai offline berhasil disinkronkan ke server.'
+          : '${result.syncedCount} nilai berhasil dikirim, ${result.failedCount} gagal.';
+
+      emit(AssessmentOutboxSyncResultState(
+        syncedCount: result.syncedCount,
+        failedCount: result.failedCount,
+        message: msg,
+      ));
+
+      final targetKegiatan = event.kegiatanId ?? _aktifKegiatanId;
+      if (targetKegiatan != null) {
+        add(AssessmentScoreCardRequested(targetKegiatan, force: true));
+      }
+    } catch (_) {
+      emit(const AssessmentError('Gagal memproses sinkronisasi antrean offline.'));
     }
   }
 }

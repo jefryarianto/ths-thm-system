@@ -66,9 +66,10 @@ class AssessmentScoresLoaded extends AssessmentState {
 /// F3 - Nilai utk satu item berhasil disimpan.
 class AssessmentScoreSaved extends AssessmentState {
   final String message;
-  const AssessmentScoreSaved(this.message);
+  final bool isOffline;
+  const AssessmentScoreSaved(this.message, {this.isOffline = false});
   @override
-  List<Object?> get props => <Object?>[message];
+  List<Object?> get props => <Object?>[message, isOffline];
 }
 
 /// F3 - Sesi ujian praktek aktif berhasil di-resolve (id ujian utk submit bulk).
@@ -105,12 +106,20 @@ class AssessmentScoreCardReady extends AssessmentState {
   /// key = itemPenilaianId → {skor, komentar}.
   final Map<String, ({double skor, String? komentar})> skorByItem;
 
+  /// Status antrean outbox offline untuk kegiatan ini
+  final int pendingOutboxCount;
+  final Set<String> pendingCandidateIds;
+  final bool isOfflineMode;
+
   const AssessmentScoreCardReady({
     required this.ujianPraktekId,
     this.ujianStatus,
     this.aspects = const [],
     this.participants = const [],
     this.skorByItem = const {},
+    this.pendingOutboxCount = 0,
+    this.pendingCandidateIds = const {},
+    this.isOfflineMode = false,
   });
 
   @override
@@ -120,5 +129,24 @@ class AssessmentScoreCardReady extends AssessmentState {
         aspects,
         participants,
         skorByItem,
+        pendingOutboxCount,
+        pendingCandidateIds,
+        isOfflineMode,
       ];
+}
+
+/// Hasil proses sinkronisasi antrean outbox.
+class AssessmentOutboxSyncResultState extends AssessmentState {
+  final int syncedCount;
+  final int failedCount;
+  final String message;
+
+  const AssessmentOutboxSyncResultState({
+    required this.syncedCount,
+    required this.failedCount,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => <Object?>[syncedCount, failedCount, message];
 }
