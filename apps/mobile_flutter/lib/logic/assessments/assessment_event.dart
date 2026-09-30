@@ -210,3 +210,20 @@ class AssessmentScoreSubmitRequested extends AssessmentEvent {
         catatan,
       ];
 }
+
+/// Sinkronisasi antrean outbox offline ke backend.
+class AssessmentOutboxSyncRequested extends AssessmentEvent {
+  final String? kegiatanId;
+  const AssessmentOutboxSyncRequested({this.kegiatanId});
+  @override
+  List<Object?> get props => <Object?>[kegiatanId];
+}
+
+/// Permintaan pengecekan jumlah antrean outbox offline.
+class AssessmentOutboxCountRequested extends AssessmentEvent {
+  final String? kegiatanId;
+  const AssessmentOutboxCountRequested({this.kegiatanId});
+  @override
+  List<Object?> get props => <Object?>[kegiatanId];
+}
+
