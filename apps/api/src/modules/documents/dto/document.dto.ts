@@ -28,7 +28,10 @@ export class GenerateDocumentDto {
 }
 
 export class BatchGenerateDocumentDto {
-  @ApiPropertyOptional({ type: [String], description: 'Daftar ID anggota (opsional jika range dipakai)' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Daftar ID anggota (opsional jika range dipakai)',
+  })
   @IsOptional()
   @IsArray()
   memberIds?: string[];
@@ -37,7 +40,10 @@ export class BatchGenerateDocumentDto {
   @IsEnum(TipeDokumen)
   type: TipeDokumen;
 
-  @ApiPropertyOptional({ enum: BATCH_RANGES, description: 'Rentang anggota untuk resolve memberIds otomatis' })
+  @ApiPropertyOptional({
+    enum: BATCH_RANGES,
+    description: 'Rentang anggota untuk resolve memberIds otomatis',
+  })
   @IsOptional()
   @IsEnum(BATCH_RANGES)
   range?: BatchRange;

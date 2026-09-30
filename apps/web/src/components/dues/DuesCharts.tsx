@@ -89,10 +89,7 @@ export default function DuesCharts({
             {monthlyTrend.map((t, i) => {
               const height = (t.jumlah / maxTrend) * 100;
               return (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center gap-1 group relative"
-                >
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
                   <div
                     className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition cursor-pointer min-h-[4px]"
                     style={{ height: `${Math.max(height, 4)}%` }}

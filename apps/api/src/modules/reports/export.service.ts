@@ -79,7 +79,16 @@ export class ExportService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const headers = ['NO', 'NAMA', 'NOMOR ANGGOTA', 'JENIS KELAMIN', 'RANTING', 'STATUS', 'NO HP', 'EMAIL'];
+    const headers = [
+      'NO',
+      'NAMA',
+      'NOMOR ANGGOTA',
+      'JENIS KELAMIN',
+      'RANTING',
+      'STATUS',
+      'NO HP',
+      'EMAIL',
+    ];
     const data = members.map((m, i) => ({
       NO: i + 1,
       NAMA: m.namaLengkap,
@@ -98,7 +107,8 @@ export class ExportService {
     const where: Record<string, unknown> = {};
     if (scope?.rantingId) where.anggota = { rantingId: scope.rantingId };
     else if (scope?.wilayahId) where.anggota = { ranting: { wilayahId: scope.wilayahId } };
-    else if (scope?.distrikId) where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
+    else if (scope?.distrikId)
+      where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
 
     const dues = await this.prisma.iuran.findMany({
       where,
@@ -213,16 +223,7 @@ export class ExportService {
       take: 5000,
     });
 
-    const headers = [
-      'NO',
-      'WAKTU',
-      'AKSI',
-      'ENTITAS',
-      'ID ENTITAS',
-      'USER ID',
-      'IP',
-      'DETAIL',
-    ];
+    const headers = ['NO', 'WAKTU', 'AKSI', 'ENTITAS', 'ID ENTITAS', 'USER ID', 'IP', 'DETAIL'];
     const data = logs.map((l, i) => ({
       NO: i + 1,
       WAKTU: l.createdAt.toISOString(),

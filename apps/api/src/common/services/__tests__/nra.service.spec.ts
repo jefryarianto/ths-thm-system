@@ -54,10 +54,7 @@ describe('NraService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NraService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [NraService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<NraService>(NraService);

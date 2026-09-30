@@ -9,13 +9,7 @@ export interface DiffChange {
 }
 
 /** Field sistem yang tidak pernah masuk ke diff/restore. */
-const EXCLUDED_FIELDS = new Set([
-  'id',
-  'createdAt',
-  'updatedAt',
-  'createdBy',
-  'version',
-]);
+const EXCLUDED_FIELDS = new Set(['id', 'createdAt', 'updatedAt', 'createdBy', 'version']);
 
 /**
  * Hitung daftar perubahan field antara dua objek.

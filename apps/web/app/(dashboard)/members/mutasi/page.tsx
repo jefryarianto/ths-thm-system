@@ -43,8 +43,16 @@ interface MutationRequest {
     nomorAnggota: string;
     rantingId: string;
   };
-  fromRanting?: { id: string; nama: string; wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } } };
-  toRanting?: { id: string; nama: string; wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } } };
+  fromRanting?: {
+    id: string;
+    nama: string;
+    wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } };
+  };
+  toRanting?: {
+    id: string;
+    nama: string;
+    wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } };
+  };
   approvals: ApprovalStep[];
   currentStep?: { side: string; level: string } | null;
   canApprove: boolean;
@@ -66,7 +74,9 @@ export default function MutasiPage() {
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get('/mutations', { params: { status: tab === 'pending' ? 'pending' : undefined } });
+      const { data } = await apiClient.get('/mutations', {
+        params: { status: tab === 'pending' ? 'pending' : undefined },
+      });
       setRequests(Array.isArray(data) ? data : []);
     } catch {
       setRequests([]);
@@ -96,9 +106,13 @@ export default function MutasiPage() {
   };
 
   const pathFrom = (r: MutationRequest) =>
-    [r.fromRanting?.nama, r.fromRanting?.wilayah?.nama, r.fromRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' → ');
+    [r.fromRanting?.nama, r.fromRanting?.wilayah?.nama, r.fromRanting?.wilayah?.distrik?.nama]
+      .filter(Boolean)
+      .join(' → ');
   const pathTo = (r: MutationRequest) =>
-    [r.toRanting?.nama, r.toRanting?.wilayah?.nama, r.toRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' → ');
+    [r.toRanting?.nama, r.toRanting?.wilayah?.nama, r.toRanting?.wilayah?.distrik?.nama]
+      .filter(Boolean)
+      .join(' → ');
 
   const visible = tab === 'pending' ? requests.filter((r) => r.status === 'pending') : requests;
 
@@ -156,7 +170,9 @@ export default function MutasiPage() {
                       >
                         {r.anggota?.namaLengkap || 'Anggota'}
                       </Link>
-                      <span className="text-xs font-mono text-gray-500">{r.anggota?.nomorAnggota}</span>
+                      <span className="text-xs font-mono text-gray-500">
+                        {r.anggota?.nomorAnggota}
+                      </span>
                       <StatusBadge status={r.status} />
                       {r.scope === 'nasional' && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
@@ -169,11 +185,18 @@ export default function MutasiPage() {
                       <ArrowLeftRight size={14} className="shrink-0" />
                       <span>{pathTo(r) || r.toRanting?.nama || '-'}</span>
                     </div>
-                    {r.reason && <p className="mt-1 text-xs text-gray-500 italic">&ldquo;{r.reason}&rdquo;</p>}
+                    {r.reason && (
+                      <p className="mt-1 text-xs text-gray-500 italic">&ldquo;{r.reason}&rdquo;</p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-wide text-gray-400">
-                      Diajukan {new Date(r.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      Diajukan{' '}
+                      {new Date(r.createdAt).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </p>
                     {r.canApprove && r.status === 'pending' && (
                       <div className="mt-2 flex gap-2 justify-end">
@@ -182,13 +205,21 @@ export default function MutasiPage() {
                           disabled={actingId === r.id}
                           className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                         >
-                          {actingId === r.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                          {actingId === r.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={12} />
+                          )}
                           Setujui
                         </button>
                         <button
                           onClick={() => {
                             if (!window.confirm('Yakin menolak permintaan mutasi ini?')) return;
-                            act(r.id, 'reject', window.prompt('Catatan penolakan (opsional):') || undefined);
+                            act(
+                              r.id,
+                              'reject',
+                              window.prompt('Catatan penolakan (opsional):') || undefined,
+                            );
                           }}
                           disabled={actingId === r.id}
                           className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition disabled:opacity-50"
@@ -218,9 +249,12 @@ export default function MutasiPage() {
                                   : 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
                             }`}
                           >
-                            {s.side === 'asal' ? 'Asal' : 'Tujuan'} · {LEVEL_LABELS[s.level] || s.level} · {s.status}
+                            {s.side === 'asal' ? 'Asal' : 'Tujuan'} ·{' '}
+                            {LEVEL_LABELS[s.level] || s.level} · {s.status}
                           </span>
-                          {i < r.approvals.length - 1 && <span className="text-gray-400 text-xs">→</span>}
+                          {i < r.approvals.length - 1 && (
+                            <span className="text-gray-400 text-xs">→</span>
+                          )}
                         </span>
                       ))}
                   </div>

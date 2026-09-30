@@ -83,7 +83,10 @@ describe('JabatanService', () => {
       mockPrisma.jabatan.findFirst.mockResolvedValue(null);
       mockPrisma.jabatan.create.mockImplementation(async ({ data }) => ({ id: 'j2', ...data }));
 
-      const result = await service.create(req('superadmin'), { nama: 'Sekretaris', distrikId: 'd-lrt' });
+      const result = await service.create(req('superadmin'), {
+        nama: 'Sekretaris',
+        distrikId: 'd-lrt',
+      });
 
       expect(mockPrisma.jabatan.findFirst).toHaveBeenCalledWith({
         where: { nama: 'Sekretaris', distrikId: 'd-lrt' },
@@ -119,7 +122,10 @@ describe('JabatanService', () => {
         .mockResolvedValueOnce({ id: 'global-1', distrikId: null }); // "sudah ada" global — boleh
       mockPrisma.jabatan.create.mockImplementation(async ({ data }) => ({ id: 'j4', ...data }));
 
-      const result = await service.create(req('superadmin'), { nama: 'Sekretaris', distrikId: 'd-lrt' });
+      const result = await service.create(req('superadmin'), {
+        nama: 'Sekretaris',
+        distrikId: 'd-lrt',
+      });
       expect(result.distrikId).toBe('d-lrt');
     });
   });
@@ -138,7 +144,9 @@ describe('JabatanService', () => {
       mockPrisma.jabatan.findFirst.mockResolvedValue(null);
       mockPrisma.jabatan.update.mockResolvedValue(detail({ nama: 'Sekretaris II' }));
 
-      const result = await service.update(req('admin_distrik', 'd-lrt'), 'j1', { nama: 'Sekretaris II' });
+      const result = await service.update(req('admin_distrik', 'd-lrt'), 'j1', {
+        nama: 'Sekretaris II',
+      });
 
       expect(result.nama).toBe('Sekretaris II');
     });
@@ -146,18 +154,18 @@ describe('JabatanService', () => {
     it('menolak rename ke nama yang sudah dipakai pada scope yang sama', async () => {
       mockPrisma.jabatan.findUnique.mockResolvedValue(detail());
       mockPrisma.jabatan.findFirst.mockResolvedValue({ id: 'other' });
-      await expect(
-        service.update(req('superadmin'), 'j1', { nama: 'Bendahara' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.update(req('superadmin'), 'j1', { nama: 'Bendahara' })).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockPrisma.jabatan.update).not.toHaveBeenCalled();
     });
 
     it('menolak kode duplikat pada scope yang sama', async () => {
       mockPrisma.jabatan.findUnique.mockResolvedValue(detail({ kode: 'SKR' }));
       mockPrisma.jabatan.findFirst.mockResolvedValue({ id: 'other' });
-      await expect(
-        service.update(req('superadmin'), 'j1', { kode: 'BND' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.update(req('superadmin'), 'j1', { kode: 'BND' })).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('NotFound bila jabatan tidak ada', async () => {

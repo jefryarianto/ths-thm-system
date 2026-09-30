@@ -71,13 +71,22 @@ export interface CardSvgData {
     frontImage?: string | null;
     backImage?: string | null;
     overlayConfig?: {
-      guilloche?: { enabledFront?: boolean; enabledBack?: boolean; strokeFront?: string; strokeBack?: string };
+      guilloche?: {
+        enabledFront?: boolean;
+        enabledBack?: boolean;
+        strokeFront?: string;
+        strokeBack?: string;
+      };
     } | null;
   } | null;
 }
 
 const esc = (s: unknown): string =>
-  String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
 /** Ambil isi luar <svg>…</svg> agar bisa disisipkan sebagai <g> di dalam dokumen besar. */
 function svgInner(str: string): string {
@@ -128,7 +137,12 @@ function photoEl(
   if (!dataUrl) {
     return (
       `<g><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6 4"/>` +
-      txt(placeholder.cx, placeholder.cy, placeholder.text, { size: 18, weight: 700, fill: '#94a3b8', anchor: 'middle' }) +
+      txt(placeholder.cx, placeholder.cy, placeholder.text, {
+        size: 18,
+        weight: 700,
+        fill: '#94a3b8',
+        anchor: 'middle',
+      }) +
       `</g>`
     );
   }
@@ -153,9 +167,7 @@ function patternGroup(name: string, side: 'front' | 'back') {
           return `<text x="${x.toFixed(1)}" y="${top + cfg.fontSize * 0.78}" font-family="${fam(FONTS.robotoBold)}, sans-serif" font-size="${cfg.fontSize}" font-weight="900" letter-spacing="${cfg.letterSpacing}" fill="${cfg.color}">${esc(w)}</text>`;
         })
         .join('');
-      return (
-        `<g transform="rotate(${cfg.angle} ${CARD.W / 2} ${top + cfg.fontSize * 0.4})" opacity="${cfg.opacity}">${texts}</g>`
-      );
+      return `<g transform="rotate(${cfg.angle} ${CARD.W / 2} ${top + cfg.fontSize * 0.4})" opacity="${cfg.opacity}">${texts}</g>`;
     })
     .join('');
 }
@@ -176,7 +188,12 @@ function frontSide(d: CardSvgData): string {
   const signers: Array<{ signerName?: string; signerTitle?: string }> =
     d.signers && d.signers.length > 0
       ? d.signers
-      : [{ signerName: d.signerName || 'Koordinator Distrik', signerTitle: d.signerTitle || 'THS-THM' }];
+      : [
+          {
+            signerName: d.signerName || 'Koordinator Distrik',
+            signerTitle: d.signerTitle || 'THS-THM',
+          },
+        ];
 
   let s = '';
   // Latar: gambar upload template ATAU dekorasi bawaan (gradien/ombak/header/bottom)
@@ -210,30 +227,59 @@ function frontSide(d: CardSvgData): string {
   ];
   let rowY = logoY + FRONT.header.row.fontSize;
   rows.forEach(([t, sp]) => {
-    s += txt(textX, rowY, t, { size: FRONT.header.row.fontSize, weight: 900, fill: COLORS.headerText, spacing: sp, family: FONTS.openSansBold });
+    s += txt(textX, rowY, t, {
+      size: FRONT.header.row.fontSize,
+      weight: 900,
+      fill: COLORS.headerText,
+      spacing: sp,
+      family: FONTS.openSansBold,
+    });
     rowY += FRONT.header.row.lineHeight + FRONT.header.row.rowGap;
   });
   s += `</g>`;
 
   // Foto besar kiri + foto kecil kanan atas (crop ala SIM)
-  const big = { x: FRONT.photo.big.left, y: FRONT.photo.big.top, w: FRONT.photo.big.w, h: FRONT.photo.big.h };
-  const small = { x: CARD.W - FRONT.photo.small.right - FRONT.photo.small.w, y: FRONT.photo.small.top, w: FRONT.photo.small.w, h: FRONT.photo.small.h };
+  const big = {
+    x: FRONT.photo.big.left,
+    y: FRONT.photo.big.top,
+    w: FRONT.photo.big.w,
+    h: FRONT.photo.big.h,
+  };
+  const small = {
+    x: CARD.W - FRONT.photo.small.right - FRONT.photo.small.w,
+    y: FRONT.photo.small.top,
+    w: FRONT.photo.small.w,
+    h: FRONT.photo.small.h,
+  };
   s += `<clipPath id="clipBig"><rect x="${big.x}" y="${big.y}" width="${big.w}" height="${big.h}"/></clipPath>`;
   s += `<clipPath id="clipSmall"><rect x="${small.x}" y="${small.y}" width="${small.w}" height="${small.h}"/></clipPath>`;
-  s += photoEl(big, cropBig, d.photoDataUrl, 'clipBig', { cx: big.x + big.w / 2, cy: big.y + big.h / 2, text: 'FOTO' });
-  s += photoEl(small, cropSmall, d.photoDataUrl, 'clipSmall', { cx: small.x + small.w / 2, cy: small.y + small.h / 2, text: 'FOTO' });
+  s += photoEl(big, cropBig, d.photoDataUrl, 'clipBig', {
+    cx: big.x + big.w / 2,
+    cy: big.y + big.h / 2,
+    text: 'FOTO',
+  });
+  s += photoEl(small, cropSmall, d.photoDataUrl, 'clipSmall', {
+    cx: small.x + small.w / 2,
+    cy: small.y + small.h / 2,
+    text: 'FOTO',
+  });
 
   // Level rank — di bawah foto kecil
   if (lv.stripCount > 0) {
     const rankX = CARD.W - FRONT.rank.right - FRONT.rank.w;
     s += `<g>`;
-    s += txt(rankX + FRONT.rank.w / 2, FRONT.rank.top + FRONT.rank.name.fontSize, (member.tingkat || lv.label || '').toUpperCase(), {
-      size: FRONT.rank.name.fontSize,
-      weight: 900,
-      fill: COLORS.rankText,
-      anchor: 'middle',
-      spacing: FRONT.rank.name.letterSpacing,
-    });
+    s += txt(
+      rankX + FRONT.rank.w / 2,
+      FRONT.rank.top + FRONT.rank.name.fontSize,
+      (member.tingkat || lv.label || '').toUpperCase(),
+      {
+        size: FRONT.rank.name.fontSize,
+        weight: 900,
+        fill: COLORS.rankText,
+        anchor: 'middle',
+        spacing: FRONT.rank.name.letterSpacing,
+      },
+    );
     const stripY0 = FRONT.rank.top + FRONT.rank.name.fontSize + 4 + FRONT.rank.name.marginBottom;
     for (let i = 0; i < lv.stripCount; i++) {
       const y = stripY0 + i * (FRONT.rank.strip.h + FRONT.rank.strip.gap);
@@ -258,24 +304,44 @@ function frontSide(d: CardSvgData): string {
   infoRows.forEach((r) => {
     const labelBaseline = infoY + FRONT.info.label.fontSize;
     if (r.label === 'Nama') namaLabelBaseline = labelBaseline;
-    s += txt(infoX, labelBaseline, r.label, { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
+    s += txt(infoX, labelBaseline, r.label, {
+      size: FRONT.info.label.fontSize,
+      weight: 700,
+      fill: FRONT.info.label.color,
+      spacing: FRONT.info.label.letterSpacing,
+    });
     if (r.strong) {
-      s += txt(infoX, labelBaseline + FRONT.info.valueStrong.marginTop + FRONT.info.valueStrong.fontSize, r.value, {
-        size: FRONT.info.valueStrong.fontSize,
-        weight: 900,
-        fill: FRONT.info.valueStrong.color,
-        spacing: FRONT.info.valueStrong.letterSpacing,
-        family: FONTS.ocrA,
-      });
+      s += txt(
+        infoX,
+        labelBaseline + FRONT.info.valueStrong.marginTop + FRONT.info.valueStrong.fontSize,
+        r.value,
+        {
+          size: FRONT.info.valueStrong.fontSize,
+          weight: 900,
+          fill: FRONT.info.valueStrong.color,
+          spacing: FRONT.info.valueStrong.letterSpacing,
+          family: FONTS.ocrA,
+        },
+      );
     } else {
-      s += txt(infoX, labelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize, r.value, {
-        size: FRONT.info.value.fontSize,
-        weight: 700,
-        fill: FRONT.info.value.color,
-        family: FONTS.ocrA,
-      });
+      s += txt(
+        infoX,
+        labelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize,
+        r.value,
+        {
+          size: FRONT.info.value.fontSize,
+          weight: 700,
+          fill: FRONT.info.value.color,
+          family: FONTS.ocrA,
+        },
+      );
     }
-    infoY = labelBaseline + FRONT.info.value.fontSize + FRONT.info.value.marginTop + FRONT.info.rowMarginBottom + FRONT.info.label.fontSize * 0.2;
+    infoY =
+      labelBaseline +
+      FRONT.info.value.fontSize +
+      FRONT.info.value.marginTop +
+      FRONT.info.rowMarginBottom +
+      FRONT.info.label.fontSize * 0.2;
   });
   // JK kolom sejajar label Nama — geometri sama dgn flex web/PDF/mobile (spec .info-pair):
   // kolom kiri = infoW - jk.w - jk.marginLeft = 346, lalu jkBox mulai setelah margin 40
@@ -283,13 +349,23 @@ function frontSide(d: CardSvgData): string {
   const infoW = CARD.W - FRONT.info.left - FRONT.info.right;
   const jkX = infoX + infoW - FRONT.info.jk.w;
   if (namaLabelBaseline >= 0) {
-    s += txt(jkX, namaLabelBaseline, 'JK', { size: FRONT.info.label.fontSize, weight: 700, fill: FRONT.info.label.color, spacing: FRONT.info.label.letterSpacing });
-    s += txt(jkX, namaLabelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize, member.jenisKelamin === 'P' ? 'P' : 'L', {
-      size: FRONT.info.value.fontSize,
-      weight: 900,
-      fill: FRONT.info.value.color,
-      family: FONTS.ocrA,
+    s += txt(jkX, namaLabelBaseline, 'JK', {
+      size: FRONT.info.label.fontSize,
+      weight: 700,
+      fill: FRONT.info.label.color,
+      spacing: FRONT.info.label.letterSpacing,
     });
+    s += txt(
+      jkX,
+      namaLabelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize,
+      member.jenisKelamin === 'P' ? 'P' : 'L',
+      {
+        size: FRONT.info.value.fontSize,
+        weight: 900,
+        fill: FRONT.info.value.color,
+        family: FONTS.ocrA,
+      },
+    );
   }
   s += `</g>`;
 
@@ -297,8 +373,16 @@ function frontSide(d: CardSvgData): string {
   s += `<g>`;
   const botX = FRONT.bottom.left;
   const botY = CARD.H - FRONT.bottom.bottom;
-  s += txt(botX, botY - FRONT.bottom.value.fontSize - 2, 'Berlaku sampai', { size: FRONT.bottom.label.fontSize, weight: 700, fill: FRONT.bottom.label.color });
-  s += txt(botX, botY, validUntilStr, { size: FRONT.bottom.value.fontSize, weight: 700, fill: FRONT.bottom.value.color });
+  s += txt(botX, botY - FRONT.bottom.value.fontSize - 2, 'Berlaku sampai', {
+    size: FRONT.bottom.label.fontSize,
+    weight: 700,
+    fill: FRONT.bottom.label.color,
+  });
+  s += txt(botX, botY, validUntilStr, {
+    size: FRONT.bottom.value.fontSize,
+    weight: 700,
+    fill: FRONT.bottom.value.color,
+  });
   s += `</g>`;
 
   // Signer — teks RATA-KIRI: batas kanan ditentukan baris terpanjang. Kotak di-anchor
@@ -330,7 +414,12 @@ function frontSide(d: CardSvgData): string {
   if (d.stampDataUrl) {
     s += `<g clip-path="url(#clipStamp)"><image x="${stamX}" y="${stamY}" width="${sg.stamp.size}" height="${sg.stamp.size}" preserveAspectRatio="xMidYMid slice" href="${d.stampDataUrl}" xlink:href="${d.stampDataUrl}"/></g>`;
   } else {
-    s += txt(stamX + sg.stamp.size / 2, stamY + sg.stamp.size / 2 + 4, 'STEMPEL', { size: sg.stamp.text.fontSize, weight: 900, fill: COLORS.stampText, anchor: 'middle' });
+    s += txt(stamX + sg.stamp.size / 2, stamY + sg.stamp.size / 2 + 4, 'STEMPEL', {
+      size: sg.stamp.text.fontSize,
+      weight: 900,
+      fill: COLORS.stampText,
+      anchor: 'middle',
+    });
   }
   s += `</g>`;
   // Tanda tangan
@@ -364,12 +453,17 @@ function frontSide(d: CardSvgData): string {
       decoration: 'underline',
     });
     if (sgn.signerTitle) {
-      s += txt(0, nameBaseline + sg.title.fontSize + sg.title.marginTop, sgn.signerTitle.toUpperCase(), {
-        size: sg.title.fontSize,
-        weight: 700,
-        fill: COLORS.value,
-        anchor: 'start',
-      });
+      s += txt(
+        0,
+        nameBaseline + sg.title.fontSize + sg.title.marginTop,
+        sgn.signerTitle.toUpperCase(),
+        {
+          size: sg.title.fontSize,
+          weight: 700,
+          fill: COLORS.value,
+          anchor: 'start',
+        },
+      );
     }
   });
   s += `</g>`;
@@ -413,12 +507,17 @@ function backSide(d: CardSvgData): string {
     fill: COLORS.white,
     spacing: bh.title.letterSpacing,
   });
-  s += txt(bh.padH + logoH.size + bh.gap, bh.height / 2 + bh.title.fontSize + bh.subtitle.marginTop, 'Scan QR untuk memeriksa keabsahan anggota', {
-    size: bh.subtitle.fontSize,
-    fill: COLORS.white,
-    opacity: bh.subtitle.opacity,
-    family: FONTS.robotoRegular,
-  });
+  s += txt(
+    bh.padH + logoH.size + bh.gap,
+    bh.height / 2 + bh.title.fontSize + bh.subtitle.marginTop,
+    'Scan QR untuk memeriksa keabsahan anggota',
+    {
+      size: bh.subtitle.fontSize,
+      fill: COLORS.white,
+      opacity: bh.subtitle.opacity,
+      family: FONTS.robotoRegular,
+    },
+  );
   s += `</g>`;
   s += `<rect x="0" y="${bh.height - bh.hairline.height}" width="856" height="${bh.hairline.height}" fill="${bh.hairline.color}"/>`;
 
@@ -432,18 +531,28 @@ function backSide(d: CardSvgData): string {
   if (d.qrDataUrl) {
     s += `<g clip-path="url(#clipQr)"><image x="${qrX}" y="${qrY}" width="${qrInner}" height="${qrInner}" preserveAspectRatio="xMidYMid meet" href="${d.qrDataUrl}" xlink:href="${d.qrDataUrl}"/></g>`;
   } else {
-    s += txt(qrX + qrInner / 2, qrY + qrInner / 2 + 10, 'QR', { size: 30, weight: 700, fill: '#475569', anchor: 'middle' });
+    s += txt(qrX + qrInner / 2, qrY + qrInner / 2 + 10, 'QR', {
+      size: 30,
+      weight: 700,
+      fill: '#475569',
+      anchor: 'middle',
+    });
   }
 
   // Info belakang — teks putih di atas gradien (no box), Proper Case
   const infoX = info.left + info.padding;
   let y = info.top + info.padding + info.desc.fontSize;
-  s += txt(infoX, y, 'Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.', {
-    size: info.desc.fontSize,
-    fill: COLORS.white,
-    opacity: info.desc.opacity,
-    family: FONTS.robotoRegular,
-  });
+  s += txt(
+    infoX,
+    y,
+    'Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
+    {
+      size: info.desc.fontSize,
+      fill: COLORS.white,
+      opacity: info.desc.opacity,
+      family: FONTS.robotoRegular,
+    },
+  );
   y += info.desc.lineHeight + info.desc.marginBottom + info.row.label.fontSize;
   const rowsBack: Array<[string, string]> = [
     ['TTL', fmt.proper(ttl)],
@@ -455,27 +564,47 @@ function backSide(d: CardSvgData): string {
   rowsBack.forEach(([label, value]) => {
     s += `<g>`;
     s += txt(infoX, y, label, { size: info.row.label.fontSize, weight: 700, fill: COLORS.white });
-    s += txt(infoX + info.row.label.w + 2, y, ':', { size: info.row.label.fontSize, weight: 700, fill: COLORS.white, opacity: 0.9 });
-    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, { size: info.row.value.fontSize, weight: 400, fill: COLORS.white, family: FONTS.robotoRegular });
+    s += txt(infoX + info.row.label.w + 2, y, ':', {
+      size: info.row.label.fontSize,
+      weight: 700,
+      fill: COLORS.white,
+      opacity: 0.9,
+    });
+    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, {
+      size: info.row.value.fontSize,
+      weight: 400,
+      fill: COLORS.white,
+      family: FONTS.robotoRegular,
+    });
     s += `</g>`;
     y += info.row.label.fontSize + info.row.marginBottom + 4;
   });
 
   // Footer
   const ft = BACK.footer;
-  s += txt(ft.left, CARD.H - ft.bottom - 8, 'Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.', {
-    size: ft.text.fontSize,
-    fill: '#f0f9ff',
-    opacity: ft.text.opacity,
-    family: FONTS.robotoRegular,
-  });
-  s += txt(CARD.W - ft.right, CARD.H - ft.bottom - ft.urlValue.fontSize - ft.urlValue.marginTop - ft.urlLabel.fontSize - 4, 'URL VERIFIKASI', {
-    size: ft.urlLabel.fontSize,
-    fill: '#f0f9ff',
-    opacity: ft.urlLabel.opacity,
-    anchor: 'end',
-    family: FONTS.robotoRegular,
-  });
+  s += txt(
+    ft.left,
+    CARD.H - ft.bottom - 8,
+    'Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.',
+    {
+      size: ft.text.fontSize,
+      fill: '#f0f9ff',
+      opacity: ft.text.opacity,
+      family: FONTS.robotoRegular,
+    },
+  );
+  s += txt(
+    CARD.W - ft.right,
+    CARD.H - ft.bottom - ft.urlValue.fontSize - ft.urlValue.marginTop - ft.urlLabel.fontSize - 4,
+    'URL VERIFIKASI',
+    {
+      size: ft.urlLabel.fontSize,
+      fill: '#f0f9ff',
+      opacity: ft.urlLabel.opacity,
+      anchor: 'end',
+      family: FONTS.robotoRegular,
+    },
+  );
   s += txt(CARD.W - ft.right, CARD.H - ft.bottom, d.verificationUrl, {
     size: ft.urlValue.fontSize,
     weight: 700,

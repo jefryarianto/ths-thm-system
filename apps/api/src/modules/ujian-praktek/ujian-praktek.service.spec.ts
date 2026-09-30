@@ -22,7 +22,13 @@ describe('UjianPraktekService', () => {
     itemPenilaian: { findMany: jest.fn() },
     penugasanPenguji: { findMany: jest.fn(), findFirst: jest.fn() },
     user: { findUnique: jest.fn() },
-    nilaiPendadaran: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), upsert: jest.fn(), findMany: jest.fn() },
+    nilaiPendadaran: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      upsert: jest.fn(),
+      findMany: jest.fn(),
+    },
     kegiatan: { findUnique: jest.fn() },
     pesertaPendadaran: { findMany: jest.fn() },
   };
@@ -146,12 +152,21 @@ describe('UjianPraktekService', () => {
       ]);
       mockPrisma.aspekPenilaian.findMany.mockResolvedValue([
         {
-          id: 'a1', kodeAspek: 'A', namaAspek: 'Teknis', isActive: true,
+          id: 'a1',
+          kodeAspek: 'A',
+          namaAspek: 'Teknis',
+          isActive: true,
           itemPenilaian: [{ id: 'i1', namaItem: 'Kuda', urutan: 1, isActive: true }],
         },
       ]);
       mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
-        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: '85.5', komentar: 'baik', createdAt: new Date() },
+        {
+          ujianPraktekId: 'u1',
+          itemPenilaianId: 'i1',
+          skor: '85.5',
+          komentar: 'baik',
+          createdAt: new Date(),
+        },
       ]);
 
       const res = await service.getMyScoreCard('k1', 'penguji-1');
@@ -187,13 +202,20 @@ describe('UjianPraktekService', () => {
       ]);
       mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([
         {
-          sumber: 'manual', createdAt: new Date(),
+          sumber: 'manual',
+          createdAt: new Date(),
           calonAnggota: { id: 'c1', namaLengkap: 'Budi', email: null },
         },
       ]);
       mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
       mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
-        { ujianPraktekId: 'u0', itemPenilaianId: 'i1', skor: 90, komentar: null, createdAt: new Date() },
+        {
+          ujianPraktekId: 'u0',
+          itemPenilaianId: 'i1',
+          skor: 90,
+          komentar: null,
+          createdAt: new Date(),
+        },
       ]);
 
       const res = await service.getMyScoreCard('k1', 'penguji-1');
@@ -233,8 +255,20 @@ describe('UjianPraktekService', () => {
       mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([]);
       mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
       mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
-        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: 70, komentar: null, createdAt: new Date('2026-01-01') },
-        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: 88, komentar: 'revisi', createdAt: new Date('2026-01-02') },
+        {
+          ujianPraktekId: 'u1',
+          itemPenilaianId: 'i1',
+          skor: 70,
+          komentar: null,
+          createdAt: new Date('2026-01-01'),
+        },
+        {
+          ujianPraktekId: 'u1',
+          itemPenilaianId: 'i1',
+          skor: 88,
+          komentar: 'revisi',
+          createdAt: new Date('2026-01-02'),
+        },
       ]);
 
       const res = await service.getMyScoreCard('k1', 'penguji-1');
@@ -244,7 +278,9 @@ describe('UjianPraktekService', () => {
   });
 
   describe('scoreCandidate guard (penguji harus approved)', () => {
-    const dto = { scores: [{ calonAnggotaId: 'c1', items: [{ itemPenilaianId: 'i1', skor: 80 }] }] };
+    const dto = {
+      scores: [{ calonAnggotaId: 'c1', items: [{ itemPenilaianId: 'i1', skor: 80 }] }],
+    };
     const ujian = { id: 'uj1', kegiatanId: 'k1', status: 'draft' };
 
     it('penguji belum approved → Forbidden', async () => {

@@ -74,12 +74,8 @@ export default function PageHeader({
       {/* Title + Actions Row */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold text-text truncate">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="text-sm text-muted mt-0.5">{subtitle}</p>
-          )}
+          <h1 className="text-xl font-semibold text-text truncate">{title}</h1>
+          {subtitle && <p className="text-sm text-muted mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onRefresh && (
@@ -99,7 +95,10 @@ export default function PageHeader({
       {/* Tab Bar */}
       {tabs && tabs.length > 0 && (
         <div className="border-b border-border">
-          <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div
+            className="flex gap-1 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.key;
@@ -116,11 +115,13 @@ export default function PageHeader({
                   {Icon && <Icon size={16} />}
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                      isActive
-                        ? 'bg-primary-container text-primary-on-container'
-                        : 'bg-surface-variant text-muted'
-                    }`}>
+                    <span
+                      className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        isActive
+                          ? 'bg-primary-container text-primary-on-container'
+                          : 'bg-surface-variant text-muted'
+                      }`}
+                    >
                       {tab.count}
                     </span>
                   )}

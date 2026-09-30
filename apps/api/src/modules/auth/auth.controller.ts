@@ -1,4 +1,20 @@
-import { Controller, Post, Body, Get, Patch, Query, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile, Delete, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Patch,
+  Query,
+  Req,
+  UseGuards,
+  Res,
+  Inject,
+  UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -54,18 +70,14 @@ export class AuthController {
    * himpunan terbatas: success / unauthorized / internal. Error asli tetap
    * dilempar ulang sehingga kontrak API tidak berubah.
    */
-  private async withAuthMetric<T>(
-    operation: AuthOperation,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  private async withAuthMetric<T>(operation: AuthOperation, fn: () => Promise<T>): Promise<T> {
     const started = Date.now();
     try {
       const result = await fn();
       this.metrics.recordAuth(operation, 'success', Date.now() - started);
       return result;
     } catch (err) {
-      const result: AuthResult =
-        err instanceof UnauthorizedException ? 'unauthorized' : 'internal';
+      const result: AuthResult = err instanceof UnauthorizedException ? 'unauthorized' : 'internal';
       this.metrics.recordAuth(operation, result, Date.now() - started);
       throw err;
     }
@@ -75,7 +87,11 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60 } })
   @ApiOperation({ summary: 'Login pengguna' })
-  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     // Pass `res` so the service sets the HttpOnly cookie internally
     const result = await this.authService.login(dto, res, {
       ip: req.ip,
@@ -95,10 +111,15 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
-  async refresh(@Req() req: Request, @Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Body() dto: RefreshDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.withAuthMetric('refresh', async () => {
       // Mobile mengirim refreshToken via body; web via httpOnly cookie — terima keduanya
-      const refreshToken = dto.refreshToken || parseCookie(req.headers.cookie || '', 'refreshToken');
+      const refreshToken =
+        dto.refreshToken || parseCookie(req.headers.cookie || '', 'refreshToken');
       if (!refreshToken) {
         throw new UnauthorizedException('Refresh token tidak ditemukan');
       }
@@ -143,7 +164,11 @@ export class AuthController {
   @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Keluar — hapus refresh token (server + cookie)' })
-  async logout(@CurrentUser() user: { id: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @CurrentUser() user: { id: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.withAuthMetric('logout', async () => {
       const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
       this.authService.clearRefreshTokenCookie(res);
@@ -158,8 +183,7 @@ export class AuthController {
   @Get('session/verify')
   @Public()
   @ApiOperation({
-    summary:
-      'Verifikasi read-only refresh session (untuk Next.js proxy route gate)',
+    summary: 'Verifikasi read-only refresh session (untuk Next.js proxy route gate)',
   })
   async verifySession(@Req() req: Request) {
     return this.withAuthMetric('session_verify', async () => {
@@ -363,7 +387,9 @@ export class AuthController {
   @Public()
   @ApiOperation({ summary: 'Status provider autentikasi (publik)' })
   async getAuthProviders() {
-    const setting = await this.prisma.setting.findUnique({ where: { key: 'google_oauth_enabled' } });
+    const setting = await this.prisma.setting.findUnique({
+      where: { key: 'google_oauth_enabled' },
+    });
     return { googleOAuthEnabled: setting?.value !== false };
   }
 
@@ -385,20 +411,22 @@ export class AuthController {
       | ({ id: string; email: string; role: string } & Record<string, unknown>)
       | undefined;
     if (!user) {
-      return res.redirect(
-        `${this.envConfig.frontendUrl}/login?error=oauth_failed`,
-      );
+      return res.redirect(`${this.envConfig.frontendUrl}/login?error=oauth_failed`);
     }
 
     const tokens = await this.authService.generateTokens(user);
     this.authService.setRefreshTokenCookie(res, tokens.refreshToken);
-    this.authService.logAuthAudit('LOGIN', user.id, { method: 'google' }, {
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
-    });
+    this.authService.logAuthAudit(
+      'LOGIN',
+      user.id,
+      { method: 'google' },
+      {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+      },
+    );
 
     const redirectUrl = `${this.envConfig.frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`;
     return res.redirect(redirectUrl);
   }
-
 }

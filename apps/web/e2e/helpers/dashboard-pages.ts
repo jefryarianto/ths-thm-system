@@ -438,8 +438,22 @@ export async function registerDashboardPageMocks(page: Page) {
       body: JSON.stringify({
         success: true,
         data: [
-          { id: 'signer-1', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
-          { id: 'signer-2', nama: 'Pastor Moderator', jabatan: 'Moderator', isActive: false, distrikId: null, distrik: null },
+          {
+            id: 'signer-1',
+            nama: 'Koordinator Distrik A',
+            jabatan: 'Koordinator Distrik',
+            isActive: true,
+            distrikId: 'distrik-1',
+            distrik: { id: 'distrik-1', nama: 'Distrik A' },
+          },
+          {
+            id: 'signer-2',
+            nama: 'Pastor Moderator',
+            jabatan: 'Moderator',
+            isActive: false,
+            distrikId: null,
+            distrik: null,
+          },
         ],
       }),
     });
@@ -456,7 +470,13 @@ export async function registerDashboardPageMocks(page: Page) {
           {
             type: 'kartu_anggota',
             label: 'Kartu Anggota (KTA)',
-            signers: [{ penandatanganId: 'signer-1', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik' }],
+            signers: [
+              {
+                penandatanganId: 'signer-1',
+                nama: 'Koordinator Distrik A',
+                jabatan: 'Koordinator Distrik',
+              },
+            ],
           },
           {
             type: 'sertifikat_pendadaran',
@@ -508,10 +528,38 @@ export async function registerDashboardPageMocks(page: Page) {
       body: JSON.stringify({
         success: true,
         data: [
-          { id: 'j1', nama: 'Pastor Moderator', urutan: 0, distrikId: null, distrik: null, _count: { pengurus: 0 } },
-          { id: 'j2', nama: 'Koordinator Distrik', urutan: 1, distrikId: null, distrik: null, _count: { pengurus: 0 } },
-          { id: 'j3', nama: 'Sekretaris', urutan: 2, distrikId: null, distrik: null, _count: { pengurus: 0 } },
-          { id: 'j4', nama: 'Sekretaris', urutan: 0, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' }, _count: { pengurus: 0 } },
+          {
+            id: 'j1',
+            nama: 'Pastor Moderator',
+            urutan: 0,
+            distrikId: null,
+            distrik: null,
+            _count: { pengurus: 0 },
+          },
+          {
+            id: 'j2',
+            nama: 'Koordinator Distrik',
+            urutan: 1,
+            distrikId: null,
+            distrik: null,
+            _count: { pengurus: 0 },
+          },
+          {
+            id: 'j3',
+            nama: 'Sekretaris',
+            urutan: 2,
+            distrikId: null,
+            distrik: null,
+            _count: { pengurus: 0 },
+          },
+          {
+            id: 'j4',
+            nama: 'Sekretaris',
+            urutan: 0,
+            distrikId: 'distrik-1',
+            distrik: { id: 'distrik-1', nama: 'Distrik A' },
+            _count: { pengurus: 0 },
+          },
         ],
       }),
     });
@@ -573,8 +621,24 @@ export async function registerDashboardPageMocks(page: Page) {
       body: JSON.stringify({
         success: true,
         data: [
-          { id: 'sig-1', nama: 'Ketua THS', jabatan: 'Ketua', imagePath: 'sig-ketua.png', isActive: true, distrikId: null, distrik: null },
-          { id: 'sig-2', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik', imagePath: 'sig-koord.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+          {
+            id: 'sig-1',
+            nama: 'Ketua THS',
+            jabatan: 'Ketua',
+            imagePath: 'sig-ketua.png',
+            isActive: true,
+            distrikId: null,
+            distrik: null,
+          },
+          {
+            id: 'sig-2',
+            nama: 'Koordinator Distrik A',
+            jabatan: 'Koordinator Distrik',
+            imagePath: 'sig-koord.png',
+            isActive: true,
+            distrikId: 'distrik-1',
+            distrik: { id: 'distrik-1', nama: 'Distrik A' },
+          },
         ],
       }),
     });
@@ -588,8 +652,22 @@ export async function registerDashboardPageMocks(page: Page) {
       body: JSON.stringify({
         success: true,
         data: [
-          { id: 'stamp-1', nama: 'Stempel Resmi', imagePath: 'stempel-resmi.png', isActive: true, distrikId: null, distrik: null },
-          { id: 'stamp-2', nama: 'Stempel Distrik A', imagePath: 'stempel-a.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+          {
+            id: 'stamp-1',
+            nama: 'Stempel Resmi',
+            imagePath: 'stempel-resmi.png',
+            isActive: true,
+            distrikId: null,
+            distrik: null,
+          },
+          {
+            id: 'stamp-2',
+            nama: 'Stempel Distrik A',
+            imagePath: 'stempel-a.png',
+            isActive: true,
+            distrikId: 'distrik-1',
+            distrik: { id: 'distrik-1', nama: 'Distrik A' },
+          },
         ],
       }),
     });
@@ -602,7 +680,13 @@ export async function registerDashboardPageMocks(page: Page) {
       contentType: 'application/json',
       body: JSON.stringify({
         success: true,
-        data: { id: 'stamp-1', nama: 'Stempel THS-THM', imagePath: 'stempel-resmi.png', isActive: true, distrikId: null },
+        data: {
+          id: 'stamp-1',
+          nama: 'Stempel THS-THM',
+          imagePath: 'stempel-resmi.png',
+          isActive: true,
+          distrikId: null,
+        },
       }),
     });
   });

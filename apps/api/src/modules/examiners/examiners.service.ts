@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Optional,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
@@ -30,19 +25,23 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
     private readonly mailService: MailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'user',
-      prefix: 'examiners:',
-      notFound: 'Penguji tidak ditemukan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'user',
+        prefix: 'examiners:',
+        notFound: 'Penguji tidak ditemukan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hook: transform DTO before create ────────────────────
   // bcrypt password, set role='penguji'
 
-  protected async beforeCreate(
-    dto: CreateExaminerDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeCreate(dto: CreateExaminerDto): Promise<Record<string, unknown>> {
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
     return {
@@ -285,7 +284,9 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
       },
       orderBy: { kegiatan: { tanggalMulai: 'asc' } },
     });
-    const schedules = assignments.filter((a: { kegiatan: { tanggalMulai: Date } }) => a.kegiatan.tanggalMulai >= new Date());
+    const schedules = assignments.filter(
+      (a: { kegiatan: { tanggalMulai: Date } }) => a.kegiatan.tanggalMulai >= new Date(),
+    );
     return schedules;
   }
 

@@ -5,10 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
-import {
-  createDistributedLock,
-  createCronLockClient,
-} from '../../common/utils/distributed-lock';
+import { createDistributedLock, createCronLockClient } from '../../common/utils/distributed-lock';
 import { EmailBlastService, EmailBlastItem } from './email-blast.service';
 import { dataIncompleteEmail } from '../../mail/email-templates';
 
@@ -142,16 +139,22 @@ export class CronTasksService {
     // ── H-7: 7 days before next due date ─────────────────
     const in7Days = new Date(today);
     in7Days.setDate(in7Days.getDate() + 7);
-    await this.sendDueDateReminders(in7Days, 'H-7',
+    await this.sendDueDateReminders(
+      in7Days,
+      'H-7',
       'Pengingat Iuran (H-7)',
-      'Iuran Anda akan jatuh tempo dalam 7 hari. Segera persiapkan pembayaran.');
+      'Iuran Anda akan jatuh tempo dalam 7 hari. Segera persiapkan pembayaran.',
+    );
 
     // ── H-1: tomorrow ────────────────────────────────────
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    await this.sendDueDateReminders(tomorrow, 'H-1',
+    await this.sendDueDateReminders(
+      tomorrow,
+      'H-1',
       'Pengingat Iuran (H-1) — Jatuh Tempo Besok!',
-      'Iuran Anda jatuh tempo besok. Lakukan pembayaran sekarang untuk menghindari keterlambatan.');
+      'Iuran Anda jatuh tempo besok. Lakukan pembayaran sekarang untuk menghindari keterlambatan.',
+    );
 
     // ── H+7: unpaid for ≥7 days → escalate to menunggak ──
     const sevenDaysAgo = new Date(today);
@@ -304,14 +307,8 @@ export class CronTasksService {
     }
 
     if (items.length > 0) {
-      const enqueued = await this.emailBlast.enqueue(
-        'reminder_iuran',
-        dateKey(new Date()),
-        items,
-      );
-      this.logger.log(
-        `Dues reminder [current month]: ${enqueued}/${unpaidCount} antrean kirim`,
-      );
+      const enqueued = await this.emailBlast.enqueue('reminder_iuran', dateKey(new Date()), items);
+      this.logger.log(`Dues reminder [current month]: ${enqueued}/${unpaidCount} antrean kirim`);
     }
   }
 
@@ -354,7 +351,9 @@ export class CronTasksService {
       });
 
       const dateStr = training.hariTanggal.toLocaleDateString('id-ID', {
-        weekday: 'long', day: '2-digit', month: 'long',
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
       });
       const lokasi = training.lokasi || training.ranting?.nama || 'lokasi biasa';
       const materi = training.jenisMateri ? ` (${training.jenisMateri})` : '';
@@ -438,7 +437,8 @@ export class CronTasksService {
 
       // In-app notification tetap langsung (murah, tanpa email/FCM)
       await this.createNotification(
-        userId, 'data_incomplete',
+        userId,
+        'data_incomplete',
         '📋 Data Anggota Belum Lengkap',
         `Data keanggotaan Anda masih belum lengkap. Segera lengkapi: ${missingList}.`,
       );
@@ -582,8 +582,7 @@ export class CronTasksService {
   }
 
   private async cleanupStaleSessionsImpl(): Promise<void> {
-    const retentionDays =
-      Number(process.env.SESSION_RETENTION_DAYS) || SESSION_RETENTION_DAYS;
+    const retentionDays = Number(process.env.SESSION_RETENTION_DAYS) || SESSION_RETENTION_DAYS;
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - retentionDays);
@@ -595,9 +594,7 @@ export class CronTasksService {
 
     // Sesi revoked lama tidak lagi berguna untuk riwayat → hapus juga
     const revokedCutoff = new Date();
-    revokedCutoff.setDate(
-      revokedCutoff.getDate() - SESSION_REVOKED_RETENTION_DAYS,
-    );
+    revokedCutoff.setDate(revokedCutoff.getDate() - SESSION_REVOKED_RETENTION_DAYS);
     const revoked = await this.prisma.userSession.deleteMany({
       where: { revokedAt: { lt: revokedCutoff } },
     });
@@ -632,8 +629,7 @@ export class CronTasksService {
   }
 
   private async cleanupOldEmailLogsImpl(): Promise<void> {
-    const retentionDays =
-      Number(process.env.EMAIL_LOG_RETENTION_DAYS) || EMAIL_LOG_RETENTION_DAYS;
+    const retentionDays = Number(process.env.EMAIL_LOG_RETENTION_DAYS) || EMAIL_LOG_RETENTION_DAYS;
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - retentionDays);
@@ -644,9 +640,7 @@ export class CronTasksService {
 
     if (deleted.count === 0) return;
 
-    this.logger.log(
-      `Email log cleanup: ${deleted.count} baris (>${retentionDays} hari) dihapus`,
-    );
+    this.logger.log(`Email log cleanup: ${deleted.count} baris (>${retentionDays} hari) dihapus`);
 
     // Catat ke audit log (best-effort) agar eksekusi cron dapat diaudit
     await this.persistentAudit?.log({
@@ -676,7 +670,9 @@ export class CronTasksService {
         data: { userId, tipe: tipe as never, judul, isi },
       });
     } catch (error) {
-      this.logger.error(`Failed to create notification for user ${userId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to create notification for user ${userId}: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -724,7 +720,11 @@ export class CronTasksService {
       }
       // 4. Create user if not found
       if (!user) {
-        const fallbackEmail = email || (anggota.noHp ? `${anggota.noHp}@noemail.ths-thm.org` : `${anggota.id}@noemail.ths-thm.org`);
+        const fallbackEmail =
+          email ||
+          (anggota.noHp
+            ? `${anggota.noHp}@noemail.ths-thm.org`
+            : `${anggota.id}@noemail.ths-thm.org`);
         const bcrypt = await import('bcryptjs');
         const passwordHash = await bcrypt.hash('thsthm123456', 12);
         user = await this.prisma.user.create({
@@ -743,7 +743,9 @@ export class CronTasksService {
 
       return user.id;
     } catch (error) {
-      this.logger.error(`resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`);
+      this.logger.error(
+        `resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`,
+      );
       return null;
     }
   }

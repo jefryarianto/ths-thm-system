@@ -214,10 +214,10 @@ describe('MembersService', () => {
         nomorAnggota: '0114-0101-001-2026',
       });
 
-      const result = await service.create(
-        { namaLengkap: 'Test' },
-        { rantingId: 'r1', role: 'admin_ranting' } as any,
-      );
+      const result = await service.create({ namaLengkap: 'Test' }, {
+        rantingId: 'r1',
+        role: 'admin_ranting',
+      } as any);
 
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
     });
@@ -228,33 +228,31 @@ describe('MembersService', () => {
     // assert per-row behavior (ranting validation, NRA conversion, errors).
     const runImport = async (rows: any[], scope?: any) => {
       let capturedProcessor: any = null;
-      mockCsvImportService.importRows.mockImplementation(
-        async (_data: any[], options: any) => {
-          capturedProcessor = options.rowProcessor;
-          const result: any = { success: 0, incomplete: 0, errors: 0, warnings: 0, details: [] };
-          for (const row of _data) {
-            const helpers: any = {
-              email: row.email?.toString().trim().toLowerCase(),
-              namaLengkap: (row.nama_lengkap || row.nama || '').toString().trim().toLowerCase(),
-              addIntraCsv: jest.fn(),
-            };
-            const processed = await options.rowProcessor(row, helpers);
-            if (processed.skip) {
-              result.incomplete++;
-            } else if (processed.success) {
-              result.success++;
-              if (processed.warning) {
-                result.warnings++;
-                result.details.push({ row, error: '', warning: processed.warning });
-              }
-            } else {
-              result.errors++;
-              result.details.push({ row, error: processed.error });
+      mockCsvImportService.importRows.mockImplementation(async (_data: any[], options: any) => {
+        capturedProcessor = options.rowProcessor;
+        const result: any = { success: 0, incomplete: 0, errors: 0, warnings: 0, details: [] };
+        for (const row of _data) {
+          const helpers: any = {
+            email: row.email?.toString().trim().toLowerCase(),
+            namaLengkap: (row.nama_lengkap || row.nama || '').toString().trim().toLowerCase(),
+            addIntraCsv: jest.fn(),
+          };
+          const processed = await options.rowProcessor(row, helpers);
+          if (processed.skip) {
+            result.incomplete++;
+          } else if (processed.success) {
+            result.success++;
+            if (processed.warning) {
+              result.warnings++;
+              result.details.push({ row, error: '', warning: processed.warning });
             }
+          } else {
+            result.errors++;
+            result.details.push({ row, error: processed.error });
           }
-          return result;
-        },
-      );
+        }
+        return result;
+      });
       const result = await service.importCsv(rows, scope);
       return { result, processor: capturedProcessor };
     };
@@ -301,7 +299,12 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm1', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
+        return {
+          id: 'm1',
+          email: data.email,
+          namaLengkap: data.namaLengkap,
+          rantingId: data.rantingId,
+        };
       });
 
       const { result } = await runImport([
@@ -333,7 +336,12 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm2', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
+        return {
+          id: 'm2',
+          email: data.email,
+          namaLengkap: data.namaLengkap,
+          rantingId: data.rantingId,
+        };
       });
 
       const { result } = await runImport([
@@ -362,26 +370,34 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm3', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
+        return {
+          id: 'm3',
+          email: data.email,
+          namaLengkap: data.namaLengkap,
+          rantingId: data.rantingId,
+        };
       });
 
-      const { result } = await runImport([
+      const { result } = await runImport(
+        [
+          {
+            nama_lengkap: 'Scope Ranting',
+            jenis_kelamin: 'L',
+            email: 'scope@test.com',
+            tempat_lahir: 'Jakarta',
+            tanggal_lahir: '1990-01-15',
+            tempat_dadar: 'Bandung',
+            tahun_dadar: '2020',
+            alamat: 'Jl. Test No. 1',
+            no_hp: '081234567890',
+            tingkat: 'Pratama',
+          },
+        ],
         {
-          nama_lengkap: 'Scope Ranting',
-          jenis_kelamin: 'L',
-          email: 'scope@test.com',
-          tempat_lahir: 'Jakarta',
-          tanggal_lahir: '1990-01-15',
-          tempat_dadar: 'Bandung',
-          tahun_dadar: '2020',
-          alamat: 'Jl. Test No. 1',
-          no_hp: '081234567890',
-          tingkat: 'Pratama',
+          rantingId: 'r1',
+          role: 'admin_ranting',
         },
-      ], {
-        rantingId: 'r1',
-        role: 'admin_ranting',
-      });
+      );
 
       expect(result.success).toBe(1);
       expect(createdData.rantingId).toBe('r1');
@@ -391,7 +407,10 @@ describe('MembersService', () => {
       mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
       mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
       mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', email: 'new@test.com' });
-      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm99', nomorAnggota: '0114-0101-999-2020' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({
+        id: 'm99',
+        nomorAnggota: '0114-0101-999-2020',
+      });
 
       const { result } = await runImport([
         {
@@ -463,11 +482,15 @@ describe('MembersService', () => {
       const result = await service.getDocuments('m1');
     });
 
-    it('should throw ForbiddenException when anggota requests another member\'s documents', async () => {
+    it("should throw ForbiddenException when anggota requests another member's documents", async () => {
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm1' });
       mockPrisma.anggota.findMany.mockResolvedValue([]);
       await expect(
-        service.getDocuments('m2', { email: 'jefry@gmail.com', namaLengkap: 'Jefry Arianto Baba', role: 'anggota' }),
+        service.getDocuments('m2', {
+          email: 'jefry@gmail.com',
+          namaLengkap: 'Jefry Arianto Baba',
+          role: 'anggota',
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -482,7 +505,11 @@ describe('MembersService', () => {
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm1' });
       mockPrisma.anggota.findMany.mockResolvedValue([]);
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'i1', jumlah: 100000 }]);
-      const result = await service.getDues('m1', { email: 'jefry@gmail.com', namaLengkap: 'Jefry Arianto Baba', role: 'anggota' });
+      const result = await service.getDues('m1', {
+        email: 'jefry@gmail.com',
+        namaLengkap: 'Jefry Arianto Baba',
+        role: 'anggota',
+      });
       expect(result).toHaveLength(1);
     });
   });
@@ -493,7 +520,10 @@ describe('MembersService', () => {
       nomorAnggota: '001-1994',
       namaLengkap: 'Jefry Arianto Baba',
       email: null,
-      ranting: { nama: 'Ranting Test', wilayah: { nama: 'Wilayah Test', distrik: { nama: 'Distrik Test' } } },
+      ranting: {
+        nama: 'Ranting Test',
+        wilayah: { nama: 'Wilayah Test', distrik: { nama: 'Distrik Test' } },
+      },
     };
 
     it('should return member by exact email match', async () => {
@@ -544,7 +574,9 @@ describe('MembersService', () => {
     it('should ignore client distrikId filter outside the admin scope', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([]);
       mockPrisma.anggota.count.mockResolvedValue(0);
-      mockScopeHelper.buildScopeFilter.mockReturnValue({ ranting: { wilayah: { distrikId: 'd1' } } });
+      mockScopeHelper.buildScopeFilter.mockReturnValue({
+        ranting: { wilayah: { distrikId: 'd1' } },
+      });
 
       await service.findAll({ distrikId: 'd-other' } as any, { distrikId: 'd1' });
 

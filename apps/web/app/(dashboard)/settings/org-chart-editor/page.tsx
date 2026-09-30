@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '@/lib/api-client';
-import { GripVertical, ChevronDown, ChevronRight, Users, Building2, MapPin, RefreshCw, ArrowUpDown } from 'lucide-react';
+import {
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  Building2,
+  MapPin,
+  RefreshCw,
+  ArrowUpDown,
+} from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { useToast } from '@/components/ui/toast';
@@ -36,7 +45,7 @@ export default function OrgChartEditorPage() {
   const [wilayahId, setWilayahId] = useState('');
   const [rantingId, setRantingId] = useState('');
   const [periodeId, setPeriodeId] = useState('');
-  
+
   // Role-based scope locking
   const { user } = useAuth();
   const userRole = user?.role || '';
@@ -52,22 +61,40 @@ export default function OrgChartEditorPage() {
 
   // Load dropdowns
   useEffect(() => {
-    apiClient.get('/org-structure/distrik').then(({ data }) => setDistriks(data.data || [])).catch(() => {});
-    apiClient.get('/periode').then(({ data }) => {
-      setPeriodes(data.data || []);
-      const active = (data.data || []).find((p: any) => p.isActive);
-      if (active) setPeriodeId(active.id);
-    }).catch(() => {});
+    apiClient
+      .get('/org-structure/distrik')
+      .then(({ data }) => setDistriks(data.data || []))
+      .catch(() => {});
+    apiClient
+      .get('/periode')
+      .then(({ data }) => {
+        setPeriodes(data.data || []);
+        const active = (data.data || []).find((p: any) => p.isActive);
+        if (active) setPeriodeId(active.id);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!distrikId) { setWilayahs([]); return; }
-    apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`).then(({ data }) => setWilayahs(data.data || [])).catch(() => {});
+    if (!distrikId) {
+      setWilayahs([]);
+      return;
+    }
+    apiClient
+      .get(`/org-structure/wilayah?distrikId=${distrikId}`)
+      .then(({ data }) => setWilayahs(data.data || []))
+      .catch(() => {});
   }, [distrikId]);
 
   useEffect(() => {
-    if (!wilayahId) { setRantings([]); return; }
-    apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`).then(({ data }) => setRantings(data.data || [])).catch(() => {});
+    if (!wilayahId) {
+      setRantings([]);
+      return;
+    }
+    apiClient
+      .get(`/org-structure/ranting?wilayahId=${wilayahId}`)
+      .then(({ data }) => setRantings(data.data || []))
+      .catch(() => {});
   }, [wilayahId]);
 
   // Resolve user scope on mount for scoped roles
@@ -77,31 +104,34 @@ export default function OrgChartEditorPage() {
       return;
     }
     // Fetch ranting → wilayah → distrik chain
-    apiClient.get(`/org-structure/ranting/${user.rantingId}`).then(({ data }) => {
-      const ranting = data.data || data;
-      const wilayahId = ranting?.wilayahId || ranting?.wilayah?.id || '';
-      const distrikId = ranting?.wilayah?.distrikId || ranting?.wilayah?.distrik?.id || '';
-      
-      if (isRantingScoped) {
-        setLevel('ranting');
-        if (distrikId) setDistrikId(distrikId);
-        // Set wilayah after distrik loads
-        if (wilayahId) {
-          // Need to wait for distrik effect to load wilayahs
-          setTimeout(() => setWilayahId(wilayahId), 100);
-          setTimeout(() => setRantingId(user.rantingId!), 200);
+    apiClient
+      .get(`/org-structure/ranting/${user.rantingId}`)
+      .then(({ data }) => {
+        const ranting = data.data || data;
+        const wilayahId = ranting?.wilayahId || ranting?.wilayah?.id || '';
+        const distrikId = ranting?.wilayah?.distrikId || ranting?.wilayah?.distrik?.id || '';
+
+        if (isRantingScoped) {
+          setLevel('ranting');
+          if (distrikId) setDistrikId(distrikId);
+          // Set wilayah after distrik loads
+          if (wilayahId) {
+            // Need to wait for distrik effect to load wilayahs
+            setTimeout(() => setWilayahId(wilayahId), 100);
+            setTimeout(() => setRantingId(user.rantingId!), 200);
+          }
+        } else if (isWilayahScoped) {
+          setLevel('wilayah');
+          if (distrikId) setDistrikId(distrikId);
+          if (wilayahId) setTimeout(() => setWilayahId(wilayahId), 100);
         }
-      } else if (isWilayahScoped) {
-        setLevel('wilayah');
-        if (distrikId) setDistrikId(distrikId);
-        if (wilayahId) setTimeout(() => setWilayahId(wilayahId), 100);
-      }
-      setScopeResolved(true);
-    }).catch(() => {
-      setScopeResolved(true);
-    });
+        setScopeResolved(true);
+      })
+      .catch(() => {
+        setScopeResolved(true);
+      });
   }, [isScoped, user?.rantingId, isRantingScoped, isWilayahScoped]);
-  
+
   // Fetch kepengurusan and build tree
   const fetchTree = useCallback(async () => {
     setLoading(true);
@@ -125,7 +155,13 @@ export default function OrgChartEditorPage() {
           jabatan: item.jabatan?.nama || '-',
           jabatanId: item.jabatanId,
           unitName: item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || '-',
-          level: item.rantingId ? 'ranting' : item.wilayahId ? 'wilayah' : item.distrikId ? 'distrik' : 'nasional',
+          level: item.rantingId
+            ? 'ranting'
+            : item.wilayahId
+              ? 'wilayah'
+              : item.distrikId
+                ? 'distrik'
+                : 'nasional',
           startDate: item.startDate,
           endDate: item.endDate,
           parentId: item.parentId,
@@ -157,13 +193,16 @@ export default function OrgChartEditorPage() {
     setLoading(false);
   }, [level, distrikId, wilayahId, rantingId, periodeId]);
 
-  useEffect(() => { fetchTree(); }, [fetchTree]);
+  useEffect(() => {
+    fetchTree();
+  }, [fetchTree]);
 
   // Toggle expand/collapse
   const toggleExpand = (id: string) => {
     setExpandedNodes((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -210,7 +249,9 @@ export default function OrgChartEditorPage() {
     }
 
     try {
-      await apiClient.patch(`/kepengurusan/${draggedNode.id}/reparent`, { parentId: targetNode.id });
+      await apiClient.patch(`/kepengurusan/${draggedNode.id}/reparent`, {
+        parentId: targetNode.id,
+      });
       toast('success', `${draggedNode.nama} dipindahkan ke bawahan ${targetNode.nama}`);
       fetchTree();
     } catch (e: any) {
@@ -259,14 +300,19 @@ export default function OrgChartEditorPage() {
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, node)}
           className={`flex items-center gap-2 p-3 mb-1 rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
-            isDragOver ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 ring-2 ring-indigo-300' :
-            isExpired ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60' :
-            'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+            isDragOver
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 ring-2 ring-indigo-300'
+              : isExpired
+                ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60'
+                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
           }`}
         >
           <GripVertical size={16} className="text-gray-400 flex-shrink-0" />
           {hasChildren && (
-            <button onClick={() => toggleExpand(node.id)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            <button
+              onClick={() => toggleExpand(node.id)}
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
               {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
           )}
@@ -276,18 +322,26 @@ export default function OrgChartEditorPage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">{node.nama}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{node.jabatan}</span>
-              {isExpired && <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">Selesai</span>}
+              <span className="font-medium text-gray-900 dark:text-gray-100 text-sm truncate">
+                {node.nama}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {node.jabatan}
+              </span>
+              {isExpired && (
+                <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
+                  Selesai
+                </span>
+              )}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">{node.unitName}</div>
           </div>
-          <div className="text-xs text-gray-400">{node.children.length > 0 && `${node.children.length} bawahan`}</div>
+          <div className="text-xs text-gray-400">
+            {node.children.length > 0 && `${node.children.length} bawahan`}
+          </div>
         </div>
         {isExpanded && hasChildren && (
-          <div>
-            {node.children.map((child) => renderNode(child, depth + 1))}
-          </div>
+          <div>{node.children.map((child) => renderNode(child, depth + 1))}</div>
         )}
       </div>
     );
@@ -304,52 +358,93 @@ export default function OrgChartEditorPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Level</label>
-            <select value={level} onChange={(e) => setLevel(e.target.value as any)}
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Level
+            </label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value as any)}
               disabled={isScoped}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
-              {(!isWilayahScoped) && <option value="distrik">Distrik</option>}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {!isWilayahScoped && <option value="distrik">Distrik</option>}
               <option value="wilayah">Wilayah</option>
-              {(!isWilayahScoped) && <option value="ranting">Ranting</option>}
+              {!isWilayahScoped && <option value="ranting">Ranting</option>}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Distrik</label>
-            <select value={distrikId} onChange={(e) => setDistrikId(e.target.value)}
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Distrik
+            </label>
+            <select
+              value={distrikId}
+              onChange={(e) => setDistrikId(e.target.value)}
               disabled={isScoped}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <option value="">Semua</option>
-              {distriks.map((d) => <option key={d.id} value={d.id}>{d.nama}</option>)}
+              {distriks.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nama}
+                </option>
+              ))}
             </select>
           </div>
           {(level === 'wilayah' || level === 'ranting') && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Wilayah</label>
-              <select value={wilayahId} onChange={(e) => setWilayahId(e.target.value)}
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Wilayah
+              </label>
+              <select
+                value={wilayahId}
+                onChange={(e) => setWilayahId(e.target.value)}
                 disabled={isRantingScoped}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <option value="">Semua</option>
-                {wilayahs.map((w) => <option key={w.id} value={w.id}>{w.nama}</option>)}
+                {wilayahs.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.nama}
+                  </option>
+                ))}
               </select>
             </div>
           )}
           {level === 'ranting' && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ranting</label>
-              <select value={rantingId} onChange={(e) => setRantingId(e.target.value)}
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Ranting
+              </label>
+              <select
+                value={rantingId}
+                onChange={(e) => setRantingId(e.target.value)}
                 disabled={isRantingScoped}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <option value="">Semua</option>
-                {rantings.map((r) => <option key={r.id} value={r.id}>{r.nama}</option>)}
+                {rantings.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nama}
+                  </option>
+                ))}
               </select>
             </div>
           )}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Periode</label>
-            <select value={periodeId} onChange={(e) => setPeriodeId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Periode
+            </label>
+            <select
+              value={periodeId}
+              onChange={(e) => setPeriodeId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
               <option value="">Semua</option>
-              {periodes.map((p) => <option key={p.id} value={p.id}>{p.nama} {p.isActive ? '(Aktif)' : ''}</option>)}
+              {periodes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nama} {p.isActive ? '(Aktif)' : ''}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -358,11 +453,13 @@ export default function OrgChartEditorPage() {
       {/* Instructions */}
       <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 text-sm text-blue-800 dark:text-blue-200">
         <ArrowUpDown size={16} className="inline mr-2" />
-        <strong>Cara menggunakan:</strong> Seret node ke node lain untuk menjadikan bawahan. Seret ke root area untuk memindahkan ke tingkat atas.
+        <strong>Cara menggunakan:</strong> Seret node ke node lain untuk menjadikan bawahan. Seret
+        ke root area untuk memindahkan ke tingkat atas.
       </div>
 
       {/* Tree */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[400px]"
+      <div
+        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 min-h-[400px]"
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDropToRoot}
       >
@@ -377,8 +474,10 @@ export default function OrgChartEditorPage() {
 
       {/* Action bar */}
       <div className="flex justify-end gap-3 mt-4">
-        <button onClick={fetchTree}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+        <button
+          onClick={fetchTree}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+        >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>

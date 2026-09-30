@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
 import {
@@ -38,13 +28,23 @@ export class GraduationsController {
    * - penguji: kegiatan WHERE ada PenugasanPenguji dengan pengujiUserId = userId
    */
   @Get('my')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Kegiatan yang ditugaskan untuk user yang login' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Kegiatan yang ditugaskan untuk user yang login' },
+  )
   findMyKegiatan(@Req() req: ScopedRequest) {
     return this.service.findMyKegiatan(req.user?.id || '', req.user?.role || '');
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua wisuda' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil semua wisuda',
+  })
   findAll(@Query() query: GraduationFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(query, req.scope, req.user?.id, req.user?.role);
   }
@@ -57,7 +57,8 @@ export class GraduationsController {
    */
   @Get('admin-kegiatan-options')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
-    summary: 'Opsi admin kegiatan — dipilih admin distrik/superadmin dari anggota aktif dalam distrik',
+    summary:
+      'Opsi admin kegiatan — dipilih admin distrik/superadmin dari anggota aktif dalam distrik',
   })
   getAdminKegiatanOptions(
     @Req() req: ScopedRequest,
@@ -69,25 +70,33 @@ export class GraduationsController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail wisuda' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil detail wisuda',
+  })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Perbarui pendadaran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Perbarui pendadaran',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateGraduationDto, @Req() req: ScopedRequest) {
     return this.service.update(id, dto, req.scope);
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah wisuda baru — hanya superadmin & admin_distrik' })
+  @CrudAuth('superadmin', 'admin_distrik', {
+    summary: 'Tambah wisuda baru — hanya superadmin & admin_distrik',
+  })
   create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) {
     return this.service.create(dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus / batalkan pendadaran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Hapus / batalkan pendadaran',
+  })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.delete(id, req.scope);
   }
@@ -95,41 +104,73 @@ export class GraduationsController {
   // ── Participant endpoints ──
 
   @Post(':id/register')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftarkan peserta wisuda (dari calon yang sudah terdaftar)' })
-  register(@Param('id') id: string, @Body() dto: RegisterParticipantDto, @Req() req: ScopedRequest) {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Daftarkan peserta wisuda (dari calon yang sudah terdaftar)',
+  })
+  register(
+    @Param('id') id: string,
+    @Body() dto: RegisterParticipantDto,
+    @Req() req: ScopedRequest,
+  ) {
     return this.service.registerParticipant(id, dto, req.scope, req.user?.id);
   }
 
   @Post(':id/participants')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah peserta manual (calon baru langsung dari pendadaran)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Tambah peserta manual (calon baru langsung dari pendadaran)',
+  })
   @ApiBody({ type: CreateParticipantDto, description: 'Data calon anggota baru' })
-  createParticipant(@Param('id') id: string, @Body() dto: CreateParticipantDto, @Req() req: ScopedRequest) {
+  createParticipant(
+    @Param('id') id: string,
+    @Body() dto: CreateParticipantDto,
+    @Req() req: ScopedRequest,
+  ) {
     return this.service.createParticipant(id, dto, req.scope, req.user?.id);
   }
 
   @Get(':id/participants/eligible')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftar calon yang bisa ditarik ke pendadaran ini (belum terdaftar)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Daftar calon yang bisa ditarik ke pendadaran ini (belum terdaftar)',
+  })
   getEligibleParticipants(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getEligibleParticipants(id, req.scope);
   }
 
   @Post(':id/unregister')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Batalkan pendaftaran wisuda' })
-  unregister(@Param('id') id: string, @Body() dto: RegisterParticipantDto, @Req() req: ScopedRequest) {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Batalkan pendaftaran wisuda',
+  })
+  unregister(
+    @Param('id') id: string,
+    @Body() dto: RegisterParticipantDto,
+    @Req() req: ScopedRequest,
+  ) {
     return this.service.unregisterParticipant(id, dto, req.scope);
   }
 
   @Get(':id/participants')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil peserta wisuda' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Ambil peserta wisuda' },
+  )
   getParticipants(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getParticipants(id, req.scope);
   }
 
   @Post(':id/participants/import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor peserta wisuda (candidateId = tarik existing; baris data lengkap = buat calon baru)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary:
+      'Impor peserta wisuda (candidateId = tarik existing; baris data lengkap = buat calon baru)',
+  })
   importParticipants(
     @Param('id') id: string,
-    @Body() importDto: {
+    @Body()
+    importDto: {
       data: Array<{
         candidateId?: string;
         id?: string;
@@ -151,7 +192,9 @@ export class GraduationsController {
   // ── Graduate & Documents ──
 
   @Post(':id/graduate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Proses kelulusan (hitung skor & ranking, buat HasilPendadaran pending)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Proses kelulusan (hitung skor & ranking, buat HasilPendadaran pending)',
+  })
   graduate(@Param('id') id: string, @Body() dto: GraduateDto, @Req() req: ScopedRequest) {
     return this.service.graduate(id, dto, req.scope);
   }
@@ -161,7 +204,9 @@ export class GraduationsController {
    * - Approve + lulus → otomatis buat Anggota (NRA) + generate sertifikat.
    */
   @Post(':id/validate-result')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Validasi (approve/reject) hasil pendadaran oleh admin' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Validasi (approve/reject) hasil pendadaran oleh admin',
+  })
   validateResult(
     @Param('id') id: string,
     @Body() dto: ValidateResultDto,
@@ -171,19 +216,19 @@ export class GraduationsController {
   }
 
   @Post(':id/generate-docs')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Generate sertifikat batch untuk lulus+approved' })
-  generateDocs(
-    @Param('id') id: string,
-    @Body() dto: GenerateDocsDto,
-    @Req() req: ScopedRequest,
-  ) {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Generate sertifikat batch untuk lulus+approved',
+  })
+  generateDocs(@Param('id') id: string, @Body() dto: GenerateDocsDto, @Req() req: ScopedRequest) {
     return this.service.generateDocuments(id, dto, req.scope);
   }
 
   // ── Results (HasilPendadaran + status validasi) ──
 
   @Get(':id/results')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil hasil pendadaran beserta status validasi' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil hasil pendadaran beserta status validasi',
+  })
   getResults(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getResults(id, req.scope);
   }
@@ -191,7 +236,15 @@ export class GraduationsController {
   // ── Evaluations (Nilai aspek & item penilaian) — didokumentasikan di API.md ──
 
   @Get(':id/evaluations')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Nilai evaluasi / penilaian pendadaran' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Nilai evaluasi / penilaian pendadaran' },
+  )
   getEvaluations(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getEvaluations(id, req.scope);
   }
@@ -199,19 +252,40 @@ export class GraduationsController {
   // ── Score Progress ──
 
   @Get(':id/aspek-count')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Jumlah aspek penilaian yang TERKONFIGURASI untuk pendadaran (independen skor; fallback ke template global)' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    {
+      summary:
+        'Jumlah aspek penilaian yang TERKONFIGURASI untuk pendadaran (independen skor; fallback ke template global)',
+    },
+  )
   getAspekCount(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getAspekCount(id, req.scope);
   }
 
   @Post(':id/clone-aspek')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Salin aspek & item penilaian dari template global ke pendadaran ini (idempoten)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Salin aspek & item penilaian dari template global ke pendadaran ini (idempoten)',
+  })
   cloneAspek(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.cloneAspekTemplate(id, req.scope);
   }
 
   @Get(':id/score-progress')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Progress pengisian nilai penguji secara real-time' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Progress pengisian nilai penguji secara real-time' },
+  )
   getScoreProgress(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getScoreProgress(id, req.scope);
   }
@@ -219,19 +293,33 @@ export class GraduationsController {
   // ── Workflow pendadaran: pengajuan & persetujuan penguji, nilai, dan pengajuan ke distrik ──
 
   @Get(':id/examiners')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar penguji pendadaran beserta status persetujuan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Daftar penguji pendadaran beserta status persetujuan' },
+  )
   getExaminers(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getExaminers(id, req.scope);
   }
 
   @Get(':id/examiner-candidates')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Kandidat penguji: manajemen penguji aktif + anggota hadir + anggota terdaftar pada kegiatan (yang punya akun)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary:
+      'Kandidat penguji: manajemen penguji aktif + anggota hadir + anggota terdaftar pada kegiatan (yang punya akun)',
+  })
   getExaminerCandidates(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getExaminerCandidates(id, req.scope);
   }
 
   @Post(':id/examiners')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan mengajukan penguji (status pending, menunggu persetujuan admin distrik)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary:
+      'Admin kegiatan mengajukan penguji (status pending, menunggu persetujuan admin distrik)',
+  })
   proposeExaminer(
     @Param('id') id: string,
     @Body() dto: { pengujiUserId: string; peran?: string; catatan?: string },
@@ -241,7 +329,10 @@ export class GraduationsController {
   }
 
   @Post(':id/examiners/manual')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Superadmin/admin distrik menambahkan penguji secara manual — langsung approved, pilih dari kandidat terdaftar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary:
+      'Superadmin/admin distrik menambahkan penguji secara manual — langsung approved, pilih dari kandidat terdaftar',
+  })
   addExaminerManually(
     @Param('id') id: string,
     @Body() dto: { pengujiUserId: string; peran?: string; catatan?: string },
@@ -251,7 +342,10 @@ export class GraduationsController {
   }
 
   @Post(':id/examiners/from-member')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ajukan/tambah penguji langsung dari anggota terdaftar — akun dibuat/dipromosikan lalu ditugaskan (pending utk admin kegiatan, approved utk level di atasnya)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary:
+      'Ajukan/tambah penguji langsung dari anggota terdaftar — akun dibuat/dipromosikan lalu ditugaskan (pending utk admin kegiatan, approved utk level di atasnya)',
+  })
   addExaminerFromMember(
     @Param('id') id: string,
     @Body() dto: { anggotaId: string; peran?: string; catatan?: string },
@@ -264,7 +358,9 @@ export class GraduationsController {
   }
 
   @Post(':id/examiners/:penugasanId/review')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Admin distrik menyetujui / menolak pengajuan penguji',
+  })
   reviewExaminer(
     @Param('id') id: string,
     @Param('penugasanId') penugasanId: string,
@@ -275,13 +371,17 @@ export class GraduationsController {
   }
 
   @Post(':id/scores/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui seluruh nilai penguji' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Admin distrik menyetujui seluruh nilai penguji',
+  })
   approveScores(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.approveScores(id, req.user?.id, req.scope);
   }
 
   @Post(':id/submit-results')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan mengajukan seluruh nilai ke admin distrik untuk review & approve' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Admin kegiatan mengajukan seluruh nilai ke admin distrik untuk review & approve',
+  })
   submitResults(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.submitResults(id, req.user?.id, req.scope);
   }
@@ -290,39 +390,75 @@ export class GraduationsController {
 
   /** Undangan untuk anggota yang sedang login (self-scope) — semua role termasuk anggota. */
   @Get(':id/qr')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'QR absensi pendadaran (data URL) untuk ditampilkan admin' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'QR absensi pendadaran (data URL) untuk ditampilkan admin',
+  })
   getQr(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getQrDataUrl(id, req.scope);
   }
 
   @Post(':id/checkin')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'QR absensi pendadaran — catat kehadiran anggota yang login (self check-in)' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'QR absensi pendadaran — catat kehadiran anggota yang login (self check-in)',
+    },
+  )
   checkInByQr(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.checkInByQr(id, req.user?.id || '', req.scope);
   }
 
   @Get('invitations/me')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Daftar undangan pendadaran untuk user yang login' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Daftar undangan pendadaran untuk user yang login' },
+  )
   getMyInvitations(@Req() req: ScopedRequest) {
     return this.service.getMyInvitations(req.user.id);
   }
 
   @Get(':id/invitations')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftar undangan untuk satu pendadaran (semua status)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Daftar undangan untuk satu pendadaran (semua status)',
+  })
   getInvitations(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getInvitations(id, req.scope);
   }
 
   /** Generate undangan manual (kriteria: masa anggota >2 tahun dari tahun dadar ATAU tingkat Pratama). */
   @Post(':id/invitations/generate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Generate undangan pendadaran (otomatis saat H-7 / manual oleh admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Generate undangan pendadaran (otomatis saat H-7 / manual oleh admin)',
+  })
   generateInvitations(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.generateInvitations(id, req.scope);
   }
 
   /** Konfirmasi kehadiran — anggota sendiri (self) ATAU pencatatan manual oleh admin. */
   @Post(':id/invitations/:invitationId/confirm')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Konfirmasi kehadiran undangan (anggota self / admin manual)' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Konfirmasi kehadiran undangan (anggota self / admin manual)' },
+  )
   confirmInvitation(
     @Param('id') id: string,
     @Param('invitationId') invitationId: string,
@@ -330,9 +466,13 @@ export class GraduationsController {
     @Req() req: ScopedRequest,
   ) {
     // Admin yang mencatat manual → manualOleh diisi nama/email admin.
-    const isAdmin = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan'].includes(
-      req.user?.role || '',
-    );
+    const isAdmin = [
+      'superadmin',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+    ].includes(req.user?.role || '');
     return this.service.confirmInvitation(
       id,
       invitationId,

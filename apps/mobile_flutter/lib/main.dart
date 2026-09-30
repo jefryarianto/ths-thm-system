@@ -53,6 +53,8 @@ import 'presentation/screens/claims_admin_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/berita_detail_screen.dart';
+import 'presentation/screens/berita/berita_submit_screen.dart';
+import 'presentation/screens/berita/berita_status_screen.dart';
 import 'presentation/screens/kegiatan_detail_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
 import 'presentation/screens/verification_result_screen.dart';
@@ -295,6 +297,14 @@ class AppRouter {
         builder: (context, state) =>
             KegiatanDetailScreen(id: state.pathParameters['id']!),
       ),
+      GoRoute(
+        path: '/berita/submit',
+        builder: (context, state) => const BeritaSubmitScreen(),
+      ),
+      GoRoute(
+        path: '/berita/status',
+        builder: (context, state) => const BeritaStatusScreen(),
+      ),
       // ── Publik: Registrasi & Klaim ──
       GoRoute(
         path: '/register',
@@ -365,3 +375,4 @@ class AppRouter {
         location == '/claim-account';
   }
 }
+

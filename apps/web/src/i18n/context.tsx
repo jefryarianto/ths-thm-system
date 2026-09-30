@@ -38,11 +38,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocale,
   };
 
-  return (
-    <I18nContext.Provider value={value}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {
@@ -56,13 +52,13 @@ export function useI18n() {
 // Client-side initialization component
 export function LocaleInitializer() {
   const { setLocale } = useI18n();
-  
+
   useEffect(() => {
     const saved = localStorage.getItem('ths-thm-locale') as Locale;
     if (saved && (saved === 'id' || saved === 'en')) {
       setLocale(saved);
     }
   }, [setLocale]);
-  
+
   return null;
 }

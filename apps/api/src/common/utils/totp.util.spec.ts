@@ -1,4 +1,10 @@
-import { generateTotpSecret, generateTotpCode, verifyTotpCode, buildOtpauthUrl, base32Decode } from './totp.util';
+import {
+  generateTotpSecret,
+  generateTotpCode,
+  verifyTotpCode,
+  buildOtpauthUrl,
+  base32Decode,
+} from './totp.util';
 
 describe('totp.util', () => {
   it('should generate a base32 secret of valid length', () => {

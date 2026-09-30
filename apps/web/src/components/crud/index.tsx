@@ -15,7 +15,14 @@ interface DetailLayoutProps {
   headerRight?: ReactNode;
 }
 
-export function DetailLayout({ backHref, backLabel, title, subtitle, children, headerRight }: DetailLayoutProps) {
+export function DetailLayout({
+  backHref,
+  backLabel,
+  title,
+  subtitle,
+  children,
+  headerRight,
+}: DetailLayoutProps) {
   return (
     <div className="space-y-6">
       <Link
@@ -29,13 +36,9 @@ export function DetailLayout({ backHref, backLabel, title, subtitle, children, h
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-text">{title}</h1>
-          {subtitle && (
-            <p className="text-sm text-muted mt-0.5">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-muted mt-0.5">{subtitle}</p>}
         </div>
-        {headerRight && (
-          <div className="flex items-center gap-2">{headerRight}</div>
-        )}
+        {headerRight && <div className="flex items-center gap-2">{headerRight}</div>}
       </div>
 
       {children}
@@ -147,9 +150,7 @@ export function FormLayout({
         </Link>
         <div>
           <h1 className="text-xl font-semibold text-text">{title}</h1>
-          {subtitle && (
-            <p className="text-sm text-muted mt-0.5">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-muted mt-0.5">{subtitle}</p>}
         </div>
       </div>
 
@@ -246,10 +247,19 @@ interface MiniStatCardProps {
 
 const STAT_COLORS: Record<string, { bg: string; text: string }> = {
   blue: { bg: 'bg-primary-50 dark:bg-primary-950', text: 'text-primary dark:text-primary-300' },
-  green: { bg: 'bg-success-50 dark:bg-success-950', text: 'text-success-600 dark:text-success-400' },
-  purple: { bg: 'bg-secondary-50 dark:bg-secondary-950', text: 'text-secondary-600 dark:text-secondary-400' },
+  green: {
+    bg: 'bg-success-50 dark:bg-success-950',
+    text: 'text-success-600 dark:text-success-400',
+  },
+  purple: {
+    bg: 'bg-secondary-50 dark:bg-secondary-950',
+    text: 'text-secondary-600 dark:text-secondary-400',
+  },
   red: { bg: 'bg-error-50 dark:bg-error-950', text: 'text-error-600 dark:text-error-400' },
-  yellow: { bg: 'bg-warning-50 dark:bg-warning-950', text: 'text-warning-600 dark:text-warning-400' },
+  yellow: {
+    bg: 'bg-warning-50 dark:bg-warning-950',
+    text: 'text-warning-600 dark:text-warning-400',
+  },
   orange: { bg: 'bg-warning-50 dark:bg-warning-950', text: 'text-warning dark:text-warning-300' },
 };
 

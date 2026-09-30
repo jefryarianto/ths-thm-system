@@ -37,7 +37,10 @@ function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   try {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      audioCtx = new (
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      )();
     }
     // Resume if suspended (browser autoplay policy)
     if (audioCtx.state === 'suspended') {

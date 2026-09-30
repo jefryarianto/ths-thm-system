@@ -61,7 +61,8 @@ export class RevisionController {
   @RequireScope('national')
   @ApiOperation({
     summary: 'Pulihkan data ke nilai lama dari sebuah revisi',
-    description: 'Hanya field yang berubah pada revisi tersebut yang dikembalikan. Membuat jejak revisi RESTORE.',
+    description:
+      'Hanya field yang berubah pada revisi tersebut yang dikembalikan. Membuat jejak revisi RESTORE.',
   })
   restore(@Body() dto: RestoreRevisionDto, @Req() req: ScopedRequest) {
     return this.revisionService.restore(dto.entity, dto.entityId, dto.id, req.user?.id);

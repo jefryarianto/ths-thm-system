@@ -112,15 +112,21 @@ export default function FcmTestPage() {
 
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{tokens?.total || 0}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {tokens?.total || 0}
+            </p>
             <p className="text-xs text-gray-500 mt-1">Total Devices</p>
           </div>
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{tokens?.active || 0}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {tokens?.active || 0}
+            </p>
             <p className="text-xs text-gray-500 mt-1">Active</p>
           </div>
           <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{tokens?.inactive || 0}</p>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {tokens?.inactive || 0}
+            </p>
             <p className="text-xs text-gray-500 mt-1">Inactive</p>
           </div>
         </div>
@@ -130,7 +136,9 @@ export default function FcmTestPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Send size={18} className="text-blue-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Kirim Test Push</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Kirim Test Push
+          </h3>
         </div>
 
         <div className="space-y-4">
@@ -185,24 +193,22 @@ export default function FcmTestPage() {
             disabled={sending || !tokens?.active}
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition"
           >
-            {sending ? (
-              <RefreshCw size={16} className="animate-spin" />
-            ) : (
-              <Send size={16} />
-            )}
+            {sending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
             {sending ? 'Mengirim...' : 'Kirim Test Push'}
           </button>
         </div>
 
         {/* Result */}
         {lastResult && (
-          <div className={`mt-4 p-4 rounded-lg border ${
-            lastResult.failureCount === 0 && lastResult.successCount > 0
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-              : lastResult.successCount > 0
-                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-          }`}>
+          <div
+            className={`mt-4 p-4 rounded-lg border ${
+              lastResult.failureCount === 0 && lastResult.successCount > 0
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                : lastResult.successCount > 0
+                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+            }`}
+          >
             <div className="flex items-center gap-2 mb-2">
               {lastResult.failureCount === 0 && lastResult.successCount > 0 ? (
                 <CheckCircle size={18} className="text-green-600" />
@@ -245,7 +251,9 @@ export default function FcmTestPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
           <Smartphone size={18} className="text-purple-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Registered Devices</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Registered Devices
+          </h3>
         </div>
 
         {loading ? (
@@ -263,21 +271,34 @@ export default function FcmTestPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">User</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">Platform</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">Token</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">Registered</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    User
+                  </th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Platform
+                  </th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Token
+                  </th>
+                  <th className="text-center py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Registered
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {tokens?.tokens.map((t) => (
-                  <tr key={t.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <tr
+                    key={t.id}
+                    className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                  >
                     <td className="py-2.5 px-3">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{t.user.namaLengkap}</div>
-                      {t.user.email && (
-                        <div className="text-xs text-gray-500">{t.user.email}</div>
-                      )}
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        {t.user.namaLengkap}
+                      </div>
+                      {t.user.email && <div className="text-xs text-gray-500">{t.user.email}</div>}
                     </td>
                     <td className="py-2.5 px-3">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
@@ -299,7 +320,11 @@ export default function FcmTestPage() {
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right text-xs text-gray-500">
-                      {new Date(t.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      {new Date(t.createdAt).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </td>
                   </tr>
                 ))}

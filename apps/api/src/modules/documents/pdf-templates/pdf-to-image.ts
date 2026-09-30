@@ -42,9 +42,12 @@ export async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
       // Poppler pdftoppm: konversi halaman 1, 300 DPI, output page-1.png
       await execFileAsync('pdftoppm', [
         '-png',
-        '-r', '300',
-        '-f', '1',
-        '-l', '1',
+        '-r',
+        '300',
+        '-f',
+        '1',
+        '-l',
+        '1',
         pdfPath,
         path.join(tmpDir, 'page'),
       ]);

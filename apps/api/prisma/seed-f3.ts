@@ -14,8 +14,20 @@ const aspekSeed = [
     namaAspek: 'Keorganisasian THS-HT',
     bobot: 40,
     items: [
-      { kodeItem: 'F3-ITM-A1', namaItem: 'Pemahaman Sejarah THS', skorMaksimal: 100, bobot: 50, urutan: 1 },
-      { kodeItem: 'F3-ITM-A2', namaItem: 'Pemahaman Asas & Dasar', skorMaksimal: 100, bobot: 50, urutan: 2 },
+      {
+        kodeItem: 'F3-ITM-A1',
+        namaItem: 'Pemahaman Sejarah THS',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 1,
+      },
+      {
+        kodeItem: 'F3-ITM-A2',
+        namaItem: 'Pemahaman Asas & Dasar',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 2,
+      },
     ],
   },
   {
@@ -23,9 +35,27 @@ const aspekSeed = [
     namaAspek: 'Konsep & Praktik Fasilitasi',
     bobot: 60,
     items: [
-      { kodeItem: 'F3-ITM-B1', namaItem: 'Perencanaan Fasilitasi', skorMaksimal: 100, bobot: 40, urutan: 1 },
-      { kodeItem: 'F3-ITM-B2', namaItem: 'Teknik Presentasi', skorMaksimal: 100, bobot: 30, urutan: 2 },
-      { kodeItem: 'F3-ITM-B3', namaItem: 'Penanganan Dinamika Kelompok', skorMaksimal: 100, bobot: 30, urutan: 3 },
+      {
+        kodeItem: 'F3-ITM-B1',
+        namaItem: 'Perencanaan Fasilitasi',
+        skorMaksimal: 100,
+        bobot: 40,
+        urutan: 1,
+      },
+      {
+        kodeItem: 'F3-ITM-B2',
+        namaItem: 'Teknik Presentasi',
+        skorMaksimal: 100,
+        bobot: 30,
+        urutan: 2,
+      },
+      {
+        kodeItem: 'F3-ITM-B3',
+        namaItem: 'Penanganan Dinamika Kelompok',
+        skorMaksimal: 100,
+        bobot: 30,
+        urutan: 3,
+      },
     ],
   },
 ];
@@ -175,7 +205,9 @@ async function main() {
   console.log('Login penguji :', PENGUJI_EMAIL, '/', PENGUJI_PASSWORD);
   console.log('Kegiatan      :', KEGIATAN_NAMA, '(', kegiatan.id, ')');
   console.log('Calon anggota :', calon.calonAnggotaId);
-  console.log('Langkah: login > menu Pendadaran > buka kegiatan di atas > tombol "Input Nilai Penguji"');
+  console.log(
+    'Langkah: login > menu Pendadaran > buka kegiatan di atas > tombol "Input Nilai Penguji"',
+  );
 }
 
 main()

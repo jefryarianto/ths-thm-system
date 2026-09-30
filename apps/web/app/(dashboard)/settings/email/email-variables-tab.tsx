@@ -19,9 +19,7 @@ const TEMPLATE_DOCS: TemplateDoc[] = [
     name: 'welcomeMemberEmail',
     label: 'Welcome Anggota',
     category: 'Keanggotaan',
-    variables: [
-      { name: 'nama', description: 'Nama lengkap anggota' },
-    ],
+    variables: [{ name: 'nama', description: 'Nama lengkap anggota' }],
   },
   {
     name: 'approvedMemberEmail',
@@ -45,9 +43,7 @@ const TEMPLATE_DOCS: TemplateDoc[] = [
     name: 'registrationApprovedEmail',
     label: 'Registrasi Disetujui',
     category: 'Keanggotaan',
-    variables: [
-      { name: 'nama', description: 'Nama lengkap pendaftar' },
-    ],
+    variables: [{ name: 'nama', description: 'Nama lengkap pendaftar' }],
   },
   {
     name: 'registrationRejectedEmail',
@@ -253,17 +249,21 @@ export default function EmailVariablesTab() {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         {Object.entries(
-          TEMPLATE_DOCS.reduce((acc, t) => {
-            if (!acc[t.category]) acc[t.category] = [];
-            acc[t.category].push(t);
-            return acc;
-          }, {} as Record<string, TemplateDoc[]>)
+          TEMPLATE_DOCS.reduce(
+            (acc, t) => {
+              if (!acc[t.category]) acc[t.category] = [];
+              acc[t.category].push(t);
+              return acc;
+            },
+            {} as Record<string, TemplateDoc[]>,
+          ),
         ).map(([category, templates]) => (
-          <div key={category} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
+          <div
+            key={category}
+            className="border-b border-gray-200 dark:border-gray-700 last:border-0"
+          >
             <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                {category}
-              </h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{category}</h3>
             </div>
             {templates.map((tpl) => (
               <div
@@ -281,16 +281,13 @@ export default function EmailVariablesTab() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                   {tpl.variables.map((v) => (
-                    <div
-                      key={v.name}
-                      className="flex items-center gap-2 text-xs"
-                    >
+                    <div key={v.name} className="flex items-center gap-2 text-xs">
                       <code className="px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded font-mono whitespace-nowrap">
-                        {'{{'}{v.name}{'}}'}
+                        {'{{'}
+                        {v.name}
+                        {'}}'}
                       </code>
-                      <span className="text-gray-500 dark:text-gray-400">
-                        {v.description}
-                      </span>
+                      <span className="text-gray-500 dark:text-gray-400">{v.description}</span>
                     </div>
                   ))}
                 </div>

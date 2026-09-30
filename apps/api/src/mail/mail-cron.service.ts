@@ -3,10 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailService } from './mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../modules/notifications/notifications.service';
-import {
-  createDistributedLock,
-  createCronLockClient,
-} from '../common/utils/distributed-lock';
+import { createDistributedLock, createCronLockClient } from '../common/utils/distributed-lock';
 
 /** Baca env integer positif; fallback ke default (paritas dengan MailService). */
 function positiveIntEnv(name: string, fallback: number): number {
@@ -19,8 +16,7 @@ export class MailCronService {
   private readonly logger = new Logger(MailCronService.name);
 
   /** Jendela usia email yang layak auto-retry — harus SAMA dengan MailService (env sama). */
-  private readonly maxAgeMs =
-    positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
+  private readonly maxAgeMs = positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
   /**
    * Guard overlap siklus retry 30-menit (pelajaran insiden 2026-09);
    * dengan CRON_DISTRIBUTED_LOCK=true jadi lock SETNX via Valkey.

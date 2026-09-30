@@ -47,24 +47,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Grafik pertumbuhan anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   async getMembersOverTime() {
-    const data = await this.prisma.anggota.groupBy({
-      by: ['createdAt'],
-      _count: true,
-      where: { deletedAt: null },
-    });
-
-    const grouped = data.reduce(
-      (acc, item) => {
-        const month = new Date(item.createdAt).toISOString().slice(0, 7);
-        acc[month] = (acc[month] || 0) + item._count;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-
-    return Object.entries(grouped)
-      .map(([month, count]) => ({ month, count }))
-      .sort((a, b) => a.month.localeCompare(b.month));
+    return this.reportsService.getMembersOverTime();
   }
 
   @Get('chart/training-attendance')
@@ -121,7 +104,10 @@ export class ReportsController {
     if (fmt === 'csv') {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     } else {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
     }
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(content);

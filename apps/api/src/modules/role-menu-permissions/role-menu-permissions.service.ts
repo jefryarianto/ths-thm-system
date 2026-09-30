@@ -117,7 +117,7 @@ export class RoleMenuPermissionsService {
    */
   async seedFromMinRoleConfig(
     menuConfig: Record<string, string>,
-    roleHierarchy: Record<string, number>
+    roleHierarchy: Record<string, number>,
   ): Promise<number> {
     const existingCount = await this.prisma.roleMenuPermission.count();
     if (existingCount > 0) {

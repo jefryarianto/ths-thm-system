@@ -3,8 +3,17 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  CheckCircle2, Shield, UserX, Eye, MoreVertical, Edit, Trash2,
-  IdCard, FileText, ArrowLeftRight, Image
+  CheckCircle2,
+  Shield,
+  UserX,
+  Eye,
+  MoreVertical,
+  Edit,
+  Trash2,
+  IdCard,
+  FileText,
+  ArrowLeftRight,
+  Image,
 } from 'lucide-react';
 import { Can } from '@/components/auth/can';
 
@@ -56,18 +65,29 @@ export default function MemberActions({
 
   const menuItems = [
     { label: 'Lihat Detail', icon: Eye, action: () => onViewDetail(member.id) },
-    { label: 'Edit Anggota', icon: Edit, action: () => router.push(`/members/${member.id}/edit`), minRole: 'admin_ranting' as const },
-    { label: 'Kartu Digital (KTA)', icon: IdCard, action: () => window.open(`/members/${member.id}?tab=card`, '_blank') },
+    {
+      label: 'Edit Anggota',
+      icon: Edit,
+      action: () => router.push(`/members/${member.id}/edit`),
+      minRole: 'admin_ranting' as const,
+    },
+    {
+      label: 'Kartu Digital (KTA)',
+      icon: IdCard,
+      action: () => window.open(`/members/${member.id}?tab=card`, '_blank'),
+    },
     { label: 'Dokumen', icon: FileText, action: () => onViewDetail(member.id) },
     ...(onMutate
       ? [{ label: 'Mutasi', icon: ArrowLeftRight, action: () => onMutate!(member.id) }]
       : []),
     ...(onUploadPhoto
-      ? [{
-          label: 'Ubah Foto',
-          icon: Image,
-          action: () => fileInputRef.current?.click(),
-        }]
+      ? [
+          {
+            label: 'Ubah Foto',
+            icon: Image,
+            action: () => fileInputRef.current?.click(),
+          },
+        ]
       : []),
     ...(member.statusValidasi === 'pending'
       ? [{ label: 'Setujui', icon: CheckCircle2, action: () => onAction(member.id, 'approve') }]
@@ -112,7 +132,11 @@ export default function MemberActions({
         </button>
         {showMenu && (
           <>
-            <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} aria-hidden="true" />
+            <div
+              className="fixed inset-0 z-50"
+              onClick={() => setShowMenu(false)}
+              aria-hidden="true"
+            />
             <div
               style={menuStyle}
               className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
@@ -123,9 +147,14 @@ export default function MemberActions({
                   <button
                     key={i}
                     title={item.label}
-                    onClick={() => { setShowMenu(false); item.action(); }}
+                    onClick={() => {
+                      setShowMenu(false);
+                      item.action();
+                    }}
                     className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                      item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+                      item.danger
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-700 dark:text-gray-300'
                     }`}
                     role="menuitem"
                   >

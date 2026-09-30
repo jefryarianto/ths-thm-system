@@ -1,4 +1,4 @@
-import { Page, type Route } from "@playwright/test";
+import { Page, type Route } from '@playwright/test';
 
 /**
  * Mock endpoint alur pendaftaran publik.
@@ -10,16 +10,16 @@ import { Page, type Route } from "@playwright/test";
  *  - POST /api/registrations            — kirim pendaftaran (dulu: /api/pendaftaran)
  */
 export async function registerRegistrationMocks(page: Page) {
-  await page.route("**/api/public/struktur/distrik**", async (route) => {
-    if (route.request().method() === "GET") {
+  await page.route('**/api/public/struktur/distrik**', async (route) => {
+    if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({
           success: true,
           data: [
-            { id: "distrik-1", nama: "Distrik E2E Satu" },
-            { id: "distrik-2", nama: "Distrik E2E Dua" },
+            { id: 'distrik-1', nama: 'Distrik E2E Satu' },
+            { id: 'distrik-2', nama: 'Distrik E2E Dua' },
           ],
         }),
       });
@@ -28,16 +28,16 @@ export async function registerRegistrationMocks(page: Page) {
     }
   });
 
-  await page.route("**/api/public/struktur/wilayah**", async (route) => {
-    if (route.request().method() === "GET") {
+  await page.route('**/api/public/struktur/wilayah**', async (route) => {
+    if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({
           success: true,
           data: [
-            { id: "wilayah-1", nama: "Wilayah E2E Satu", distrikId: "distrik-1" },
-            { id: "wilayah-2", nama: "Wilayah E2E Dua", distrikId: "distrik-1" },
+            { id: 'wilayah-1', nama: 'Wilayah E2E Satu', distrikId: 'distrik-1' },
+            { id: 'wilayah-2', nama: 'Wilayah E2E Dua', distrikId: 'distrik-1' },
           ],
         }),
       });
@@ -46,16 +46,16 @@ export async function registerRegistrationMocks(page: Page) {
     }
   });
 
-  await page.route("**/api/public/struktur/ranting**", async (route) => {
-    if (route.request().method() === "GET") {
+  await page.route('**/api/public/struktur/ranting**', async (route) => {
+    if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({
           success: true,
           data: [
-            { id: "ranting-e2e-1", nama: "Ranting E2E Satu", wilayahId: "wilayah-1" },
-            { id: "ranting-e2e-2", nama: "Ranting E2E Dua", wilayahId: "wilayah-1" },
+            { id: 'ranting-e2e-1', nama: 'Ranting E2E Satu', wilayahId: 'wilayah-1' },
+            { id: 'ranting-e2e-2', nama: 'Ranting E2E Dua', wilayahId: 'wilayah-1' },
           ],
         }),
       });
@@ -66,27 +66,27 @@ export async function registerRegistrationMocks(page: Page) {
 
   // Catatan: glob Playwright tidak mendukung alternasi "(a|b)" — dua route eksplisit.
   const mockRegistrationPost = async (route: Route) => {
-    if (route.request().method() === "POST") {
+    if (route.request().method() === 'POST') {
       await route.fulfill({
         status: 201,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          message: "Pendaftaran berhasil",
+          message: 'Pendaftaran berhasil',
         }),
       });
     } else {
       await route.continue();
     }
   };
-  await page.route("**/api/registrations", mockRegistrationPost);
-  await page.route("**/api/pendaftaran", mockRegistrationPost);
+  await page.route('**/api/registrations', mockRegistrationPost);
+  await page.route('**/api/pendaftaran', mockRegistrationPost);
 
-  await page.route("**/api/auth/set-session-cookie**", async (route) => {
-    if (route.request().method() === "POST") {
+  await page.route('**/api/auth/set-session-cookie**', async (route) => {
+    if (route.request().method() === 'POST') {
       await route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({ success: true }),
       });
     } else {

@@ -12,7 +12,11 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
-import { graduationResultEmail, graduationRegisteredEmail, credentialEmail } from '../../mail/email-templates';
+import {
+  graduationResultEmail,
+  graduationRegisteredEmail,
+  credentialEmail,
+} from '../../mail/email-templates';
 import * as QRCode from 'qrcode';
 import { DocumentsService } from '../documents/documents.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -66,12 +70,18 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     private readonly examinersService: ExaminersService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'kegiatan',
-      prefix: 'graduations:',
-      notFound: 'Pendadaran tidak ditemukan',
-      scopeStrategy: 'kegiatan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'kegiatan',
+        prefix: 'graduations:',
+        notFound: 'Pendadaran tidak ditemukan',
+        scopeStrategy: 'kegiatan',
+      },
+      persistentAudit,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -114,7 +124,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       lokasi: dto.lokasi,
       tanggalMulai: new Date(dto.tanggalMulai),
       // tanggalSelesai is required in schema — fall back to tanggalMulai if not provided
-      tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : new Date(dto.tanggalMulai),
+      tanggalSelesai: dto.tanggalSelesai
+        ? new Date(dto.tanggalSelesai)
+        : new Date(dto.tanggalMulai),
       scopeType: resolvedScopeType,
       scopeId: resolvedScopeId,
       createdBy: userId || 'system',
@@ -504,11 +516,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   async findOne(id: string, scope?: UserScope) {
-    return this.baseFindOne(
-      id,
-      scope,
-      { adminKegiatan: { select: { id: true, namaLengkap: true, email: true } } },
-    );
+    return this.baseFindOne(id, scope, {
+      adminKegiatan: { select: { id: true, namaLengkap: true, email: true } },
+    });
   }
 
   async create(dto: CreateGraduationDto, scope?: UserScope, userId?: string) {
@@ -582,7 +592,11 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
       this.invalidateCache();
       await this.downgradeAdminKegiatanIfNeeded(grad.adminKegiatanId);
-      return { deleted: false, status: 'cancelled', reason: 'Memiliki data terkait (hasil/nilai/ujian)' };
+      return {
+        deleted: false,
+        status: 'cancelled',
+        reason: 'Memiliki data terkait (hasil/nilai/ujian)',
+      };
     }
 
     await this.prisma.kegiatan.delete({ where: { id: grad.id } });
@@ -591,7 +605,6 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     await this.downgradeAdminKegiatanIfNeeded(grad.adminKegiatanId);
     return { deleted: true };
   }
-
 
   /**
    * Hapus (soft via baseRemove) + auto-downgrade admin kegiatan per-call.
@@ -898,7 +911,8 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const errors: string[] = [];
 
     for (const row of data) {
-      const label = row.candidateId || row.nama_lengkap || row.nama || row.name || 'baris tanpa nama';
+      const label =
+        row.candidateId || row.nama_lengkap || row.nama || row.name || 'baris tanpa nama';
       try {
         const candidateId = row.candidateId || row.id;
 
@@ -1010,10 +1024,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scoreMap = new Map<string, number>();
     for (const n of nilaiList) {
-      scoreMap.set(
-        n.calonAnggotaId,
-        (scoreMap.get(n.calonAnggotaId) ?? 0) + Number(n.skor),
-      );
+      scoreMap.set(n.calonAnggotaId, (scoreMap.get(n.calonAnggotaId) ?? 0) + Number(n.skor));
     }
 
     // Determine totals (user-supplied or computed) then derive ranking by score desc.
@@ -1022,13 +1033,15 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       totalSkor:
         r.totalSkor !== undefined && r.totalSkor > 0
           ? r.totalSkor
-          : scoreMap.get(r.candidateId) ?? 0,
+          : (scoreMap.get(r.candidateId) ?? 0),
       ranking: r.ranking,
       lulus: r.lulus,
     }));
 
     // If NO ranking was supplied at all, compute rankings from totals (rank #1 = highest).
-    const anyRankingSupplied = (dto.results || []).some((r) => r.ranking !== undefined && r.ranking > 0);
+    const anyRankingSupplied = (dto.results || []).some(
+      (r) => r.ranking !== undefined && r.ranking > 0,
+    );
     if (!anyRankingSupplied) {
       const sorted = [...computed].sort((a, b) => b.totalSkor - a.totalSkor);
       const rankOf = new Map<string, number>();
@@ -1193,7 +1206,12 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
     for (const r of results) {
       try {
-        await this.ensureAnggotaAndDocument(graduationId, r.calonAnggotaId, r.totalSkor, r.calonAnggota);
+        await this.ensureAnggotaAndDocument(
+          graduationId,
+          r.calonAnggotaId,
+          r.totalSkor,
+          r.calonAnggota,
+        );
         generated++;
       } catch (error) {
         errors.push(`${r.calonAnggotaId}: ${(error as Error).message}`);
@@ -1334,7 +1352,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
     }
 
-    this.logger.log(`Generated KTA + sertifikat + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`);
+    this.logger.log(
+      `Generated KTA + sertifikat + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`,
+    );
   }
 
   private predicateFromScore(skor: number): string {
@@ -1343,7 +1363,10 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     return 'Lulus';
   }
 
-  private async buildAspectScores(kegiatanId: string, calonAnggotaId: string): Promise<AspectScore[]> {
+  private async buildAspectScores(
+    kegiatanId: string,
+    calonAnggotaId: string,
+  ): Promise<AspectScore[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nilai: any[] = await this.prisma.nilaiPendadaran.findMany({
       where: { kegiatanId, calonAnggotaId },
@@ -1440,9 +1463,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const registeredIds = new Set(registered.map((r) => r.id));
 
     // Resolve User untuk anggota hadir via email (batch — hindari N+1)
-    const attendeeEmails = hadir
-      .map((inv) => inv.anggota.email)
-      .filter((e): e is string => !!e);
+    const attendeeEmails = hadir.map((inv) => inv.anggota.email).filter((e): e is string => !!e);
     const usersByEmail = new Map<string, string>();
     if (attendeeEmails.length > 0) {
       const users = await this.prisma.user.findMany({
@@ -1492,10 +1513,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       for (const u of users) usersByEmail.set(u.email, u.id);
     }
 
-    const listedIds = new Set<string>([
-      ...registeredIds,
-      ...fromAttendance.map((a) => a.id),
-    ]);
+    const listedIds = new Set<string>([...registeredIds, ...fromAttendance.map((a) => a.id)]);
     const fromRegistered: Array<{
       id: string;
       namaLengkap: string;
@@ -1558,7 +1576,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   ) {
     const grad = await this.getGraduationOrThrow(graduationId, scope);
     if (grad.status === 'closed' || grad.status === 'cancelled') {
-      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat mengajukan penguji.');
+      throw new BadRequestException(
+        'Pendadaran sudah ditutup/dibatalkan. Tidak dapat mengajukan penguji.',
+      );
     }
 
     const penguji = await this.prisma.user.findUnique({
@@ -1648,7 +1668,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   ) {
     const grad = await this.getGraduationOrThrow(graduationId, scope);
     if (grad.status === 'closed' || grad.status === 'cancelled') {
-      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.');
+      throw new BadRequestException(
+        'Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.',
+      );
     }
 
     const anggota = await this.prisma.anggota.findFirst({
@@ -1702,7 +1724,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   ) {
     const grad = await this.getGraduationOrThrow(graduationId, scope);
     if (grad.status === 'closed' || grad.status === 'cancelled') {
-      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.');
+      throw new BadRequestException(
+        'Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.',
+      );
     }
 
     const penguji = await this.prisma.user.findUnique({
@@ -1938,7 +1962,12 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     }
 
     // Compute ranking and kelulusan
-    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking: number; lulus: boolean }> = [];
+    const totals: Array<{
+      calonAnggotaId: string;
+      totalSkor: number;
+      ranking: number;
+      lulus: boolean;
+    }> = [];
     for (const [calonAnggotaId, totalSkor] of scoreMap.entries()) {
       const max = maxMap.get(calonAnggotaId) ?? 0;
       const pct = max > 0 ? (totalSkor / max) * 100 : 0;
@@ -2005,7 +2034,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       where: { kegiatanId: graduationId, statusValidasi: 'approved' },
     });
     if (approvedCount === 0) {
-      throw new BadRequestException('Belum ada nilai yang disetujui. Setujui nilai penguji terlebih dahulu.');
+      throw new BadRequestException(
+        'Belum ada nilai yang disetujui. Setujui nilai penguji terlebih dahulu.',
+      );
     }
 
     const updated = await this.prisma.kegiatan.update({
@@ -2034,7 +2065,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
    */
   private async autoComputeResults(
     graduationId: string,
-  ): Promise<Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number; lulus: boolean }>> {
+  ): Promise<
+    Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number; lulus: boolean }>
+  > {
     const nilai = await this.prisma.nilaiPendadaran.findMany({
       where: { kegiatanId: graduationId, statusValidasi: 'approved' },
       select: {
@@ -2057,12 +2090,16 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
         (maxMap.get(n.calonAnggotaId) ?? 0) + Number(n.itemPenilaian?.skorMaksimal ?? 100),
       );
     }
-    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number; lulus: boolean }> =
-      Array.from(scoreMap.entries()).map(([calonAnggotaId, totalSkor]) => {
-        const max = maxMap.get(calonAnggotaId) ?? 0;
-        const pct = max > 0 ? (totalSkor / max) * 100 : 0;
-        return { calonAnggotaId, totalSkor, lulus: pct >= 60 };
-      });
+    const totals: Array<{
+      calonAnggotaId: string;
+      totalSkor: number;
+      ranking?: number;
+      lulus: boolean;
+    }> = Array.from(scoreMap.entries()).map(([calonAnggotaId, totalSkor]) => {
+      const max = maxMap.get(calonAnggotaId) ?? 0;
+      const pct = max > 0 ? (totalSkor / max) * 100 : 0;
+      return { calonAnggotaId, totalSkor, lulus: pct >= 60 };
+    });
 
     // Ranking: skor tertinggi = #1
     totals.sort((a, b) => b.totalSkor - a.totalSkor);
@@ -2086,7 +2123,15 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       where: { kegiatanId: graduationId },
       include: {
         anggota: {
-          select: { id: true, namaLengkap: true, nomorAnggota: true, tingkat: true, tahunDadar: true, email: true, noHp: true },
+          select: {
+            id: true,
+            namaLengkap: true,
+            nomorAnggota: true,
+            tingkat: true,
+            tahunDadar: true,
+            email: true,
+            noHp: true,
+          },
         },
       },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
@@ -2102,7 +2147,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   async generateInvitations(graduationId: string, scope?: UserScope) {
     const grad = await this.getGraduationOrThrow(graduationId, scope);
     if (grad.status === 'cancelled' || grad.status === 'closed') {
-      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat membuat undangan.');
+      throw new BadRequestException(
+        'Pendadaran sudah ditutup/dibatalkan. Tidak dapat membuat undangan.',
+      );
     }
 
     const currentYear = new Date().getFullYear();
@@ -2266,7 +2313,13 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
     } else {
       invitation = await this.prisma.undanganPendadaran.create({
-        data: { kegiatanId: graduationId, anggotaId: anggota.id, status: 'hadir', konfirmasiAt: new Date(), konfirmasiOleh: userId },
+        data: {
+          kegiatanId: graduationId,
+          anggotaId: anggota.id,
+          status: 'hadir',
+          konfirmasiAt: new Date(),
+          konfirmasiOleh: userId,
+        },
       });
     }
 
@@ -2301,7 +2354,14 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       where: { anggotaId: anggota.id },
       include: {
         kegiatan: {
-          select: { id: true, nama: true, lokasi: true, tanggalMulai: true, tanggalSelesai: true, status: true },
+          select: {
+            id: true,
+            nama: true,
+            lokasi: true,
+            tanggalMulai: true,
+            tanggalSelesai: true,
+            status: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -2340,13 +2400,17 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
         });
       }
     } catch (error) {
-      this.logger.warn(`Invitation in-app notif failed for ${member.id}: ${(error as Error).message}`);
+      this.logger.warn(
+        `Invitation in-app notif failed for ${member.id}: ${(error as Error).message}`,
+      );
       if (userId) {
         try {
           await this.prisma.notifikasi.create({
             data: { userId, tipe: 'umum', judul, isi },
           });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     }
 
@@ -2355,7 +2419,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       try {
         await this.sendGraduationInvitationEmail(member, grad, tanggal, lokasi);
       } catch (error) {
-        this.logger.warn(`Invitation email failed for ${member.email}: ${(error as Error).message}`);
+        this.logger.warn(
+          `Invitation email failed for ${member.email}: ${(error as Error).message}`,
+        );
       }
     }
   }
@@ -2398,7 +2464,11 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
       // 4. Create user if not found (auto-provision account so push/in-app still work)
       if (!user) {
-        const fallbackEmail = email || (anggota.noHp ? `${anggota.noHp}@noemail.ths-thm.org` : `${anggota.id}@noemail.ths-thm.org`);
+        const fallbackEmail =
+          email ||
+          (anggota.noHp
+            ? `${anggota.noHp}@noemail.ths-thm.org`
+            : `${anggota.id}@noemail.ths-thm.org`);
         const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
         user = await this.prisma.user.create({
           data: {
@@ -2416,7 +2486,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
       return user.id;
     } catch (error) {
-      this.logger.warn(`resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`);
+      this.logger.warn(
+        `resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`,
+      );
       return null;
     }
   }
@@ -2494,7 +2566,8 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       select: { id: true, items: { select: { id: true } } },
     });
     const totalItemsPerUjian = ujianList.map((u) => ({ id: u.id, itemCount: u.items.length }));
-    const totalExpectedScores = totalParticipants * totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0);
+    const totalExpectedScores =
+      totalParticipants * totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0);
 
     // 3. Actual scores entered
     const scores = await this.prisma.nilaiPendadaran.findMany({
@@ -2509,7 +2582,10 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const totalEntered = scores.length;
 
     // 4. Per-penguji progress
-    const pengujiMap = new Map<string, { id: string; nama: string; entered: number; expected: number }>();
+    const pengujiMap = new Map<
+      string,
+      { id: string; nama: string; entered: number; expected: number }
+    >();
     // Initialize all approved penguji with 0
     const approvedExaminers = await this.prisma.penugasanPenguji.findMany({
       where: { kegiatanId: graduationId, status: 'approved' },
@@ -2549,7 +2625,8 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       totalItems: totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0),
       totalExpectedScores,
       totalEntered,
-      percentage: totalExpectedScores > 0 ? Math.round((totalEntered / totalExpectedScores) * 100) : 0,
+      percentage:
+        totalExpectedScores > 0 ? Math.round((totalEntered / totalExpectedScores) * 100) : 0,
       perPenguji,
     };
   }
@@ -2593,7 +2670,12 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       clonedAspects: cloned.clonedAspects,
       clonedItems: cloned.clonedItems,
     });
-    return { skipped: false, total, clonedAspects: cloned.clonedAspects, clonedItems: cloned.clonedItems };
+    return {
+      skipped: false,
+      total,
+      clonedAspects: cloned.clonedAspects,
+      clonedItems: cloned.clonedItems,
+    };
   }
 
   async getAspekCount(graduationId: string, scope?: UserScope) {
@@ -2620,7 +2702,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const results = await this.prisma.nilaiPendadaran.findMany({
       where: { kegiatanId: graduationId },
       include: {
-        calonAnggota: { select: { id: true, namaLengkap: true, ranting: { select: { nama: true } } } },
+        calonAnggota: {
+          select: { id: true, namaLengkap: true, ranting: { select: { nama: true } } },
+        },
         itemPenilaian: {
           select: {
             namaItem: true,

@@ -1,6 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, createContext, useContext, type ReactNode } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  createContext,
+  useContext,
+  type ReactNode,
+} from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 // ─── Types ───
@@ -54,14 +62,10 @@ const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 const TOAST_STYLES: Record<ToastType, string> = {
-  success:
-    'border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-950/80',
-  error:
-    'border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-950/80',
-  info:
-    'border-info-200 bg-info-50 dark:border-info-800 dark:bg-info-950/80',
-  warning:
-    'border-warning-200 bg-warning-50 dark:border-warning-800 dark:bg-warning-950/80',
+  success: 'border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-950/80',
+  error: 'border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-950/80',
+  info: 'border-info-200 bg-info-50 dark:border-info-800 dark:bg-info-950/80',
+  warning: 'border-warning-200 bg-warning-50 dark:border-warning-800 dark:bg-warning-950/80',
 };
 
 const TOAST_ICON_BG: Record<ToastType, string> = {
@@ -281,7 +285,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       {/* Toast Container — center of screen (live region for screen readers) */}
       {toasts.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" role="status" aria-live="polite" aria-atomic="false">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          role="status"
+          aria-live="polite"
+          aria-atomic="false"
+        >
           <div className="flex flex-col gap-3 max-w-sm w-full px-4 pointer-events-auto">
             {toasts.map((t) => (
               <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />

@@ -67,7 +67,13 @@ export interface CsvImportResult {
   incomplete: number;
   errors: number;
   warnings: number;
-  details: Array<{ row: unknown; error: string; warning?: string; missingFields?: string[]; memberId?: string }>;
+  details: Array<{
+    row: unknown;
+    error: string;
+    warning?: string;
+    missingFields?: string[];
+    memberId?: string;
+  }>;
 }
 
 // ─── Unified Import Pipeline — field & config interfaces ───
@@ -154,7 +160,9 @@ export class CsvImportService {
    */
   registerModuleConfig(config: ImportModuleConfig): void {
     this.moduleConfigs.set(config.module, config);
-    this.logger.log(`Registered import config for module "${config.module}" (${config.fields.length} fields)`);
+    this.logger.log(
+      `Registered import config for module "${config.module}" (${config.fields.length} fields)`,
+    );
   }
 
   /**
@@ -185,10 +193,7 @@ export class CsvImportService {
    * 3. Row-by-row processing with intra-CSV duplicate tracking
    * 4. Audit log
    */
-  async importRows<T>(
-    data: T[],
-    options: CsvImportOptions<T>,
-  ): Promise<CsvImportResult> {
+  async importRows<T>(data: T[], options: CsvImportOptions<T>): Promise<CsvImportResult> {
     const maxRows = options.maxRows ?? this.DEFAULT_MAX_ROWS;
     if (data.length > maxRows) {
       throw new BadRequestException(
@@ -196,7 +201,13 @@ export class CsvImportService {
       );
     }
 
-    const result: CsvImportResult = { success: 0, incomplete: 0, errors: 0, warnings: 0, details: [] };
+    const result: CsvImportResult = {
+      success: 0,
+      incomplete: 0,
+      errors: 0,
+      warnings: 0,
+      details: [],
+    };
 
     // Extract emails and names from all rows for batch duplicate check
     const emails = (
@@ -219,24 +230,29 @@ export class CsvImportService {
     ) as string[];
 
     // Use provided sets or query DB
-    const existingEmails = options.existingEmails ?? (await this.batchCheckEmails(emails, options.duplicateTables));
-    const existingNames = options.existingNames ?? (await this.batchCheckNames(names, options.duplicateTables));
+    const existingEmails =
+      options.existingEmails ?? (await this.batchCheckEmails(emails, options.duplicateTables));
+    const existingNames =
+      options.existingNames ?? (await this.batchCheckNames(names, options.duplicateTables));
 
     // Process each row
     for (const row of data) {
       try {
         const email = options.extractEmail
-          ? options.extractEmail(row) ?? undefined
+          ? (options.extractEmail(row) ?? undefined)
           : (row as Record<string, unknown>).email?.toString().trim().toLowerCase();
 
         const namaLengkap = options.extractName
-          ? options.extractName(row) ?? ''
+          ? (options.extractName(row) ?? '')
           : (
               (row as Record<string, unknown>).nama_lengkap ||
               (row as Record<string, unknown>).nama ||
               (row as Record<string, unknown>).name ||
               ''
-            ).toString().trim().toLowerCase();
+            )
+              .toString()
+              .trim()
+              .toLowerCase();
 
         // Check duplicate email
         if (email && existingEmails.has(email)) {
@@ -292,23 +308,24 @@ export class CsvImportService {
             row,
             error: processed.error || 'Gagal memproses baris',
           });
-        }        } catch (error) {
-          result.errors++;
-          // Check for unique constraint violation (P2002) and provide a user-friendly message
-          if ((error as Record<string, string>).code === PRISMA_UNIQUE_VIOLATION) {
-            const meta = (error as Record<string, { target?: string[] }>).meta;
-            const field = meta?.target?.join(', ') || 'field';
-            result.details.push({
-              row,
-              error: `Data sudah terdaftar (${field})`,
-            });
-          } else {
-            result.details.push({
-              row,
-              error: (error as Error).message,
-            });
-          }
         }
+      } catch (error) {
+        result.errors++;
+        // Check for unique constraint violation (P2002) and provide a user-friendly message
+        if ((error as Record<string, string>).code === PRISMA_UNIQUE_VIOLATION) {
+          const meta = (error as Record<string, { target?: string[] }>).meta;
+          const field = meta?.target?.join(', ') || 'field';
+          result.details.push({
+            row,
+            error: `Data sudah terdaftar (${field})`,
+          });
+        } else {
+          result.details.push({
+            row,
+            error: (error as Error).message,
+          });
+        }
+      }
     }
 
     // Write audit trail
@@ -548,9 +565,10 @@ export class CsvImportService {
       }
 
       // Intra-CSV duplicate name check
-      const namaLengkap = (
-        row.nama_lengkap || row.nama || row.name || ''
-      ).toString().trim().toLowerCase();
+      const namaLengkap = (row.nama_lengkap || row.nama || row.name || '')
+        .toString()
+        .trim()
+        .toLowerCase();
       if (namaLengkap) {
         if (intraNameTracker.has(namaLengkap)) {
           errors.push(`Nama "${namaLengkap}" duplikat dalam file yang sama`);
@@ -568,9 +586,7 @@ export class CsvImportService {
     // Build column mapping
     const firstRowKeys = data.length > 0 ? Object.keys(data[0]) : [];
     const columns = config.fields.map((f) => {
-      const matched = firstRowKeys.some(
-        (k) => k === f.key || f.aliases.includes(k),
-      );
+      const matched = firstRowKeys.some((k) => k === f.key || f.aliases.includes(k));
       return { name: f.key, matched, required: f.required };
     });
 
@@ -603,9 +619,7 @@ export class CsvImportService {
     const preview = this.validateRows(data, config);
 
     // Check DB duplicates (can't be done in client-only validateRows)
-    const emails = data
-      .map((r) => (r.email || '').toString().trim().toLowerCase())
-      .filter(Boolean);
+    const emails = data.map((r) => (r.email || '').toString().trim().toLowerCase()).filter(Boolean);
     const names = data
       .map((r) => (r.nama_lengkap || r.nama || r.name || '').toString().trim().toLowerCase())
       .filter(Boolean);
@@ -657,13 +671,18 @@ export class CsvImportService {
    */
   private escapeCsvValue(value: string): string {
     // Prevent CSV formula injection: prefix =, +, -, @ with an actual tab character
-    const formulaChars = ["=", "+", "-", "@"];
+    const formulaChars = ['=', '+', '-', '@'];
     let escaped = value;
     if (formulaChars.includes(escaped.charAt(0))) {
-      escaped = "	" + escaped;
+      escaped = '	' + escaped;
     }
     // Wrap in quotes if contains comma, quote, actual newline, or carriage return
-    if (escaped.includes(",") || escaped.includes("\"") || escaped.includes("\n") || escaped.includes("\r")) {
+    if (
+      escaped.includes(',') ||
+      escaped.includes('"') ||
+      escaped.includes('\n') ||
+      escaped.includes('\r')
+    ) {
       return `"${escaped.replace(/"/g, '""')}"`;
     }
     return escaped;
@@ -681,11 +700,7 @@ export class CsvImportService {
   /**
    * Log import to the audit trail. Fire-and-forget with .catch().
    */
-  private logImportAudit(
-    module: string,
-    totalRows: number,
-    result: CsvImportResult,
-  ): void {
+  private logImportAudit(module: string, totalRows: number, result: CsvImportResult): void {
     this.prisma.importLog
       .create({
         data: {
@@ -699,8 +714,6 @@ export class CsvImportService {
               : undefined,
         },
       })
-      .catch((err: Error) =>
-        this.logger.warn('Failed to write import log:', err.message),
-      );
+      .catch((err: Error) => this.logger.warn('Failed to write import log:', err.message));
   }
 }

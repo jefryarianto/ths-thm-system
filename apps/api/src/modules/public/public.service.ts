@@ -53,29 +53,37 @@ export class PublicService {
   }
 
   async getBeranda() {
-    const [sambutan, berita, donasi, totalDistrik, totalWilayah, totalRanting, totalAnggota, totalCalonAnggota] =
-      await Promise.all([
-        this.getSambutan(),
-        this.prisma.berita.findMany({
-          where: { isVisible: true },
-          orderBy: { tanggal: 'desc' },
-          take: 3,
-        }),
-        this.prisma.donasiProgram.findMany({
-          where: { isVisible: true },
-          take: 3,
-        }),
-        this.prisma.distrik.count({ where: { isVisible: true } }),
-        this.prisma.wilayah.count({ where: { isVisible: true } }),
-        this.prisma.ranting.count({ where: { isVisible: true } }),
-        this.prisma.anggota.count({
-          where: {
-            statusKeanggotaan: 'aktif',
-            deletedAt: null,
-          },
-        }),
-        this.prisma.calonAnggota.count(),
-      ]);
+    const [
+      sambutan,
+      berita,
+      donasi,
+      totalDistrik,
+      totalWilayah,
+      totalRanting,
+      totalAnggota,
+      totalCalonAnggota,
+    ] = await Promise.all([
+      this.getSambutan(),
+      this.prisma.berita.findMany({
+        where: { isVisible: true },
+        orderBy: { tanggal: 'desc' },
+        take: 3,
+      }),
+      this.prisma.donasiProgram.findMany({
+        where: { isVisible: true },
+        take: 3,
+      }),
+      this.prisma.distrik.count({ where: { isVisible: true } }),
+      this.prisma.wilayah.count({ where: { isVisible: true } }),
+      this.prisma.ranting.count({ where: { isVisible: true } }),
+      this.prisma.anggota.count({
+        where: {
+          statusKeanggotaan: 'aktif',
+          deletedAt: null,
+        },
+      }),
+      this.prisma.calonAnggota.count(),
+    ]);
 
     return {
       sambutan,
@@ -259,7 +267,9 @@ export class PublicService {
           },
         },
         jabatan: { select: { id: true, nama: true, urutan: true } },
-        periode: { select: { id: true, nama: true, tglMulai: true, tglSelesai: true, isActive: true } },
+        periode: {
+          select: { id: true, nama: true, tglMulai: true, tglSelesai: true, isActive: true },
+        },
         nasional: { select: { id: true, nama: true } },
         distrik: { select: { id: true, nama: true } },
         wilayah: { select: { id: true, nama: true } },
@@ -376,7 +386,13 @@ export class PublicService {
       jabatan: k.jabatan.nama,
       periode: k.periode.nama,
       periodeId: k.periodeId,
-      level: k.rantingId ? 'ranting' : k.wilayahId ? 'wilayah' : k.distrikId ? 'distrik' : 'nasional',
+      level: k.rantingId
+        ? 'ranting'
+        : k.wilayahId
+          ? 'wilayah'
+          : k.distrikId
+            ? 'distrik'
+            : 'nasional',
       unitId: k.rantingId || k.wilayahId || k.distrikId || k.nasionalId,
       unitName: k.ranting?.nama || k.wilayah?.nama || k.distrik?.nama || k.nasional?.nama || '-',
     }));

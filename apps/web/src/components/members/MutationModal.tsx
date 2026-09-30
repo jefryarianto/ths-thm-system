@@ -35,7 +35,8 @@ interface MutationModalProps {
 const chainText = (scope?: string) => {
   // Informasi rantai persetujuan - ringkas untuk preview di modal
   if (scope === 'distrik') return 'Wilayah → Distrik';
-  if (scope === 'nasional') return 'Ranting Asal → Wilayah → Distrik → Ranting Tujuan → Wilayah → Distrik';
+  if (scope === 'nasional')
+    return 'Ranting Asal → Wilayah → Distrik → Ranting Tujuan → Wilayah → Distrik';
   return undefined;
 };
 
@@ -61,16 +62,21 @@ export default function MutationModal({ open, onClose, onSuccess, member }: Muta
     })();
   }, [open]);
 
-  const distrikOptions = useMemo(
-    () => tree.map((d) => ({ value: d.id, label: d.name })),
-    [tree],
-  );
+  const distrikOptions = useMemo(() => tree.map((d) => ({ value: d.id, label: d.name })), [tree]);
   const wilayahOptions = useMemo(
-    () => (tree.find((d) => d.id === distrikId)?.children ?? []).map((w) => ({ value: w.id, label: w.name })),
+    () =>
+      (tree.find((d) => d.id === distrikId)?.children ?? []).map((w) => ({
+        value: w.id,
+        label: w.name,
+      })),
     [tree, distrikId],
   );
   const rantingOptions = useMemo(
-    () => (tree.find((d) => d.id === distrikId)?.children?.find((w) => w.id === wilayahId)?.children ?? []).map((r) => ({ value: r.id, label: r.name })),
+    () =>
+      (
+        tree.find((d) => d.id === distrikId)?.children?.find((w) => w.id === wilayahId)?.children ??
+        []
+      ).map((r) => ({ value: r.id, label: r.name })),
     [tree, distrikId, wilayahId],
   );
 
@@ -178,7 +184,9 @@ export default function MutationModal({ open, onClose, onSuccess, member }: Muta
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alasan Mutasi</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Alasan Mutasi
+          </label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -201,7 +209,11 @@ export default function MutationModal({ open, onClose, onSuccess, member }: Muta
             disabled={submitting || !rantingId}
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowLeftRight size={14} />}
+            {submitting ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <ArrowLeftRight size={14} />
+            )}
             Ajukan Mutasi
           </button>
         </div>

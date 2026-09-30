@@ -184,7 +184,8 @@ export class SingleValidateResultDto {
 /** Dto untuk validasi hasil pendadaran oleh admin (Approve/Reject). */
 export class ValidateResultDto {
   @ApiProperty({
-    description: 'Validasi satu peserta: isi candidateId + approved. Atau pakai `results` untuk bulk.',
+    description:
+      'Validasi satu peserta: isi candidateId + approved. Atau pakai `results` untuk bulk.',
   })
   @IsOptional()
   @IsString()

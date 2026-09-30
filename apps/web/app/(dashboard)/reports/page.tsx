@@ -4,17 +4,17 @@ import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { useApi, usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
-import { BarChart3, Users, Activity, Download } from 'lucide-react';
+import { BarChart3, Users, Activity, Download, TrendingUp } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import OverviewTab from '@/components/reports/OverviewTab';
 import MembersTab from '@/components/reports/MembersTab';
+import TrendTab from '@/components/reports/TrendTab';
 import ScanTab from '@/components/reports/ScanTab';
 import ExportTab from '@/components/reports/ExportTab';
 
 // ─── Types ───
-
 
 interface DashboardData {
   totalMembers: number;
@@ -65,11 +65,12 @@ interface ScanStats {
 
 // ─── Tabs ───
 
-type ReportTab = 'overview' | 'members' | 'scan' | 'exports';
+type ReportTab = 'overview' | 'members' | 'trend' | 'scan' | 'exports';
 
 const tabs: Array<{ key: ReportTab; label: string; icon: typeof BarChart3 }> = [
   { key: 'overview', label: 'Ringkasan', icon: BarChart3 },
   { key: 'members', label: 'Anggota', icon: Users },
+  { key: 'trend', label: 'Tren Anggota', icon: TrendingUp },
   { key: 'scan', label: 'Absensi', icon: Activity },
   { key: 'exports', label: 'Ekspor Data', icon: Download },
 ];
@@ -162,74 +163,77 @@ export default function ReportsPage() {
 
   return (
     <PermissionGuard module="reports" action="view">
-    <PageContainer className="space-y-6 max-w-6xl">
-      <PageHeader
-        title="Laporan & Statistik"
-        onRefresh={() => {
-          if (activeTab === 'members') fetchMembers();
-          if (activeTab === 'scan') fetchScanStats();
-        }}
-      />
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
-                activeTab === tab.key
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <OverviewTab dashboard={dashboard as DashboardData | null} loading={loading} />
-      )}
-
-      {activeTab === 'members' && (
-        <MembersTab
-          members={members}
-          loading={membersLoading}
-          search={memberSearch}
-          onSearchChange={setMemberSearch}
-          page={memberPage}
-          totalPages={memberMeta?.totalPages ?? 1}
-          total={memberMeta?.total ?? 0}
-          onPrevPage={() => setMemberPage(memberPage - 1)}
-          onNextPage={() => setMemberPage(memberPage + 1)}
+      <PageContainer className="space-y-6 max-w-6xl">
+        <PageHeader
+          title="Laporan & Statistik"
+          onRefresh={() => {
+            if (activeTab === 'members') fetchMembers();
+            if (activeTab === 'scan') fetchScanStats();
+          }}
         />
-      )}
 
-      {activeTab === 'scan' && (
-        <ScanTab scanStats={scanStats as ScanStats | null} loading={scanLoading} />
-      )}
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                  activeTab === tab.key
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <Icon size={16} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-      {activeTab === 'exports' && (
-        <ExportTab
-          exportType={exportType}
-          onExportTypeChange={setExportType}
-          exportLoading={exportLoading}
-          onExport={handleExport}
-        />
-      )}
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <OverviewTab dashboard={dashboard as DashboardData | null} loading={loading} />
+        )}
 
-      {/* Footer */}
-      <div className="text-center text-xs text-gray-400 dark:text-gray-600 py-4 border-t border-gray-100 dark:border-gray-800">
-        Data diperbarui secara real-time. Terakhir dimuat:{' '}
-        {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-      </div>
-    </PageContainer>
+        {activeTab === 'members' && (
+          <MembersTab
+            members={members}
+            loading={membersLoading}
+            search={memberSearch}
+            onSearchChange={setMemberSearch}
+            page={memberPage}
+            totalPages={memberMeta?.totalPages ?? 1}
+            total={memberMeta?.total ?? 0}
+            onPrevPage={() => setMemberPage(memberPage - 1)}
+            onNextPage={() => setMemberPage(memberPage + 1)}
+          />
+        )}
+
+        {activeTab === 'trend' && <TrendTab />}
+
+        {activeTab === 'scan' && (
+          <ScanTab scanStats={scanStats as ScanStats | null} loading={scanLoading} />
+        )}
+
+        {activeTab === 'exports' && (
+          <ExportTab
+            exportType={exportType}
+            onExportTypeChange={setExportType}
+            exportLoading={exportLoading}
+            onExport={handleExport}
+          />
+        )}
+
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-400 dark:text-gray-600 py-4 border-t border-gray-100 dark:border-gray-800">
+          Data diperbarui secara real-time. Terakhir dimuat:{' '}
+          {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </PageContainer>
     </PermissionGuard>
   );
 }
+

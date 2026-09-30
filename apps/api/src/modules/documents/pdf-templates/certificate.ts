@@ -386,9 +386,23 @@ const h = React.createElement;
 
 export function buildCertificatePdf(props: CertificatePdfProps) {
   const {
-    recipientName, certificateNumber, eventTitle, location,
-    ranting, wilayah, distrik, finalScore, predicate, status,
-    issuedDate, signers, aspects, qrDataUrl, watermarkText, watermarkOpacity, template,
+    recipientName,
+    certificateNumber,
+    eventTitle,
+    location,
+    ranting,
+    wilayah,
+    distrik,
+    finalScore,
+    predicate,
+    status,
+    issuedDate,
+    signers,
+    aspects,
+    qrDataUrl,
+    watermarkText,
+    watermarkOpacity,
+    template,
   } = props;
 
   const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
@@ -398,16 +412,20 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
   const watermarkAlpha = watermarkOpacity ?? 0.045;
 
   const signerBlocks = (signers || []).map((s, i) =>
-    h(View, { key: `signer-${i}`, style: styles.signerBlock },
+    h(
+      View,
+      { key: `signer-${i}`, style: styles.signerBlock },
       s.signatureUrl
         ? h(Image, { src: s.signatureUrl, style: styles.signatureImage })
         : h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
-      s.stampUrl
-        ? h(Image, { src: s.stampUrl, style: styles.stampImage })
-        : null,
-      h(View, { style: styles.signerLine },
+      s.stampUrl ? h(Image, { src: s.stampUrl, style: styles.stampImage }) : null,
+      h(
+        View,
+        { style: styles.signerLine },
         h(Text, { style: styles.signerName }, s.signerName),
-        h(Text, { style: styles.signerTitle }, s.signerTitle))),
+        h(Text, { style: styles.signerTitle }, s.signerTitle),
+      ),
+    ),
   );
 
   // Tanggal di tengah untuk 2 penandatangan (mempertahankan tata letak klasik);
@@ -426,100 +444,202 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
 
   const pages = [
     // Front side
-    h(Page, { size: [1188, 840], style: styles.page, key: 'front' },
-      h(View, { style: { ...styles.watermark, opacity: watermarkAlpha } },
-        h(View, { style: styles.watermarkCircle },
-          h(Text, { style: styles.watermarkText }, watermarkLabel))),
+    h(
+      Page,
+      { size: [1188, 840], style: styles.page, key: 'front' },
+      h(
+        View,
+        { style: { ...styles.watermark, opacity: watermarkAlpha } },
+        h(
+          View,
+          { style: styles.watermarkCircle },
+          h(Text, { style: styles.watermarkText }, watermarkLabel),
+        ),
+      ),
       h(View, { style: styles.innerBorder1 }),
       h(View, { style: styles.innerBorder2 }),
       // Header
-      h(View, { style: styles.headerSection },
-        h(View, { style: styles.logoCircle },
-          h(View, { style: styles.logoInner }, h(Text, null, 'THS'))),
-        h(View, { style: { flex: 1, alignItems: 'center' } },
+      h(
+        View,
+        { style: styles.headerSection },
+        h(
+          View,
+          { style: styles.logoCircle },
+          h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
+        ),
+        h(
+          View,
+          { style: { flex: 1, alignItems: 'center' } },
           h(Text, { style: styles.orgName }, orgName),
-          h(Text, { style: styles.districtName }, `KOORDINATORAT DISTRIK ${distrik.toUpperCase()}`)),
-        h(View, { style: styles.logoCircle },
-          h(View, { style: styles.logoInner }, h(Text, null, 'THS')))),
+          h(Text, { style: styles.districtName }, `KOORDINATORAT DISTRIK ${distrik.toUpperCase()}`),
+        ),
+        h(
+          View,
+          { style: styles.logoCircle },
+          h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
+        ),
+      ),
       // Title
-      h(View, { style: styles.titleSection },
+      h(
+        View,
+        { style: styles.titleSection },
         h(Text, { style: styles.sertifikatText }, judulText),
         h(Text, { style: styles.pendadaranText }, subJudulText),
-        h(Text, { style: styles.nomorText }, `Nomor Sertifikat: ${certificateNumber}`)),
+        h(Text, { style: styles.nomorText }, `Nomor Sertifikat: ${certificateNumber}`),
+      ),
       // Body
-      h(View, { style: styles.bodySection },
+      h(
+        View,
+        { style: styles.bodySection },
         h(Text, { style: styles.diberikanText }, 'Diberikan kepada'),
-        h(View, { style: styles.namaBox },
-          h(Text, { style: styles.namaText }, recipientName)),
-        h(Text, { style: styles.keteranganLulus },
-          `atas kelulusan dalam kegiatan ${eventTitle} di ${location}`)),
+        h(View, { style: styles.namaBox }, h(Text, { style: styles.namaText }, recipientName)),
+        h(
+          Text,
+          { style: styles.keteranganLulus },
+          `atas kelulusan dalam kegiatan ${eventTitle} di ${location}`,
+        ),
+      ),
       // Info Grid
-      h(View, { style: styles.infoGrid },
-        h(View, { style: styles.infoBox },
+      h(
+        View,
+        { style: styles.infoGrid },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Ranting'),
-          h(Text, { style: styles.infoValue }, ranting)),
-        h(View, { style: styles.infoBox },
+          h(Text, { style: styles.infoValue }, ranting),
+        ),
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Wilayah'),
-          h(Text, { style: styles.infoValue }, wilayah)),
-        h(View, { style: styles.infoBox },
+          h(Text, { style: styles.infoValue }, wilayah),
+        ),
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Distrik'),
-          h(Text, { style: styles.infoValue }, distrik))),
+          h(Text, { style: styles.infoValue }, distrik),
+        ),
+      ),
       // Score Grid
-      h(View, { style: { position: 'absolute', left: 80, right: 80, top: 630, flexDirection: 'row', gap: 12 } },
-        h(View, { style: styles.infoBox },
+      h(
+        View,
+        {
+          style: {
+            position: 'absolute',
+            left: 80,
+            right: 80,
+            top: 630,
+            flexDirection: 'row',
+            gap: 12,
+          },
+        },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Nilai Akhir'),
-          h(Text, { style: styles.infoValueHighlight }, String(finalScore))),
-        h(View, { style: styles.infoBox },
+          h(Text, { style: styles.infoValueHighlight }, String(finalScore)),
+        ),
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Predikat'),
-          h(Text, { style: styles.infoValueHighlight }, predicate)),
-        h(View, { style: styles.infoBox },
+          h(Text, { style: styles.infoValueHighlight }, predicate),
+        ),
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Status'),
-          h(Text, { style: styles.infoValueHighlight }, status))),
+          h(Text, { style: styles.infoValueHighlight }, status),
+        ),
+      ),
       // Penandatangan (1-3 blok)
       h(View, { style: styles.signerSection }, ...signerSectionChildren),
       ...(signerCount !== 2 && signerCount > 0
         ? [
-            h(Text, {
-              key: 'tgl-abs',
-              style: { ...styles.tanggalText, position: 'absolute' as const, right: 80, bottom: 150 },
-            }, issuedDate),
+            h(
+              Text,
+              {
+                key: 'tgl-abs',
+                style: {
+                  ...styles.tanggalText,
+                  position: 'absolute' as const,
+                  right: 80,
+                  bottom: 150,
+                },
+              },
+              issuedDate,
+            ),
           ]
         : []),
     ),
     // Back side
-    h(Page, { size: [1188, 840], style: styles.page, key: 'back' },
-      h(View, { style: { ...styles.watermark, opacity: watermarkAlpha } },
-        h(View, { style: styles.watermarkCircle },
-          h(Text, { style: styles.watermarkText }, watermarkLabel))),
+    h(
+      Page,
+      { size: [1188, 840], style: styles.page, key: 'back' },
+      h(
+        View,
+        { style: { ...styles.watermark, opacity: watermarkAlpha } },
+        h(
+          View,
+          { style: styles.watermarkCircle },
+          h(Text, { style: styles.watermarkText }, watermarkLabel),
+        ),
+      ),
       h(View, { style: styles.innerBorder1 }),
       h(View, { style: styles.innerBorder2 }),
       h(Text, { style: styles.backTitle }, 'RINCIAN PENILAIAN PENDADARAN'),
-      h(Text, { style: styles.backSubtitle }, 'Nilai item 55-90, nilai aspek dihitung dari rata-rata item'),
+      h(
+        Text,
+        { style: styles.backSubtitle },
+        'Nilai item 55-90, nilai aspek dihitung dari rata-rata item',
+      ),
       // Aspects
-      h(View, { style: styles.aspectsGrid },
+      h(
+        View,
+        { style: styles.aspectsGrid },
         aspects.map((aspect, i) =>
-          h(View, { style: styles.aspectCard, key: i },
-            h(View, { style: styles.aspectHeader },
+          h(
+            View,
+            { style: styles.aspectCard, key: i },
+            h(
+              View,
+              { style: styles.aspectHeader },
               h(Text, { style: styles.aspectName }, aspect.name),
-              h(Text, { style: styles.aspectScore }, `Nilai: ${aspect.score}`)),
-            h(View, { style: styles.aspectItems },
+              h(Text, { style: styles.aspectScore }, `Nilai: ${aspect.score}`),
+            ),
+            h(
+              View,
+              { style: styles.aspectItems },
               aspect.items.map((item, j) =>
-                h(Text, { style: styles.aspectItem, key: j }, `• ${item}`))
-            )
-          )
-        )
+                h(Text, { style: styles.aspectItem, key: j }, `• ${item}`),
+              ),
+            ),
+          ),
+        ),
       ),
       // Summary
-      h(View, { style: styles.summaryBar },
-        h(View, null,
+      h(
+        View,
+        { style: styles.summaryBar },
+        h(
+          View,
+          null,
           h(Text, { style: styles.summaryText }, 'Ringkasan Hasil'),
-          h(Text, { style: styles.summaryScore },
-            `Nilai Akhir ${finalScore} · ${predicate} · ${status}`),
-          h(Text, { style: { color: WHITE, fontSize: 11, opacity: 0.8, marginTop: 4 } },
-            'Predikat: 55-65 Cukup, 66-75 Baik, 76-90 Baik Sekali')),
-        qrDataUrl
-          ? h(Image, { src: qrDataUrl, style: { width: 70, height: 70 } })
-          : null),
+          h(
+            Text,
+            { style: styles.summaryScore },
+            `Nilai Akhir ${finalScore} · ${predicate} · ${status}`,
+          ),
+          h(
+            Text,
+            { style: { color: WHITE, fontSize: 11, opacity: 0.8, marginTop: 4 } },
+            'Predikat: 55-65 Cukup, 66-75 Baik, 76-90 Baik Sekali',
+          ),
+        ),
+        qrDataUrl ? h(Image, { src: qrDataUrl, style: { width: 70, height: 70 } }) : null,
+      ),
     ),
   ];
 

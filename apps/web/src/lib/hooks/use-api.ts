@@ -11,7 +11,12 @@ function isTransientError(err: unknown): boolean {
       if (n.status >= 400 && n.status < 500 && n.status !== 408) return false;
       return true;
     }
-    if (err.message.includes('Network') || err.message.includes('timeout') || err.message.includes('ECONNABORTED')) return true;
+    if (
+      err.message.includes('Network') ||
+      err.message.includes('timeout') ||
+      err.message.includes('ECONNABORTED')
+    )
+      return true;
   }
   return false;
 }

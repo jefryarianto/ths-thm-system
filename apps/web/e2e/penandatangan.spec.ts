@@ -8,12 +8,42 @@ import { mockAuth } from './helpers';
 async function registerPenandatanganMocks(page: Page) {
   const data = {
     signatures: [
-      { id: 'sig-1', nama: 'Ketua THS', jabatan: 'Ketua', imagePath: 'sig-ketua.png', isActive: true, distrikId: null, distrik: null },
-      { id: 'sig-2', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik', imagePath: 'sig-koord.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+      {
+        id: 'sig-1',
+        nama: 'Ketua THS',
+        jabatan: 'Ketua',
+        imagePath: 'sig-ketua.png',
+        isActive: true,
+        distrikId: null,
+        distrik: null,
+      },
+      {
+        id: 'sig-2',
+        nama: 'Koordinator Distrik A',
+        jabatan: 'Koordinator Distrik',
+        imagePath: 'sig-koord.png',
+        isActive: true,
+        distrikId: 'distrik-1',
+        distrik: { id: 'distrik-1', nama: 'Distrik A' },
+      },
     ],
     stamps: [
-      { id: 'stamp-1', nama: 'Stempel Resmi', imagePath: 'stempel-resmi.png', isActive: true, distrikId: null, distrik: null },
-      { id: 'stamp-2', nama: 'Stempel Distrik A', imagePath: 'stempel-a.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+      {
+        id: 'stamp-1',
+        nama: 'Stempel Resmi',
+        imagePath: 'stempel-resmi.png',
+        isActive: true,
+        distrikId: null,
+        distrik: null,
+      },
+      {
+        id: 'stamp-2',
+        nama: 'Stempel Distrik A',
+        imagePath: 'stempel-a.png',
+        isActive: true,
+        distrikId: 'distrik-1',
+        distrik: { id: 'distrik-1', nama: 'Distrik A' },
+      },
     ],
   };
 
@@ -131,7 +161,9 @@ test.describe('Settings — /settings/penandatangan', () => {
     // Default scope = Global: only global rows visible in each section
     const globalSig = page
       .locator('div.rounded-2xl')
-      .filter({ has: page.getByRole('heading', { name: 'Gambar Tanda Tangan — Global (Nasional)' }) });
+      .filter({
+        has: page.getByRole('heading', { name: 'Gambar Tanda Tangan — Global (Nasional)' }),
+      });
     const globalStamp = page
       .locator('div.rounded-2xl')
       .filter({ has: page.getByRole('heading', { name: 'Stempel — Global (Nasional)' }) });
@@ -158,7 +190,9 @@ test.describe('Settings — /settings/penandatangan', () => {
     // Distrik B has no rows in the mock
     await page.locator('select').first().selectOption('distrik-2');
     await expect(page.getByText('Gambar Tanda Tangan — Distrik B')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('Belum ada gambar tanda tangan pada scope ini').first()).toBeVisible();
+    await expect(
+      page.getByText('Belum ada gambar tanda tangan pada scope ini').first(),
+    ).toBeVisible();
     await expect(page.getByText('Belum ada stempel pada scope ini').first()).toBeVisible();
   });
 
@@ -173,10 +207,16 @@ test.describe('Settings — /settings/penandatangan', () => {
     // cache modul, awalnya 'Koordinator Distrik' — plus opsi custom.
     const jabatanSelect = modal.locator('select');
     await expect(jabatanSelect).toHaveValue('Koordinator Distrik', { timeout: 8000 });
-    await expect(jabatanSelect.locator('option[value="Koordinator Distrik"]')).toHaveText('Koordinator Distrik');
-    await expect(jabatanSelect.locator('option[value="Pastor Moderator"]')).toHaveText('Pastor Moderator');
+    await expect(jabatanSelect.locator('option[value="Koordinator Distrik"]')).toHaveText(
+      'Koordinator Distrik',
+    );
+    await expect(jabatanSelect.locator('option[value="Pastor Moderator"]')).toHaveText(
+      'Pastor Moderator',
+    );
     await expect(jabatanSelect.locator('option[value="Sekretaris"]')).toHaveText('Sekretaris');
-    await expect(jabatanSelect.locator('option[value="__custom__"]')).toHaveText('Lainnya (tulis manual)…');
+    await expect(jabatanSelect.locator('option[value="__custom__"]')).toHaveText(
+      'Lainnya (tulis manual)…',
+    );
 
     // Pilih preset lain lalu kembali — memastikan kontrol berfungsi
     await jabatanSelect.selectOption('Pastor Moderator');
@@ -215,7 +255,9 @@ test.describe('Settings — /settings/penandatangan', () => {
   test('upload tanda tangan requires a file', async ({ page }) => {
     await page.getByRole('button', { name: 'Upload Tanda Tangan' }).click();
     await page.getByRole('button', { name: 'Upload' }).last().click();
-    await expect(page.getByText('Pilih file gambar tanda tangan terlebih dahulu')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Pilih file gambar tanda tangan terlebih dahulu')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('delete tanda tangan asks for confirmation and removes the row', async ({ page }) => {
@@ -229,7 +271,9 @@ test.describe('Settings — /settings/penandatangan', () => {
     await section.getByTitle('Hapus').click();
 
     // Confirmation modal (default variant → confirm button is "Ya")
-    await expect(page.getByText('Hapus gambar tanda tangan "Koordinator Distrik A"?')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Hapus gambar tanda tangan "Koordinator Distrik A"?')).toBeVisible({
+      timeout: 5000,
+    });
     await page.getByRole('button', { name: 'Ya', exact: true }).click();
 
     await expect(page.getByText('Tanda tangan dihapus')).toBeVisible({ timeout: 5000 });
@@ -245,7 +289,9 @@ test.describe('Settings — /settings/penandatangan', () => {
 
     await section.getByTitle('Hapus').click();
 
-    await expect(page.getByText('Hapus stempel "Stempel Distrik A"?')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Hapus stempel "Stempel Distrik A"?')).toBeVisible({
+      timeout: 5000,
+    });
     await page.getByRole('button', { name: 'Ya', exact: true }).click();
 
     await expect(page.getByText('Stempel dihapus')).toBeVisible({ timeout: 5000 });
@@ -253,7 +299,9 @@ test.describe('Settings — /settings/penandatangan', () => {
   });
 
   test('renders penandatangan per dokumen section with signer slots', async ({ page }) => {
-    await expect(page.getByText('Penandatangan per Dokumen — Global (Nasional)')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Penandatangan per Dokumen — Global (Nasional)')).toBeVisible({
+      timeout: 8000,
+    });
     await expect(page.getByText('Kartu Anggota (KTA)')).toBeVisible();
     // KTA has one assigned signer
     await expect(page.getByText('Saat ini: Koordinator Distrik A')).toBeVisible();
@@ -263,8 +311,6 @@ test.describe('Settings — /settings/penandatangan', () => {
   });
 
   test('info banner explains the one-active-per-scope rule', async ({ page }) => {
-    await expect(
-      page.getByText(/satu penandatangan aktif per distrik\/global/),
-    ).toBeVisible();
+    await expect(page.getByText(/satu penandatangan aktif per distrik\/global/)).toBeVisible();
   });
 });

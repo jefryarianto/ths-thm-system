@@ -3,7 +3,16 @@
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
+import {
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Loader2,
+  ShieldCheck,
+} from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
 // AUTH-003: shared key with the login handoff (app/login/page.tsx).
@@ -45,7 +54,9 @@ function ForceChangePasswordForm() {
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={22} className="text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Token Tidak Valid</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Token Tidak Valid
+              </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Token ubah password tidak ditemukan atau sudah kadaluarsa.
               </p>
@@ -148,7 +159,10 @@ function ForceChangePasswordForm() {
             {!success && (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  <label
+                    htmlFor="newPassword"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                  >
                     Password Baru
                   </label>
                   <div className="relative">
@@ -178,7 +192,10 @@ function ForceChangePasswordForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                  >
                     Konfirmasi Password
                   </label>
                   <div className="relative">
@@ -207,20 +224,46 @@ function ForceChangePasswordForm() {
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-800/50">
-                  <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">Password harus:</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
+                    Password harus:
+                  </p>
                   <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-0.5">
                     <li className="flex items-center gap-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      >
                         {newPassword.length >= 6 && (
-                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
                       </span>
                       Minimal 6 karakter
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword && newPassword === confirmPassword ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword && newPassword === confirmPassword ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      >
                         {newPassword && newPassword === confirmPassword && (
-                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
                       </span>
                       Password cocok

@@ -125,7 +125,8 @@ export function LandingPageContent() {
               </h1>
 
               <p className="mb-4 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
-                {t.home.description || 'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
+                {t.home.description ||
+                  'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
               </p>
 
               {/* Motto */}
@@ -136,7 +137,8 @@ export function LandingPageContent() {
                     {t.home.motto || 'Fortiter in Re, Suaviter in Modo'}
                   </p>
                   <p className="text-white/60 text-xs sm:text-sm">
-                    {t.home.mottoMeaning || 'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya'}
+                    {t.home.mottoMeaning ||
+                      'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya'}
                   </p>
                 </div>
                 <span className="text-gold-400 text-xl leading-none">”</span>
@@ -275,7 +277,8 @@ export function LandingPageContent() {
               {t.home.pilarsTitle || '1 Landasan 3 Pilar Pembinaan THS-THM'}
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mt-3 text-base">
-              {t.home.pilarsSub || 'Seluruh pembinaan berlandaskan Iman Katolik dalam Kasih Yesus Kristus, dijabarkan melalui tiga pilar pengembangan karakter.'}
+              {t.home.pilarsSub ||
+                'Seluruh pembinaan berlandaskan Iman Katolik dalam Kasih Yesus Kristus, dijabarkan melalui tiga pilar pengembangan karakter.'}
             </p>
           </div>
 
@@ -297,7 +300,8 @@ export function LandingPageContent() {
                     {t.home.landasanTitle || 'Landasan — Iman Katolik'}
                   </h3>
                   <p className="text-white/80 text-sm leading-relaxed">
-                    {t.home.landasanDesc || 'Iman Katolik yang berlandaskan Kasih Yesus Kristus menjadi pusat dan sumber inspirasi utama dalam seluruh kegiatan THS-THM.'}
+                    {t.home.landasanDesc ||
+                      'Iman Katolik yang berlandaskan Kasih Yesus Kristus menjadi pusat dan sumber inspirasi utama dalam seluruh kegiatan THS-THM.'}
                   </p>
                 </div>
               </div>
@@ -317,7 +321,8 @@ export function LandingPageContent() {
                 {t.home.pilars?.rohaniTitle || 'Segi Spiritual'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.rohaniDesc || 'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan beriman.'}
+                {t.home.pilars?.rohaniDesc ||
+                  'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan beriman.'}
               </p>
             </div>
 
@@ -333,7 +338,8 @@ export function LandingPageContent() {
                 {t.home.pilars?.beladiriTitle || 'Segi Beladiri & Fisik'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.beladiriDesc || 'Pelatihan fisik dan teknik pencak silat khas THS-THM untuk ketangkasan dan keberanian.'}
+                {t.home.pilars?.beladiriDesc ||
+                  'Pelatihan fisik dan teknik pencak silat khas THS-THM untuk ketangkasan dan keberanian.'}
               </p>
             </div>
 
@@ -349,7 +355,8 @@ export function LandingPageContent() {
                 {t.home.pilars?.organisasiTitle || 'Segi Organisasi & Persaudaraan'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.organisasiDesc || 'Membentuk kepemimpinan, disiplin, tanggung jawab, dan persaudaraan sejati.'}
+                {t.home.pilars?.organisasiDesc ||
+                  'Membentuk kepemimpinan, disiplin, tanggung jawab, dan persaudaraan sejati.'}
               </p>
             </div>
           </div>
@@ -423,7 +430,9 @@ export function LandingPageContent() {
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-navy-800 to-navy-900 flex flex-col items-center justify-center text-white/40">
                               <Newspaper size={64} className="mb-2 text-gold-400/40" />
-                              <span className="text-sm font-medium tracking-wider">THS-THM NEWS</span>
+                              <span className="text-sm font-medium tracking-wider">
+                                THS-THM NEWS
+                              </span>
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-black/30 to-transparent" />

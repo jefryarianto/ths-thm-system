@@ -40,9 +40,7 @@ const FIELD_KEY_MAP: Record<string, string> = {
  *                Null, undefined, empty string, and whitespace-only strings
  *                are all treated as "missing".
  */
-export function calculateMissingFields(
-  member: Record<string, unknown>,
-): string[] {
+export function calculateMissingFields(member: Record<string, unknown>): string[] {
   const missing: string[] = [];
   for (const field of MOBILE_EDITABLE_FIELDS) {
     const value = member[field];
@@ -56,8 +54,6 @@ export function calculateMissingFields(
 /**
  * Returns `'complete'` or `'incomplete'` based on mobile-editable fields.
  */
-export function calculateStatusData(
-  member: Record<string, unknown>,
-): 'complete' | 'incomplete' {
+export function calculateStatusData(member: Record<string, unknown>): 'complete' | 'incomplete' {
   return calculateMissingFields(member).length === 0 ? 'complete' : 'incomplete';
 }

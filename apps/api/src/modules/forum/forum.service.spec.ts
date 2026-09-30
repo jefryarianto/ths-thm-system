@@ -48,20 +48,28 @@ describe('ForumService', () => {
 
   const mockPrisma = {
     user: {
-      findUnique: jest.fn().mockImplementation(({ where: { id } }: { where: { id: string } }) =>
-        Promise.resolve({ id, email: `${id}@test.com` }),
-      ),
-      findFirst: jest.fn().mockImplementation(({ where: { email } }: { where: { email: string } }) =>
-        Promise.resolve({ id: email.split('@')[0] }),
-      ),
+      findUnique: jest
+        .fn()
+        .mockImplementation(({ where: { id } }: { where: { id: string } }) =>
+          Promise.resolve({ id, email: `${id}@test.com` }),
+        ),
+      findFirst: jest
+        .fn()
+        .mockImplementation(({ where: { email } }: { where: { email: string } }) =>
+          Promise.resolve({ id: email.split('@')[0] }),
+        ),
     },
     anggota: {
-      findFirst: jest.fn().mockImplementation(({ where: { email } }: { where: { email: string } }) =>
-        Promise.resolve({ id: email.split('@')[0] }),
-      ),
-      findUnique: jest.fn().mockImplementation(({ where: { id } }: { where: { id: string } }) =>
-        Promise.resolve({ id, email: `${id}@test.com` }),
-      ),
+      findFirst: jest
+        .fn()
+        .mockImplementation(({ where: { email } }: { where: { email: string } }) =>
+          Promise.resolve({ id: email.split('@')[0] }),
+        ),
+      findUnique: jest
+        .fn()
+        .mockImplementation(({ where: { id } }: { where: { id: string } }) =>
+          Promise.resolve({ id, email: `${id}@test.com` }),
+        ),
     },
     forumCategory: {
       findMany: jest.fn().mockResolvedValue([mockCategory]),
@@ -161,7 +169,10 @@ describe('ForumService', () => {
     it('should create a new thread', async () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumThread.create.mockResolvedValue(mockThread);
-      const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, author);
+      const result = await service.createThread(
+        { categoryId: 'cat1', judul: 'Test', konten: 'Konten' },
+        author,
+      );
       expect(result).toBeDefined();
     });
 
@@ -236,8 +247,15 @@ describe('ForumService', () => {
     });
 
     it('should notify thread author on new reply', async () => {
-      mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false, authorId: 'user1' });
-      mockPrisma.forumPost.create.mockResolvedValue({ ...mockPost, author: { id: 'user2', namaLengkap: 'Replyer' } });
+      mockPrisma.forumThread.findUnique.mockResolvedValue({
+        ...mockThread,
+        isLocked: false,
+        authorId: 'user1',
+      });
+      mockPrisma.forumPost.create.mockResolvedValue({
+        ...mockPost,
+        author: { id: 'user2', namaLengkap: 'Replyer' },
+      });
       await service.createPost('thread1', { konten: 'Reply' }, otherUser);
       expect(mockNotificationsService.send).toHaveBeenCalledWith('user1', {
         userId: 'user1',
@@ -284,7 +302,11 @@ describe('ForumService', () => {
     });
 
     it('should notify post author when marked as solution', async () => {
-      mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user2', threadId: 'thread1' });
+      mockPrisma.forumPost.findUnique.mockResolvedValue({
+        ...mockPost,
+        authorId: 'user2',
+        threadId: 'thread1',
+      });
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumPost.updateMany.mockResolvedValue([]);
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, isSolution: true });

@@ -37,7 +37,9 @@ export function StatusBadge({ variant, children, dot = true }: StatusBadgeProps)
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ring-1 ring-inset border-0 ${VARIANT_CLASSES[variant]}`}
     >
-      {dot && <span className={`h-1.5 w-1.5 rounded-full ${DOT_CLASSES[variant]}`} aria-hidden="true" />}
+      {dot && (
+        <span className={`h-1.5 w-1.5 rounded-full ${DOT_CLASSES[variant]}`} aria-hidden="true" />
+      )}
       {children}
     </span>
   );
@@ -52,9 +54,7 @@ export function ResponsiveTable({ children }: { children: ReactNode }) {
     <div className="w-full">
       {/* Desktop: horizontal scroll table */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm">
-          {children}
-        </table>
+        <table className="w-full text-sm">{children}</table>
       </div>
       {/* Mobile: card view - children should include MobileCard items */}
     </div>
@@ -64,12 +64,14 @@ export function ResponsiveTable({ children }: { children: ReactNode }) {
 /**
  * Card view for mobile - wraps each row's data into a vertical card.
  */
-export function MobileCard({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`md:hidden card-elegant p-4 space-y-3 ${className}`}>
-      {children}
-    </div>
-  );
+export function MobileCard({
+  children,
+  className = '',
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`md:hidden card-elegant p-4 space-y-3 ${className}`}>{children}</div>;
 }
 
 /**
@@ -83,4 +85,3 @@ export function CardField({ label, children }: { label: string; children: ReactN
     </div>
   );
 }
-

@@ -48,7 +48,8 @@ export default function JabatanPage() {
   // Cakupan: '' = Global (Nasional), selain itu id distrik.
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
   const [scope, setScope] = useState('');
-  const scopeName = scope === '' ? 'Global (Nasional)' : districts.find((d) => d.id === scope)?.nama || scope;
+  const scopeName =
+    scope === '' ? 'Global (Nasional)' : districts.find((d) => d.id === scope)?.nama || scope;
   const isGlobalScope = scope === '';
 
   // Untuk admin_distrik: scope terkunci ke distriknya — ambil dari /auth/scope.
@@ -59,7 +60,8 @@ export default function JabatanPage() {
       .then(({ data: res }) => {
         const distrikId = res?.data?.distrikId as string | null | undefined;
         if (distrikId) setScope(distrikId);
-        if (res?.data?.distrikNama) setDistricts([{ id: distrikId as string, nama: res.data.distrikNama }]);
+        if (res?.data?.distrikNama)
+          setDistricts([{ id: distrikId as string, nama: res.data.distrikNama }]);
       })
       .catch(() => {
         /* silent — service sudah membatasi hasil berdasarkan scope server-side */
@@ -82,18 +84,28 @@ export default function JabatanPage() {
     try {
       const { data: res } = await apiClient.get('/jabatan');
       setData(res.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const filtered = isSuperadmin ? data.filter((j) => (j.distrikId ?? null) === (scope || null)) : data;
+  const filtered = isSuperadmin
+    ? data.filter((j) => (j.distrikId ?? null) === (scope || null))
+    : data;
 
   const handleSave = async () => {
     if (!form.nama.trim()) return toast('error', 'Nama wajib diisi');
     try {
-      const payload: Record<string, unknown> = { nama: form.nama.trim(), kode: form.kode.trim() || undefined, urutan: form.urutan };
+      const payload: Record<string, unknown> = {
+        nama: form.nama.trim(),
+        kode: form.kode.trim() || undefined,
+        urutan: form.urutan,
+      };
       if (isSuperadmin) payload.distrikId = scope || null;
       if (editData) {
         await apiClient.patch(`/jabatan/${editData.id}`, payload);
@@ -113,7 +125,11 @@ export default function JabatanPage() {
   };
 
   const handleDelete = async (item: Jabatan) => {
-    const ok = await confirm({ title: `Hapus "${item.nama}"?`, message: item._count.pengurus > 0 ? `Masih digunakan oleh ${item._count.pengurus} pengurus` : '' });
+    const ok = await confirm({
+      title: `Hapus "${item.nama}"?`,
+      message:
+        item._count.pengurus > 0 ? `Masih digunakan oleh ${item._count.pengurus} pengurus` : '',
+    });
     if (!ok) return;
     try {
       await apiClient.delete(`/jabatan/${item.id}`);
@@ -132,7 +148,11 @@ export default function JabatanPage() {
         onRefresh={fetchData}
         children={
           <button
-            onClick={() => { setEditData(null); setForm({ nama: '', kode: '', urutan: data.length }); setShowModal(true); }}
+            onClick={() => {
+              setEditData(null);
+              setForm({ nama: '', kode: '', urutan: data.length });
+              setShowModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus size={16} /> Tambah Jabatan
@@ -149,7 +169,8 @@ export default function JabatanPage() {
               {isGlobalScope
                 ? 'Preset global dipakai semua distrik sebagai pilihan bawaan.'
                 : `Preset ${scopeName} dipakai distrik ini dan menggantikan preset global yang bernama sama.`}{' '}
-              Kelola preset di sini, lalu pilih di dropdown jabatan pada form penandatangan & struktur organisasi.
+              Kelola preset di sini, lalu pilih di dropdown jabatan pada form penandatangan &
+              struktur organisasi.
             </p>
           </div>
         </div>
@@ -173,14 +194,18 @@ export default function JabatanPage() {
           </div>
         ) : (
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{scopeName}</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+              {scopeName}
+            </span>
             <span className="text-xs text-gray-400">(otomatis mengikuti distrik Anda)</span>
           </div>
         )}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><RefreshCw className="animate-spin text-gray-400" size={24} /></div>
+        <div className="flex justify-center py-20">
+          <RefreshCw className="animate-spin text-gray-400" size={24} />
+        </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
@@ -189,16 +214,23 @@ export default function JabatanPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-500 w-12">#</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Nama</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Kode</th>
-                {isSuperadmin && <th className="text-left px-4 py-3 font-medium text-gray-500">Cakupan</th>}
+                {isSuperadmin && (
+                  <th className="text-left px-4 py-3 font-medium text-gray-500">Cakupan</th>
+                )}
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Pengurus</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-500">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((item) => (
-                <tr key={item.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <tr
+                  key={item.id}
+                  className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                >
                   <td className="px-4 py-3 text-gray-400">{item.urutan}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{item.nama}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    {item.nama}
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{item.kode || '-'}</td>
                   {isSuperadmin && (
                     <td className="px-4 py-3 text-gray-500">
@@ -216,8 +248,22 @@ export default function JabatanPage() {
                   <td className="px-4 py-3 text-gray-500">{item._count.pengurus}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => { setEditData(item); setForm({ nama: item.nama, kode: item.kode || '', urutan: item.urutan }); setShowModal(true); }} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><Edit3 size={14} className="text-gray-500" /></button>
-                      <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={14} className="text-red-500" /></button>
+                      <button
+                        onClick={() => {
+                          setEditData(item);
+                          setForm({ nama: item.nama, kode: item.kode || '', urutan: item.urutan });
+                          setShowModal(true);
+                        }}
+                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <Edit3 size={14} className="text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item)}
+                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 size={14} className="text-red-500" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -232,11 +278,17 @@ export default function JabatanPage() {
         </div>
       )}
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editData ? 'Edit Jabatan' : 'Tambah Jabatan'}>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editData ? 'Edit Jabatan' : 'Tambah Jabatan'}
+      >
         <div className="space-y-4">
           {isSuperadmin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cakupan</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Cakupan
+              </label>
               <select
                 value={scope}
                 onChange={(e) => setScope(e.target.value)}
@@ -244,7 +296,9 @@ export default function JabatanPage() {
               >
                 <option value="">Global (Nasional)</option>
                 {districts.map((d) => (
-                  <option key={d.id} value={d.id}>{d.nama}</option>
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
                 ))}
               </select>
               <p className="text-xs text-gray-400 mt-1">
@@ -253,22 +307,53 @@ export default function JabatanPage() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Jabatan *</label>
-            <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: Koordinator" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nama Jabatan *
+            </label>
+            <input
+              value={form.nama}
+              onChange={(e) => setForm({ ...form, nama: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Contoh: Koordinator"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode</label>
-              <input value={form.kode} onChange={(e) => setForm({ ...form, kode: e.target.value })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: KRD" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Kode
+              </label>
+              <input
+                value={form.kode}
+                onChange={(e) => setForm({ ...form, kode: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Contoh: KRD"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Urutan</label>
-              <input type="number" value={form.urutan} onChange={(e) => setForm({ ...form, urutan: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Urutan
+              </label>
+              <input
+                type="number"
+                value={form.urutan}
+                onChange={(e) => setForm({ ...form, urutan: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm border rounded-lg">Batal</button>
-            <button onClick={handleSave} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Simpan</button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 text-sm border rounded-lg"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Simpan
+            </button>
           </div>
         </div>
       </Modal>

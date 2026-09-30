@@ -339,11 +339,9 @@ describe('MailService', () => {
     it('should substitute provided variables over samples', async () => {
       mockPrisma.emailTemplate.findUnique.mockResolvedValue(null);
 
-      const preview = await service.previewTemplate(
-        'welcomeMemberEmail',
-        undefined,
-        { nama: 'Siti Aminah' },
-      );
+      const preview = await service.previewTemplate('welcomeMemberEmail', undefined, {
+        nama: 'Siti Aminah',
+      });
 
       expect(preview.html).toContain('Siti Aminah');
       expect(preview.html).not.toContain('Budi Santoso');

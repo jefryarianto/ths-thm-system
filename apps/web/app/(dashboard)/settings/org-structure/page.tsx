@@ -5,7 +5,20 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home, Upload, X, CheckCircle2 } from 'lucide-react';
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  RefreshCw,
+  Save,
+  AlertCircle,
+  Building2,
+  Map as MapIcon,
+  Home,
+  Upload,
+  X,
+  CheckCircle2,
+} from 'lucide-react';
 import Modal from '@/components/ui/modal';
 
 // ─── Types ───
@@ -102,7 +115,9 @@ function OrgFormModal({
 
         {/* Kode */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode {label}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Kode {label}
+          </label>
           <input
             type="text"
             value={form.kode || ''}
@@ -115,7 +130,9 @@ function OrgFormModal({
 
         {/* Nama */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama {label}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Nama {label}
+          </label>
           <input
             type="text"
             value={form.nama || ''}
@@ -129,7 +146,9 @@ function OrgFormModal({
         {/* Parent selector for Wilayah/Ranting */}
         {level === 'wilayah' && distrikList && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Distrik
+            </label>
             <select
               value={form.distrikId || ''}
               onChange={(e) => setForm({ ...form, distrikId: e.target.value })}
@@ -138,7 +157,9 @@ function OrgFormModal({
             >
               <option value="">Pilih Distrik</option>
               {distrikList.map((d) => (
-                <option key={d.id} value={d.id}>{d.nama} ({d.kodeDistrik})</option>
+                <option key={d.id} value={d.id}>
+                  {d.nama} ({d.kodeDistrik})
+                </option>
               ))}
             </select>
           </div>
@@ -146,7 +167,9 @@ function OrgFormModal({
 
         {level === 'ranting' && wilayahList && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Wilayah
+            </label>
             <select
               value={form.wilayahId || ''}
               onChange={(e) => setForm({ ...form, wilayahId: e.target.value })}
@@ -155,7 +178,9 @@ function OrgFormModal({
             >
               <option value="">Pilih Wilayah</option>
               {wilayahList.map((w) => (
-                <option key={w.id} value={w.id}>{w.nama} ({w.kodeWilayah})</option>
+                <option key={w.id} value={w.id}>
+                  {w.nama} ({w.kodeWilayah})
+                </option>
               ))}
             </select>
           </div>
@@ -164,7 +189,9 @@ function OrgFormModal({
         {/* Alamat / Lokasi */}
         {level === 'distrik' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Alamat
+            </label>
             <textarea
               value={form.alamat || ''}
               onChange={(e) => setForm({ ...form, alamat: e.target.value })}
@@ -176,7 +203,9 @@ function OrgFormModal({
 
         {level === 'ranting' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lokasi Latihan</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Lokasi Latihan
+            </label>
             <input
               type="text"
               value={form.lokasiLatihan || ''}
@@ -188,10 +217,18 @@ function OrgFormModal({
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
             Batal
           </button>
-          <button type="submit" disabled={saving} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
             <Save size={14} /> {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
@@ -234,8 +271,12 @@ export default function OrgStructureSettingsPage() {
     try {
       const [dRes, wRes, rRes] = await Promise.all([
         apiClient.get('/org-structure/distrik'),
-        selectedDistrik ? apiClient.get(`/org-structure/wilayah?distrikId=${selectedDistrik}`) : apiClient.get('/org-structure/wilayah'),
-        selectedWilayah ? apiClient.get(`/org-structure/ranting?wilayahId=${selectedWilayah}`) : apiClient.get('/org-structure/ranting'),
+        selectedDistrik
+          ? apiClient.get(`/org-structure/wilayah?distrikId=${selectedDistrik}`)
+          : apiClient.get('/org-structure/wilayah'),
+        selectedWilayah
+          ? apiClient.get(`/org-structure/ranting?wilayahId=${selectedWilayah}`)
+          : apiClient.get('/org-structure/ranting'),
       ]);
       setDistriks(dRes.data.data);
       setWilayahs(wRes.data.data);
@@ -259,11 +300,16 @@ export default function OrgStructureSettingsPage() {
   const openEdit = (item: Record<string, unknown>, _level: OrgLevel) => {
     const form: Record<string, string> = {
       id: item.id as string,
-      kode: item.kodeDistrik as string || item.kodeWilayah as string || item.kodeRanting as string || '',
+      kode:
+        (item.kodeDistrik as string) ||
+        (item.kodeWilayah as string) ||
+        (item.kodeRanting as string) ||
+        '',
       nama: item.nama as string,
       alamat: (item.alamat as string) || '',
       lokasiLatihan: (item.lokasiLatihan as string) || '',
-      distrikId: (item.distrikId as string) || (item.wilayah as Wilayah)?.distrikId || selectedDistrik || '',
+      distrikId:
+        (item.distrikId as string) || (item.wilayah as Wilayah)?.distrikId || selectedDistrik || '',
       wilayahId: (item.wilayahId as string) || '',
     };
     setEditData(form);
@@ -288,7 +334,12 @@ export default function OrgStructureSettingsPage() {
         await apiClient.post('/org-structure/wilayah', payload);
       }
     } else if (activeTab === 'ranting') {
-      const payload = { kodeRanting: form.kode, nama: form.nama, lokasiLatihan: form.lokasiLatihan, wilayahId: form.wilayahId };
+      const payload = {
+        kodeRanting: form.kode,
+        nama: form.nama,
+        lokasiLatihan: form.lokasiLatihan,
+        wilayahId: form.wilayahId,
+      };
       if (isEdit) {
         const { wilayahId: _w, ...updatePayload } = payload;
         await apiClient.patch(`/org-structure/ranting/${editData!.id}`, updatePayload);
@@ -385,227 +436,293 @@ export default function OrgStructureSettingsPage() {
     { key: 'ranting', label: 'Ranting', icon: Home },
   ];
 
-  const currentList = activeTab === 'distrik' ? distriks : activeTab === 'wilayah' ? wilayahs : rantings;
+  const currentList =
+    activeTab === 'distrik' ? distriks : activeTab === 'wilayah' ? wilayahs : rantings;
 
   return (
-      <PermissionGuard module="settings" action="view">
-        <div className="space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Struktur Organisasi</h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Kelola Distrik, Wilayah, dan Ranting</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={fetchData} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <RefreshCw size={14} /> Refresh
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowImportModal(true);
-                      setImportResult(null);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
-                  >
-                    <Upload size={14} /> Import Data
-                  </button>
-                  <button onClick={openCreate} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
-                    <Plus size={14} /> Tambah {tabs.find(t => t.key === activeTab)?.label}
-                  </button>
-                </div>
+    <PermissionGuard module="settings" action="view">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Struktur Organisasi
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Kelola Distrik, Wilayah, dan Ranting
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchData}
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <RefreshCw size={14} /> Refresh
+            </button>
+            <button
+              onClick={() => {
+                setShowImportModal(true);
+                setImportResult(null);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+            >
+              <Upload size={14} /> Import Data
+            </button>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            >
+              <Plus size={14} /> Tambah {tabs.find((t) => t.key === activeTab)?.label}
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-6">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              const isActive = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                    isActive
+                      ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon size={16} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Filters for Wilayah / Ranting */}
+        {(activeTab === 'wilayah' || activeTab === 'ranting') && (
+          <div className="flex items-center gap-3">
+            {activeTab === 'wilayah' && distriks.length > 0 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500">Filter Distrik:</label>
+                <select
+                  value={selectedDistrik}
+                  onChange={(e) => {
+                    setSelectedDistrik(e.target.value);
+                    setSelectedWilayah('');
+                  }}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Semua Distrik</option>
+                  {distriks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nama}
+                    </option>
+                  ))}
+                </select>
               </div>
-        
-              {/* Tabs */}
-              <div className="border-b border-gray-200 dark:border-gray-700">
-                <div className="flex gap-6">
-                  {tabs.map((t) => {
-                    const Icon = t.icon;
-                    const isActive = activeTab === t.key;
-                    return (
-                      <button
-                        key={t.key}
-                        onClick={() => setActiveTab(t.key)}
-                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                          isActive
-                            ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
+            )}
+            {activeTab === 'ranting' && wilayahs.length > 0 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500">Filter Wilayah:</label>
+                <select
+                  value={selectedWilayah}
+                  onChange={(e) => setSelectedWilayah(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">Semua Wilayah</option>
+                  {wilayahs.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-10">
+            <RefreshCw size={24} className="animate-spin text-blue-500" />
+          </div>
+        )}
+
+        {/* List */}
+        {!loading && (
+          <div className="space-y-3">
+            {currentList.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <Building2 size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada data</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Klik "Tambah" untuk menambahkan
+                </p>
+              </div>
+            ) : (
+              currentList.map((item) => {
+                const wil = item as unknown as Wilayah;
+                const ran = item as unknown as Ranting;
+                const distrik = item as unknown as Distrik;
+                const orgPath =
+                  activeTab === 'ranting'
+                    ? [ran.wilayah?.distrik?.nama, ran.wilayah?.nama].filter(Boolean).join(' → ')
+                    : activeTab === 'wilayah'
+                      ? wil.distrik?.nama || ''
+                      : '';
+                const kode = distrik.kodeDistrik || wil.kodeWilayah || ran.kodeRanting;
+                const childCount =
+                  distrik._count?.wilayahs ?? wil._count?.rantings ?? ran._count?.anggota;
+                const childLabel =
+                  activeTab === 'distrik'
+                    ? 'Wilayah'
+                    : activeTab === 'wilayah'
+                      ? 'Ranting'
+                      : 'Anggota';
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center justify-between hover:shadow-md transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          activeTab === 'distrik'
+                            ? 'bg-blue-50 dark:bg-blue-950'
+                            : activeTab === 'wilayah'
+                              ? 'bg-green-50 dark:bg-green-950'
+                              : 'bg-purple-50 dark:bg-purple-950'
                         }`}
                       >
-                        <Icon size={16} />
-                        {t.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-        
-              {/* Filters for Wilayah / Ranting */}
-              {(activeTab === 'wilayah' || activeTab === 'ranting') && (
-                <div className="flex items-center gap-3">
-                  {activeTab === 'wilayah' && distriks.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-500">Filter Distrik:</label>
-                      <select
-                        value={selectedDistrik}
-                        onChange={(e) => { setSelectedDistrik(e.target.value); setSelectedWilayah(''); }}
-                        className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="">Semua Distrik</option>
-                        {distriks.map((d) => (
-                          <option key={d.id} value={d.id}>{d.nama}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {activeTab === 'ranting' && wilayahs.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-500">Filter Wilayah:</label>
-                      <select
-                        value={selectedWilayah}
-                        onChange={(e) => setSelectedWilayah(e.target.value)}
-                        className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="">Semua Wilayah</option>
-                        {wilayahs.map((w) => (
-                          <option key={w.id} value={w.id}>{w.nama}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
-        
-              {/* Loading */}
-              {loading && (
-                <div className="flex items-center justify-center py-10">
-                  <RefreshCw size={24} className="animate-spin text-blue-500" />
-                </div>
-              )}
-        
-              {/* List */}
-              {!loading && (
-                <div className="space-y-3">
-                  {currentList.length === 0 ? (
-                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                      <Building2 size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada data</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Klik "Tambah" untuk menambahkan</p>
-                    </div>
-                  ) : (
-                    currentList.map((item) => {
-                      const wil = item as unknown as Wilayah;
-                      const ran = item as unknown as Ranting;
-                      const distrik = item as unknown as Distrik;
-                      const orgPath = activeTab === 'ranting'
-                        ? [ran.wilayah?.distrik?.nama, ran.wilayah?.nama].filter(Boolean).join(' → ')
-                        : activeTab === 'wilayah'
-                          ? wil.distrik?.nama || ''
-                          : '';
-                      const kode = distrik.kodeDistrik || wil.kodeWilayah || ran.kodeRanting;
-                      const childCount = distrik._count?.wilayahs ?? wil._count?.rantings ?? ran._count?.anggota;
-                      const childLabel = activeTab === 'distrik' ? 'Wilayah' : activeTab === 'wilayah' ? 'Ranting' : 'Anggota';
-        
-                      return (
-                        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center justify-between hover:shadow-md transition">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${
-                              activeTab === 'distrik' ? 'bg-blue-50 dark:bg-blue-950' :
-                              activeTab === 'wilayah' ? 'bg-green-50 dark:bg-green-950' :
-                              'bg-purple-50 dark:bg-purple-950'
-                            }`}>
-                              {activeTab === 'distrik' ? <Building2 size={18} className="text-blue-600 dark:text-blue-400" /> :
-                               activeTab === 'wilayah' ? <MapIcon size={18} className="text-green-600 dark:text-green-400" /> :
-                               <Home size={18} className="text-purple-600 dark:text-purple-400" />}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900 dark:text-white">{item.nama}</span>
-                                <span className="font-mono text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{kode}</span>
-                              </div>
-                              {orgPath && (
-                                <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                                  <span>{orgPath}</span>
-                                </div>
-                              )}
-                              <p className="text-xs text-gray-400 mt-0.5">{childCount} {childLabel}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => openEdit(item as unknown as Record<string, unknown>, activeTab)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition" title="Edit">
-                              <Edit3 size={14} />
-                            </button>
-                            <button onClick={() => handleDelete(item.id, activeTab)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition" title="Hapus">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                        {activeTab === 'distrik' ? (
+                          <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
+                        ) : activeTab === 'wilayah' ? (
+                          <MapIcon size={18} className="text-green-600 dark:text-green-400" />
+                        ) : (
+                          <Home size={18} className="text-purple-600 dark:text-purple-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {item.nama}
+                          </span>
+                          <span className="font-mono text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                            {kode}
+                          </span>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-        
-              {/* Modal */}
-              <OrgFormModal
-                open={showModal}
-                onClose={() => setShowModal(false)}
-                level={activeTab}
-                data={editData}
-                distrikList={distriks}
-                wilayahList={wilayahs}
-                onSave={handleSave}
-              />
-
-              {/* Import Modal */}
-              <Modal open={showImportModal} onClose={() => setShowImportModal(false)} title="Import Data Organisasi" size="lg">
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Tempel data struktur organisasi (satu baris = satu ranting). Kolom: <b>distrik, wilayah, ranting</b>.
-                    Data yang sudah ada (nama sama) otomatis dilewati.
-                  </p>
-                  <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                    <p className="font-medium text-gray-600 dark:text-gray-300">Contoh CSV:</p>
-                    <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng</code>
-                    <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir</code>
-                    <code className="block">Distrik Banten, Wilayah Tangerang, Ranting Cikokol</code>
-                    <p className="font-medium text-gray-600 dark:text-gray-300 pt-2">Contoh JSON:</p>
-                    <code className="block">[{'{'} "distrik": "Distrik Jakarta", "wilayah": "Jakarta Pusat", "ranting": "Cideng" {'}'}]</code>
-                  </div>
-                  <textarea
-                    value={importText}
-                    onChange={(e) => setImportText(e.target.value)}
-                    rows={8}
-                    placeholder={'Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng\nDistrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir'}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-blue-500"
-                  />
-                  {importResult && (
-                    <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400">
-                      <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-                      <span>
-                        Import selesai: <b>{importResult.importedDistrik}</b> distrik, <b>{importResult.importedWilayah}</b> wilayah,{' '}
-                        <b>{importResult.importedRanting}</b> ranting baru · <b>{importResult.skipped}</b> dilewati (sudah ada).
-                      </span>
+                        {orgPath && (
+                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                            <span>{orgPath}</span>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {childCount} {childLabel}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    <button
-                      onClick={() => setShowImportModal(false)}
-                      className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    >
-                      <X size={14} /> {importResult ? 'Selesai' : 'Batal'}
-                    </button>
-                    <button
-                      onClick={handleImport}
-                      disabled={importing || !!importResult}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      <Upload size={14} /> {importing ? 'Mengimpor...' : 'Import Sekarang'}
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() =>
+                          openEdit(item as unknown as Record<string, unknown>, activeTab)
+                        }
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition"
+                        title="Edit"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id, activeTab)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition"
+                        title="Hapus"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Modal>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* Modal */}
+        <OrgFormModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          level={activeTab}
+          data={editData}
+          distrikList={distriks}
+          wilayahList={wilayahs}
+          onSave={handleSave}
+        />
+
+        {/* Import Modal */}
+        <Modal
+          open={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          title="Import Data Organisasi"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Tempel data struktur organisasi (satu baris = satu ranting). Kolom:{' '}
+              <b>distrik, wilayah, ranting</b>. Data yang sudah ada (nama sama) otomatis dilewati.
+            </p>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+              <p className="font-medium text-gray-600 dark:text-gray-300">Contoh CSV:</p>
+              <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng</code>
+              <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir</code>
+              <code className="block">Distrik Banten, Wilayah Tangerang, Ranting Cikokol</code>
+              <p className="font-medium text-gray-600 dark:text-gray-300 pt-2">Contoh JSON:</p>
+              <code className="block">
+                [{'{'} "distrik": "Distrik Jakarta", "wilayah": "Jakarta Pusat", "ranting": "Cideng"{' '}
+                {'}'}]
+              </code>
             </div>
-        {confirmModal}
-      </PermissionGuard>
-    );
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              rows={8}
+              placeholder={
+                'Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng\nDistrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir'
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-blue-500"
+            />
+            {importResult && (
+              <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400">
+                <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
+                <span>
+                  Import selesai: <b>{importResult.importedDistrik}</b> distrik,{' '}
+                  <b>{importResult.importedWilayah}</b> wilayah,{' '}
+                  <b>{importResult.importedRanting}</b> ranting baru · <b>{importResult.skipped}</b>{' '}
+                  dilewati (sudah ada).
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <X size={14} /> {importResult ? 'Selesai' : 'Batal'}
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={importing || !!importResult}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Upload size={14} /> {importing ? 'Mengimpor...' : 'Import Sekarang'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+      {confirmModal}
+    </PermissionGuard>
+  );
 }

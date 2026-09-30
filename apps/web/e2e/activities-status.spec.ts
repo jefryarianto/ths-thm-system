@@ -56,7 +56,11 @@ async function registerActivityMocks(page: Page, initialStatus: string) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { ...DETAIL_BASE, status: currentStatus }, message: 'ok' }),
+        body: JSON.stringify({
+          success: true,
+          data: { ...DETAIL_BASE, status: currentStatus },
+          message: 'ok',
+        }),
       });
       return;
     }
@@ -73,7 +77,9 @@ test.describe('Activities — edit & status quick actions', () => {
     await mockAuth(page, { mockDashboardPages: false });
   });
 
-  test('draft detail shows Publish quick action and Edit button; publish flow works', async ({ page }) => {
+  test('draft detail shows Publish quick action and Edit button; publish flow works', async ({
+    page,
+  }) => {
     await registerActivityMocks(page, 'draft');
     await page.goto(`/activities/${ACT_ID}`);
     await expect(page.locator('h1')).toContainText('Kegiatan Uji', { timeout: 10000 });
@@ -127,7 +133,9 @@ test.describe('Activities — edit & status quick actions', () => {
     await expect(page.locator('h1')).toContainText('Edit', { timeout: 10000 });
   });
 
-  test('edit form uses valid status vocabulary (draft/published/closed/cancelled)', async ({ page }) => {
+  test('edit form uses valid status vocabulary (draft/published/closed/cancelled)', async ({
+    page,
+  }) => {
     await registerActivityMocks(page, 'draft');
     await page.goto(`/activities/${ACT_ID}/edit`);
     await expect(page.locator('h1')).toContainText('Edit', { timeout: 10000 });

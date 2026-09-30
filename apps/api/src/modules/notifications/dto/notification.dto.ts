@@ -35,7 +35,9 @@ export class SendNotificationDto {
   @IsString()
   tipe?: string;
 
-  @ApiPropertyOptional({ description: 'Lewati pengiriman email (untuk event tinggi frekuensi seperti scan kartu)' })
+  @ApiPropertyOptional({
+    description: 'Lewati pengiriman email (untuk event tinggi frekuensi seperti scan kartu)',
+  })
   @IsOptional()
   skipEmail?: boolean;
 
@@ -181,7 +183,9 @@ export class PublishAppUpdateDto {
   @IsString()
   changelog?: string;
 
-  @ApiPropertyOptional({ description: 'URL alternatif APK. Kosongkan untuk memakai endpoint bawaan /api/app.' })
+  @ApiPropertyOptional({
+    description: 'URL alternatif APK. Kosongkan untuk memakai endpoint bawaan /api/app.',
+  })
   @IsOptional()
   @IsString()
   apkUrl?: string;

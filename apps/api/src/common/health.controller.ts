@@ -1,4 +1,17 @@
-import { Body, Controller, Get, Header, Logger, OnApplicationBootstrap, Optional, Param, Patch, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Logger,
+  OnApplicationBootstrap,
+  Optional,
+  Param,
+  Patch,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
@@ -64,7 +77,10 @@ class UptimeTracker {
         UptimeTracker.lastCompletedDurationMs = durationMs;
         UptimeTracker.lastDataChangeMs = now;
         for (let i = UptimeTracker.history.length - 1; i >= 0; i--) {
-          if (UptimeTracker.history[i].status === 'disconnected' && !UptimeTracker.history[i].durationMs) {
+          if (
+            UptimeTracker.history[i].status === 'disconnected' &&
+            !UptimeTracker.history[i].durationMs
+          ) {
             UptimeTracker.history[i].durationMs = durationMs;
           } else if (UptimeTracker.history[i].status === 'connected') {
             break;
@@ -98,7 +114,8 @@ class UptimeTracker {
       if (gap > 1) {
         // Gap detected — fill with disconnected
         for (let i = 1; i < gap; i++) {
-          const fillTs = (Math.floor(lastTs / UptimeTracker.BUCKET_MS) + i) * UptimeTracker.BUCKET_MS;
+          const fillTs =
+            (Math.floor(lastTs / UptimeTracker.BUCKET_MS) + i) * UptimeTracker.BUCKET_MS;
           UptimeTracker.history.push({ timestamp: fillTs, status: 'disconnected' });
         }
       }
@@ -122,7 +139,11 @@ class UptimeTracker {
   }
 
   /** Get the full history for the last 24 hours. */
-  static getHistory(): { timestamp: string; status: 'connected' | 'disconnected'; durationMs?: number }[] {
+  static getHistory(): {
+    timestamp: string;
+    status: 'connected' | 'disconnected';
+    durationMs?: number;
+  }[] {
     return UptimeTracker.history.map((h) => ({
       timestamp: new Date(h.timestamp).toISOString(),
       status: h.status,
@@ -193,7 +214,10 @@ class UptimeTracker {
     // Sort events by start time for efficient overlap checks
     // Filter out events without endTime (they weren't closed yet)
     const completed = events
-      .filter((e): e is { startTime: Date; endTime: Date; durationMs: number | null } => e.endTime !== null)
+      .filter(
+        (e): e is { startTime: Date; endTime: Date; durationMs: number | null } =>
+          e.endTime !== null,
+      )
       .map((e) => ({
         startMs: e.startTime.getTime(),
         endMs: e.endTime.getTime(),
@@ -208,9 +232,7 @@ class UptimeTracker {
       const bucketEnd = bucketStart + bucketMs;
 
       // Find an event that overlaps this bucket
-      const overlapping = completed.find(
-        (e) => e.startMs < bucketEnd && e.endMs > bucketStart,
-      );
+      const overlapping = completed.find((e) => e.startMs < bucketEnd && e.endMs > bucketStart);
 
       if (overlapping) {
         newHistory.push({
@@ -245,7 +267,10 @@ class UptimeTracker {
   /** Get the duration of the most recent completed disconnect streak, or null if none. */
   static getLastDisconnectDuration(): number | null {
     for (let i = UptimeTracker.history.length - 1; i >= 0; i--) {
-      if (UptimeTracker.history[i].status === 'disconnected' && UptimeTracker.history[i].durationMs !== undefined) {
+      if (
+        UptimeTracker.history[i].status === 'disconnected' &&
+        UptimeTracker.history[i].durationMs !== undefined
+      ) {
         return UptimeTracker.history[i].durationMs!;
       }
       if (UptimeTracker.history[i].status === 'connected') break;
@@ -375,17 +400,23 @@ export class HealthController implements OnApplicationBootstrap {
     }
 
     // Check disk space on uploads directory (cached 60s, non-blocking)
-    let diskSpace: { free: string; total: string; used: string; usagePercent: number } | null = null;
+    let diskSpace: { free: string; total: string; used: string; usagePercent: number } | null =
+      null;
     const uploadDir = process.env.UPLOAD_DIR || './uploads';
     const diskCacheKey = `health:disk:${uploadDir}`;
-    diskSpace = this.cache.get<{ free: string; total: string; used: string; usagePercent: number }>(diskCacheKey) ?? null;
+    diskSpace =
+      this.cache.get<{ free: string; total: string; used: string; usagePercent: number }>(
+        diskCacheKey,
+      ) ?? null;
     if (!diskSpace) {
       try {
         statSync(uploadDir);
         const { exec } = require('child_process');
         const dfOutput: string = await new Promise((resolve) => {
-          exec(`df -h "${uploadDir}"`, { encoding: 'utf-8', timeout: 5000 }, (err: Error | null, stdout: string) =>
-            resolve(err ? '' : stdout),
+          exec(
+            `df -h "${uploadDir}"`,
+            { encoding: 'utf-8', timeout: 5000 },
+            (err: Error | null, stdout: string) => resolve(err ? '' : stdout),
           );
         });
         const lines = dfOutput.trim().split('\n');
@@ -455,18 +486,18 @@ export class HealthController implements OnApplicationBootstrap {
   async getDetailedHealth() {
     const basicHealth = await this.check();
     const memoryUsage = process.memoryUsage();
-    
+
     // Additional system info
     const cpus = os.cpus();
-    const cpuUsage = cpus.map(cpu => ({
+    const cpuUsage = cpus.map((cpu) => ({
       model: cpu.model,
       speed: cpu.speed,
       times: cpu.times,
     }));
-    
+
     // Network interfaces
     const networkInterfaces = os.networkInterfaces();
-    
+
     return {
       ...basicHealth,
       data: {
@@ -493,7 +524,7 @@ export class HealthController implements OnApplicationBootstrap {
           execPath: process.execPath,
           cwd: process.cwd(),
         },
-      }
+      },
     };
   }
 
@@ -541,7 +572,9 @@ export class HealthController implements OnApplicationBootstrap {
         sendEvent('health', healthData);
 
         // Detect queue status transition
-        const queueStatus = (healthData as Record<string, unknown>)?.queue as QueueHealthDetail | undefined;
+        const queueStatus = (healthData as Record<string, unknown>)?.queue as
+          | QueueHealthDetail
+          | undefined;
         const currentStatus = queueStatus?.status;
         if (currentStatus && currentStatus !== lastQueueStatus) {
           sendEvent('queue-status', {
@@ -613,17 +646,32 @@ export class HealthController implements OnApplicationBootstrap {
 
       const backupDir = '/app/backups/production';
       if (!fs.existsSync(backupDir)) {
-        return { available: false, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+        return {
+          available: false,
+          lastBackup: null,
+          lastBackupSize: null,
+          lastBackupAge: null,
+          backupCount: 0,
+          status: 'missing',
+        };
       }
 
       // Read all .info.json files
-      const files = fs.readdirSync(backupDir)
+      const files = fs
+        .readdirSync(backupDir)
         .filter((f: string) => f.endsWith('.info.json'))
         .sort()
         .reverse(); // newest first
 
       if (files.length === 0) {
-        return { available: true, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+        return {
+          available: true,
+          lastBackup: null,
+          lastBackupSize: null,
+          lastBackupAge: null,
+          backupCount: 0,
+          status: 'missing',
+        };
       }
 
       // Read the most recent backup info
@@ -646,7 +694,8 @@ export class HealthController implements OnApplicationBootstrap {
       // Format size
       const sizeBytes = info.size_bytes || 0;
       let sizeStr: string;
-      if (sizeBytes > 1024 * 1024 * 1024) sizeStr = `${(sizeBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+      if (sizeBytes > 1024 * 1024 * 1024)
+        sizeStr = `${(sizeBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
       else if (sizeBytes > 1024 * 1024) sizeStr = `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
       else if (sizeBytes > 1024) sizeStr = `${(sizeBytes / 1024).toFixed(1)} KB`;
       else sizeStr = `${sizeBytes} B`;
@@ -660,7 +709,14 @@ export class HealthController implements OnApplicationBootstrap {
         status,
       };
     } catch {
-      return { available: false, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+      return {
+        available: false,
+        lastBackup: null,
+        lastBackupSize: null,
+        lastBackupAge: null,
+        backupCount: 0,
+        status: 'missing',
+      };
     }
   }
 
@@ -681,7 +737,8 @@ export class HealthController implements OnApplicationBootstrap {
           connection: resolveRedisConnection() as { host: string; port: number },
           workerStatus: 'stopped',
           latencyMs: null,
-          error: 'BullMQ queue not initialized. Check that redis is reachable and bullmq is installed.',
+          error:
+            'BullMQ queue not initialized. Check that redis is reachable and bullmq is installed.',
           recentErrors,
         };
       } else {
@@ -771,7 +828,11 @@ export class HealthController implements OnApplicationBootstrap {
 
     // Persist disconnect start — create a new database event when a disconnect begins
     const disconnectStartMs = UptimeTracker.getDisconnectStartMs();
-    if (currentStatus === 'disconnected' && disconnectStartMs !== null && !HealthController.ongoingUptimeEventId) {
+    if (
+      currentStatus === 'disconnected' &&
+      disconnectStartMs !== null &&
+      !HealthController.ongoingUptimeEventId
+    ) {
       try {
         const event = await this.prisma.queueUptimeEvent.create({
           data: {
@@ -806,11 +867,10 @@ export class HealthController implements OnApplicationBootstrap {
   @Roles('superadmin', 'admin_distrik')
   @Header('Cache-Control', 'max-age=5')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get 24-hour queue sparkline uptime history (use /events for outage list)' })
-  getUptimeHistory(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  @ApiOperation({
+    summary: 'Get 24-hour queue sparkline uptime history (use /events for outage list)',
+  })
+  getUptimeHistory(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const cacheKey = 'uptime:sparkline:default';
 
     // Check CacheService first (TTL = 5s, shared across pods)
@@ -979,12 +1039,14 @@ export class HealthController implements OnApplicationBootstrap {
         take: limitNum,
       });
 
-      events = rows.map((r: { id: string; startTime: Date; endTime: Date | null; durationMs: number | null }) => ({
-        id: r.id,
-        startTime: r.startTime.toISOString(),
-        ...(r.endTime ? { endTime: r.endTime.toISOString() } : {}),
-        ...(r.durationMs !== null ? { durationMs: r.durationMs } : {}),
-      }));
+      events = rows.map(
+        (r: { id: string; startTime: Date; endTime: Date | null; durationMs: number | null }) => ({
+          id: r.id,
+          startTime: r.startTime.toISOString(),
+          ...(r.endTime ? { endTime: r.endTime.toISOString() } : {}),
+          ...(r.durationMs !== null ? { durationMs: r.durationMs } : {}),
+        }),
+      );
     } catch (err) {
       this.logger.warn(`Failed to fetch uptime events: ${(err as Error).message}`);
     }
@@ -1077,7 +1139,9 @@ export class HealthController implements OnApplicationBootstrap {
         where: { endTime: null },
       });
       if (staleEvents.length > 0) {
-        this.logger.warn(`Closing ${staleEvents.length} stale uptime event(s) from previous lifecycle`);
+        this.logger.warn(
+          `Closing ${staleEvents.length} stale uptime event(s) from previous lifecycle`,
+        );
         await this.prisma.queueUptimeEvent.updateMany({
           where: { endTime: null },
           data: { endTime: new Date() },
@@ -1092,10 +1156,7 @@ export class HealthController implements OnApplicationBootstrap {
       const recentEvents = await this.prisma.queueUptimeEvent.findMany({
         where: {
           endTime: { not: null },
-          OR: [
-            { startTime: { gte: windowStart } },
-            { endTime: { gte: windowStart } },
-          ],
+          OR: [{ startTime: { gte: windowStart } }, { endTime: { gte: windowStart } }],
         },
         select: { startTime: true, endTime: true, durationMs: true },
       });

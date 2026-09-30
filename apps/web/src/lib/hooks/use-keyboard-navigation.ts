@@ -20,34 +20,37 @@ export function useKeyboardNavigation({
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!enabled) return;
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!enabled) return;
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        if (activeIndex < itemCount - 1) {
-          setActiveIndex((prev: number) => prev + 1);
-          onArrowDown?.();
-        }
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        if (activeIndex > 0) {
-          setActiveIndex((prev: number) => prev - 1);
-          onArrowUp?.();
-        }
-        break;
-      case 'Enter':
-        e.preventDefault();
-        onActivate(activeIndex);
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setActiveIndex(0);
-        break;
-    }
-  }, [activeIndex, enabled, itemCount, onActivate, onArrowUp, onArrowDown]);
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (activeIndex < itemCount - 1) {
+            setActiveIndex((prev: number) => prev + 1);
+            onArrowDown?.();
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (activeIndex > 0) {
+            setActiveIndex((prev: number) => prev - 1);
+            onArrowUp?.();
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          onActivate(activeIndex);
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setActiveIndex(0);
+          break;
+      }
+    },
+    [activeIndex, enabled, itemCount, onActivate, onArrowUp, onArrowDown],
+  );
 
   useEffect(() => {
     const container = containerRef.current;

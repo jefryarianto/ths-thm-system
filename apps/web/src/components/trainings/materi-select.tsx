@@ -77,7 +77,10 @@ export default function MateriMultiSelect({ value, onChange, disabled }: MateriM
             const opt = KATEGORI_MATERI_OPTIONS.find((o) => o.value === item.kategori);
             if (!opt) return null;
             return (
-              <div key={item.kategori} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+              <div
+                key={item.kategori}
+                className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
+              >
                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   <BookOpen size={14} className="text-gray-400" />
                   {opt.icon} {opt.label}

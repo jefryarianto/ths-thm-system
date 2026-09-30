@@ -30,7 +30,9 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(modalTitle).toBeVisible({ timeout: 5000 });
 
     // Document type options
-    await expect(page.getByText('Kartu Tanda Anggota (KTA)').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Kartu Tanda Anggota (KTA)').first()).toBeVisible({
+      timeout: 5000,
+    });
     await expect(page.getByText('Sertifikat Pendadaran').first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Sertifikat Pelatihan').first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('Piagam Prestasi').first()).toBeVisible({ timeout: 5000 });
@@ -77,7 +79,11 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(confirmTitle).toBeVisible({ timeout: 5000 });
 
     // Should show estimate count (the mock returns 25)
-    const estimateVisible = await page.getByText('25').first().isVisible().catch(() => false);
+    const estimateVisible = await page
+      .getByText('25')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (estimateVisible) {
       await expect(page.getByText('25').first()).toBeVisible({ timeout: 5000 });
     }
@@ -103,7 +109,11 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(page.getByText('Konfirmasi Generate Massal')).toBeVisible();
 
     // Wait for estimate to load (mock returns 25) — may not appear in CI
-    const estimateVisible = await page.getByText('25').first().isVisible().catch(() => false);
+    const estimateVisible = await page
+      .getByText('25')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (estimateVisible) {
       await expect(page.getByText('25').first()).toBeVisible({ timeout: 5000 });
     }
@@ -115,7 +125,10 @@ test.describe('Batch Document Generation Flow', () => {
     await generateButton.click();
 
     // Should transition to progress step — may not appear if estimate mock times out in CI
-    const progressVisible = await page.getByText('Memproses Generate Massal').isVisible().catch(() => false);
+    const progressVisible = await page
+      .getByText('Memproses Generate Massal')
+      .isVisible()
+      .catch(() => false);
     if (progressVisible) {
       await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
@@ -127,7 +140,9 @@ test.describe('Batch Document Generation Flow', () => {
       // Click "Tutup" to close modal
       await page.locator('button:has-text("Tutup")').click();
       // Use heading role to only match the modal's h3, not the batch tab description paragraph
-      await expect(page.getByRole('heading', { name: /Generate Dokumen Massal/i })).not.toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Generate Dokumen Massal/i }),
+      ).not.toBeVisible();
     }
   });
 
@@ -145,7 +160,10 @@ test.describe('Batch Document Generation Flow', () => {
     await page.locator('button:has-text("Generate")').last().click();
 
     // Progress step may not appear in CI if batch creation mock has timing issues
-    const progressVisible = await page.getByText('Memproses Generate Massal').isVisible().catch(() => false);
+    const progressVisible = await page
+      .getByText('Memproses Generate Massal')
+      .isVisible()
+      .catch(() => false);
     if (progressVisible) {
       await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
@@ -158,25 +176,38 @@ test.describe('Batch Document Generation Flow', () => {
         await page.waitForTimeout(300);
 
         // Job list should expand — check for job row content
-        const docNumVisible = await page.getByText('Nomor Dokumen').first().isVisible().catch(() => false);
+        const docNumVisible = await page
+          .getByText('Nomor Dokumen')
+          .first()
+          .isVisible()
+          .catch(() => false);
         if (docNumVisible) {
           await expect(page.getByText('Nomor Dokumen').first()).toBeVisible({ timeout: 5000 });
         }
 
         // Verify completed jobs show checkmark
-        const greenSvgs = await page.locator('svg.text-green-500').count().catch(() => 0);
+        const greenSvgs = await page
+          .locator('svg.text-green-500')
+          .count()
+          .catch(() => 0);
         if (greenSvgs > 0) {
           await expect(page.locator('svg.text-green-500').first()).toBeVisible({ timeout: 3000 });
         }
 
         // Verify failed jobs show X icon
-        const redSvgs = await page.locator('svg.text-red-500').count().catch(() => 0);
+        const redSvgs = await page
+          .locator('svg.text-red-500')
+          .count()
+          .catch(() => 0);
         if (redSvgs > 0) {
           await expect(page.locator('svg.text-red-500').first()).toBeVisible({ timeout: 3000 });
         }
 
         // Verify error text appears for failed jobs
-        const errorVisible = await page.getByText('PDF generation timeout').isVisible().catch(() => false);
+        const errorVisible = await page
+          .getByText('PDF generation timeout')
+          .isVisible()
+          .catch(() => false);
         if (errorVisible) {
           await expect(page.getByText('PDF generation timeout')).toBeVisible();
         }
@@ -197,7 +228,10 @@ test.describe('Batch Document Generation Flow', () => {
     await page.locator('button:has-text("Generate")').last().click();
 
     // Progress step may not appear in CI
-    const progressVisible = await page.getByText('Memproses Generate Massal').isVisible().catch(() => false);
+    const progressVisible = await page
+      .getByText('Memproses Generate Massal')
+      .isVisible()
+      .catch(() => false);
     if (progressVisible) {
       await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
@@ -229,7 +263,10 @@ test.describe('Batch Document Generation Flow', () => {
 
     // Switch to the "Generate Massal" tab to see batch history
     // The tab button is the FIRST button with "Generate Massal" text in DOM order
-    await page.getByRole('button', { name: /Generate Massal/ }).first().click();
+    await page
+      .getByRole('button', { name: /Generate Massal/ })
+      .first()
+      .click();
 
     // Wait for the batch history panel to load
     await expect(page.getByText('Riwayat Generate Dokumen')).toBeVisible({ timeout: 5000 });
@@ -238,13 +275,21 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(page.getByText(/batch/i).first()).toBeVisible();
 
     // Verify completed batch is visible
-    const selesaiVisible = await page.getByText('Selesai').first().isVisible().catch(() => false);
+    const selesaiVisible = await page
+      .getByText('Selesai')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (selesaiVisible) {
       await expect(page.getByText('Selesai').first()).toBeVisible({ timeout: 5000 });
     }
 
     // Verify processing batch shows animated spinner
-    const spinnerVisible = await page.locator('.animate-spin').first().isVisible().catch(() => false);
+    const spinnerVisible = await page
+      .locator('.animate-spin')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (spinnerVisible) {
       await expect(page.locator('.animate-spin').first()).toBeVisible({ timeout: 3000 });
     }
@@ -257,7 +302,11 @@ test.describe('Batch Document Generation Flow', () => {
 
     // After expanding, BatchProgressCard should render with detailed info
     await page.waitForTimeout(500);
-    const totalVis = await page.getByText('Total').first().isVisible().catch(() => false);
+    const totalVis = await page
+      .getByText('Total')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (totalVis) {
       await expect(page.getByText('Total').first()).toBeVisible({ timeout: 5000 });
       await expect(page.getByText('Berhasil').first()).toBeVisible({ timeout: 5000 });
@@ -291,7 +340,11 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(page.getByText('Per Ranting')).toBeVisible();
 
     // Wait for estimate — may not appear in CI
-    const estimateVisible = await page.getByText('25').first().isVisible().catch(() => false);
+    const estimateVisible = await page
+      .getByText('25')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (estimateVisible) {
       await expect(page.getByText('25').first()).toBeVisible({ timeout: 5000 });
     }
@@ -300,17 +353,28 @@ test.describe('Batch Document Generation Flow', () => {
     await page.locator('button:has-text("Generate")').last().click();
 
     // Progress step may not appear in CI
-    const progressVisible = await page.getByText('Memproses Generate Massal').isVisible().catch(() => false);
+    const progressVisible = await page
+      .getByText('Memproses Generate Massal')
+      .isVisible()
+      .catch(() => false);
     if (progressVisible) {
       await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
       // Progress stats visible
       await page.waitForTimeout(500);
-      const berhasilVisible = await page.getByText('Berhasil').first().isVisible().catch(() => false);
+      const berhasilVisible = await page
+        .getByText('Berhasil')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (berhasilVisible) {
         await expect(page.getByText('Berhasil').first()).toBeVisible({ timeout: 5000 });
       }
-      const gagalVisible = await page.getByText('Gagal').first().isVisible().catch(() => false);
+      const gagalVisible = await page
+        .getByText('Gagal')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (gagalVisible) {
         await expect(page.getByText('Gagal').first()).toBeVisible({ timeout: 5000 });
       }
@@ -323,7 +387,10 @@ test.describe('Batch Document Generation Flow', () => {
 
       // The batch should be listed
       await page.waitForTimeout(500);
-      const historyVisible = await page.getByText('Generate & Riwayat Batch').isVisible().catch(() => false);
+      const historyVisible = await page
+        .getByText('Generate & Riwayat Batch')
+        .isVisible()
+        .catch(() => false);
       if (historyVisible) {
         await expect(page.getByText('Generate & Riwayat Batch')).toBeVisible({ timeout: 5000 });
       }

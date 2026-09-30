@@ -13,13 +13,17 @@ export class CalendarController {
 
   @Get('events')
   @ApiOperation({ summary: 'Ambil event kalender per bulan (latihan, kegiatan, pendadaran)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
-  getEvents(
-    @Query('year') year: string,
-    @Query('month') month: string,
-    @Req() req: ScopedRequest,
-  ) {
+  getEvents(@Query('year') year: string, @Query('month') month: string, @Req() req: ScopedRequest) {
     const y = parseInt(year, 10) || new Date().getFullYear();
     const m = parseInt(month, 10) || new Date().getMonth() + 1;
     return this.service.getCalendarEvents(y, m, req.scope);
@@ -27,7 +31,15 @@ export class CalendarController {
 
   @Get('holidays')
   @ApiOperation({ summary: 'Ambil hari libur nasional (opsional filter tahun)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
   getHolidays(@Query('year') year: string) {
     const y = year ? parseInt(year, 10) : undefined;
@@ -36,12 +48,17 @@ export class CalendarController {
 
   @Get('upcoming')
   @ApiOperation({ summary: 'Ambil event 7 hari ke depan (latihan + iuran jatuh tempo)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
-  getUpcoming(
-    @Query('days') days: string,
-    @Req() req: ScopedRequest,
-  ) {
+  getUpcoming(@Query('days') days: string, @Req() req: ScopedRequest) {
     const d = parseInt(days, 10) || 7;
     return this.service.getUpcomingEvents(d, req.scope);
   }

@@ -5,9 +5,23 @@ import Link from 'next/link';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import {
-  BookOpen, ChevronRight, Shield, Heart, Award, Calendar, Users,
-  Cross, Sparkles, MapPin, Flame, CheckCircle2, ArrowRight,
-  Landmark, Building2, Share2, Check,
+  BookOpen,
+  ChevronRight,
+  Shield,
+  Heart,
+  Award,
+  Calendar,
+  Users,
+  Cross,
+  Sparkles,
+  MapPin,
+  Flame,
+  CheckCircle2,
+  ArrowRight,
+  Landmark,
+  Building2,
+  Share2,
+  Check,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import { TIMELINE_EVENTS } from './sejarah-data';
@@ -21,7 +35,7 @@ export default function SejarahPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('timeline');
   const [copied, setCopied] = useState(false);
   const [processedContent, setProcessedContent] = useState<string>('');
-  const [toc, setToc] = useState<Array<{id: string, text: string, level: number}>>([]);
+  const [toc, setToc] = useState<Array<{ id: string; text: string; level: number }>>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -43,7 +57,7 @@ export default function SejarahPage() {
     if (data?.konten) {
       const lines = data.konten.split('\n');
       let html = '';
-      const tocItems: Array<{id: string, text: string, level: number}> = [];
+      const tocItems: Array<{ id: string; text: string; level: number }> = [];
 
       let currentParagraph = '';
 
@@ -54,7 +68,7 @@ export default function SejarahPage() {
         }
       };
 
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const trimmed = line.trim();
         // Check if line is a heading: starts with a number, dot, space
         if (/^\d+\.\s+/.test(trimmed)) {
@@ -133,7 +147,8 @@ export default function SejarahPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-white/80 leading-relaxed font-light mb-6 max-w-3xl">
-              {t.sejarah.subtitle}. Mengembangkan watak kesatria, kedisiplinan jasmani, dan kemurnian batin berlandaskan Kasih Kristus dan teladan Bunda Maria.
+              {t.sejarah.subtitle}. Mengembangkan watak kesatria, kedisiplinan jasmani, dan
+              kemurnian batin berlandaskan Kasih Kristus dan teladan Bunda Maria.
             </p>
 
             <div className="inline-flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-white/5 border border-gold-400/25 backdrop-blur-md mb-8 shadow-sm">
@@ -202,7 +217,6 @@ export default function SejarahPage() {
           </div>
         </div>
       </section>
-
 
       {/* ── 2. Interactive Navigation Tabs ── */}
       <section className="sticky top-16 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors">
@@ -291,7 +305,6 @@ export default function SejarahPage() {
         </div>
       </section>
 
-
       {/* ── 3. Main Content & Sidebar Layout ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         <div className="grid lg:grid-cols-4 gap-8">
@@ -299,7 +312,9 @@ export default function SejarahPage() {
             {loading ? (
               <div className="min-h-[45vh] flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 dark:border-gold-400 border-t-transparent mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Memuat catatan sejarah...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Memuat catatan sejarah...
+                </p>
               </div>
             ) : (
               <>
@@ -316,7 +331,8 @@ export default function SejarahPage() {
                             Linimasa Tonggak Bersejarah
                           </h2>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            Kronologi perjalanan dari awal mula benih perintisan hingga era transformasi modern.
+                            Kronologi perjalanan dari awal mula benih perintisan hingga era
+                            transformasi modern.
                           </p>
                         </div>
                       </div>
@@ -353,8 +369,14 @@ export default function SejarahPage() {
 
                               <div className="space-y-1.5 pt-3 border-t border-gray-200/60 dark:border-gray-700/60">
                                 {event.highlights.map((item, hIdx) => (
-                                  <div key={hIdx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                                    <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+                                  <div
+                                    key={hIdx}
+                                    className="flex items-start gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300"
+                                  >
+                                    <CheckCircle2
+                                      size={15}
+                                      className="text-emerald-500 shrink-0 mt-0.5"
+                                    />
                                     <span>{item}</span>
                                   </div>
                                 ))}
@@ -366,7 +388,6 @@ export default function SejarahPage() {
                     </div>
                   </section>
                 )}
-
 
                 {/* ── TAB 2: KISAH PENDIRIAN & TOKOH ── */}
                 {activeTab === 'story' && (
@@ -381,7 +402,8 @@ export default function SejarahPage() {
                             Tokoh Perintis &amp; Gagasan Awal
                           </h2>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            Visi mendalam menyatukan seni bela diri pencak silat dengan spiritualitas Katolik.
+                            Visi mendalam menyatukan seni bela diri pencak silat dengan
+                            spiritualitas Katolik.
                           </p>
                         </div>
                       </div>
@@ -397,14 +419,20 @@ export default function SejarahPage() {
                                   alt="Potret Rm. Martinus Hadiwijoyo, Pr."
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
-                                    const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
+                                    const fb = e.currentTarget
+                                      .nextElementSibling as HTMLElement | null;
                                     if (fb) fb.style.display = 'flex';
                                   }}
                                   className="w-full h-full object-cover"
                                 />
-                                <div className="hidden w-full h-full flex-col items-center justify-center text-gold-400" style={{ display: 'none' }}>
+                                <div
+                                  className="hidden w-full h-full flex-col items-center justify-center text-gold-400"
+                                  style={{ display: 'none' }}
+                                >
                                   <Cross size={36} className="mb-0.5" />
-                                  <span className="text-[9px] uppercase tracking-wider text-gold-300/80">Rm. MH, Pr.</span>
+                                  <span className="text-[9px] uppercase tracking-wider text-gold-300/80">
+                                    Rm. MH, Pr.
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -417,28 +445,41 @@ export default function SejarahPage() {
                               Romo Martinus Hadiwijoyo, Pr.
                             </h3>
                             <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed">
-                              Imam Projo (Diosesan) Keuskupan Agung Jakarta yang merintis latihan pencak silat rohani di Seminari Mertoyudan dan Paroki Tanjung Priok, serta mendirikan THS (1985) dan THM (1986).
+                              Imam Projo (Diosesan) Keuskupan Agung Jakarta yang merintis latihan
+                              pencak silat rohani di Seminari Mertoyudan dan Paroki Tanjung Priok,
+                              serta mendirikan THS (1985) dan THM (1986).
                             </p>
                           </div>
                         </div>
 
                         <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-5 border-t border-white/10 text-xs sm:text-sm">
                           <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Calendar size={13} /> Masa Hidup</span>
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                              <Calendar size={13} /> Masa Hidup
+                            </span>
                             <span className="font-semibold text-white">1954 &ndash; 2020</span>
                           </div>
                           <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Cross size={13} /> Tahbisan Imamat</span>
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                              <Cross size={13} /> Tahbisan Imamat
+                            </span>
                             <span className="font-semibold text-white">18 Agustus 1983</span>
                           </div>
                           <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><MapPin size={13} /> Perintisan</span>
-                            <span className="font-semibold text-white">Mertoyudan &amp; Jakarta</span>
+                            <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                              <MapPin size={13} /> Perintisan
+                            </span>
+                            <span className="font-semibold text-white">
+                              Mertoyudan &amp; Jakarta
+                            </span>
                           </div>
                         </div>
 
                         <p className="relative mt-4 text-white/80 text-xs sm:text-sm font-light italic">
-                          &ldquo;Pro Patria et Ecclesia &mdash; Untuk Tanah Air dan Gereja&rdquo; <span className="text-gold-300 font-serif not-italic">Fortiter in Re, Suaviter in Modo</span>
+                          &ldquo;Pro Patria et Ecclesia &mdash; Untuk Tanah Air dan Gereja&rdquo;{' '}
+                          <span className="text-gold-300 font-serif not-italic">
+                            Fortiter in Re, Suaviter in Modo
+                          </span>
                         </p>
                       </div>
 
@@ -448,24 +489,39 @@ export default function SejarahPage() {
 
                       <div className="grid sm:grid-cols-3 gap-4 mb-8">
                         <div className="p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
-                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">1</div>
-                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">Pembinaan Karakter Muda</h4>
+                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">
+                            1
+                          </div>
+                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">
+                            Pembinaan Karakter Muda
+                          </h4>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Mewadahi energi positif generasi muda Katolik agar terlatih disiplin jasmani, mental kesatria, dan terjaga dari pengaruh negatif.
+                            Mewadahi energi positif generasi muda Katolik agar terlatih disiplin
+                            jasmani, mental kesatria, dan terjaga dari pengaruh negatif.
                           </p>
                         </div>
                         <div className="p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
-                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">2</div>
-                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">Spiritualitas &amp; Doa</h4>
+                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">
+                            2
+                          </div>
+                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">
+                            Spiritualitas &amp; Doa
+                          </h4>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Menjadikan olah bela diri sebagai sarana doa, perenungan batin, serta mendekatkan diri pada Hati Kudus Yesus.
+                            Menjadikan olah bela diri sebagai sarana doa, perenungan batin, serta
+                            mendekatkan diri pada Hati Kudus Yesus.
                           </p>
                         </div>
                         <div className="p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
-                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">3</div>
-                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">Tanah Air &amp; Gereja</h4>
+                          <div className="w-9 h-9 rounded-xl bg-navy-800 dark:bg-gold-400 flex items-center justify-center text-white dark:text-navy-950 mb-3 font-bold text-sm">
+                            3
+                          </div>
+                          <h4 className="font-bold text-navy-900 dark:text-white mb-2 text-base">
+                            Tanah Air &amp; Gereja
+                          </h4>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Melestarikan pencak silat warisan luhur nusantara demi kemuliaan Allah dan kebaikan NKRI.
+                            Melestarikan pencak silat warisan luhur nusantara demi kemuliaan Allah
+                            dan kebaikan NKRI.
                           </p>
                         </div>
                       </div>
@@ -475,13 +531,14 @@ export default function SejarahPage() {
                           Semangat Persaudaraan Awal
                         </h4>
                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-light">
-                          Para perintis berlatih dalam keterbatasan sarana, namun ikatan batin yang kokoh lahir justru dari kesederhanaan itu. Semangat &quot;Satu Hati, Satu Tekad, Satu Jiwa&quot; terus menyala di seluruh pelosok Indonesia.
+                          Para perintis berlatih dalam keterbatasan sarana, namun ikatan batin yang
+                          kokoh lahir justru dari kesederhanaan itu. Semangat &quot;Satu Hati, Satu
+                          Tekad, Satu Jiwa&quot; terus menyala di seluruh pelosok Indonesia.
                         </p>
                       </div>
                     </div>
                   </section>
                 )}
-
 
                 {/* ── TAB 3: MAKNA LAMBANG & SESANTI ── */}
                 {activeTab === 'symbols' && (
@@ -496,54 +553,85 @@ export default function SejarahPage() {
                             Makna Lambang, Atribut &amp; Sesanti
                           </h2>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            Setiap simbol, warna, dan lambang memiliki filosofi rohani serta kebangsaan yang mendalam.
+                            Setiap simbol, warna, dan lambang memiliki filosofi rohani serta
+                            kebangsaan yang mendalam.
                           </p>
                         </div>
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-5 mb-8">
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-gold-400/20 text-gold-600 dark:text-gold-400 flex items-center justify-center mb-3"><Cross size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Salib Kristus</h3>
+                          <div className="w-10 h-10 rounded-xl bg-gold-400/20 text-gold-600 dark:text-gold-400 flex items-center justify-center mb-3">
+                            <Cross size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Salib Kristus
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Pusat iman Katolik dan lambang kemenangan sejati melalui pengorbanan serta kasih tanpa batas. Segala gerak pendekar THS-THM berakar pada salib Kristus.
+                            Pusat iman Katolik dan lambang kemenangan sejati melalui pengorbanan
+                            serta kasih tanpa batas. Segala gerak pendekar THS-THM berakar pada
+                            salib Kristus.
                           </p>
                         </div>
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center mb-3"><Flame size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Hati Kudus Yesus (THS)</h3>
+                          <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center mb-3">
+                            <Flame size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Hati Kudus Yesus (THS)
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Melambangkan cinta ilahi yang berkobar-kobar, belas kasih, kerendahan hati, dan pengampunan bagi seluruh anggota Tunggal Hati Seminari.
+                            Melambangkan cinta ilahi yang berkobar-kobar, belas kasih, kerendahan
+                            hati, dan pengampunan bagi seluruh anggota Tunggal Hati Seminari.
                           </p>
                         </div>
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3"><Heart size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Hati Tak Bernoda Maria (THM)</h3>
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                            <Heart size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Hati Tak Bernoda Maria (THM)
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Melambangkan kemurnian batin, ketaatan total pada kehendak Allah, dan kelembutan Bunda Maria sebagai teladan Tunggal Hati Maria.
+                            Melambangkan kemurnian batin, ketaatan total pada kehendak Allah, dan
+                            kelembutan Bunda Maria sebagai teladan Tunggal Hati Maria.
                           </p>
                         </div>
 
-
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3"><Sparkles size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Segilima &amp; Melati</h3>
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+                            <Sparkles size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Segilima &amp; Melati
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Bentuk segilima melambangkan kesetiaan pada Pancasila; bunga melati menggambarkan keharuman budi pekerti dan kesucian moral.
+                            Bentuk segilima melambangkan kesetiaan pada Pancasila; bunga melati
+                            menggambarkan keharuman budi pekerti dan kesucian moral.
                           </p>
                         </div>
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-500 flex items-center justify-center mb-3"><Award size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Warna Kuning Emas</h3>
+                          <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-500 flex items-center justify-center mb-3">
+                            <Award size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Warna Kuning Emas
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Melambangkan kemuliaan Ilahi, keagungan martabat manusia sebagai citra Allah, dan kesetiaan pada kebenaran.
+                            Melambangkan kemuliaan Ilahi, keagungan martabat manusia sebagai citra
+                            Allah, dan kesetiaan pada kebenaran.
                           </p>
                         </div>
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all">
-                          <div className="w-10 h-10 rounded-xl bg-navy-900/20 text-navy-800 dark:text-white flex items-center justify-center mb-3"><Shield size={22} /></div>
-                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">Warna Hitam / Navy</h3>
+                          <div className="w-10 h-10 rounded-xl bg-navy-900/20 text-navy-800 dark:text-white flex items-center justify-center mb-3">
+                            <Shield size={22} />
+                          </div>
+                          <h3 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
+                            Warna Hitam / Navy
+                          </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            Melambangkan keteguhan iman, keheningan batin, kerendahan hati, dan ketenangan sikap menghadapi tantangan hidup.
+                            Melambangkan keteguhan iman, keheningan batin, kerendahan hati, dan
+                            ketenangan sikap menghadapi tantangan hidup.
                           </p>
                         </div>
                       </div>
@@ -551,17 +639,25 @@ export default function SejarahPage() {
                       <div className="p-6 rounded-2xl bg-gradient-to-r from-navy-900 to-navy-950 text-white border border-gold-400/30">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div>
-                            <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">Sesanti Utama</span>
-                            <h3 className="text-xl font-bold font-serif text-white">Pro Patria et Ecclesia</h3>
-                            <p className="text-sm text-white/80 font-light">Untuk Tanah Air dan Gereja &mdash; membela kebenaran demi kemuliaan Allah.</p>
+                            <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">
+                              Sesanti Utama
+                            </span>
+                            <h3 className="text-xl font-bold font-serif text-white">
+                              Pro Patria et Ecclesia
+                            </h3>
+                            <p className="text-sm text-white/80 font-light">
+                              Untuk Tanah Air dan Gereja &mdash; membela kebenaran demi kemuliaan
+                              Allah.
+                            </p>
                           </div>
-                          <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">Sumpah Pendekar</div>
+                          <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">
+                            Sumpah Pendekar
+                          </div>
                         </div>
                       </div>
                     </div>
                   </section>
                 )}
-
 
                 {/* ── TAB 4: 1 LANDASAN & 3 PILAR ── */}
                 {activeTab === 'pillars' && (
@@ -576,7 +672,8 @@ export default function SejarahPage() {
                             1 Landasan &amp; 3 Pilar Pembinaan
                           </h2>
                           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            Pondasi spiritualitas dan tiga pilar pembentukan karakter seluruh anggota THS-THM.
+                            Pondasi spiritualitas dan tiga pilar pembentukan karakter seluruh
+                            anggota THS-THM.
                           </p>
                         </div>
                       </div>
@@ -594,12 +691,12 @@ export default function SejarahPage() {
                               Iman Katolik dalam Kasih Yesus Kristus
                             </h3>
                             <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed">
-                              Seluruh kegiatan dan pengabdian anggota THS-THM senantiasa berlandaskan pada ajaran Gereja Katolik serta Kasih Kristus.
+                              Seluruh kegiatan dan pengabdian anggota THS-THM senantiasa
+                              berlandaskan pada ajaran Gereja Katolik serta Kasih Kristus.
                             </p>
                           </div>
                         </div>
                       </div>
-
 
                       <div className="grid sm:grid-cols-3 gap-5">
                         <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 flex flex-col justify-between">
@@ -607,12 +704,15 @@ export default function SejarahPage() {
                             <div className="w-10 h-10 rounded-xl bg-gold-400/20 text-gold-600 dark:text-gold-400 flex items-center justify-center mb-3">
                               <Heart size={20} />
                             </div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-gold-600 dark:text-gold-400 block mb-1">Pilar I</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-gold-600 dark:text-gold-400 block mb-1">
+                              Pilar I
+                            </span>
                             <h4 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
                               Segi Olah Rohani
                             </h4>
                             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                              Pendalaman iman, doa pribadi dan bersama, sakramen Ekaristi, rekonsiliasi, devosi Rosario, dan retret pendadaran.
+                              Pendalaman iman, doa pribadi dan bersama, sakramen Ekaristi,
+                              rekonsiliasi, devosi Rosario, dan retret pendadaran.
                             </p>
                           </div>
                           <div className="text-xs text-navy-800 dark:text-gold-400 font-semibold pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -625,12 +725,15 @@ export default function SejarahPage() {
                             <div className="w-10 h-10 rounded-xl bg-navy-800/10 dark:bg-navy-800 text-navy-800 dark:text-white flex items-center justify-center mb-3">
                               <Shield size={20} />
                             </div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-navy-800 dark:text-gold-400 block mb-1">Pilar II</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-navy-800 dark:text-gold-400 block mb-1">
+                              Pilar II
+                            </span>
                             <h4 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
                               Segi Bela Diri &amp; Fisik
                             </h4>
                             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                              Penguasaan teknik pencak silat khas THS-THM, ketahanan jasmani (Sanitas), dan disiplin raga tanpa kekerasan liar.
+                              Penguasaan teknik pencak silat khas THS-THM, ketahanan jasmani
+                              (Sanitas), dan disiplin raga tanpa kekerasan liar.
                             </p>
                           </div>
                           <div className="text-xs text-navy-800 dark:text-gold-400 font-semibold pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -643,12 +746,15 @@ export default function SejarahPage() {
                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
                               <Users size={20} />
                             </div>
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">Pilar III</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">
+                              Pilar III
+                            </span>
                             <h4 className="text-lg font-bold font-serif text-navy-900 dark:text-white mb-2">
                               Organisasi &amp; Persaudaraan
                             </h4>
                             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                              Membentuk kepemimpinan kesatria, ketaatan hirarki, serta persaudaraan sejati lintas ranting dan keuskupan.
+                              Membentuk kepemimpinan kesatria, ketaatan hirarki, serta persaudaraan
+                              sejati lintas ranting dan keuskupan.
                             </p>
                           </div>
                           <div className="text-xs text-navy-800 dark:text-gold-400 font-semibold pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -659,7 +765,6 @@ export default function SejarahPage() {
                     </div>
                   </section>
                 )}
-
 
                 {/* ── TAB 5: NASKAH LENGKAP / CMS CONTENT ── */}
                 {activeTab === 'cms' && (
@@ -690,21 +795,34 @@ export default function SejarahPage() {
                             Naskah Sejarah &amp; Konstitusi Dasar THS-THM
                           </h3>
                           <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed max-w-3xl mb-5">
-                            Dokumen otentik yang memuat sejarah pendirian, landasan spiritualitas, serta perutusan organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria sebagai pedoman seluruh anggota di seluruh nusantara dan mancanegara.
+                            Dokumen otentik yang memuat sejarah pendirian, landasan spiritualitas,
+                            serta perutusan organisasi Tunggal Hati Seminari &ndash; Tunggal Hati
+                            Maria sebagai pedoman seluruh anggota di seluruh nusantara dan
+                            mancanegara.
                           </p>
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
                             <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><BookOpen size={13} /> Kategori</span>
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                                <BookOpen size={13} /> Kategori
+                              </span>
                               <span className="font-semibold text-white">Sejarah Resmi</span>
                             </div>
                             <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Cross size={13} /> Pelindung</span>
-                              <span className="font-semibold text-white">Hati Kudus Yesus &amp; Bunda Maria</span>
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                                <Cross size={13} /> Pelindung
+                              </span>
+                              <span className="font-semibold text-white">
+                                Hati Kudus Yesus &amp; Bunda Maria
+                              </span>
                             </div>
                             <div className="rounded-xl bg-white/5 border border-white/10 p-3 col-span-2 sm:col-span-1">
-                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><CheckCircle2 size={13} /> Penetapan</span>
-                              <span className="font-semibold text-white">10 November 1985 &amp; 1986</span>
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1">
+                                <CheckCircle2 size={13} /> Penetapan
+                              </span>
+                              <span className="font-semibold text-white">
+                                10 November 1985 &amp; 1986
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -722,8 +840,12 @@ export default function SejarahPage() {
                                     <BookOpen size={18} />
                                   </div>
                                   <div>
-                                    <h3 className="font-serif font-bold text-white text-lg leading-tight">Daftar Isi Naskah</h3>
-                                    <p className="text-white/70 text-xs font-light">Klik untuk melompat langsung ke bagian dokumen</p>
+                                    <h3 className="font-serif font-bold text-white text-lg leading-tight">
+                                      Daftar Isi Naskah
+                                    </h3>
+                                    <p className="text-white/70 text-xs font-light">
+                                      Klik untuk melompat langsung ke bagian dokumen
+                                    </p>
                                   </div>
                                 </div>
                                 <ul className="grid sm:grid-cols-2 gap-2 mt-4">
@@ -736,7 +858,9 @@ export default function SejarahPage() {
                                         <span className="w-6 h-6 rounded-lg bg-gold-400/20 text-gold-300 text-xs font-bold flex items-center justify-center shrink-0 group-hover:bg-gold-400 group-hover:text-navy-950 transition-colors">
                                           {String(idx + 1).padStart(2, '0')}
                                         </span>
-                                        <span className="text-sm text-white/90 font-medium leading-snug">{item.text}</span>
+                                        <span className="text-sm text-white/90 font-medium leading-snug">
+                                          {item.text}
+                                        </span>
                                       </a>
                                     </li>
                                   ))}
@@ -798,10 +922,20 @@ export default function SejarahPage() {
                             </h3>
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
                               <MapPin size={13} className="text-gold-500 shrink-0" />
-                              <span>Seminari Menengah St. Petrus Canisius, Mertoyudan &amp; Paroki St. FX Tanjung Priok</span>
+                              <span>
+                                Seminari Menengah St. Petrus Canisius, Mertoyudan &amp; Paroki St.
+                                FX Tanjung Priok
+                              </span>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                              Organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria (THS-THM) lahir dari kerinduan mendalam untuk membina kaum muda Katolik melalui perpaduan harmonis antara kekayaan budaya bela diri pencak silat dan kedalaman rohani Katolik. Bermula pada tahun 1983, <strong>Rm. Martinus Hadiwijoyo, Pr.</strong> bersama para frater dan seminaris mulai merintis latihan pencak silat yang dipadukan dengan olah batin dan doa sebagai sarana melatih kedisiplinan raga dan ketahanan mental.
+                              Organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria (THS-THM)
+                              lahir dari kerinduan mendalam untuk membina kaum muda Katolik melalui
+                              perpaduan harmonis antara kekayaan budaya bela diri pencak silat dan
+                              kedalaman rohani Katolik. Bermula pada tahun 1983,{' '}
+                              <strong>Rm. Martinus Hadiwijoyo, Pr.</strong> bersama para frater dan
+                              seminaris mulai merintis latihan pencak silat yang dipadukan dengan
+                              olah batin dan doa sebagai sarana melatih kedisiplinan raga dan
+                              ketahanan mental.
                             </p>
                           </div>
 
@@ -823,7 +957,13 @@ export default function SejarahPage() {
                               <span>10 November 1985 &amp; 10 November 1986</span>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                              Pada tanggal <strong>10 November 1985</strong>, bertepatan dengan Hari Pahlawan Nasional, organisasi dideklarasikan dengan nama <strong>Tunggal Hati Seminari (THS)</strong>. Setahun kemudian, pada tanggal <strong>10 November 1986</strong>, berdiri pula wadah saudari <strong>Tunggal Hati Maria (THM)</strong> bagi kaum puteri. Momentum Hari Pahlawan dipilih sebagai pengingat semangat kepahlawanan para pendekar yang siap membela Tanah Air dan Gereja.
+                              Pada tanggal <strong>10 November 1985</strong>, bertepatan dengan Hari
+                              Pahlawan Nasional, organisasi dideklarasikan dengan nama{' '}
+                              <strong>Tunggal Hati Seminari (THS)</strong>. Setahun kemudian, pada
+                              tanggal <strong>10 November 1986</strong>, berdiri pula wadah saudari{' '}
+                              <strong>Tunggal Hati Maria (THM)</strong> bagi kaum puteri. Momentum
+                              Hari Pahlawan dipilih sebagai pengingat semangat kepahlawanan para
+                              pendekar yang siap membela Tanah Air dan Gereja.
                             </p>
                           </div>
 
@@ -845,7 +985,12 @@ export default function SejarahPage() {
                               <span>Nasional &amp; Mancanegara</span>
                             </div>
                             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                              Hingga kini, ribuan anggota THS-THM tersebar di puluhan keuskupan di Indonesia dan mancanegara. Seluruh anggota dipanggil menjadi saksi kasih Kristus yang membawa damai dan menjaga keutuhan NKRI, dengan senantiasa mengamalkan semangat <strong>Satu Hati, Satu Tekad, Satu Jiwa</strong> dalam setiap langkah pengabdian.
+                              Hingga kini, ribuan anggota THS-THM tersebar di puluhan keuskupan di
+                              Indonesia dan mancanegara. Seluruh anggota dipanggil menjadi saksi
+                              kasih Kristus yang membawa damai dan menjaga keutuhan NKRI, dengan
+                              senantiasa mengamalkan semangat{' '}
+                              <strong>Satu Hati, Satu Tekad, Satu Jiwa</strong> dalam setiap langkah
+                              pengabdian.
                             </p>
                           </div>
                         </div>
@@ -855,11 +1000,20 @@ export default function SejarahPage() {
                       <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-navy-900 to-navy-950 text-white border border-gold-400/30">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div>
-                            <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">Sesanti Utama</span>
-                            <h3 className="text-xl font-bold font-serif text-white">Pro Patria et Ecclesia</h3>
-                            <p className="text-sm text-white/80 font-light">Untuk Tanah Air dan Gereja &mdash; membela kebenaran demi kemuliaan Allah.</p>
+                            <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">
+                              Sesanti Utama
+                            </span>
+                            <h3 className="text-xl font-bold font-serif text-white">
+                              Pro Patria et Ecclesia
+                            </h3>
+                            <p className="text-sm text-white/80 font-light">
+                              Untuk Tanah Air dan Gereja &mdash; membela kebenaran demi kemuliaan
+                              Allah.
+                            </p>
                           </div>
-                          <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">Naskah Resmi</div>
+                          <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">
+                            Naskah Resmi
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -868,7 +1022,6 @@ export default function SejarahPage() {
               </>
             )}
           </main>
-
 
           {/* ── Sidebar ── */}
           <aside className="space-y-6">
@@ -914,7 +1067,6 @@ export default function SejarahPage() {
               </div>
             </div>
 
-
             <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
               <h3 className="font-bold text-navy-900 dark:text-white mb-4 text-xs uppercase tracking-wider font-serif flex items-center gap-2">
                 <Building2 size={16} className="text-gold-500" />
@@ -923,10 +1075,34 @@ export default function SejarahPage() {
 
               <ul className="space-y-2">
                 {[
-                  { href: '/sejarah', label: t.nav.sejarah, desc: 'Kilas balik berdirinya THS-THM', active: true, icon: BookOpen },
-                  { href: '/organisasi', label: t.nav.organisasi || 'Visi & AD/ART', desc: 'Prinsip organisasi & dasar konstitusi', active: false, icon: Landmark },
-                  { href: '/struktur-organisasi', label: t.nav.strukturOrganisasi || 'Struktur Organisasi', desc: 'Bagan tata kelola Nasional hingga Ranting', active: false, icon: Building2 },
-                  { href: '/kepengurusan', label: t.nav.kepengurusan, desc: 'Jajaran dewan pengurus aktif', active: false, icon: Users },
+                  {
+                    href: '/sejarah',
+                    label: t.nav.sejarah,
+                    desc: 'Kilas balik berdirinya THS-THM',
+                    active: true,
+                    icon: BookOpen,
+                  },
+                  {
+                    href: '/organisasi',
+                    label: t.nav.organisasi || 'Visi & AD/ART',
+                    desc: 'Prinsip organisasi & dasar konstitusi',
+                    active: false,
+                    icon: Landmark,
+                  },
+                  {
+                    href: '/struktur-organisasi',
+                    label: t.nav.strukturOrganisasi || 'Struktur Organisasi',
+                    desc: 'Bagan tata kelola Nasional hingga Ranting',
+                    active: false,
+                    icon: Building2,
+                  },
+                  {
+                    href: '/kepengurusan',
+                    label: t.nav.kepengurusan,
+                    desc: 'Jajaran dewan pengurus aktif',
+                    active: false,
+                    icon: Users,
+                  },
                 ].map((link) => (
                   <li key={link.href}>
                     <Link
@@ -939,8 +1115,12 @@ export default function SejarahPage() {
                     >
                       <link.icon size={18} className="shrink-0 mt-0.5" />
                       <div>
-                        <div className="text-xs sm:text-sm font-semibold leading-tight">{link.label}</div>
-                        <div className={`text-[11px] leading-tight mt-0.5 ${link.active ? 'text-white/80 dark:text-navy-950/80' : 'text-gray-400 dark:text-gray-400'}`}>
+                        <div className="text-xs sm:text-sm font-semibold leading-tight">
+                          {link.label}
+                        </div>
+                        <div
+                          className={`text-[11px] leading-tight mt-0.5 ${link.active ? 'text-white/80 dark:text-navy-950/80' : 'text-gray-400 dark:text-gray-400'}`}
+                        >
                           {link.desc}
                         </div>
                       </div>
@@ -956,7 +1136,8 @@ export default function SejarahPage() {
                 Bergabung Bersama Kami
               </h3>
               <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4">
-                Jadilah bagian dari generasi pendekar Katolik yang tangguh, beriman, dan mengabdi bagi Gereja serta Tanah Air.
+                Jadilah bagian dari generasi pendekar Katolik yang tangguh, beriman, dan mengabdi
+                bagi Gereja serta Tanah Air.
               </p>
               <Link
                 href="/daftar"
@@ -972,4 +1153,3 @@ export default function SejarahPage() {
     </PublicLayout>
   );
 }
-

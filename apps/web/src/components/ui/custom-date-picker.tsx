@@ -4,8 +4,18 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MONTHS_ID = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 const DAYS_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
@@ -52,7 +62,8 @@ function fromIdToDate(idDate: string): Date | null {
   const yyyy = Number(y);
   if (!dd || !mm || !yyyy) return null;
   const date = new Date(yyyy, mm - 1, dd);
-  if (date.getFullYear() !== yyyy || date.getMonth() !== mm - 1 || date.getDate() !== dd) return null;
+  if (date.getFullYear() !== yyyy || date.getMonth() !== mm - 1 || date.getDate() !== dd)
+    return null;
   return date;
 }
 
@@ -63,7 +74,12 @@ interface CustomDatePickerProps {
   disabled?: boolean;
 }
 
-export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM/YYYY', disabled }: CustomDatePickerProps) {
+export default function CustomDatePicker({
+  value,
+  onChange,
+  placeholder = 'DD/MM/YYYY',
+  disabled,
+}: CustomDatePickerProps) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState<Date>(() => {
     if (value) {
@@ -125,22 +141,28 @@ export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM
         disabled={disabled}
         className={`w-full flex items-center justify-between px-3 py-2 border border-border rounded-lg text-sm bg-surface text-text focus:ring-2 focus:ring-primary transition ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <span className={displayValue ? '' : 'text-muted'}>
-          {displayValue || placeholder}
-        </span>
+        <span className={displayValue ? '' : 'text-muted'}>{displayValue || placeholder}</span>
         <CalendarIcon size={16} className="text-muted" />
       </button>
 
       {open && (
         <div className="absolute z-50 mt-2 w-72 bg-surface border border-border rounded-xl shadow-elegant-lg p-3">
           <div className="flex items-center justify-between mb-2">
-            <button type="button" onClick={prevMonth} className="p-1 rounded-lg hover:bg-surface-variant transition">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="p-1 rounded-lg hover:bg-surface-variant transition"
+            >
               <ChevronLeft size={16} />
             </button>
             <span className="text-sm font-semibold text-text">
               {MONTHS_ID[viewDate.getMonth()]} {viewDate.getFullYear()}
             </span>
-            <button type="button" onClick={nextMonth} className="p-1 rounded-lg hover:bg-surface-variant transition">
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="p-1 rounded-lg hover:bg-surface-variant transition"
+            >
               <ChevronRight size={16} />
             </button>
           </div>
@@ -160,15 +182,17 @@ export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const isSelected = selectedDate
-                ? selectedDate.getFullYear() === viewDate.getFullYear()
-                  && selectedDate.getMonth() === viewDate.getMonth()
-                  && selectedDate.getDate() === day
+                ? selectedDate.getFullYear() === viewDate.getFullYear() &&
+                  selectedDate.getMonth() === viewDate.getMonth() &&
+                  selectedDate.getDate() === day
                 : false;
               const isToday = (() => {
                 const today = new Date();
-                return today.getFullYear() === viewDate.getFullYear()
-                  && today.getMonth() === viewDate.getMonth()
-                  && today.getDate() === day;
+                return (
+                  today.getFullYear() === viewDate.getFullYear() &&
+                  today.getMonth() === viewDate.getMonth() &&
+                  today.getDate() === day
+                );
               })();
               return (
                 <button

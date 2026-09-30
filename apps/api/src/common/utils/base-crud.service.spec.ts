@@ -11,11 +11,7 @@ interface UpdateDto {
 }
 
 class TestVersionedService extends BaseCrudService<Record<string, unknown>, UpdateDto> {
-  constructor(
-    prisma: PrismaService,
-    scopeHelper: ScopeHelper,
-    cache: CacheService,
-  ) {
+  constructor(prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService) {
     super(prisma, scopeHelper, cache, {
       model: 'anggota',
       prefix: 'test:',
@@ -28,11 +24,7 @@ class TestVersionedService extends BaseCrudService<Record<string, unknown>, Upda
 }
 
 class TestIuranService extends BaseCrudService<Record<string, unknown>, UpdateDto> {
-  constructor(
-    prisma: PrismaService,
-    scopeHelper: ScopeHelper,
-    cache: CacheService,
-  ) {
+  constructor(prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService) {
     super(prisma, scopeHelper, cache, {
       model: 'iuran',
       prefix: 'test:',
@@ -45,11 +37,7 @@ class TestIuranService extends BaseCrudService<Record<string, unknown>, UpdateDt
 }
 
 class TestPlainService extends BaseCrudService<Record<string, unknown>, UpdateDto> {
-  constructor(
-    prisma: PrismaService,
-    scopeHelper: ScopeHelper,
-    cache: CacheService,
-  ) {
+  constructor(prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService) {
     super(prisma, scopeHelper, cache, {
       model: 'latihan',
       prefix: 'test:',
@@ -169,7 +157,9 @@ describe('BaseCrudService optimistic locking', () => {
   it('should delete iuran (anggota_indirect, no rantingId) without throwing', async () => {
     prisma.iuran.findUnique.mockResolvedValue({ anggota: { rantingId: 'r1' } });
     prisma.iuran.delete.mockResolvedValue({ id: 'i1' });
-    await expect(iuranSvc.doRemove('i1', undefined, 'Data iuran berhasil dihapus')).resolves.toEqual({
+    await expect(
+      iuranSvc.doRemove('i1', undefined, 'Data iuran berhasil dihapus'),
+    ).resolves.toEqual({
       message: 'Data iuran berhasil dihapus',
     });
     expect(prisma.iuran.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
@@ -225,7 +215,10 @@ describe('BaseCrudService optimistic locking', () => {
     it('should throw ForbiddenException when user scope does not match the resource ranting', async () => {
       scopeHelper.hasAccessToResourceAsync.mockImplementation(
         async (_p: any, s: any, resourceRantingId?: string) => {
-          return !!(!s || (!s.rantingId && !s.wilayahId && !s.distrikId)) || s.rantingId === resourceRantingId;
+          return (
+            !!(!s || (!s.rantingId && !s.wilayahId && !s.distrikId)) ||
+            s.rantingId === resourceRantingId
+          );
         },
       );
       // User at ranting r2, resource belongs to r1
@@ -256,7 +249,10 @@ describe('BaseCrudService buildKegiatanScopeFilter (district tenant safety)', ()
       getOrSet: jest.fn((_k: string, f: () => unknown) => f()),
       invalidatePrefix: jest.fn(),
     };
-    class TestKegiatanService extends BaseCrudService<Record<string, unknown>, Record<string, unknown>> {
+    class TestKegiatanService extends BaseCrudService<
+      Record<string, unknown>,
+      Record<string, unknown>
+    > {
       constructor() {
         super(prisma as never, scopeHelper as never, cache as never, {
           model: 'kegiatan',
@@ -277,7 +273,10 @@ describe('BaseCrudService buildKegiatanScopeFilter (district tenant safety)', ()
       ranting: { findMany: jest.fn().mockResolvedValue([{ id: 'r1' }, { id: 'r2' }]) },
     };
     const filter = await makeService(prisma).doFilter({ distrikId: 'd1' });
-    expect(prisma.wilayah.findMany).toHaveBeenCalledWith({ where: { distrikId: 'd1' }, select: { id: true } });
+    expect(prisma.wilayah.findMany).toHaveBeenCalledWith({
+      where: { distrikId: 'd1' },
+      select: { id: true },
+    });
     expect(filter.OR).toEqual([
       { scopeType: 'distrik', scopeId: 'd1' },
       { scopeType: 'wilayah', scopeId: { in: ['w1', 'w2'] } },
@@ -305,7 +304,10 @@ describe('BaseCrudService buildKegiatanScopeFilter (district tenant safety)', ()
       ranting: { findMany: jest.fn().mockResolvedValue([{ id: 'r1' }]) },
     };
     const filter = await makeService(prisma).doFilter({ wilayahId: 'w1' });
-    expect(prisma.ranting.findMany).toHaveBeenCalledWith({ where: { wilayahId: 'w1' }, select: { id: true } });
+    expect(prisma.ranting.findMany).toHaveBeenCalledWith({
+      where: { wilayahId: 'w1' },
+      select: { id: true },
+    });
     expect(filter.OR).toEqual([
       { scopeType: 'wilayah', scopeId: 'w1' },
       { scopeType: 'ranting', scopeId: { in: ['r1'] } },
@@ -319,7 +321,10 @@ describe('BaseCrudService assertKegiatanCreateScope', () => {
       getOrSet: jest.fn((_k: string, f: () => unknown) => f()),
       invalidatePrefix: jest.fn(),
     };
-    class TestKegiatanService extends BaseCrudService<Record<string, unknown>, Record<string, unknown>> {
+    class TestKegiatanService extends BaseCrudService<
+      Record<string, unknown>,
+      Record<string, unknown>
+    > {
       constructor() {
         super(prisma as never, scopeHelper as never, cache as never, {
           model: 'kegiatan',
@@ -357,7 +362,11 @@ describe('BaseCrudService assertKegiatanCreateScope', () => {
     await expect(
       makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'ranting', 'r-other'),
     ).rejects.toThrow(ForbiddenException);
-    expect(helper.hasAccessToResourceAsync).toHaveBeenCalledWith(prisma, { distrikId: 'd1' }, 'r-other');
+    expect(helper.hasAccessToResourceAsync).toHaveBeenCalledWith(
+      prisma,
+      { distrikId: 'd1' },
+      'r-other',
+    );
   });
 
   it('should allow a district admin to create a ranting-scoped kegiatan inside their district', async () => {

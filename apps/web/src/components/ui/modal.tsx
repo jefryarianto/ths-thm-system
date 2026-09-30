@@ -43,7 +43,11 @@ const Modal = ({ open, onClose, title, children, size = 'md' }: ModalProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black bg-opacity-40 transition-opacity" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-40 transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <div
         ref={modalRef}
         role="dialog"
@@ -52,7 +56,9 @@ const Modal = ({ open, onClose, title, children, size = 'md' }: ModalProps) => {
         className={`relative bg-surface rounded-xl shadow-elegant-lg w-full ${sizeClasses[size]} mx-4 max-h-[85vh] flex flex-col`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h3 id="modal-title" className="text-lg font-semibold text-text">{title}</h3>
+          <h3 id="modal-title" className="text-lg font-semibold text-text">
+            {title}
+          </h3>
           <button
             onClick={onClose}
             aria-label="Tutup modal"

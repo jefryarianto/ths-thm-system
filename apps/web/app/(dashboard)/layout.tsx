@@ -102,7 +102,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       if (savedGroups) {
         setCollapsedGroups(new Set(JSON.parse(savedGroups) as string[]));
       } else {
-        const openGroups = user?.role ? DEFAULT_OPEN_GROUPS[user.role] : DEFAULT_OPEN_GROUPS.anggota;
+        const openGroups = user?.role
+          ? DEFAULT_OPEN_GROUPS[user.role]
+          : DEFAULT_OPEN_GROUPS.anggota;
         setCollapsedGroups(
           new Set(menuGroups.map((g) => g.label).filter((label) => !openGroups.includes(label))),
         );

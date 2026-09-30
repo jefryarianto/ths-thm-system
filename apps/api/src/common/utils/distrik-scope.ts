@@ -9,7 +9,10 @@ import { ScopedRequest } from '../interfaces/user-scope.interface';
  * - Peran lain terkunci ke distrik pada scope-nya sendiri; menulis data
  *   distrik lain → 403.
  */
-export function resolveWriteDistrikId(req: ScopedRequest | undefined, requested?: string | null): string | null {
+export function resolveWriteDistrikId(
+  req: ScopedRequest | undefined,
+  requested?: string | null,
+): string | null {
   if (req?.user?.role === 'superadmin') return requested ?? null;
   const own = req?.scope?.distrikId;
   if (!own) throw new ForbiddenException('Cakupan distrik tidak tersedia untuk peran Anda');
@@ -20,7 +23,10 @@ export function resolveWriteDistrikId(req: ScopedRequest | undefined, requested?
 }
 
 /** DistrikId efektif untuk operasi baca: non-superadmin mengikuti scope-nya. */
-export function resolveReadDistrikId(req: ScopedRequest | undefined, requested?: string | null): string | null {
+export function resolveReadDistrikId(
+  req: ScopedRequest | undefined,
+  requested?: string | null,
+): string | null {
   if (req?.user?.role === 'superadmin') return requested ?? null;
   return req?.scope?.distrikId ?? requested ?? null;
 }

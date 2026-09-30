@@ -2,13 +2,18 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, createReadStream, createWriteStream } from 'fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  unlinkSync,
+  createReadStream,
+  createWriteStream,
+} from 'fs';
 import { join } from 'path';
 import { createGzip } from 'zlib';
-import {
-  createDistributedLock,
-  createCronLockClient,
-} from '../utils/distributed-lock';
+import { createDistributedLock, createCronLockClient } from '../utils/distributed-lock';
 
 const execFileAsync = promisify(execFile);
 
@@ -51,8 +56,7 @@ export class DbBackupService implements OnApplicationBootstrap {
   private readonly backupDir = process.env.BACKUP_DIR || './backups';
   private readonly keepCount = Math.max(1, parseInt(process.env.BACKUP_KEEP || '7', 10) || 7);
   private readonly pgDumpPath =
-    process.env.PG_DUMP_PATH ||
-    (process.platform === 'win32' ? 'pg_dump.exe' : 'pg_dump');
+    process.env.PG_DUMP_PATH || (process.platform === 'win32' ? 'pg_dump.exe' : 'pg_dump');
   /**
    * Guard overlap backup (pg_dump berat & lama — juga mengunci backup manual);
    * dengan CRON_DISTRIBUTED_LOCK=true jadi lock SETNX via Valkey.
@@ -94,11 +98,16 @@ export class DbBackupService implements OnApplicationBootstrap {
       const args = [
         '--no-owner',
         '--no-privileges',
-        '--host', conn.host,
-        '--port', String(conn.port),
-        '--username', conn.user,
-        '--dbname', conn.database,
-        '--file', rawFile,
+        '--host',
+        conn.host,
+        '--port',
+        String(conn.port),
+        '--username',
+        conn.user,
+        '--dbname',
+        conn.database,
+        '--file',
+        rawFile,
       ];
       if (conn.password) {
         await execFileAsync(this.pgDumpPath, args, {
@@ -130,9 +139,7 @@ export class DbBackupService implements OnApplicationBootstrap {
           /* ignore */
         }
       }
-      throw new Error(
-        `Backup gagal (pastikan pg_dump tersedia): ${(err as Error).message}`,
-      );
+      throw new Error(`Backup gagal (pastikan pg_dump tersedia): ${(err as Error).message}`);
     }
   }
 

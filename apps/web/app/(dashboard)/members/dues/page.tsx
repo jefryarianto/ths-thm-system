@@ -100,13 +100,29 @@ export default function MemberDuesPage() {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'lunas':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"><CheckCircle size={12} /> Lunas</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+            <CheckCircle size={12} /> Lunas
+          </span>
+        );
       case 'menunggu_verifikasi':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"><Clock size={12} /> Menunggu</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
+            <Clock size={12} /> Menunggu
+          </span>
+        );
       case 'menunggak':
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400"><Clock size={12} /> Menunggak</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400">
+            <Clock size={12} /> Menunggak
+          </span>
+        );
       default:
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"><Clock size={12} /> Belum Dibayar</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+            <Clock size={12} /> Belum Dibayar
+          </span>
+        );
     }
   };
 
@@ -119,26 +135,40 @@ export default function MemberDuesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
             <div className="flex items-center gap-2 mb-4">
               <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Informasi Pembayaran</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Informasi Pembayaran
+              </h3>
             </div>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-2">
                 <div className="flex gap-2">
                   <span className="text-sm text-gray-500 dark:text-gray-400 w-28">Bank</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{bankInfo.bankName}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {bankInfo.bankName}
+                  </span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400 w-28">No. Rekening</span>
-                  <span className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">{bankInfo.accountNumber}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 w-28">
+                    No. Rekening
+                  </span>
+                  <span className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {bankInfo.accountNumber}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <span className="text-sm text-gray-500 dark:text-gray-400 w-28">Atas Nama</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{bankInfo.accountName}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {bankInfo.accountName}
+                  </span>
                 </div>
               </div>
               {bankInfo.qrisImageUrl && (
                 <div className="flex flex-col items-center">
-                  <img src={bankInfo.qrisImageUrl} alt="QRIS" className="w-36 h-36 object-contain border rounded-lg" />
+                  <img
+                    src={bankInfo.qrisImageUrl}
+                    alt="QRIS"
+                    className="w-36 h-36 object-contain border rounded-lg"
+                  />
                   <span className="text-xs text-gray-500 mt-1">Scan QRIS</span>
                 </div>
               )}
@@ -155,11 +185,18 @@ export default function MemberDuesPage() {
         ) : (
           <div className="space-y-4">
             {dues.map((due) => (
-              <div key={due.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+              <div
+                key={due.id}
+                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Periode: {formatPeriode(due.periode)}</div>
-                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatRupiah(due.jumlah)}</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Periode: {formatPeriode(due.periode)}
+                    </div>
+                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {formatRupiah(due.jumlah)}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {statusBadge(due.status)}
@@ -175,7 +212,9 @@ export default function MemberDuesPage() {
                   <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3 space-y-2">
                     <div className="flex flex-col sm:flex-row gap-2">
                       <label className="flex-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Bukti foto (opsional)</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Bukti foto (opsional)
+                        </span>
                         <input
                           type="file"
                           accept="image/*"
@@ -188,7 +227,9 @@ export default function MemberDuesPage() {
                         <input
                           type="text"
                           value={proofNotes[due.id] || ''}
-                          onChange={(e) => setProofNotes((prev) => ({ ...prev, [due.id]: e.target.value }))}
+                          onChange={(e) =>
+                            setProofNotes((prev) => ({ ...prev, [due.id]: e.target.value }))
+                          }
                           placeholder="Nama pengirim, tanggal transfer..."
                           className="mt-1 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -200,7 +241,8 @@ export default function MemberDuesPage() {
                         disabled={uploadingId === due.id}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
                       >
-                        <Upload size={14} /> {uploadingId === due.id ? 'Mengirim...' : 'Kirim Bukti Pembayaran'}
+                        <Upload size={14} />{' '}
+                        {uploadingId === due.id ? 'Mengirim...' : 'Kirim Bukti Pembayaran'}
                       </button>
                     </div>
                   </div>
@@ -208,8 +250,21 @@ export default function MemberDuesPage() {
 
                 {due.buktiBayarPath && (
                   <div className="mt-2 text-xs text-gray-500">
-                    Bukti: {due.buktiBayarPath.startsWith('http') || due.buktiBayarPath.startsWith('/api/uploads') ? (
-                      <a href={due.buktiBayarPath.startsWith('http') ? due.buktiBayarPath : `${window.location.origin}${due.buktiBayarPath}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Lihat file</a>
+                    Bukti:{' '}
+                    {due.buktiBayarPath.startsWith('http') ||
+                    due.buktiBayarPath.startsWith('/api/uploads') ? (
+                      <a
+                        href={
+                          due.buktiBayarPath.startsWith('http')
+                            ? due.buktiBayarPath
+                            : `${window.location.origin}${due.buktiBayarPath}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Lihat file
+                      </a>
                     ) : (
                       due.buktiBayarPath
                     )}

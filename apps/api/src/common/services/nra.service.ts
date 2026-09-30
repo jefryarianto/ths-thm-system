@@ -52,7 +52,11 @@ export class NraService {
    *                    transaksi pemanggil sehingga generate + insert anggota
    *                    bersifat atomik terhadap generator konkuren.
    */
-  async generateMemberNumber(rantingId: string, tahunDadar?: string, tx?: unknown): Promise<string> {
+  async generateMemberNumber(
+    rantingId: string,
+    tahunDadar?: string,
+    tx?: unknown,
+  ): Promise<string> {
     const result = await this.prisma.$transaction(async (outerTx) => {
       // Pakai transaksi pemanggil bila ada; kalau tidak, pakai tx internal.
       const db = (tx ?? outerTx) as NraDbClient;
@@ -69,7 +73,10 @@ export class NraService {
       // Strip prefixes like "DST-" from kodeDistrik; always use the last segment
       const kodeDistrik =
         ranting?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '0000';
-      const kodeWilayah = (ranting?.wilayah?.kodeWilayah?.split('-').pop() || '00').padStart(2, '0');
+      const kodeWilayah = (ranting?.wilayah?.kodeWilayah?.split('-').pop() || '00').padStart(
+        2,
+        '0',
+      );
       const kodeRanting = (ranting?.kodeRanting?.split('-').pop() || '00').padStart(2, '0');
 
       // ── Race guard: advisory lock per ranting ──────────────

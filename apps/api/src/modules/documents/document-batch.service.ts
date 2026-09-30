@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException, Optional, Logger, OnApplicationShutdown } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Optional,
+  Logger,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { DocumentBatchJob, DocumentJob } from '@prisma/client';
-import {
-  IJobQueue,
-  JobPayload,
-  JobResult,
-} from '../../common/queue/queue.interface';
+import { IJobQueue, JobPayload, JobResult } from '../../common/queue/queue.interface';
 import { InProcessQueueAdapter } from '../../common/queue/in-process-queue.adapter';
 import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
 import { resolveRedisConnection } from '../../common/queue/redis-connection';
@@ -85,7 +87,9 @@ export class DocumentBatchService implements OnApplicationShutdown {
       );
     } else {
       this.queue = new InProcessQueueAdapter(callbacks, opts);
-      this.logger.log('In-process document generation queue initialized (concurrency: 3, maxRetries: 3)');
+      this.logger.log(
+        'In-process document generation queue initialized (concurrency: 3, maxRetries: 3)',
+      );
     }
   }
 
@@ -105,30 +109,30 @@ export class DocumentBatchService implements OnApplicationShutdown {
     // 1-3. Create batch + jobs + update status dalam satu transaksi atomik
     const { batch, jobRecords }: { batch: DocumentBatchJob; jobRecords: DocumentJob[] } =
       await this.prisma.$transaction(async (tx) => {
-      const createdBatch = await tx.documentBatchJob.create({
-        data: {
-          type,
-          totalJobs: memberIds.length,
-          status: 'pending',
-          createdBy,
-        },
-      });
+        const createdBatch = await tx.documentBatchJob.create({
+          data: {
+            type,
+            totalJobs: memberIds.length,
+            status: 'pending',
+            createdBy,
+          },
+        });
 
-      const createdJobs = await tx.documentJob.createManyAndReturn({
-        data: memberIds.map((memberId) => ({
-          batchId: createdBatch.id,
-          memberId,
-          status: 'pending',
-        })),
-      });
+        const createdJobs = await tx.documentJob.createManyAndReturn({
+          data: memberIds.map((memberId) => ({
+            batchId: createdBatch.id,
+            memberId,
+            status: 'pending',
+          })),
+        });
 
-      await tx.documentBatchJob.update({
-        where: { id: createdBatch.id },
-        data: { status: 'processing' },
-      });
+        await tx.documentBatchJob.update({
+          where: { id: createdBatch.id },
+          data: { status: 'processing' },
+        });
 
-      return { batch: createdBatch, jobRecords: createdJobs };
-    });
+        return { batch: createdBatch, jobRecords: createdJobs };
+      });
 
     // 4. Enqueue jobs
     const payloads: JobPayload[] = jobRecords.map((job) => ({
@@ -216,10 +220,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
       success: true,
       data: batches.map((b) => ({
         ...b,
-        progress:
-          b.totalJobs > 0
-            ? Math.round(((b.completed + b.failed) / b.totalJobs) * 100)
-            : 0,
+        progress: b.totalJobs > 0 ? Math.round(((b.completed + b.failed) / b.totalJobs) * 100) : 0,
       })),
       meta: { total, limit, offset },
     };
@@ -390,8 +391,8 @@ export class DocumentBatchService implements OnApplicationShutdown {
           this.logger.log(
             `Batch ${batchId} complete: ${batch.completed} success, ${batch.failed} failed`,
           );
-          await this.sendBatchCompletionNotifications(batch, finalStatus).catch(
-            (err) => this.logger.error(`Batch notification failed: ${(err as Error).message}`),
+          await this.sendBatchCompletionNotifications(batch, finalStatus).catch((err) =>
+            this.logger.error(`Batch notification failed: ${(err as Error).message}`),
           );
         }
       } else {
@@ -450,8 +451,8 @@ export class DocumentBatchService implements OnApplicationShutdown {
           data: { status: finalStatus },
         });
         if (count > 0) {
-          await this.sendBatchCompletionNotifications(batch, finalStatus).catch(
-            (err) => this.logger.error(`Batch notification failed: ${(err as Error).message}`),
+          await this.sendBatchCompletionNotifications(batch, finalStatus).catch((err) =>
+            this.logger.error(`Batch notification failed: ${(err as Error).message}`),
           );
         }
       } else {
@@ -499,7 +500,14 @@ export class DocumentBatchService implements OnApplicationShutdown {
    * @param status - Final status ('completed' | 'completed_with_errors')
    */
   private async sendBatchCompletionNotifications(
-    batch: { id: string; type: string; totalJobs: number; completed: number; failed: number; createdBy: string | null },
+    batch: {
+      id: string;
+      type: string;
+      totalJobs: number;
+      completed: number;
+      failed: number;
+      createdBy: string | null;
+    },
     status: string,
   ): Promise<void> {
     if (!batch.createdBy) return;
@@ -645,9 +653,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
    * Generate CSV export of all jobs in a batch.
    * Returns the CSV string and the filename for the download.
    */
-  async exportCsv(
-    batchId: string,
-  ): Promise<{ csv: string; filename: string }> {
+  async exportCsv(batchId: string): Promise<{ csv: string; filename: string }> {
     const batch = await this.prisma.documentBatchJob.findUnique({
       where: { id: batchId },
     });
@@ -694,7 +700,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
    * Escape a CSV field value — wraps in quotes if contains comma, quote, or newline.
    */
   private escapeCsvField(value: string): string {
-    if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;

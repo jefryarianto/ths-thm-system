@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Req,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UjianPraktekService } from './ujian-praktek.service';
 import {
@@ -33,15 +24,32 @@ export class UjianPraktekController {
 
   @Get(':kegiatanId/ujian-praktek')
   @ApiOperation({ summary: 'Ambil semua ujian praktek dalam pendadaran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   findAll(@Param('kegiatanId') kegiatanId: string) {
     return this.service.findByKegiatan(kegiatanId);
   }
 
   @Get(':kegiatanId/ujian-praktek/my-score-card')
-  @ApiOperation({ summary: 'Agregat layar input nilai penguji: ujian aktif + aspek/item + peserta + skor penguji pemanggil' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @ApiOperation({
+    summary:
+      'Agregat layar input nilai penguji: ujian aktif + aspek/item + peserta + skor penguji pemanggil',
+  })
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   getMyScoreCard(@Param('kegiatanId') kegiatanId: string, @Req() req: ScopedRequest) {
     return this.service.getMyScoreCard(kegiatanId, req.user?.id || 'system');
@@ -49,7 +57,14 @@ export class UjianPraktekController {
 
   @Get(':kegiatanId/ujian-praktek/:id')
   @ApiOperation({ summary: 'Ambil detail ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
@@ -59,10 +74,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Buat ujian praktek baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  create(
-    @Param('kegiatanId') kegiatanId: string,
-    @Body() dto: CreateUjianPraktekDto,
-  ) {
+  create(@Param('kegiatanId') kegiatanId: string, @Body() dto: CreateUjianPraktekDto) {
     return this.service.create(kegiatanId, dto);
   }
 
@@ -70,10 +82,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Perbarui ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateUjianPraktekDto,
-  ) {
+  update(@Param('id') id: string, @Body() dto: UpdateUjianPraktekDto) {
     return this.service.update(id, dto);
   }
 
@@ -86,7 +95,9 @@ export class UjianPraktekController {
   }
 
   @Post(':kegiatanId/ujian-praktek/:id/auto-sync')
-  @ApiOperation({ summary: 'Sinkronkan semua item aktif & penguji approved ke ujian (additive & idempoten)' })
+  @ApiOperation({
+    summary: 'Sinkronkan semua item aktif & penguji approved ke ujian (additive & idempoten)',
+  })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   autoSync(@Param('id') id: string) {
@@ -99,10 +110,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Tugaskan penguji ke ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  assignExaminer(
-    @Param('id') id: string,
-    @Body() dto: AssignExaminerDto,
-  ) {
+  assignExaminer(@Param('id') id: string, @Body() dto: AssignExaminerDto) {
     return this.service.assignExaminer(id, dto);
   }
 
@@ -110,10 +118,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Hapus penguji dari ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  removeExaminer(
-    @Param('id') id: string,
-    @Body() dto: RemoveExaminerDto,
-  ) {
+  removeExaminer(@Param('id') id: string, @Body() dto: RemoveExaminerDto) {
     return this.service.removeExaminer(id, dto);
   }
 
@@ -123,10 +128,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Tambah item penilaian ke ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  assignItem(
-    @Param('id') id: string,
-    @Body() dto: AssignItemDto,
-  ) {
+  assignItem(@Param('id') id: string, @Body() dto: AssignItemDto) {
     return this.service.assignItem(id, dto);
   }
 
@@ -134,10 +136,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Hapus item penilaian dari ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  removeItem(
-    @Param('id') id: string,
-    @Param('itemPenilaianId') itemPenilaianId: string,
-  ) {
+  removeItem(@Param('id') id: string, @Param('itemPenilaianId') itemPenilaianId: string) {
     return this.service.removeItem(id, itemPenilaianId);
   }
 
@@ -155,18 +154,17 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Input nilai ujian praktek (bulk per penguji)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
   @RequireScope('branch')
-  scoreCandidate(
-    @Param('id') id: string,
-    @Body() dto: BulkScoreDto,
-    @Req() req: ScopedRequest,
-  ) {
+  scoreCandidate(@Param('id') id: string, @Body() dto: BulkScoreDto, @Req() req: ScopedRequest) {
     return this.service.scoreCandidate(id, dto, req.user?.id || 'system');
   }
 
   // ─── Reference Data ─────────────────────────────────────
 
   @Get(':kegiatanId/ujian-praktek/available-items')
-  @ApiOperation({ summary: 'Ambil item penilaian yang tersedia (utamakan set milik pendadaran, fallback template)' })
+  @ApiOperation({
+    summary:
+      'Ambil item penilaian yang tersedia (utamakan set milik pendadaran, fallback template)',
+  })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   getAvailableItems(@Param('kegiatanId') kegiatanId: string) {
@@ -222,10 +220,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Akhiri sesi ujian peserta (opsional — waktu hanya pedoman)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
   @RequireScope('branch')
-  finishSesi(
-    @Param('id') id: string,
-    @Param('calonAnggotaId') calonAnggotaId: string,
-  ) {
+  finishSesi(@Param('id') id: string, @Param('calonAnggotaId') calonAnggotaId: string) {
     return this.service.finishSesi(id, calonAnggotaId);
   }
 }

@@ -57,8 +57,20 @@ async function mockStrukturApis(page: import('@playwright/test').Page) {
       contentType: 'application/json',
       body: JSON.stringify({
         data: [
-          { id: 'periode-1', nama: '2025-2028', tglMulai: '2025-01-01', tglSelesai: '2028-12-31', isActive: true },
-          { id: 'periode-2', nama: '2022-2025', tglMulai: '2022-01-01', tglSelesai: '2025-12-31', isActive: false },
+          {
+            id: 'periode-1',
+            nama: '2025-2028',
+            tglMulai: '2025-01-01',
+            tglSelesai: '2028-12-31',
+            isActive: true,
+          },
+          {
+            id: 'periode-2',
+            nama: '2022-2025',
+            tglMulai: '2022-01-01',
+            tglSelesai: '2025-12-31',
+            isActive: false,
+          },
         ],
       }),
     }),
@@ -77,11 +89,41 @@ async function mockStrukturApis(page: import('@playwright/test').Page) {
           pengurusCount: 11,
           memberCount: 256,
           pengurus: [
-            { id: 'p1', nama: 'Fransiskus Bharata', jabatan: 'Pastor Moderator', jabatanUrutan: 0, parentId: null },
-            { id: 'p2', nama: 'Yohanes Palmeo', jabatan: 'Koordinator', jabatanUrutan: 1, parentId: 'p1' },
-            { id: 'p3', nama: 'Maria Santos', jabatan: 'Wakil Koordinator', jabatanUrutan: 2, parentId: 'p2' },
-            { id: 'p4', nama: 'Budi Santoso', jabatan: 'Sekretaris', jabatanUrutan: 3, parentId: 'p2' },
-            { id: 'p5', nama: 'Ani Wijaya', jabatan: 'Bendahara', jabatanUrutan: 4, parentId: 'p2' },
+            {
+              id: 'p1',
+              nama: 'Fransiskus Bharata',
+              jabatan: 'Pastor Moderator',
+              jabatanUrutan: 0,
+              parentId: null,
+            },
+            {
+              id: 'p2',
+              nama: 'Yohanes Palmeo',
+              jabatan: 'Koordinator',
+              jabatanUrutan: 1,
+              parentId: 'p1',
+            },
+            {
+              id: 'p3',
+              nama: 'Maria Santos',
+              jabatan: 'Wakil Koordinator',
+              jabatanUrutan: 2,
+              parentId: 'p2',
+            },
+            {
+              id: 'p4',
+              nama: 'Budi Santoso',
+              jabatan: 'Sekretaris',
+              jabatanUrutan: 3,
+              parentId: 'p2',
+            },
+            {
+              id: 'p5',
+              nama: 'Ani Wijaya',
+              jabatan: 'Bendahara',
+              jabatanUrutan: 4,
+              parentId: 'p2',
+            },
           ],
         },
       }),
@@ -113,7 +155,13 @@ async function mockStrukturApis(page: import('@playwright/test').Page) {
       contentType: 'application/json',
       body: JSON.stringify({
         data: [
-          { id: 'p2', nama: 'Yohanes Palmeo', jabatan: 'Koordinator', unit: 'Keuskupan Larantuka', level: 'distrik' },
+          {
+            id: 'p2',
+            nama: 'Yohanes Palmeo',
+            jabatan: 'Koordinator',
+            unit: 'Keuskupan Larantuka',
+            level: 'distrik',
+          },
         ],
       }),
     }),
@@ -129,7 +177,9 @@ test.describe('Struktur Organisasi (Public)', () => {
 
   test('renders page header and breadcrumb', async ({ page }) => {
     // Title
-    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Breadcrumb
     await expect(page.getByText('Beranda').first()).toBeVisible();
@@ -180,7 +230,11 @@ test.describe('Struktur Organisasi (Public)', () => {
     await page.waitForTimeout(1000);
 
     // Distrik dropdown should be visible
-    const distrikVisible = await page.locator('select').nth(1).isVisible().catch(() => false);
+    const distrikVisible = await page
+      .locator('select')
+      .nth(1)
+      .isVisible()
+      .catch(() => false);
     expect(distrikVisible).toBeTruthy();
   });
 
@@ -233,8 +287,14 @@ test.describe('Struktur Organisasi (Public)', () => {
     await page.waitForTimeout(3000);
 
     // Should show unit info or pengurus names
-    const hasContent = await page.getByText('Keuskupan Larantuka').isVisible().catch(() => false);
-    const hasPengurus = await page.getByText('Yohanes Palmeo').isVisible().catch(() => false);
+    const hasContent = await page
+      .getByText('Keuskupan Larantuka')
+      .isVisible()
+      .catch(() => false);
+    const hasPengurus = await page
+      .getByText('Yohanes Palmeo')
+      .isVisible()
+      .catch(() => false);
     expect(hasContent || hasPengurus || true).toBeTruthy();
   });
 
@@ -272,7 +332,9 @@ test.describe('Struktur Organisasi (Public)', () => {
     await page.waitForTimeout(1000);
 
     // Title should still be visible on mobile
-    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Filter should stack vertically on mobile
     const levelSelect = page.locator('select').first();
@@ -297,7 +359,9 @@ test.describe('Struktur Organisasi - URL Parameters', () => {
   });
 
   test('loads with pre-filled distrik from URL params', async ({ page }) => {
-    await page.goto(`${BASE}/struktur-organisasi?level=distrik&distrikId=distrik-1&periodeId=periode-1`);
+    await page.goto(
+      `${BASE}/struktur-organisasi?level=distrik&distrikId=distrik-1&periodeId=periode-1`,
+    );
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -308,7 +372,9 @@ test.describe('Struktur Organisasi - URL Parameters', () => {
   });
 
   test('loads with pre-filled wilayah from URL params', async ({ page }) => {
-    await page.goto(`${BASE}/struktur-organisasi?level=wilayah&distrikId=distrik-1&wilayahId=wilayah-1&periodeId=periode-1`);
+    await page.goto(
+      `${BASE}/struktur-organisasi?level=wilayah&distrikId=distrik-1&wilayahId=wilayah-1&periodeId=periode-1`,
+    );
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -318,7 +384,9 @@ test.describe('Struktur Organisasi - URL Parameters', () => {
   });
 
   test('loads with pre-filled ranting from URL params', async ({ page }) => {
-    await page.goto(`${BASE}/struktur-organisasi?level=ranting&distrikId=distrik-1&wilayahId=wilayah-1&rantingId=ranting-1&periodeId=periode-1`);
+    await page.goto(
+      `${BASE}/struktur-organisasi?level=ranting&distrikId=distrik-1&wilayahId=wilayah-1&rantingId=ranting-1&periodeId=periode-1`,
+    );
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -344,7 +412,9 @@ test.describe('Struktur Organisasi - API Error Handling', () => {
     await page.waitForTimeout(2000);
 
     // Page should still render without crashing
-    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('handles empty data gracefully', async ({ page }) => {
@@ -362,20 +432,22 @@ test.describe('Struktur Organisasi - API Error Handling', () => {
     await page.waitForTimeout(2000);
 
     // Page should still render
-    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('handles network timeout gracefully', async ({ page }) => {
     // Mock API to timeout
-    await page.route('**/api/public/struktur/**', (route) =>
-      route.abort('timedout'),
-    );
+    await page.route('**/api/public/struktur/**', (route) => route.abort('timedout'));
 
     await page.goto(`${BASE}/struktur-organisasi`);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
     // Page should still render
-    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Struktur Organisasi' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

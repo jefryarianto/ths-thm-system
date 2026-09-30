@@ -20,16 +20,8 @@ interface AuthMetric {
   maxDurationMs: number;
 }
 
-export const AUTH_OPERATIONS: readonly AuthOperation[] = [
-  'session_verify',
-  'refresh',
-  'logout',
-];
-export const AUTH_RESULTS: readonly AuthResult[] = [
-  'success',
-  'unauthorized',
-  'internal',
-];
+export const AUTH_OPERATIONS: readonly AuthOperation[] = ['session_verify', 'refresh', 'logout'];
+export const AUTH_RESULTS: readonly AuthResult[] = ['success', 'unauthorized', 'internal'];
 
 export interface MetricsSnapshot {
   startedAt: string;
@@ -134,14 +126,10 @@ export class MetricsService {
       uptimeSeconds: Math.floor(process.uptime()),
       http: {
         totalRequests: [...this.metrics.values()].reduce((sum, m) => sum + m.count, 0),
-        byMethodStatus: [...this.metrics.values()].sort(
-          (a, b) => b.count - a.count,
-        ),
+        byMethodStatus: [...this.metrics.values()].sort((a, b) => b.count - a.count),
       },
       auth: {
-        byOperationResult: [...this.authMetrics.values()].sort(
-          (a, b) => b.count - a.count,
-        ),
+        byOperationResult: [...this.authMetrics.values()].sort((a, b) => b.count - a.count),
       },
       memory: {
         rssMb: Math.round(mem.rss / 1024 / 1024),
@@ -159,9 +147,7 @@ export class MetricsService {
     lines.push('# HELP ths_http_requests_total Total HTTP requests by method and status');
     lines.push('# TYPE ths_http_requests_total counter');
     for (const m of snap.http.byMethodStatus) {
-      lines.push(
-        `ths_http_requests_total{method="${m.method}",status="${m.status}"} ${m.count}`,
-      );
+      lines.push(`ths_http_requests_total{method="${m.method}",status="${m.status}"} ${m.count}`);
     }
     lines.push('# HELP ths_http_request_duration_ms_total Total request duration (ms)');
     lines.push('# TYPE ths_http_request_duration_ms_total counter');
@@ -177,7 +163,9 @@ export class MetricsService {
         `ths_http_request_duration_max_ms{method="${m.method}",status="${m.status}"} ${Math.round(m.maxDurationMs)}`,
       );
     }
-    lines.push('# HELP ths_auth_requests_total Total authentication operations by operation and result');
+    lines.push(
+      '# HELP ths_auth_requests_total Total authentication operations by operation and result',
+    );
     lines.push('# TYPE ths_auth_requests_total counter');
     for (const a of snap.auth.byOperationResult) {
       lines.push(
@@ -204,9 +192,7 @@ export class MetricsService {
     lines.push('# HELP ths_process_memory_bytes Process memory usage');
     lines.push('# TYPE ths_process_memory_bytes gauge');
     lines.push(`ths_process_memory_bytes{type="rss"} ${process.memoryUsage().rss}`);
-    lines.push(
-      `ths_process_memory_bytes{type="heap_used"} ${process.memoryUsage().heapUsed}`,
-    );
+    lines.push(`ths_process_memory_bytes{type="heap_used"} ${process.memoryUsage().heapUsed}`);
     if (snap.websocket) {
       lines.push('# HELP ths_websocket_connections Active websocket connections');
       lines.push('# TYPE ths_websocket_connections gauge');

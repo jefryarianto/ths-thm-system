@@ -23,7 +23,9 @@ test.describe('Approvals — /approvals', () => {
   test('renders pending approval request cards', async ({ page }) => {
     await page.waitForTimeout(500);
     // Mock approval request types
-    await expect(page.locator('text=Pendaftaran Anggota Baru').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('text=Pendaftaran Anggota Baru').first()).toBeVisible({
+      timeout: 8000,
+    });
     await expect(page.locator('text=Kenaikan Tingkat').first()).toBeVisible();
   });
 

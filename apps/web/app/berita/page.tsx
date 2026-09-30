@@ -142,7 +142,10 @@ export default function BeritaPage() {
 
             {/* Search Input */}
             <div className="relative w-full md:w-80 shrink-0">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -333,7 +336,8 @@ export default function BeritaPage() {
                   Punya Berita Kegiatan?
                 </h3>
                 <p className="text-xs text-white/70 leading-relaxed mb-4">
-                  Kirimkan berita kegiatan distrik, wilayah, atau ranting Anda untuk dipublikasikan di portal resmi THS-THM.
+                  Kirimkan berita kegiatan distrik, wilayah, atau ranting Anda untuk dipublikasikan
+                  di portal resmi THS-THM.
                 </p>
                 <Link
                   href="/login"

@@ -15,20 +15,20 @@ export class KepengurusanService {
   ) {}
 
   /** Notify all superadmins about a pending kepengurusan change */
-  private async notifySuperadmins(
-    action: string,
-    jabatanUnit: string,
-    unitName: string,
-  ) {
+  private async notifySuperadmins(action: string, jabatanUnit: string, unitName: string) {
     if (!this.notificationsService) return;
     try {
       const actionLabel =
-        action === "create" ? "Pengajuan baru" : action === "update" ? "Perubahan" : "Pengajuan penghapusan";
+        action === 'create'
+          ? 'Pengajuan baru'
+          : action === 'update'
+            ? 'Perubahan'
+            : 'Pengajuan penghapusan';
       await this.notificationsService.sendToRole({
-        role: "superadmin",
-        tipe: "approval_request",
-        judul: actionLabel + " Kepengurusan",
-        isi: actionLabel + ": " + jabatanUnit + " di " + unitName + " menunggu persetujuan Anda.",
+        role: 'superadmin',
+        tipe: 'approval_request',
+        judul: actionLabel + ' Kepengurusan',
+        isi: actionLabel + ': ' + jabatanUnit + ' di ' + unitName + ' menunggu persetujuan Anda.',
         data: { action, kepengurusan: jabatanUnit },
       });
     } catch {
@@ -45,14 +45,14 @@ export class KepengurusanService {
   ) {
     if (!this.notificationsService) return;
     try {
-      const statusLabel = status === "approved" ? "Disetujui" : "Ditolak";
+      const statusLabel = status === 'approved' ? 'Disetujui' : 'Ditolak';
       const message =
-        status === "rejected" && reason
-          ? "Kepengurusan " + jabatanUnit + " " + statusLabel + ". Alasan: " + reason
-          : "Kepengurusan " + jabatanUnit + " telah " + statusLabel + ".";
+        status === 'rejected' && reason
+          ? 'Kepengurusan ' + jabatanUnit + ' ' + statusLabel + '. Alasan: ' + reason
+          : 'Kepengurusan ' + jabatanUnit + ' telah ' + statusLabel + '.';
       await this.notificationsService.send(userId, {
-        tipe: "approval_request",
-        judul: "Kepengurusan " + statusLabel,
+        tipe: 'approval_request',
+        judul: 'Kepengurusan ' + statusLabel,
         isi: message,
       });
     } catch {
@@ -62,12 +62,14 @@ export class KepengurusanService {
 
   /** Write audit log entry */
   private audit(action: string, entityId: string | null, details?: Record<string, unknown>) {
-    this.persistentAudit?.log({
-      action,
-      entity: 'Kepengurusan',
-      entityId,
-      details,
-    }).catch(() => {});
+    this.persistentAudit
+      ?.log({
+        action,
+        entity: 'Kepengurusan',
+        entityId,
+        details,
+      })
+      .catch(() => {});
   }
 
   /** Helper to resolve or auto-create a user account from an anggotaId */
@@ -88,7 +90,9 @@ export class KepengurusanService {
     }
 
     if (!user) {
-      const email = member.email || (member.noHp ? `${member.noHp}@noemail.ths-thm.org` : `${member.id}@noemail.ths-thm.org`);
+      const email =
+        member.email ||
+        (member.noHp ? `${member.noHp}@noemail.ths-thm.org` : `${member.id}@noemail.ths-thm.org`);
       const passwordHash = await bcrypt.hash('thsthm123456', 12);
       user = await this.prisma.user.create({
         data: {
@@ -125,10 +129,7 @@ export class KepengurusanService {
     // Region-level
     if (scope.wilayahId) {
       return {
-        OR: [
-          { wilayahId: scope.wilayahId },
-          { ranting: { wilayahId: scope.wilayahId } },
-        ],
+        OR: [{ wilayahId: scope.wilayahId }, { ranting: { wilayahId: scope.wilayahId } }],
       };
     }
     // Branch-level
@@ -164,7 +165,11 @@ export class KepengurusanService {
     // Status filter: default to 'approved' for non-superadmin, 'pending' for approval queue
     if (filters?.status) {
       where.status = filters.status;
-    } else if (!filters?.scope?.distrikId && !filters?.scope?.wilayahId && !filters?.scope?.rantingId) {
+    } else if (
+      !filters?.scope?.distrikId &&
+      !filters?.scope?.wilayahId &&
+      !filters?.scope?.rantingId
+    ) {
       // Superadmin sees all by default
     } else {
       // Non-superadmin: only show approved + their own pending
@@ -224,19 +229,22 @@ export class KepengurusanService {
     return item;
   }
 
-  async create(data: {
-    userId?: string;
-    anggotaId?: string;
-    jabatanId: string;
-    periodeId: string;
-    nasionalId?: string;
-    distrikId?: string;
-    wilayahId?: string;
-    rantingId?: string;
-    parentId?: string;
-    startDate?: string;
-    endDate?: string;
-  }, scope?: UserScope) {
+  async create(
+    data: {
+      userId?: string;
+      anggotaId?: string;
+      jabatanId: string;
+      periodeId: string;
+      nasionalId?: string;
+      distrikId?: string;
+      wilayahId?: string;
+      rantingId?: string;
+      parentId?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+    scope?: UserScope,
+  ) {
     let resolvedUserId = data.userId;
     if (data.anggotaId) {
       resolvedUserId = await this.resolveUserFromMember(data.anggotaId);
@@ -260,9 +268,19 @@ export class KepengurusanService {
 
     // Scope check: admin_distrik can only create within their distrik
     if (scope?.distrikId) {
-      const targetDistrikId = data.distrikId ||
-        (data.wilayahId ? (await this.prisma.wilayah.findUnique({ where: { id: data.wilayahId } }))?.distrikId : null) ||
-        (data.rantingId ? (await this.prisma.ranting.findUnique({ where: { id: data.rantingId }, include: { wilayah: true } }))?.wilayah?.distrikId : null);
+      const targetDistrikId =
+        data.distrikId ||
+        (data.wilayahId
+          ? (await this.prisma.wilayah.findUnique({ where: { id: data.wilayahId } }))?.distrikId
+          : null) ||
+        (data.rantingId
+          ? (
+              await this.prisma.ranting.findUnique({
+                where: { id: data.rantingId },
+                include: { wilayah: true },
+              })
+            )?.wilayah?.distrikId
+          : null);
       if (targetDistrikId && targetDistrikId !== scope.distrikId) {
         throw new BadRequestException('Tidak memiliki akses ke distrik ini');
       }
@@ -307,21 +325,33 @@ export class KepengurusanService {
     });
 
     // Notify superadmins about new pending entry
-    const createUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
-    this.notifySuperadmins('create', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', createUnitName);
-    this.audit('KEPENGURUSAN_CREATE', result.id, { userId: result.userId, jabatan: result.jabatan.nama, unit: createUnitName });
+    const createUnitName =
+      result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
+    this.notifySuperadmins(
+      'create',
+      result.jabatan.nama + ' (' + result.user.namaLengkap + ')',
+      createUnitName,
+    );
+    this.audit('KEPENGURUSAN_CREATE', result.id, {
+      userId: result.userId,
+      jabatan: result.jabatan.nama,
+      unit: createUnitName,
+    });
 
     return result;
   }
 
-  async update(id: string, data: {
-    userId?: string;
-    anggotaId?: string;
-    jabatanId?: string;
-    parentId?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-  }) {
+  async update(
+    id: string,
+    data: {
+      userId?: string;
+      anggotaId?: string;
+      jabatanId?: string;
+      parentId?: string | null;
+      startDate?: string | null;
+      endDate?: string | null;
+    },
+  ) {
     await this.findOne(id);
 
     let resolvedUserId = data.userId;
@@ -344,8 +374,14 @@ export class KepengurusanService {
         ...(resolvedUserId && { userId: resolvedUserId }),
         ...(data.jabatanId && { jabatanId: data.jabatanId }),
         parentId: data.parentId === undefined ? undefined : data.parentId,
-        startDate: data.startDate === undefined ? undefined : data.startDate ? new Date(data.startDate) : null,
-        endDate: data.endDate === undefined ? undefined : data.endDate ? new Date(data.endDate) : null,
+        startDate:
+          data.startDate === undefined
+            ? undefined
+            : data.startDate
+              ? new Date(data.startDate)
+              : null,
+        endDate:
+          data.endDate === undefined ? undefined : data.endDate ? new Date(data.endDate) : null,
         status: 'pending',
         approvedBy: null,
         approvedAt: null,
@@ -362,9 +398,18 @@ export class KepengurusanService {
     });
 
     // Notify superadmins about updated entry
-    const updateUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
-    this.notifySuperadmins('update', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', updateUnitName);
-    this.audit('KEPENGURUSAN_UPDATE', result.id, { userId: result.userId, jabatan: result.jabatan.nama, unit: updateUnitName });
+    const updateUnitName =
+      result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
+    this.notifySuperadmins(
+      'update',
+      result.jabatan.nama + ' (' + result.user.namaLengkap + ')',
+      updateUnitName,
+    );
+    this.audit('KEPENGURUSAN_UPDATE', result.id, {
+      userId: result.userId,
+      jabatan: result.jabatan.nama,
+      unit: updateUnitName,
+    });
 
     return result;
   }
@@ -387,9 +432,18 @@ export class KepengurusanService {
     });
 
     // Notify superadmins about deletion request
-    const delUnitName = item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || 'organisasi';
-    this.notifySuperadmins('delete', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', delUnitName);
-    this.audit('KEPENGURUSAN_DELETE_REQUEST', item.id, { userId: item.userId, jabatan: item.jabatan?.nama, unit: delUnitName });
+    const delUnitName =
+      item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || 'organisasi';
+    this.notifySuperadmins(
+      'delete',
+      (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')',
+      delUnitName,
+    );
+    this.audit('KEPENGURUSAN_DELETE_REQUEST', item.id, {
+      userId: item.userId,
+      jabatan: item.jabatan?.nama,
+      unit: delUnitName,
+    });
 
     return delResult;
   }
@@ -426,8 +480,16 @@ export class KepengurusanService {
     });
 
     // Notify the requester about approval
-    this.notifyRequester(item.userId, 'approved', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')');
-    this.audit('KEPENGURUSAN_APPROVE', item.id, { userId: item.userId, approvedBy, jabatan: item.jabatan?.nama });
+    this.notifyRequester(
+      item.userId,
+      'approved',
+      (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')',
+    );
+    this.audit('KEPENGURUSAN_APPROVE', item.id, {
+      userId: item.userId,
+      approvedBy,
+      jabatan: item.jabatan?.nama,
+    });
 
     return approveResult;
   }
@@ -471,8 +533,17 @@ export class KepengurusanService {
     });
 
     // Notify the requester about rejection
-    this.notifyRequester(item.userId, 'rejected', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', reason);
-    this.audit('KEPENGURUSAN_REJECT', item.id, { userId: item.userId, jabatan: item.jabatan?.nama, reason });
+    this.notifyRequester(
+      item.userId,
+      'rejected',
+      (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')',
+      reason,
+    );
+    this.audit('KEPENGURUSAN_REJECT', item.id, {
+      userId: item.userId,
+      jabatan: item.jabatan?.nama,
+      reason,
+    });
 
     return rejectResult;
   }
@@ -508,7 +579,9 @@ export class KepengurusanService {
       let current = parentId;
       while (current) {
         if (current === id) {
-          throw new BadRequestException('Tidak bisa menjadikan bawahan sebagai atasan (circular reference)');
+          throw new BadRequestException(
+            'Tidak bisa menjadikan bawahan sebagai atasan (circular reference)',
+          );
         }
         const parent = await this.prisma.kepengurusan.findUnique({
           where: { id: current },
@@ -537,12 +610,28 @@ export class KepengurusanService {
   }) {
     const items = await this.findAll(filters);
     return {
-      headers: ['Nama', 'Jabatan', 'Periode', 'Level', 'Unit', 'Parent', 'Status', 'Tanggal Mulai', 'Tanggal Selesai'],
+      headers: [
+        'Nama',
+        'Jabatan',
+        'Periode',
+        'Level',
+        'Unit',
+        'Parent',
+        'Status',
+        'Tanggal Mulai',
+        'Tanggal Selesai',
+      ],
       rows: items.map((item) => ({
         nama: item.user.namaLengkap,
         jabatan: item.jabatan.nama,
         periode: item.periode.nama,
-        level: item.rantingId ? 'Ranting' : item.wilayahId ? 'Wilayah' : item.distrikId ? 'Distrik' : 'Nasional',
+        level: item.rantingId
+          ? 'Ranting'
+          : item.wilayahId
+            ? 'Wilayah'
+            : item.distrikId
+              ? 'Distrik'
+              : 'Nasional',
         unit: item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || '-',
         parent: item.parent?.user?.namaLengkap || '-',
         status: item.endDate && new Date(item.endDate) < new Date() ? 'Selesai' : 'Aktif',

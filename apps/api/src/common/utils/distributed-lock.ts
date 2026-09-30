@@ -32,13 +32,7 @@ interface LoggerLike {
 /** Kontrak minimal klien ioredis yang dipakai lock (memudahkan mock test). */
 export interface LockRedisClient {
   /** SET key value PX ttl NX — mengembalikan 'OK' bila kunci berhasil dipegang. */
-  set(
-    key: string,
-    value: string,
-    mode: 'PX',
-    ttlMs: number,
-    condition: 'NX',
-  ): Promise<'OK' | null>;
+  set(key: string, value: string, mode: 'PX', ttlMs: number, condition: 'NX'): Promise<'OK' | null>;
   pexpire(key: string, ttlMs: number): Promise<number>;
   /** EVAL script numKeys key arg — untuk release compare-and-delete. */
   eval(script: string, numKeys: number, key: string, arg: string): Promise<unknown>;
@@ -61,10 +55,7 @@ export interface DistributedLockOptions {
  * Eksekusi pekerjaan di bawah lock. Sengaja mengembalikan void — kontrak method
  * @Cron pemanggil tidak berubah; keputusan "dilewati" cukup terlihat via log.
  */
-export type DistributedLock = <T>(
-  name: string,
-  fn: () => Promise<T>,
-) => Promise<void>;
+export type DistributedLock = <T>(name: string, fn: () => Promise<T>) => Promise<void>;
 
 const RELEASE_SCRIPT = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -114,7 +105,11 @@ export function createCronLockClient(logger: LoggerLike): LockRedisClient | null
       // Dithrottle agar tidak membanjiri log — keputusan fail-open diambil
       // di withLock via PING, bukan di sini.
       const now = Date.now();
-      if (now - (client as unknown as { __lastErrLog?: number }).__lastErrLog! < FAILURE_LOG_INTERVAL_MS) return;
+      if (
+        now - (client as unknown as { __lastErrLog?: number }).__lastErrLog! <
+        FAILURE_LOG_INTERVAL_MS
+      )
+        return;
       (client as unknown as { __lastErrLog?: number }).__lastErrLog = now;
       logger.warn?.('[distributed-lock] koneksi Redis lock bermasalah — fail-open aktif');
     }) as (err: Error) => void);
@@ -166,10 +161,7 @@ export function createDistributedLock(
     }
   };
 
-  const releaseLock = async (
-    client: LockRedisClient,
-    key: string,
-  ): Promise<void> => {
+  const releaseLock = async (client: LockRedisClient, key: string): Promise<void> => {
     try {
       await client.eval(RELEASE_SCRIPT, 1, key, token);
     } catch {
@@ -177,10 +169,7 @@ export function createDistributedLock(
     }
   };
 
-  return async function withLock<T>(
-    name: string,
-    fn: () => Promise<T>,
-  ): Promise<void> {
+  return async function withLock<T>(name: string, fn: () => Promise<T>): Promise<void> {
     const client = opts.lockClient ?? null;
 
     // Tanpa klien Redis → perilaku lama (guard in-memory).

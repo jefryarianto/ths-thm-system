@@ -128,9 +128,7 @@ test.describe('Riwayat Email — /settings/email/logs', () => {
 
     const modal = page.locator('div.fixed.z-50');
     await expect(modal).toBeVisible();
-    await expect(
-      modal.getByText('Konten email tidak tersedia untuk log ini.'),
-    ).toBeVisible();
+    await expect(modal.getByText('Konten email tidak tersedia untuk log ini.')).toBeVisible();
     await expect(modal.getByText('All email providers failed')).toBeVisible();
   });
 

@@ -24,20 +24,9 @@ export function ErrorFallback({ error, onRetry, children }: ErrorFallbackProps) 
       <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
         Terjadi Kesalahan
       </h2>
-      <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-        {errorMessage}
-      </p>
-      {children && (
-        <div className="mb-4 text-sm text-gray-500 dark:text-gray-500">
-          {children}
-        </div>
-      )}
-      <Button
-        onClick={onRetry}
-        variant="primary"
-        className="gap-2"
-        aria-label="Coba lagi"
-      >
+      <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">{errorMessage}</p>
+      {children && <div className="mb-4 text-sm text-gray-500 dark:text-gray-500">{children}</div>}
+      <Button onClick={onRetry} variant="primary" className="gap-2" aria-label="Coba lagi">
         <RefreshCw className="w-4 h-4" aria-hidden="true" />
         Coba Lagi
       </Button>

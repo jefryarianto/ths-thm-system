@@ -44,11 +44,18 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     @Optional() protected readonly revisions?: RevisionService,
     @Optional() private readonly notificationsService?: NotificationsService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'iuran',
-      prefix: 'dues:',
-      scopeStrategy: 'anggota_indirect',
-    }, persistentAudit, revisions);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'iuran',
+        prefix: 'dues:',
+        scopeStrategy: 'anggota_indirect',
+      },
+      persistentAudit,
+      revisions,
+    );
   }
 
   // ── Hooks ───────────────────────────────────────────────
@@ -79,25 +86,25 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       select: { rantingId: true },
     });
     if (!anggota) throw new NotFoundException('Anggota tidak ditemukan');
-    const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, anggota.rantingId);
+    const ok = await this.scopeHelper.hasAccessToResourceAsync(
+      this.prisma,
+      scope,
+      anggota.rantingId,
+    );
     if (!ok) {
-      throw new ForbiddenException('Anda hanya dapat mencatat iuran untuk anggota dalam cakupan Anda');
+      throw new ForbiddenException(
+        'Anda hanya dapat mencatat iuran untuk anggota dalam cakupan Anda',
+      );
     }
   }
 
-  protected async afterCreate(
-    result: any,
-    dto: CreateDueDto,
-  ): Promise<void> {
+  protected async afterCreate(result: any, dto: CreateDueDto): Promise<void> {
     // Award gamification points for paid dues
     if (dto.status === 'lunas' && dto.anggotaId) {
       try {
         await this.gamificationService.recordDuesPayment(dto.anggotaId, true);
       } catch (error) {
-        this.logger.warn(
-          'Failed to award gamification points for dues:',
-          (error as Error).message,
-        );
+        this.logger.warn('Failed to award gamification points for dues:', (error as Error).message);
       }
     }
 
@@ -114,10 +121,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     this.cache.invalidatePrefix('reports:');
   }
 
-  protected async beforeUpdate(
-    _id: string,
-    dto: UpdateDueDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeUpdate(_id: string, dto: UpdateDueDto): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
     if (dto.periode !== undefined) data.periode = dto.periode;
     if (dto.jumlah !== undefined) data.jumlah = dto.jumlah;
@@ -128,10 +132,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return data;
   }
 
-  protected async afterUpdate(
-    result: any,
-    dto: UpdateDueDto,
-  ): Promise<void> {
+  protected async afterUpdate(result: any, dto: UpdateDueDto): Promise<void> {
     // Award gamification points if status changed to lunas
     if (dto.status === 'lunas' && result?.anggotaId) {
       try {
@@ -340,7 +341,9 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         // Hitung jumlah transaksi per status
         const [paidCountResult, pendingCountResult] = await Promise.all([
           this.prisma.iuran.count({ where: { status: 'lunas' } }),
-          this.prisma.iuran.count({ where: { status: { in: ['menunggak', 'belum_dibayar', 'menunggu_verifikasi'] } } }),
+          this.prisma.iuran.count({
+            where: { status: { in: ['menunggak', 'belum_dibayar', 'menunggu_verifikasi'] } },
+          }),
         ]);
 
         return {
@@ -405,7 +408,10 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    this.audit('DUE_IMPORT', 'Iuran', 'bulk', undefined, { success, failed: data.length - success });
+    this.audit('DUE_IMPORT', 'Iuran', 'bulk', undefined, {
+      success,
+      failed: data.length - success,
+    });
     return { imported: success, failed: data.length - success };
   }
 
@@ -518,7 +524,9 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
           data: { screen: 'dues' },
         });
       } catch (error) {
-        this.logger.warn(`Gagal kirim notifikasi pembayaran terverifikasi: ${(error as Error).message}`);
+        this.logger.warn(
+          `Gagal kirim notifikasi pembayaran terverifikasi: ${(error as Error).message}`,
+        );
       }
     })();
   }

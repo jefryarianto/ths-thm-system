@@ -132,7 +132,13 @@ export function buildPdfDocument({
         { style: styles.header },
         h(Text, { style: styles.title }, orgNama),
         ...(orgAlamat
-          ? [h(Text, { key: 'alamat', style: { fontSize: 10, color: '#777', marginBottom: 4 } }, orgAlamat)]
+          ? [
+              h(
+                Text,
+                { key: 'alamat', style: { fontSize: 10, color: '#777', marginBottom: 4 } },
+                orgAlamat,
+              ),
+            ]
           : []),
         h(Text, { style: styles.subtitle }, judul),
       ),
@@ -216,7 +222,11 @@ export function buildPdfDocument({
                       : null,
                     h(Text, { style: { fontSize: 12, fontWeight: 'bold' } }, s.signerName),
                     s.signerTitle
-                      ? h(Text, { style: { fontSize: 10, color: '#555', marginTop: 2 } }, s.signerTitle)
+                      ? h(
+                          Text,
+                          { style: { fontSize: 10, color: '#555', marginTop: 2 } },
+                          s.signerTitle,
+                        )
                       : null,
                   ),
                 ),

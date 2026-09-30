@@ -198,12 +198,13 @@ export class LettersService {
 
       const tpl = await this.mailService.renderWithOverride(
         'dispositionNotificationEmail',
-        () => dispositionNotificationEmail(
-          penerima.namaLengkap,
-          pengirim?.namaLengkap || 'Admin',
-          surat.perihal,
-          dto.isi,
-        ),
+        () =>
+          dispositionNotificationEmail(
+            penerima.namaLengkap,
+            pengirim?.namaLengkap || 'Admin',
+            surat.perihal,
+            dto.isi,
+          ),
         {
           namaPenerima: penerima.namaLengkap,
           pengirim: pengirim?.namaLengkap || 'Admin',

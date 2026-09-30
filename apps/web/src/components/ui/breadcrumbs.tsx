@@ -60,11 +60,7 @@ export default function Breadcrumbs({
             <li key={segment.href + segment.label} className="flex items-center gap-1">
               {/* Chevron separator (skip for first item) */}
               {index > 0 && (
-                <ChevronRight
-                  size={14}
-                  className="text-muted shrink-0 mx-0.5"
-                  aria-hidden="true"
-                />
+                <ChevronRight size={14} className="text-muted shrink-0 mx-0.5" aria-hidden="true" />
               )}
 
               {isLast ? (
@@ -80,7 +76,9 @@ export default function Breadcrumbs({
                   )}
                 </span>
               ) : isEllipsis ? (
-                <span className="text-muted px-1" aria-hidden="true">...</span>
+                <span className="text-muted px-1" aria-hidden="true">
+                  ...
+                </span>
               ) : (
                 <Link
                   href={segment.href}

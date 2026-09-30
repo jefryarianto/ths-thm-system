@@ -16,9 +16,9 @@ export const DEFAULT_TINGKATAN: Record<string, LevelVisual> = {
   Anggota: { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' },
   Pratama: { stripCount: 1, color: '#1d4ed8', label: 'Biru 1' },
   Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Biru 2' },
-  Muda:    { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
-  Madya:   { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
-  Utama:   { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
+  Muda: { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
+  Madya: { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
+  Utama: { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
 };
 
 @Injectable()

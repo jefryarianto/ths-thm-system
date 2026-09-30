@@ -12,10 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CacheService } from '../services/cache.service';
-import {
-  IDEMPOTENT_METADATA_KEY,
-  IdempotentOptions,
-} from '../decorators/idempotent.decorator';
+import { IDEMPOTENT_METADATA_KEY, IdempotentOptions } from '../decorators/idempotent.decorator';
 
 interface IdempotencyCacheEntry {
   status: 'processing' | 'completed';
@@ -53,10 +50,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const options = this.reflector.getAllAndOverride<IdempotentOptions>(
-      IDEMPOTENT_METADATA_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const options = this.reflector.getAllAndOverride<IdempotentOptions>(IDEMPOTENT_METADATA_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     // If endpoint is not decorated with @Idempotent and no global check is desired,
     // still check if client sent X-Idempotency-Key for optional idempotency support.
@@ -69,9 +66,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const idempotencyKey = Array.isArray(rawKey) ? rawKey[0] : rawKey;
 
     if (options?.required && !idempotencyKey) {
-      throw new BadRequestException(
-        'Header Idempotency-Key diperlukan untuk operasi ini',
-      );
+      throw new BadRequestException('Header Idempotency-Key diperlukan untuk operasi ini');
     }
 
     if (!idempotencyKey || !this.cache) {

@@ -53,7 +53,9 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
           {node.type === 'ranting' && <Users size={14} />}
           <span>{node.name}</span>
           {node.memberCount !== undefined && (
-            <span className="text-xs opacity-70 ml-2">({node.memberCount} {t.kepengurusan.anggota})</span>
+            <span className="text-xs opacity-70 ml-2">
+              ({node.memberCount} {t.kepengurusan.anggota})
+            </span>
           )}
         </div>
         {hasChildren && (
@@ -99,11 +101,15 @@ export default function KepengurusanPage() {
       <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
-            <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
+            <Link href="/" className="hover:text-white transition-colors">
+              Beranda
+            </Link>
             <ChevronRight size={14} />
             <span className="text-gold-400">{t.nav.kepengurusan}</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white font-serif">{t.kepengurusan.title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white font-serif">
+            {t.kepengurusan.title}
+          </h1>
           <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
       </div>
@@ -122,7 +128,10 @@ export default function KepengurusanPage() {
                 { label: t.kepengurusan.ranting, value: data.summary.totalRanting },
                 { label: t.kepengurusan.anggota, value: data.summary.totalMembers },
               ].map((card) => (
-                <div key={card.label} className="bg-white border border-gray-100 rounded-xl p-4 text-center hover:shadow-md transition-all">
+                <div
+                  key={card.label}
+                  className="bg-white border border-gray-100 rounded-xl p-4 text-center hover:shadow-md transition-all"
+                >
                   <div className="text-2xl font-bold text-navy-800">{card.value}</div>
                   <div className="text-sm text-gray-500 mt-1">{card.label}</div>
                 </div>

@@ -19,10 +19,14 @@ import Pagination from './pagination';
 // ─── Status & Label Helpers ───
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-warning-50 dark:bg-warning-950 text-warning-800 dark:text-warning-400 border-warning-200 dark:border-warning-800',
-  processing: 'bg-info-50 dark:bg-info-950 text-info-800 dark:text-info-400 border-info-200 dark:border-info-800',
-  completed: 'bg-success-50 dark:bg-success-950 text-success-800 dark:text-success-400 border-success-200 dark:border-success-800',
-  completed_with_errors: 'bg-warning-50 dark:bg-warning-950 text-warning-800 dark:text-warning-400 border-warning-200 dark:border-warning-800',
+  pending:
+    'bg-warning-50 dark:bg-warning-950 text-warning-800 dark:text-warning-400 border-warning-200 dark:border-warning-800',
+  processing:
+    'bg-info-50 dark:bg-info-950 text-info-800 dark:text-info-400 border-info-200 dark:border-info-800',
+  completed:
+    'bg-success-50 dark:bg-success-950 text-success-800 dark:text-success-400 border-success-200 dark:border-success-800',
+  completed_with_errors:
+    'bg-warning-50 dark:bg-warning-950 text-warning-800 dark:text-warning-400 border-warning-200 dark:border-warning-800',
   cancelled: 'bg-surface-variant text-muted border-border',
 };
 
@@ -74,8 +78,7 @@ interface BatchHistoryPanelProps {
 }
 
 export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
-  const { batches, loading, error, page, totalPages, total, setPage, refetch } =
-    useBatchHistory();
+  const { batches, loading, error, page, totalPages, total, setPage, refetch } = useBatchHistory();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
@@ -87,12 +90,8 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
             <Layers size={18} className="text-primary" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-text">
-              Riwayat Generate Dokumen
-            </h3>
-            <p className="text-xs text-muted">
-              {total} batch generate
-            </p>
+            <h3 className="text-base font-semibold text-text">Riwayat Generate Dokumen</h3>
+            <p className="text-xs text-muted">{total} batch generate</p>
           </div>
         </div>
         <button
@@ -108,10 +107,7 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
       {loading && batches.length === 0 && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-surface rounded-xl border border-border p-5 animate-pulse"
-            >
+            <div key={i} className="bg-surface rounded-xl border border-border p-5 animate-pulse">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-surface-variant" />
                 <div className="flex-1 space-y-2">
@@ -128,9 +124,7 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
       {error && batches.length === 0 && (
         <div className="text-center py-8">
           <AlertTriangle size={36} className="mx-auto text-muted mb-3" />
-          <p className="text-sm font-medium text-muted">
-            Gagal memuat riwayat batch
-          </p>
+          <p className="text-sm font-medium text-muted">Gagal memuat riwayat batch</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 text-sm text-primary border border-primary-200 dark:border-primary-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950 transition"
@@ -144,9 +138,7 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
       {!loading && !error && batches.length === 0 && (
         <div className="text-center py-8">
           <FileText size={36} className="mx-auto text-muted mb-3" />
-          <p className="text-sm font-medium text-muted">
-            Belum ada batch generate
-          </p>
+          <p className="text-sm font-medium text-muted">Belum ada batch generate</p>
           <p className="text-xs text-muted mt-1">
             Batch akan muncul setelah Anda membuat generate dokumen massal
           </p>
@@ -209,13 +201,9 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted">
                       <span>{batch.total} dokumen</span>
-                      <span className="text-success font-medium">
-                        {batch.completed} selesai
-                      </span>
+                      <span className="text-success font-medium">{batch.completed} selesai</span>
                       {batch.failed > 0 && (
-                        <span className="text-error-500 font-medium">
-                          {batch.failed} gagal
-                        </span>
+                        <span className="text-error-500 font-medium">{batch.failed} gagal</span>
                       )}
                       <span>{formatRelativeTime(batch.createdAt)}</span>
                     </div>
@@ -277,15 +265,8 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          onPageChange={setPage}
-        />
+        <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
       )}
     </div>
   );
 }
-
-

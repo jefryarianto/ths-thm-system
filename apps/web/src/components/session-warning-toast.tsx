@@ -17,7 +17,10 @@ function formatTime(totalSeconds: number): string {
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}`;
 }
 
-export function SessionWarningToast({ expiresInSeconds: initial, toastId }: SessionWarningToastProps) {
+export function SessionWarningToast({
+  expiresInSeconds: initial,
+  toastId,
+}: SessionWarningToastProps) {
   const [remaining, setRemaining] = useState(initial);
   const [refreshing, setRefreshing] = useState(false);
   const dismissToast = useDismissToast();
@@ -62,7 +65,9 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
     <div className="flex flex-col gap-3 p-1">
       {/* Header with icon */}
       <div className="flex items-center gap-2.5">
-        <div className={`shrink-0 p-1.5 rounded-full ${isUrgent ? 'bg-error-100 dark:bg-error-900/60' : 'bg-warning-100 dark:bg-warning-900/60'}`}>
+        <div
+          className={`shrink-0 p-1.5 rounded-full ${isUrgent ? 'bg-error-100 dark:bg-error-900/60' : 'bg-warning-100 dark:bg-warning-900/60'}`}
+        >
           {isUrgent ? (
             <Clock size={16} className="text-error-500 dark:text-error-400 animate-pulse" />
           ) : (
@@ -73,9 +78,7 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
           Sesi berakhir dalam{' '}
           <span
             className={`font-mono font-bold tabular-nums ${
-              isUrgent
-                ? 'text-error dark:text-error'
-                : 'text-warning-600 dark:text-warning-400'
+              isUrgent ? 'text-error dark:text-error' : 'text-warning-600 dark:text-warning-400'
             }`}
           >
             {formatTime(remaining)}
@@ -93,9 +96,7 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
         />
       </div>
 
-      <p className="text-xs text-muted -mt-1">
-        Klik &quot;Perpanjang Sesi&quot; untuk tetap masuk
-      </p>
+      <p className="text-xs text-muted -mt-1">Klik &quot;Perpanjang Sesi&quot; untuk tetap masuk</p>
 
       {/* Extend button */}
       <button

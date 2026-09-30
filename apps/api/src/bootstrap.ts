@@ -61,7 +61,9 @@ export async function bootstrap(): Promise<NestExpressApplication> {
 
   console.log(`🚀 THS-THM API running on port ${process.env.APP_PORT || 3001}`);
   console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${process.env.APP_PORT || 3001}/${process.env.API_PREFIX || 'api'}/health`);
+  console.log(
+    `🔗 Health check: http://localhost:${process.env.APP_PORT || 3001}/${process.env.API_PREFIX || 'api'}/health`,
+  );
 
   setupGracefulShutdown(app);
 

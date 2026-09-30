@@ -19,13 +19,13 @@ export const ROLE_LABELS: Record<Role, string> = {
  * Must match ScopeLevel order: national > district > region > branch > self
  */
 export const ROLE_HIERARCHY: Role[] = [
-  ROLE.ANGGOTA,           // self
-  ROLE.PENGUJI,           // branch
-  ROLE.ADMIN_RANTING,     // branch
-  ROLE.ADMIN_KEGIATAN,    // branch
-  ROLE.ADMIN_WILAYAH,     // region
-  ROLE.ADMIN_DISTRIK,     // district
-  ROLE.SUPERADMIN,        // national
+  ROLE.ANGGOTA, // self
+  ROLE.PENGUJI, // branch
+  ROLE.ADMIN_RANTING, // branch
+  ROLE.ADMIN_KEGIATAN, // branch
+  ROLE.ADMIN_WILAYAH, // region
+  ROLE.ADMIN_DISTRIK, // district
+  ROLE.SUPERADMIN, // national
 ];
 
 /**
@@ -48,7 +48,7 @@ export const ROLE_SCOPE: Record<Role, 'national' | 'district' | 'region' | 'bran
  */
 export function hasRequiredScope(
   userRole: Role,
-  requiredScope: 'national' | 'district' | 'region' | 'branch' | 'self'
+  requiredScope: 'national' | 'district' | 'region' | 'branch' | 'self',
 ): boolean {
   const scopeOrder: ('national' | 'district' | 'region' | 'branch' | 'self')[] = [
     'national',
@@ -72,7 +72,7 @@ export function isValidRole(role: string): role is Role {
  * Get all roles that have at least the specified scope level
  */
 export function getRolesWithScope(
-  requiredScope: 'national' | 'district' | 'region' | 'branch' | 'self'
+  requiredScope: 'national' | 'district' | 'region' | 'branch' | 'self',
 ): Role[] {
   return ROLE_VALUES.filter((role) => hasRequiredScope(role, requiredScope));
 }

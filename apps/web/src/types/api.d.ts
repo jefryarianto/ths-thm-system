@@ -6762,6 +6762,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/berita/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Riwayat pengajuan berita milik user (dengan status persetujuan) */
+        get: operations["ContentController_getMyBeritaSubmissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/berita/{id}/image": {
         parameters: {
             query?: never;
@@ -7932,6 +7949,18 @@ export interface components {
         StartSesiDto: {
             /** @description Durasi standar menit (default durasi ujian atau 30) */
             durasiStandarMenit?: number;
+        };
+        SubmitBeritaDto: {
+            /** @description Judul berita */
+            judul: string;
+            /** @description Ringkasan singkat berita */
+            ringkasan: string;
+            /** @description Isi/konten berita */
+            konten: string;
+            /** @description Path gambar sampul (opsional) */
+            gambar?: string;
+            /** @description Slug URL unik untuk berita */
+            slug: string;
         };
         CreateMutationDto: {
             /** @description ID anggota yang dimutasi */
@@ -18095,9 +18124,30 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitBeritaDto"];
+            };
+        };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ContentController_getMyBeritaSubmissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

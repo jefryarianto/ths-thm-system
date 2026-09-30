@@ -102,7 +102,12 @@ export default function OrganisasiPage() {
     setSyncing(true);
     try {
       const res = await apiClient.post('/settings/organisasi/sync', { mode });
-      const result = unwrap<{ success: boolean; message: string; count: number; struktur: OrganisasiItem[] }>(res);
+      const result = unwrap<{
+        success: boolean;
+        message: string;
+        count: number;
+        struktur: OrganisasiItem[];
+      }>(res);
 
       if (result?.success === false) {
         toast('warning', result.message || 'Sinkronisasi gagal');
@@ -178,7 +183,9 @@ export default function OrganisasiPage() {
               <div>
                 <p className="font-medium text-gray-900">Status Tampil</p>
                 <p className="text-sm text-gray-500">
-                  {isVisible ? 'Data ditampilkan di halaman public (/organisasi)' : 'Data tersembunyi dari halaman public'}
+                  {isVisible
+                    ? 'Data ditampilkan di halaman public (/organisasi)'
+                    : 'Data tersembunyi dari halaman public'}
                 </p>
               </div>
             </div>
@@ -204,7 +211,8 @@ export default function OrganisasiPage() {
                   Daftar Pengurus / Struktur
                 </label>
                 <p className="text-xs text-gray-500">
-                  Kelola tingkatan pimpinan organisasi atau sinkronkan langsung dari data kepengurusan nasional.
+                  Kelola tingkatan pimpinan organisasi atau sinkronkan langsung dari data
+                  kepengurusan nasional.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -214,7 +222,11 @@ export default function OrganisasiPage() {
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-navy-800 text-white rounded-lg hover:bg-navy-900 transition-colors disabled:opacity-50"
                   title="Ambil data pengurus nasional aktif"
                 >
-                  {syncing ? <Loader2 size={14} className="animate-spin" /> : <DownloadCloud size={14} />}
+                  {syncing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <DownloadCloud size={14} />
+                  )}
                   Tarik dari Kepengurusan
                 </button>
                 <button
@@ -232,13 +244,17 @@ export default function OrganisasiPage() {
                 <Users size={36} className="mx-auto text-gray-400 mb-2" />
                 <p className="font-medium text-gray-700">Belum ada data struktur organisasi</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Klik <strong>"Tarik dari Kepengurusan"</strong> untuk mengimpor dari data pengurus nasional atau <strong>"Tambah Manual"</strong>.
+                  Klik <strong>"Tarik dari Kepengurusan"</strong> untuk mengimpor dari data pengurus
+                  nasional atau <strong>"Tambah Manual"</strong>.
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {struktur.map((item, index) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100/60 transition-colors">
+                  <div
+                    key={index}
+                    className="p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100/60 transition-colors"
+                  >
                     <div className="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
@@ -276,14 +292,18 @@ export default function OrganisasiPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Jabatan / Posisi *</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Jabatan / Posisi *
+                        </label>
                         <JabatanSelect
                           value={item.jabatan}
                           onChange={(v) => updateItem(index, 'jabatan', v)}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Nama Pejabat / Tokoh *</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Nama Pejabat / Tokoh *
+                        </label>
                         <input
                           type="text"
                           value={item.nama}
@@ -293,7 +313,9 @@ export default function OrganisasiPage() {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Deskripsi / Peran Singkat</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Deskripsi / Peran Singkat
+                        </label>
                         <textarea
                           value={item.deskripsi}
                           onChange={(e) => updateItem(index, 'deskripsi', e.target.value)}
@@ -338,15 +360,22 @@ export default function OrganisasiPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">Impor Kepengurusan Nasional</h3>
-                  <p className="text-xs text-gray-500">Ditemukan {syncPreview.length} data pengurus nasional aktif</p>
+                  <p className="text-xs text-gray-500">
+                    Ditemukan {syncPreview.length} data pengurus nasional aktif
+                  </p>
                 </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg p-3 max-h-52 overflow-y-auto mb-4 border border-gray-200 text-sm">
-                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Pratinjau Data:</p>
+                <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                  Pratinjau Data:
+                </p>
                 <div className="space-y-1.5">
                   {syncPreview.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs bg-white p-2 rounded border border-gray-100">
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-xs bg-white p-2 rounded border border-gray-100"
+                    >
                       <span className="font-semibold text-gray-800">{item.jabatan}</span>
                       <span className="text-gray-600">{item.nama}</span>
                     </div>
@@ -357,7 +386,8 @@ export default function OrganisasiPage() {
               <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-lg flex items-start gap-2 mb-5">
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <span>
-                  Pilih metode impor: <strong>Timpa Semua</strong> akan menggantikan struktur saat ini, atau <strong>Tambahkan</strong> untuk menyisipkan ke daftar yang sudah ada.
+                  Pilih metode impor: <strong>Timpa Semua</strong> akan menggantikan struktur saat
+                  ini, atau <strong>Tambahkan</strong> untuk menyisipkan ke daftar yang sudah ada.
                 </span>
               </div>
 

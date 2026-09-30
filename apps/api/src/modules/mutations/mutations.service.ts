@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -43,7 +50,9 @@ export class MutationsService {
     });
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
     if (member.statusKeanggotaan !== 'aktif') {
-      throw new BadRequestException('Mutasi hanya dapat diajukan untuk anggota dengan status aktif');
+      throw new BadRequestException(
+        'Mutasi hanya dapat diajukan untuk anggota dengan status aktif',
+      );
     }
 
     const toRanting = await this.prisma.ranting.findUnique({
@@ -55,7 +64,10 @@ export class MutationsService {
       throw new BadRequestException('Ranting tujuan harus berbeda dari ranting asal');
     }
 
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
@@ -67,7 +79,8 @@ export class MutationsService {
       throw new BadRequestException('Struktur organisasi ranting asal tidak lengkap');
     }
 
-    const scopeType = fromRanting.wilayah.distrik.id === toRanting.wilayah.distrik.id ? 'distrik' : 'nasional';
+    const scopeType =
+      fromRanting.wilayah.distrik.id === toRanting.wilayah.distrik.id ? 'distrik' : 'nasional';
 
     const org: OrgContext = {
       fromRantingId: member.rantingId,
@@ -149,14 +162,21 @@ export class MutationsService {
 
   private transferInclude() {
     return {
-      anggota: { select: { id: true, email: true, namaLengkap: true, nomorAnggota: true, rantingId: true } },
+      anggota: {
+        select: { id: true, email: true, namaLengkap: true, nomorAnggota: true, rantingId: true },
+      },
       fromRanting: { include: { wilayah: { include: { distrik: true } } } },
       toRanting: { include: { wilayah: { include: { distrik: true } } } },
       approvals: { orderBy: { order: 'asc' as const } },
     };
   }
 
-  private async withAccess(request: any, scope: UserScope | undefined, userId: string, role: string) {
+  private async withAccess(
+    request: any,
+    scope: UserScope | undefined,
+    userId: string,
+    role: string,
+  ) {
     const org = this.toOrgContext(request);
     const currentStep = this.currentPendingStep(request.approvals);
     return {
@@ -164,7 +184,9 @@ export class MutationsService {
       org,
       currentStep,
       canApprove:
-        request.status === 'pending' ? await this.canApproveStep(scope, role, currentStep, org) : false,
+        request.status === 'pending'
+          ? await this.canApproveStep(scope, role, currentStep, org)
+          : false,
     };
   }
 
@@ -175,7 +197,10 @@ export class MutationsService {
     });
     if (!request) throw new NotFoundException('Permintaan mutasi tidak ditemukan');
 
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, request.fromRantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, request.fromRantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
@@ -196,7 +221,11 @@ export class MutationsService {
       const canSee =
         request.requestedBy === userId ||
         !scope ||
-        (await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, request.fromRantingId)) ||
+        (await this.scopeHelper.hasAccessToResourceAsync(
+          this.prisma,
+          scope,
+          request.fromRantingId,
+        )) ||
         (await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, request.toRantingId));
       if (!canSee) continue;
 
@@ -219,7 +248,10 @@ export class MutationsService {
       select: { id: true, rantingId: true },
     });
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
     return this.prisma.transferRequest.findMany({
@@ -231,13 +263,20 @@ export class MutationsService {
 
   // ── Approve / Reject ────────────────────────────────────
 
-  async approve(id: string, userId: string, note: string | undefined, role: string, scope?: UserScope) {
+  async approve(
+    id: string,
+    userId: string,
+    note: string | undefined,
+    role: string,
+    scope?: UserScope,
+  ) {
     const request = await this.prisma.transferRequest.findUnique({
       where: { id },
       include: this.transferInclude(),
     });
     if (!request) throw new NotFoundException('Permintaan mutasi tidak ditemukan');
-    if (request.status !== 'pending') throw new BadRequestException('Permintaan mutasi sudah diproses');
+    if (request.status !== 'pending')
+      throw new BadRequestException('Permintaan mutasi sudah diproses');
 
     const org = this.toOrgContext(request);
     const currentStep = this.currentPendingStep(request.approvals);
@@ -249,11 +288,19 @@ export class MutationsService {
 
     const remaining = await this.prisma.$transaction(async (tx) => {
       await tx.transferApproval.update({
-        where: { transferRequestId_side_level: { transferRequestId: id, side: currentStep.side, level: currentStep.level } },
+        where: {
+          transferRequestId_side_level: {
+            transferRequestId: id,
+            side: currentStep.side,
+            level: currentStep.level,
+          },
+        },
         data: { status: 'approved', decidedBy: userId, decidedAt: new Date(), note: note ?? null },
       });
 
-      const remainingCount = await tx.transferApproval.count({ where: { transferRequestId: id, status: 'pending' } });
+      const remainingCount = await tx.transferApproval.count({
+        where: { transferRequestId: id, status: 'pending' },
+      });
 
       if (remainingCount === 0) {
         // Finalisasi: pindahkan anggota + akun user terkait
@@ -302,13 +349,20 @@ export class MutationsService {
     return this.findOne(id, scope, userId, role);
   }
 
-  async reject(id: string, userId: string, note: string | undefined, role: string, scope?: UserScope) {
+  async reject(
+    id: string,
+    userId: string,
+    note: string | undefined,
+    role: string,
+    scope?: UserScope,
+  ) {
     const request = await this.prisma.transferRequest.findUnique({
       where: { id },
       include: this.transferInclude(),
     });
     if (!request) throw new NotFoundException('Permintaan mutasi tidak ditemukan');
-    if (request.status !== 'pending') throw new BadRequestException('Permintaan mutasi sudah diproses');
+    if (request.status !== 'pending')
+      throw new BadRequestException('Permintaan mutasi sudah diproses');
 
     const org = this.toOrgContext(request);
     const currentStep = this.currentPendingStep(request.approvals);
@@ -324,7 +378,12 @@ export class MutationsService {
     await this.prisma.$transaction(async (tx) => {
       await tx.transferRequest.update({
         where: { id },
-        data: { status: 'rejected', rejectedBy: userId, rejectedAt: new Date(), note: note ?? null },
+        data: {
+          status: 'rejected',
+          rejectedBy: userId,
+          rejectedAt: new Date(),
+          note: note ?? null,
+        },
       });
       await tx.transferApproval.updateMany({
         where: { transferRequestId: id, status: 'pending' },
@@ -365,10 +424,17 @@ export class MutationsService {
     };
   }
 
-  private currentPendingStep(approvals: { side: string; level: string; status: string; order: number }[]) {
+  private currentPendingStep(
+    approvals: { side: string; level: string; status: string; order: number }[],
+  ) {
     const step = approvals.find((a) => a.status === 'pending');
     if (!step) return null;
-    return { side: step.side as SideKey, level: step.level as StepKey, status: step.status, order: step.order };
+    return {
+      side: step.side as SideKey,
+      level: step.level as StepKey,
+      status: step.status,
+      order: step.order,
+    };
   }
 
   /**
@@ -413,7 +479,8 @@ export class MutationsService {
 
   private async resolveUserNode(scope: UserScope | undefined) {
     if (!scope) return null;
-    if (scope.wilayahId) return { rantingId: scope.rantingId, wilayahId: scope.wilayahId, distrikId: scope.distrikId };
+    if (scope.wilayahId)
+      return { rantingId: scope.rantingId, wilayahId: scope.wilayahId, distrikId: scope.distrikId };
     if (!scope.rantingId) return null;
     const ranting = await this.prisma.ranting.findUnique({
       where: { id: scope.rantingId },
@@ -458,7 +525,11 @@ export class MutationsService {
     );
   }
 
-  private async findApproverUserIds(org: OrgContext, side: SideKey, level: StepKey): Promise<string[]> {
+  private async findApproverUserIds(
+    org: OrgContext,
+    side: SideKey,
+    level: StepKey,
+  ): Promise<string[]> {
     const role = STEP_ROLE[level];
     if (level === 'ranting') {
       const rantingId = side === 'asal' ? org.fromRantingId : org.toRantingId;

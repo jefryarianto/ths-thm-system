@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-// E2E test bypass: when the Playwright route interceptor injects this header,
+  // E2E test bypass: when the Playwright route interceptor injects this header,
   // skip the auth check so tests can mock auth at the API level.
   // Only active in development/test mode - never in production.
   if (process.env.NODE_ENV !== 'production' && request.headers.get('x-e2e-bypass') === 'true') {
@@ -74,7 +74,10 @@ export async function proxy(request: NextRequest) {
   // Solusinya: panggil API backend LANGSUNG lewat NEXT_PUBLIC_API_URL, dan
   // teruskan header `cookie` dari `request.cookies` secara eksplisit (di runtime
   // proxy, `request.headers` tidak dijamin memuat `cookie`).
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
+    /\/api\/?$/,
+    '',
+  );
   const verifyUrl = `${apiBase}/api/auth/session/verify`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);

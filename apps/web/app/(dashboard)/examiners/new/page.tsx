@@ -31,7 +31,10 @@ export default function NewExaminerPage() {
       return;
     }
     if (!selectedMember.email) {
-      toast('error', 'Anggota yang dipilih belum punya email. Lengkapi email anggota terlebih dahulu di manajemen anggota.');
+      toast(
+        'error',
+        'Anggota yang dipilih belum punya email. Lengkapi email anggota terlebih dahulu di manajemen anggota.',
+      );
       return;
     }
     setSaving(true);
@@ -59,12 +62,13 @@ export default function NewExaminerPage() {
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Tambah Penguji
-          </h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Tambah Penguji</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-5 shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-5 shadow-sm"
+        >
           {/* Pilih Anggota */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -84,7 +88,9 @@ export default function NewExaminerPage() {
 
           {/* Info */}
           <div className="px-3 py-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg text-xs text-blue-800 dark:text-blue-300">
-            Anggota yang sudah punya akun akan <strong>dipromosikan</strong> menjadi penguji (password tetap); yang belum akan dibuatkan akun dengan email set-password. Peran (ketua penguji/anggota) dan catatan ditentukan saat penugasan pada masing-masing pendadaran.
+            Anggota yang sudah punya akun akan <strong>dipromosikan</strong> menjadi penguji
+            (password tetap); yang belum akan dibuatkan akun dengan email set-password. Peran (ketua
+            penguji/anggota) dan catatan ditentukan saat penugasan pada masing-masing pendadaran.
           </div>
 
           {/* Actions */}

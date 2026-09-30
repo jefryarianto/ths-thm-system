@@ -21,7 +21,6 @@ import { useToast } from '@/components/ui/toast';
 
 // ─── Types ───
 
-
 interface DuesStats {
   totalIuran: number;
   totalTransaksi: number;
@@ -111,98 +110,100 @@ export default function DuesPage() {
 
   return (
     <PermissionGuard module="dues" action="view">
-    <PageContainer>
-      {/* ── Header ── */}
-      <PageHeader title="Manajemen Iuran" onRefresh={handleRefresh}>
-        <CanExport module="dues">
-          <ExportMenu serverType="dues" filename="iuran-export" />
-        </CanExport>
-        <CanCreate module="dues">
-          <button
-            onClick={() => router.push('/dues/new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
-          >
-            <Plus size={16} /> Tambah Iuran
-          </button>
-        </CanCreate>
-      </PageHeader>
+      <PageContainer>
+        {/* ── Header ── */}
+        <PageHeader title="Manajemen Iuran" onRefresh={handleRefresh}>
+          <CanExport module="dues">
+            <ExportMenu serverType="dues" filename="iuran-export" />
+          </CanExport>
+          <CanCreate module="dues">
+            <button
+              onClick={() => router.push('/dues/new')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
+            >
+              <Plus size={16} /> Tambah Iuran
+            </button>
+          </CanCreate>
+        </PageHeader>
 
-      {/* ── Stat Cards ── */}
-      {!stats ? <StatCardGridSkeleton count={4} /> : <DuesStatCards stats={stats} />}
+        {/* ── Stat Cards ── */}
+        {!stats ? <StatCardGridSkeleton count={4} /> : <DuesStatCards stats={stats} />}
 
-      {/* ── Charts Row ── */}
-      <DuesCharts stats={stats} monthlyTrend={monthlyTrend} />
+        {/* ── Charts Row ── */}
+        <DuesCharts stats={stats} monthlyTrend={monthlyTrend} />
 
-      {/* ── Dues Table ── */}
-      <DataTable
-        data={data}
-        loading={loading}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={setPage}
-        columns={[
-          {
-            key: 'anggota',
-            label: 'Anggota',
-            render: (d: DuesRow) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span>,
-          },
-          { key: 'periode', label: 'Periode', render: (d: DuesRow) => formatPeriode(d.periode) },
-          { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(d.jumlah) },
-          {
-            key: 'status',
-            label: 'Status',
-            render: (d: DuesRow) => (
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}`}
-              >
-                {STATUS_LABELS[d.status] || d.status}
-              </span>
-            ),
-          },
-          { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatDate(d.createdAt) },
-          {
-            key: 'actions',
-            label: 'Aksi',
-            align: 'right' as const,
-            render: (d: DuesRow) => (
-              <div className="flex items-center justify-end gap-1">
-                <button
-                  onClick={() => router.push(`/dues/${d.id}`)}
-                  className="p-1.5 text-navy-600 hover:bg-navy-50 dark:hover:bg-navy-950 rounded-md transition-colors"
-                  title="Lihat Detail"
+        {/* ── Dues Table ── */}
+        <DataTable
+          data={data}
+          loading={loading}
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={setPage}
+          columns={[
+            {
+              key: 'anggota',
+              label: 'Anggota',
+              render: (d: DuesRow) => (
+                <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span>
+              ),
+            },
+            { key: 'periode', label: 'Periode', render: (d: DuesRow) => formatPeriode(d.periode) },
+            { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(d.jumlah) },
+            {
+              key: 'status',
+              label: 'Status',
+              render: (d: DuesRow) => (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}`}
                 >
-                  <ExternalLink size={14} />
-                </button>
-                <CanDelete module="dues">
+                  {STATUS_LABELS[d.status] || d.status}
+                </span>
+              ),
+            },
+            { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatDate(d.createdAt) },
+            {
+              key: 'actions',
+              label: 'Aksi',
+              align: 'right' as const,
+              render: (d: DuesRow) => (
+                <div className="flex items-center justify-end gap-1">
                   <button
-                    onClick={async () => {
-                      if (!(await confirm('Hapus iuran ini?'))) return;
-                      try {
-                        await apiClient.delete(`/dues/${d.id}`);
-                        toast('success', 'Iuran berhasil dihapus');
-                        refetch();
-                      } catch (err) {
-                        toast('error', extractErrorMessage(err, 'Gagal menghapus iuran'));
-                      }
-                    }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                    title="Hapus"
+                    onClick={() => router.push(`/dues/${d.id}`)}
+                    className="p-1.5 text-navy-600 hover:bg-navy-50 dark:hover:bg-navy-950 rounded-md transition-colors"
+                    title="Lihat Detail"
                   >
-                    <Trash2 size={14} />
+                    <ExternalLink size={14} />
                   </button>
-                </CanDelete>
-              </div>
-            ),
-          },
-        ]}
-        empty={{
-          icon: CreditCard,
-          message: 'Belum ada data iuran',
-        }}
-      />
-      {confirmModal}
-    </PageContainer>
+                  <CanDelete module="dues">
+                    <button
+                      onClick={async () => {
+                        if (!(await confirm('Hapus iuran ini?'))) return;
+                        try {
+                          await apiClient.delete(`/dues/${d.id}`);
+                          toast('success', 'Iuran berhasil dihapus');
+                          refetch();
+                        } catch (err) {
+                          toast('error', extractErrorMessage(err, 'Gagal menghapus iuran'));
+                        }
+                      }}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </CanDelete>
+                </div>
+              ),
+            },
+          ]}
+          empty={{
+            icon: CreditCard,
+            message: 'Belum ada data iuran',
+          }}
+        />
+        {confirmModal}
+      </PageContainer>
     </PermissionGuard>
   );
 }

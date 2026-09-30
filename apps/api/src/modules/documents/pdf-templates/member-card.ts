@@ -1,11 +1,33 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const React = require('react');
-const { Document, Page, View, Text, Image, StyleSheet, Svg, Defs, LinearGradient, Stop, Rect } = require('@react-pdf/renderer');
+const {
+  Document,
+  Page,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Svg,
+  Defs,
+  LinearGradient,
+  Stop,
+  Rect,
+} = require('@react-pdf/renderer');
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
 const { MAP_INDONESIA_DATA_URL, MAP_INDONESIA_LIGHT_DATA_URL } = require('./map-indonesia');
 
 // ── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ──
-const { CARD, COLORS, FRONT, BACK, PATTERN, fmt, getLevelVisual, photoCrop, patternRows } = require('../../../common/utils/card-design');
+const {
+  CARD,
+  COLORS,
+  FRONT,
+  BACK,
+  PATTERN,
+  fmt,
+  getLevelVisual,
+  photoCrop,
+  patternRows,
+} = require('../../../common/utils/card-design');
 
 // Palette PDF: warna kanon dari spec; nilai yang tak ada di spec tetap lokal (gaya print khas PDF)
 const BLUE_900 = COLORS.label; // #1e3a5f — garis & judul kartu
@@ -551,7 +573,12 @@ const styles = StyleSheet.create({
 interface CardTemplatePdfConfig {
   frontImage?: string | null;
   backImage?: string | null;
-  guilloche?: { enabledFront?: boolean; enabledBack?: boolean; strokeFront?: string; strokeBack?: string };
+  guilloche?: {
+    enabledFront?: boolean;
+    enabledBack?: boolean;
+    strokeFront?: string;
+    strokeBack?: string;
+  };
   watermark?: { enabledFront?: boolean; enabledBack?: boolean };
 }
 
@@ -603,18 +630,69 @@ const h = React.createElement;
 function guillocheBorder(strokeColor: string) {
   return h(
     Svg,
-    { width: 856, height: 540, viewBox: '0 0 856 540', style: { position: 'absolute', top: 0, left: 0 } },
-    h(Rect, { x: 16, y: 16, width: 824, height: 508, rx: 22, fill: 'none', stroke: strokeColor, strokeWidth: 1.2, opacity: 0.45 }),
-    h(Rect, { x: 22, y: 22, width: 812, height: 496, rx: 18, fill: 'none', stroke: strokeColor, strokeWidth: 0.8, strokeDasharray: '3,5', opacity: 0.35 }),
-    h(Rect, { x: 27, y: 27, width: 802, height: 486, rx: 14, fill: 'none', stroke: strokeColor, strokeWidth: 0.5, opacity: 0.2 }),
+    {
+      width: 856,
+      height: 540,
+      viewBox: '0 0 856 540',
+      style: { position: 'absolute', top: 0, left: 0 },
+    },
+    h(Rect, {
+      x: 16,
+      y: 16,
+      width: 824,
+      height: 508,
+      rx: 22,
+      fill: 'none',
+      stroke: strokeColor,
+      strokeWidth: 1.2,
+      opacity: 0.45,
+    }),
+    h(Rect, {
+      x: 22,
+      y: 22,
+      width: 812,
+      height: 496,
+      rx: 18,
+      fill: 'none',
+      stroke: strokeColor,
+      strokeWidth: 0.8,
+      strokeDasharray: '3,5',
+      opacity: 0.35,
+    }),
+    h(Rect, {
+      x: 27,
+      y: 27,
+      width: 802,
+      height: 486,
+      rx: 14,
+      fill: 'none',
+      stroke: strokeColor,
+      strokeWidth: 0.5,
+      opacity: 0.2,
+    }),
   );
 }
 
 /** Hologram / foil shimmer — gradient diagonal semi-transparan. */
-function ShimmerOverlay({ width, height, id, colors }: { width: number; height: number; id: string; colors: [string, string, string] }) {
+function ShimmerOverlay({
+  width,
+  height,
+  id,
+  colors,
+}: {
+  width: number;
+  height: number;
+  id: string;
+  colors: [string, string, string];
+}) {
   return h(
     Svg,
-    { width, height, viewBox: `0 0 ${width} ${height}`, style: { position: 'absolute', top: 0, left: 0 } },
+    {
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
+      style: { position: 'absolute', top: 0, left: 0 },
+    },
     h(
       Defs,
       null,
@@ -634,7 +712,12 @@ function ShimmerOverlay({ width, height, id, colors }: { width: number; height: 
 function BackHeaderGradient() {
   return h(
     Svg,
-    { width: 856, height: BACK.header.height, viewBox: `0 0 856 ${BACK.header.height}`, style: { position: 'absolute', top: 0, left: 0 } },
+    {
+      width: 856,
+      height: BACK.header.height,
+      viewBox: `0 0 856 ${BACK.header.height}`,
+      style: { position: 'absolute', top: 0, left: 0 },
+    },
     h(
       Defs,
       null,
@@ -676,7 +759,15 @@ function NamePattern({ name, side }: { name: string; side: 'front' | 'back' }) {
         row.map((w: string, j: number) =>
           h(
             Text,
-            { key: `npw-${j}`, style: { fontSize: cfg.fontSize, letterSpacing: cfg.letterSpacing, color: cfg.color, fontWeight: 'heavy' } },
+            {
+              key: `npw-${j}`,
+              style: {
+                fontSize: cfg.fontSize,
+                letterSpacing: cfg.letterSpacing,
+                color: cfg.color,
+                fontWeight: 'heavy',
+              },
+            },
             w,
           ),
         ),
@@ -695,9 +786,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
         year: 'numeric',
       })
     : '-';
-  const ttl = member.tempatLahir
-    ? `${member.tempatLahir}, ${tanggalLahirStr}`
-    : tanggalLahirStr;
+  const ttl = member.tempatLahir ? `${member.tempatLahir}, ${tanggalLahirStr}` : tanggalLahirStr;
   const distrik = member.distrik || member.wilayah || 'THS-THM';
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
@@ -747,7 +836,12 @@ function buildFrontSide(props: MemberCardPdfProps) {
         View,
         { key: 'logo', style: styles.logo },
         h(Image, { src: KTA_LOGO_DATA_URL, style: styles.logoImg }),
-        h(ShimmerOverlay, { width: 48, height: 48, id: 'logoShimmerFront', colors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)'] }),
+        h(ShimmerOverlay, {
+          width: 48,
+          height: 48,
+          id: 'logoShimmerFront',
+          colors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)'],
+        }),
       ),
       h(
         View,
@@ -842,11 +936,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
     h(
       View,
       { key: 'sig', style: styles.signature },
-      h(
-        Text,
-        { key: 'st1', style: styles.sigTitle1 },
-        `KOORDINATORAT DISTRIK THS-THM`,
-      ),
+      h(Text, { key: 'st1', style: styles.sigTitle1 }, `KOORDINATORAT DISTRIK THS-THM`),
       h(
         Text,
         { key: 'st2', style: styles.sigTitle2 },
@@ -875,21 +965,49 @@ function buildFrontSide(props: MemberCardPdfProps) {
             .map((s, i) =>
               h(
                 View,
-                { key: `sig-${i}`, style: { position: 'absolute', right: 0, bottom: i * 34, width: '100%', alignItems: 'flex-end' } },
+                {
+                  key: `sig-${i}`,
+                  style: {
+                    position: 'absolute',
+                    right: 0,
+                    bottom: i * 34,
+                    width: '100%',
+                    alignItems: 'flex-end',
+                  },
+                },
                 // Nama penandatangan (underline) + jabatan — keduanya tampil di bawah stempel, font sama dgn "Berlaku sampai"
                 s.signerName
                   ? h(Text, { style: styles.signerName }, (s.signerName || '').toUpperCase())
                   : null,
-                s.signerTitle ? h(Text, { style: styles.signerTitle }, s.signerTitle.toUpperCase()) : null,
+                s.signerTitle
+                  ? h(Text, { style: styles.signerTitle }, s.signerTitle.toUpperCase())
+                  : null,
               ),
             )
         : [
             h(
               View,
-              { key: 'sig-fallback', style: { position: 'absolute', right: 0, bottom: 0, width: '100%', alignItems: 'flex-end' } },
-              h(Text, { key: 'sig-n', style: styles.signerName }, (cardConfig.signerName || '').toUpperCase()),
+              {
+                key: 'sig-fallback',
+                style: {
+                  position: 'absolute',
+                  right: 0,
+                  bottom: 0,
+                  width: '100%',
+                  alignItems: 'flex-end',
+                },
+              },
+              h(
+                Text,
+                { key: 'sig-n', style: styles.signerName },
+                (cardConfig.signerName || '').toUpperCase(),
+              ),
               cardConfig.signerTitle
-                ? h(Text, { key: 'sig-nt', style: styles.signerTitle }, cardConfig.signerTitle.toUpperCase())
+                ? h(
+                    Text,
+                    { key: 'sig-nt', style: styles.signerTitle },
+                    cardConfig.signerTitle.toUpperCase(),
+                  )
                 : null,
             ),
           ]),
@@ -920,7 +1038,9 @@ function buildBackSide(props: MemberCardPdfProps) {
   const template = cardConfig.template || null;
   return [
     // Latar: gambar desain upload (template aktif) — bila ada
-    ...(props.backImageDataUrl ? [h(Image, { key: 'bgImgB', src: props.backImageDataUrl, style: styles.bgImage })] : []),
+    ...(props.backImageDataUrl
+      ? [h(Image, { key: 'bgImgB', src: props.backImageDataUrl, style: styles.bgImage })]
+      : []),
     // Guilloche / microprint border
     ...(template?.guilloche?.enabledBack === false
       ? []
@@ -986,7 +1106,11 @@ function buildBackSide(props: MemberCardPdfProps) {
         View,
         { key: 'r3', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Status'),
-        h(Text, { style: styles.backValue }, `: ${fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')}`),
+        h(
+          Text,
+          { style: styles.backValue },
+          `: ${fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')}`,
+        ),
       ),
       h(
         View,
@@ -998,7 +1122,11 @@ function buildBackSide(props: MemberCardPdfProps) {
         View,
         { key: 'r5', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Alamat'),
-        h(Text, { style: styles.backValue }, `: THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`),
+        h(
+          Text,
+          { style: styles.backValue },
+          `: THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`,
+        ),
       ),
     ),
     // Footer
@@ -1036,17 +1164,39 @@ export function buildMemberCardPdf(props: MemberCardPdfProps, opts?: { combined?
       null,
       h(
         Page,
-        { size: [856, 1080], style: { width: 856, height: 1080, padding: 0, position: 'relative', backgroundColor: WHITE } },
+        {
+          size: [856, 1080],
+          style: {
+            width: 856,
+            height: 1080,
+            padding: 0,
+            position: 'relative',
+            backgroundColor: WHITE,
+          },
+        },
         // Front (top half)
         h(
           View,
-          { key: 'front', style: { position: 'absolute', top: 0, left: 0, width: 856, height: 540, backgroundColor: WHITE } },
+          {
+            key: 'front',
+            style: {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 856,
+              height: 540,
+              backgroundColor: WHITE,
+            },
+          },
           frontSide,
         ),
         // Back (bottom half)
         h(
           View,
-          { key: 'back', style: { position: 'absolute', top: 540, left: 0, width: 856, height: 540 } },
+          {
+            key: 'back',
+            style: { position: 'absolute', top: 540, left: 0, width: 856, height: 540 },
+          },
           backSide,
         ),
       ),
@@ -1073,13 +1223,26 @@ export function buildMemberCardBatchPdf(propsArray: MemberCardPdfProps[]) {
         {
           key: `batch-${i}`,
           size: [856, 1080],
-          style: { width: 856, height: 1080, padding: 0, position: 'relative', backgroundColor: WHITE },
+          style: {
+            width: 856,
+            height: 1080,
+            padding: 0,
+            position: 'relative',
+            backgroundColor: WHITE,
+          },
         },
         h(
           View,
           {
             key: `batch-f${i}`,
-            style: { position: 'absolute', top: 0, left: 0, width: 856, height: 540, backgroundColor: WHITE },
+            style: {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 856,
+              height: 540,
+              backgroundColor: WHITE,
+            },
           },
           buildFrontSide(props),
         ),

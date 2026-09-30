@@ -11,13 +11,31 @@ export class TingkatanController {
   constructor(private readonly service: TingkatanService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Daftar tingkatan (pengaturan strip kartu)' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { summary: 'Daftar tingkatan (pengaturan strip kartu)' },
+  )
   findAll() {
     return this.service.findAll();
   }
 
   @Get('visuals')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Mapping tingkat → visual strip untuk kartu' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { summary: 'Mapping tingkat → visual strip untuk kartu' },
+  )
   getVisuals() {
     return this.service.getAllLevelVisuals();
   }

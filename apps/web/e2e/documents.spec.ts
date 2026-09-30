@@ -12,7 +12,9 @@ test.describe('Documents — /documents', () => {
   test('renders with Dokumen tab active by default and action buttons', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Dokumen');
     await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
-    await expect(page.locator('button:has-text("Generate Massal")').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('button:has-text("Generate Massal")').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('renders SummaryBar with document count', async ({ page }) => {

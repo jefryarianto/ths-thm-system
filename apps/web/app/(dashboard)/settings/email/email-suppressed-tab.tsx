@@ -78,7 +78,8 @@ export default function EmailSuppressedTab() {
     if (
       !(await confirm({
         title: 'Bersihkan Supresi',
-        message: 'Bersihkan semua alamat email dari daftar supresi? Email akan tetap dikirim ke alamat-alamat ini.',
+        message:
+          'Bersihkan semua alamat email dari daftar supresi? Email akan tetap dikirim ke alamat-alamat ini.',
         confirmLabel: 'Ya, Bersihkan',
         variant: 'danger',
       }))

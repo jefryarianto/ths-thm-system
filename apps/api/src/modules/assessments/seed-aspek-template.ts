@@ -33,7 +33,9 @@ export interface AspekTemplateSeed {
 
 export interface SeedAspekTemplatePrisma {
   aspekPenilaian: {
-    findFirst(args: { where: { kegiatanId: null; kodeAspek: string } }): Promise<{ id: string; kodeAspek: string } | null>;
+    findFirst(args: {
+      where: { kegiatanId: null; kodeAspek: string };
+    }): Promise<{ id: string; kodeAspek: string } | null>;
     create(args: {
       data: {
         kodeAspek: string;
@@ -78,8 +80,20 @@ export const aspekTemplateSeed: AspekTemplateSeed[] = [
     deskripsi: 'Pemahaman dan pengamalan dasar-dasar organisasi',
     bobot: 40,
     items: [
-      { kodeItem: 'TPL-ITM-A1', namaItem: 'Pemahaman sejarah, asas, dan dasar organisasi', skorMaksimal: 100, bobot: 50, urutan: 1 },
-      { kodeItem: 'TPL-ITM-A2', namaItem: 'Pemahaman struktur, tata tertib, dan kedudukan anggota', skorMaksimal: 100, bobot: 50, urutan: 2 },
+      {
+        kodeItem: 'TPL-ITM-A1',
+        namaItem: 'Pemahaman sejarah, asas, dan dasar organisasi',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 1,
+      },
+      {
+        kodeItem: 'TPL-ITM-A2',
+        namaItem: 'Pemahaman struktur, tata tertib, dan kedudukan anggota',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 2,
+      },
     ],
   },
   {
@@ -88,9 +102,27 @@ export const aspekTemplateSeed: AspekTemplateSeed[] = [
     deskripsi: 'Kemampuan merencanakan dan memfasilitasi kegiatan',
     bobot: 40,
     items: [
-      { kodeItem: 'TPL-ITM-B1', namaItem: 'Perencanaan & persiapan sesi', skorMaksimal: 100, bobot: 40, urutan: 1 },
-      { kodeItem: 'TPL-ITM-B2', namaItem: 'Teknik penyampaian & presentasi', skorMaksimal: 100, bobot: 30, urutan: 2 },
-      { kodeItem: 'TPL-ITM-B3', namaItem: 'Penanganan dinamika kelompok', skorMaksimal: 100, bobot: 30, urutan: 3 },
+      {
+        kodeItem: 'TPL-ITM-B1',
+        namaItem: 'Perencanaan & persiapan sesi',
+        skorMaksimal: 100,
+        bobot: 40,
+        urutan: 1,
+      },
+      {
+        kodeItem: 'TPL-ITM-B2',
+        namaItem: 'Teknik penyampaian & presentasi',
+        skorMaksimal: 100,
+        bobot: 30,
+        urutan: 2,
+      },
+      {
+        kodeItem: 'TPL-ITM-B3',
+        namaItem: 'Penanganan dinamika kelompok',
+        skorMaksimal: 100,
+        bobot: 30,
+        urutan: 3,
+      },
     ],
   },
   {
@@ -99,13 +131,27 @@ export const aspekTemplateSeed: AspekTemplateSeed[] = [
     deskripsi: 'Sikap pribadi dan kemampuan bekerja sama',
     bobot: 20,
     items: [
-      { kodeItem: 'TPL-ITM-C1', namaItem: 'Disiplin & tanggung jawab', skorMaksimal: 100, bobot: 50, urutan: 1 },
-      { kodeItem: 'TPL-ITM-C2', namaItem: 'Kerja sama & komunikasi', skorMaksimal: 100, bobot: 50, urutan: 2 },
+      {
+        kodeItem: 'TPL-ITM-C1',
+        namaItem: 'Disiplin & tanggung jawab',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 1,
+      },
+      {
+        kodeItem: 'TPL-ITM-C2',
+        namaItem: 'Kerja sama & komunikasi',
+        skorMaksimal: 100,
+        bobot: 50,
+        urutan: 2,
+      },
     ],
   },
 ];
 
-export async function seedAspekTemplate(prisma: SeedAspekTemplatePrisma): Promise<SeedAspekTemplateResult> {
+export async function seedAspekTemplate(
+  prisma: SeedAspekTemplatePrisma,
+): Promise<SeedAspekTemplateResult> {
   let aspekBaru = 0;
   let itemBaru = 0;
   let aspekSkip = 0;

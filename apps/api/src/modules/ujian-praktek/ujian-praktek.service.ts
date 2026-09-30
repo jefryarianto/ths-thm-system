@@ -103,9 +103,9 @@ export class UjianPraktekService {
     const kandidat = ujians.filter((u) => u.status !== 'dibatalkan');
     const prioritas = ['berlangsung', 'draft', 'selesai'];
     const ujianAktif =
-      prioritas
-        .map((s) => kandidat.find((u) => u.status === s))
-        .find((u) => !!u) ?? kandidat[0] ?? null;
+      prioritas.map((s) => kandidat.find((u) => u.status === s)).find((u) => !!u) ??
+      kandidat[0] ??
+      null;
 
     // Skor milik penguji utk ujian aktif: item terbaru menang (upsert create
     // baru tidak selalu menimpa createdAt — orderBy asc + overwrite = latest).
@@ -122,9 +122,7 @@ export class UjianPraktekService {
 
     return {
       kegiatan,
-      ujianAktif: ujianAktif
-        ? { id: ujianAktif.id, status: ujianAktif.status }
-        : null,
+      ujianAktif: ujianAktif ? { id: ujianAktif.id, status: ujianAktif.status } : null,
       aspects,
       participants: participants.map((p) => ({
         ...p.calonAnggota,
@@ -289,7 +287,9 @@ export class UjianPraktekService {
     const data = await this.prisma.nilaiPendadaran.findMany({
       where: { ujianPraktekId },
       include: {
-        calonAnggota: { select: { id: true, namaLengkap: true, ranting: { select: { nama: true } } } },
+        calonAnggota: {
+          select: { id: true, namaLengkap: true, ranting: { select: { nama: true } } },
+        },
         itemPenilaian: { select: { id: true, namaItem: true, skorMaksimal: true, bobot: true } },
         penguji: { select: { id: true, namaLengkap: true } },
       },
@@ -427,7 +427,11 @@ export class UjianPraktekService {
   }
 
   /** Attach penguji ke ujian (additive, idempoten via unique constraint). */
-  private attachExaminers(tx: Prisma.TransactionClient, ujianPraktekId: string, pengujiUserIds: string[]) {
+  private attachExaminers(
+    tx: Prisma.TransactionClient,
+    ujianPraktekId: string,
+    pengujiUserIds: string[],
+  ) {
     if (pengujiUserIds.length === 0) return Promise.resolve();
     return tx.ujianPraktekPenilai.createMany({
       data: pengujiUserIds.map((pengujiUserId) => ({ ujianPraktekId, pengujiUserId })),
@@ -516,12 +520,18 @@ export class UjianPraktekService {
   }
 
   /** Hitung metadata timer dari timestamp server (sisaDetik bisa negatif). */
-  private withTimer<T extends { mulaiAt: Date | null; selesaiAt: Date | null; durasiStandarMenit: number; tambahanMenit: number }>(
-    sesi: T,
-  ) {
+  private withTimer<
+    T extends {
+      mulaiAt: Date | null;
+      selesaiAt: Date | null;
+      durasiStandarMenit: number;
+      tambahanMenit: number;
+    },
+  >(sesi: T) {
     const durasiTotalMenit = sesi.durasiStandarMenit + sesi.tambahanMenit;
-    const batasAt =
-      sesi.mulaiAt ? new Date(sesi.mulaiAt.getTime() + durasiTotalMenit * 60_000) : null;
+    const batasAt = sesi.mulaiAt
+      ? new Date(sesi.mulaiAt.getTime() + durasiTotalMenit * 60_000)
+      : null;
     const sisaDetik =
       sesi.mulaiAt && !sesi.selesaiAt && batasAt
         ? Math.floor((batasAt.getTime() - Date.now()) / 1000)
@@ -575,7 +585,9 @@ export class UjianPraktekService {
         },
         include: { calonAnggota: { select: { id: true, namaLengkap: true } } },
       });
-      this.logger.log(`Sesi ujian dimulai (ujian ${ujianPraktekId}, calon ${calonAnggotaId}, oleh ${userId ?? 'system'})`);
+      this.logger.log(
+        `Sesi ujian dimulai (ujian ${ujianPraktekId}, calon ${calonAnggotaId}, oleh ${userId ?? 'system'})`,
+      );
       return this.withTimer(sesi);
     } catch (err) {
       if ((err as { code?: string }).code === 'P2002') {

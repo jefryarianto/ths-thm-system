@@ -41,10 +41,7 @@ describe('KepengurusanService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        KepengurusanService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [KepengurusanService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<KepengurusanService>(KepengurusanService);

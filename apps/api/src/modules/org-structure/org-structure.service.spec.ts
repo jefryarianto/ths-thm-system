@@ -36,7 +36,9 @@ describe('OrgStructureService', () => {
   };
 
   const mockCache = {
-    getOrSet: jest.fn(async (key: string, factory: () => Promise<any>, ttlMs?: number) => factory()),
+    getOrSet: jest.fn(async (key: string, factory: () => Promise<any>, ttlMs?: number) =>
+      factory(),
+    ),
     invalidatePrefix: jest.fn(),
     get: jest.fn(),
     set: jest.fn(),

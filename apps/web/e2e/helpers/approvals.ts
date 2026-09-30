@@ -32,9 +32,7 @@ export async function registerApprovalsMocks(page: Page) {
             requestType: 'Kenaikan Tingkat',
             itemId: 'member-456',
             createdAt: new Date(Date.now() - 7200000).toISOString(),
-            levels: [
-              { status: 'pending', approvalLevel: { name: 'Pelatih' } },
-            ],
+            levels: [{ status: 'pending', approvalLevel: { name: 'Pelatih' } }],
           },
         ],
       }),

@@ -30,27 +30,21 @@ describe('API URL normalization (regression: /api/api double prefix)', () => {
     { input: 'https://ths-thm-api.onrender.com', desc: 'Render service URL' },
   ];
 
-  it.each(testCases)(
-    'rewrite destination for $desc is always single /api',
-    ({ input }) => {
-      const baseUrl = normalizeBaseUrl(input);
-      const destination = `${baseUrl}/api/:path*`;
-      // Should never contain /api/api
-      expect(destination).not.toContain('/api/api');
-      // Should always contain exactly one /api before :path*
-      expect(destination).toMatch(/\/api\/:path\*$/);
-    },
-  );
+  it.each(testCases)('rewrite destination for $desc is always single /api', ({ input }) => {
+    const baseUrl = normalizeBaseUrl(input);
+    const destination = `${baseUrl}/api/:path*`;
+    // Should never contain /api/api
+    expect(destination).not.toContain('/api/api');
+    // Should always contain exactly one /api before :path*
+    expect(destination).toMatch(/\/api\/:path\*$/);
+  });
 
-  it.each(testCases)(
-    'client-side URL for $desc is always single /api',
-    ({ input }) => {
-      const baseUrl = normalizeBaseUrl(input);
-      const url = buildApiUrl(baseUrl, '/reports/export/dues?format=xlsx');
-      expect(url).not.toContain('/api/api');
-      expect(url).toMatch(/\/api\/reports\/export/);
-    },
-  );
+  it.each(testCases)('client-side URL for $desc is always single /api', ({ input }) => {
+    const baseUrl = normalizeBaseUrl(input);
+    const url = buildApiUrl(baseUrl, '/reports/export/dues?format=xlsx');
+    expect(url).not.toContain('/api/api');
+    expect(url).toMatch(/\/api\/reports\/export/);
+  });
 
   it('dev fallback without NEXT_PUBLIC_API_URL still works', () => {
     const fallback = 'http://localhost:3001';

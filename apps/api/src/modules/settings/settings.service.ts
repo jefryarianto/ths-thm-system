@@ -20,18 +20,25 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
     protected readonly cache: CacheService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'periode',
-      prefix: 'settings:',
-      notFound: 'Periode tidak ditemukan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'periode',
+        prefix: 'settings:',
+        notFound: 'Periode tidak ditemukan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Key-Value Settings ──────────────────────────────
 
   async getSettings() {
     return this.prisma.setting.findMany();
-  }    async updateSettings(dto: Record<string, unknown>) {
+  }
+  async updateSettings(dto: Record<string, unknown>) {
     for (const [key, value] of Object.entries(dto)) {
       await this.prisma.setting.upsert({
         where: { key },
@@ -44,9 +51,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
   // ── Period CRUD (via BaseCrudService) ──────────────
 
-  protected async beforeCreate(
-    dto: CreatePeriodDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeCreate(dto: CreatePeriodDto): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = { nama: dto.nama };
     if (dto.tglMulai) data.tglMulai = new Date(dto.tglMulai);
     if (dto.tglSelesai) data.tglSelesai = new Date(dto.tglSelesai);
@@ -134,9 +139,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   async getSignatures(scope?: { role?: string; distrikId?: string | null }) {
     const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.tandaTangan.findMany({
-      where: isScoped
-        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
-        : undefined,
+      where: isScoped ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] } : undefined,
       orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
       include: {
         user: { select: { namaLengkap: true } },
@@ -155,7 +158,9 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
     if (scope?.role && scope.role !== 'superadmin') {
       if ((existing.distrikId ?? null) !== (scope.distrikId ?? null)) {
-        throw new ForbiddenException('Anda hanya dapat menghapus tanda tangan distrik Anda sendiri');
+        throw new ForbiddenException(
+          'Anda hanya dapat menghapus tanda tangan distrik Anda sendiri',
+        );
       }
     }
     await this.prisma.tandaTangan.delete({ where: { id } });
@@ -167,9 +172,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   async getStamps(scope?: { role?: string; distrikId?: string | null }) {
     const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.stempel.findMany({
-      where: isScoped
-        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
-        : undefined,
+      where: isScoped ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] } : undefined,
       orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
       include: { distrik: { select: { id: true, nama: true } } },
     });
@@ -318,9 +321,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
     return items.map((item) => ({
       jabatan: item.jabatan?.nama || 'Pengurus',
       nama: item.user?.namaLengkap || 'Nama Pengurus',
-      deskripsi: item.periode?.nama
-        ? `Periode ${item.periode.nama}`
-        : 'Tingkat Nasional',
+      deskripsi: item.periode?.nama ? `Periode ${item.periode.nama}` : 'Tingkat Nasional',
     }));
   }
 
@@ -352,13 +353,9 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
         (existing.struktur as { jabatan: string; nama: string; deskripsi: string }[] | null) || [];
 
       // Build a set of existing keys for deduplication
-      const existingKeys = new Set(
-        existingItems.map((e) => `${e.jabatan}|${e.nama}`),
-      );
+      const existingKeys = new Set(existingItems.map((e) => `${e.jabatan}|${e.nama}`));
 
-      const uniqueNew = items.filter(
-        (item) => !existingKeys.has(`${item.jabatan}|${item.nama}`),
-      );
+      const uniqueNew = items.filter((item) => !existingKeys.has(`${item.jabatan}|${item.nama}`));
 
       newStruktur = [...existingItems, ...uniqueNew];
     }

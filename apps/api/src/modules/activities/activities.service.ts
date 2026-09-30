@@ -25,11 +25,17 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     private readonly memberMailService: MemberMailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'kegiatan',
-      prefix: 'activities:',
-      scopeStrategy: 'kegiatan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'kegiatan',
+        prefix: 'activities:',
+        scopeStrategy: 'kegiatan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hooks ───────────────────────────────────────────────

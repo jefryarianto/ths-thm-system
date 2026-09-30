@@ -106,7 +106,11 @@ const envSchema = baseEnvSchema.superRefine((data, ctx) => {
   }
 
   // Validate Valkey/Redis URL if provided
-  if (data.REDIS_URL && !data.REDIS_URL.startsWith('redis://') && !data.REDIS_URL.startsWith('rediss://')) {
+  if (
+    data.REDIS_URL &&
+    !data.REDIS_URL.startsWith('redis://') &&
+    !data.REDIS_URL.startsWith('rediss://')
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'REDIS_URL must start with redis:// or rediss:// (Valkey is Redis-compatible)',

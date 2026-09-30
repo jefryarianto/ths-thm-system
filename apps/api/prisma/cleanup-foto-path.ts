@@ -47,7 +47,7 @@ async function main() {
   // and fotoPath stores just the filename (e.g. "Agus Susilo.png").
   // So the file path is UPLOAD_DIR/fotoPath on disk.
   let existingFiles: Set<string>;
-  
+
   try {
     const files = fs.readdirSync(UPLOAD_DIR);
     existingFiles = new Set(files);
@@ -66,8 +66,10 @@ async function main() {
     const fileExists = existingFiles.has(member.fotoPath);
 
     if (!fileExists) {
-      console.log(`  ❌ ${member.namaLengkap} (${member.nomorAnggota}) → fotoPath "${member.fotoPath}" not found`);
-      
+      console.log(
+        `  ❌ ${member.namaLengkap} (${member.nomorAnggota}) → fotoPath "${member.fotoPath}" not found`,
+      );
+
       await prisma.anggota.update({
         where: { id: member.id },
         data: { fotoPath: null },

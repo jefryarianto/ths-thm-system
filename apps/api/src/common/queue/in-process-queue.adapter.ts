@@ -37,10 +37,7 @@ export class InProcessQueueAdapter implements IJobQueue {
     { resolve: (r: JobResult) => void; reject: (e: Error) => void }
   >();
 
-  constructor(
-    callbacks: JobLifecycleCallbacks,
-    options?: QueueOptions,
-  ) {
+  constructor(callbacks: JobLifecycleCallbacks, options?: QueueOptions) {
     this.callbacks = callbacks;
     this.concurrency = options?.concurrency ?? 3;
     this.maxRetries = options?.maxRetries ?? 3;

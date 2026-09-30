@@ -34,15 +34,32 @@ interface HealthData {
   environment: string;
   version: string;
   cache: { entries: number; maxEntries: number };
-  auditLog: { totalEntries: number; recentViolations: number; latency: { p50: number; p95: number; p99: number; avg: number; count: number } };
-  backup: { available: boolean; lastBackup: string | null; lastBackupSize: string | null; lastBackupAge: string | null; backupCount: number; status: 'ok' | 'stale' | 'missing' } | null;
+  auditLog: {
+    totalEntries: number;
+    recentViolations: number;
+    latency: { p50: number; p95: number; p99: number; avg: number; count: number };
+  };
+  backup: {
+    available: boolean;
+    lastBackup: string | null;
+    lastBackupSize: string | null;
+    lastBackupAge: string | null;
+    backupCount: number;
+    status: 'ok' | 'stale' | 'missing';
+  } | null;
   queue: {
     type: string;
     status: string;
     queueName: string;
     latencyMs?: number | null;
     workerStatus?: string;
-    counts?: { waiting: number; active: number; completed: number; failed: number; delayed: number };
+    counts?: {
+      waiting: number;
+      active: number;
+      completed: number;
+      failed: number;
+      delayed: number;
+    };
     error?: string;
     recentErrors?: { message: string; timestamp: string }[];
   };
@@ -67,25 +84,34 @@ function toStatus(value: string | undefined | null): StatusType {
 
 function statusColor(status: StatusType): string {
   switch (status) {
-    case 'healthy': return 'bg-green-500';
-    case 'degraded': return 'bg-yellow-500';
-    case 'down': return 'bg-red-500';
+    case 'healthy':
+      return 'bg-green-500';
+    case 'degraded':
+      return 'bg-yellow-500';
+    case 'down':
+      return 'bg-red-500';
   }
 }
 
 function statusBg(status: StatusType): string {
   switch (status) {
-    case 'healthy': return 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800';
-    case 'degraded': return 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800';
-    case 'down': return 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800';
+    case 'healthy':
+      return 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800';
+    case 'degraded':
+      return 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800';
+    case 'down':
+      return 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800';
   }
 }
 
 function statusTextColor(status: StatusType): string {
   switch (status) {
-    case 'healthy': return 'text-green-700 dark:text-green-400';
-    case 'degraded': return 'text-yellow-700 dark:text-yellow-400';
-    case 'down': return 'text-red-700 dark:text-red-400';
+    case 'healthy':
+      return 'text-green-700 dark:text-green-400';
+    case 'degraded':
+      return 'text-yellow-700 dark:text-yellow-400';
+    case 'down':
+      return 'text-red-700 dark:text-red-400';
   }
 }
 
@@ -150,7 +176,9 @@ function StatusCard({
     <div className={`rounded-xl border p-5 ${statusBg(status)} transition-all duration-500`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-lg ${status === 'healthy' ? 'bg-green-100 dark:bg-green-900' : status === 'degraded' ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-red-100 dark:bg-red-900'}`}>
+          <div
+            className={`p-2.5 rounded-lg ${status === 'healthy' ? 'bg-green-100 dark:bg-green-900' : status === 'degraded' ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-red-100 dark:bg-red-900'}`}
+          >
             <Icon size={20} className={statusTextColor(status)} />
           </div>
           <div>
@@ -159,7 +187,9 @@ function StatusCard({
           </div>
         </div>
         <span className={`relative flex w-3 h-3 mt-1 ${status === 'healthy' ? '' : ''}`}>
-          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusColor(status)}`} />
+          <span
+            className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusColor(status)}`}
+          />
           <span className={`relative inline-flex rounded-full w-3 h-3 ${statusColor(status)}`} />
         </span>
       </div>
@@ -180,7 +210,11 @@ function ErrorList({ errors }: { errors: { message: string; timestamp: string }[
       </p>
       <div className="space-y-1 max-h-24 overflow-y-auto">
         {errors.map((e, i) => (
-          <p key={i} className="text-[10px] text-red-500 dark:text-red-400 truncate" title={e.message}>
+          <p
+            key={i}
+            className="text-[10px] text-red-500 dark:text-red-400 truncate"
+            title={e.message}
+          >
             {e.message}
           </p>
         ))}
@@ -191,7 +225,11 @@ function ErrorList({ errors }: { errors: { message: string; timestamp: string }[
 
 // ── Queue Stats Table ────────────────────────────────────────
 
-function QueueStatsTable({ counts }: { counts: { waiting: number; active: number; completed: number; failed: number; delayed: number } }) {
+function QueueStatsTable({
+  counts,
+}: {
+  counts: { waiting: number; active: number; completed: number; failed: number; delayed: number };
+}) {
   const rows = [
     { label: 'Menunggu', value: counts.waiting, color: 'text-yellow-600 dark:text-yellow-400' },
     { label: 'Aktif', value: counts.active, color: 'text-blue-600 dark:text-blue-400' },
@@ -215,7 +253,9 @@ function QueueStatsTable({ counts }: { counts: { waiting: number; active: number
 
 export default function MonitoringPage() {
   const [health, setHealth] = useState<HealthData | null>(null);
-  const [uptimeHistoryData, setUptimeHistoryData] = useState<{ timestamp: string; status: string }[]>([]);
+  const [uptimeHistoryData, setUptimeHistoryData] = useState<
+    { timestamp: string; status: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -344,52 +384,62 @@ export default function MonitoringPage() {
   }, []);
 
   // ── Compute Checks ──
-  const checks: HealthCheck[] = health ? [
-    {
-      label: 'API Server',
-      icon: Server,
-      status: toStatus(health.status),
-      detail: `Uptime ${formatUptime(health.uptime)} · ${health.environment}`,
-    },
-    {
-      label: 'Database (PostgreSQL)',
-      icon: Database,
-      status: toStatus(health.database?.status),
-      detail: health.database?.status === 'connected'
-        ? `Pool: ${health.database.pool.active} aktif / ${health.database.pool.idle} idle / ${health.database.pool.total} total`
-        : 'Tidak terhubung',
-    },
-    {
-      label: 'Valkey (Cache)',
-      icon: Wifi,
-      status: toStatus(health.redis?.status),
-      detail: health.redis?.status === 'connected'
-        ? `Connected · ${health.redis.latencyMs ?? '-'}ms latency · Cache: ${health.cache?.entries || 0}/${health.cache?.maxEntries || 1000} entries`
-        : 'Tidak terhubung (in-memory fallback)',
-    },
-    {
-      label: 'Queue (Document)',
-      icon: Activity,
-      status: toStatus(health.queue?.status),
-      detail: health.queue?.status === 'connected'
-        ? `${health.queue.type} · ${health.queue.workerStatus} · ${health.queue.latencyMs ?? '-'}ms`
-        : (health.queue?.error || 'Tidak terhubung'),
-    },
-    {
-      label: 'Memory',
-      icon: MemoryStick,
-      status: toStatus(health.memory?.heapUsed ? 'connected' : null),
-      detail: `${health.memory?.heapUsed || '-'} used / ${health.memory?.heapTotal || '-'} total`,
-    },
-    {
-      label: 'Disk Space',
-      icon: Server,
-      status: health.disk?.usagePercent > 90 ? 'down' : health.disk?.usagePercent > 75 ? 'degraded' : 'healthy',
-      detail: health.disk
-        ? `${health.disk.used} used / ${health.disk.total} total (${health.disk.usagePercent}%) — ${health.disk.free} free`
-        : 'Data tidak tersedia',
-    },
-  ] : [];
+  const checks: HealthCheck[] = health
+    ? [
+        {
+          label: 'API Server',
+          icon: Server,
+          status: toStatus(health.status),
+          detail: `Uptime ${formatUptime(health.uptime)} · ${health.environment}`,
+        },
+        {
+          label: 'Database (PostgreSQL)',
+          icon: Database,
+          status: toStatus(health.database?.status),
+          detail:
+            health.database?.status === 'connected'
+              ? `Pool: ${health.database.pool.active} aktif / ${health.database.pool.idle} idle / ${health.database.pool.total} total`
+              : 'Tidak terhubung',
+        },
+        {
+          label: 'Valkey (Cache)',
+          icon: Wifi,
+          status: toStatus(health.redis?.status),
+          detail:
+            health.redis?.status === 'connected'
+              ? `Connected · ${health.redis.latencyMs ?? '-'}ms latency · Cache: ${health.cache?.entries || 0}/${health.cache?.maxEntries || 1000} entries`
+              : 'Tidak terhubung (in-memory fallback)',
+        },
+        {
+          label: 'Queue (Document)',
+          icon: Activity,
+          status: toStatus(health.queue?.status),
+          detail:
+            health.queue?.status === 'connected'
+              ? `${health.queue.type} · ${health.queue.workerStatus} · ${health.queue.latencyMs ?? '-'}ms`
+              : health.queue?.error || 'Tidak terhubung',
+        },
+        {
+          label: 'Memory',
+          icon: MemoryStick,
+          status: toStatus(health.memory?.heapUsed ? 'connected' : null),
+          detail: `${health.memory?.heapUsed || '-'} used / ${health.memory?.heapTotal || '-'} total`,
+        },
+        {
+          label: 'Disk Space',
+          icon: Server,
+          status:
+            health.disk?.usagePercent > 90
+              ? 'down'
+              : health.disk?.usagePercent > 75
+                ? 'degraded'
+                : 'healthy',
+          detail: health.disk
+            ? `${health.disk.used} used / ${health.disk.total} total (${health.disk.usagePercent}%) — ${health.disk.free} free`
+            : 'Data tidak tersedia',
+        },
+      ]
+    : [];
 
   if (loading && !health) {
     return (
@@ -398,7 +448,10 @@ export default function MonitoringPage() {
           <PageHeader title="Monitoring Server" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse"
+              >
                 <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
                 <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
               </div>
@@ -409,8 +462,11 @@ export default function MonitoringPage() {
     );
   }
 
-  const overallStatus = checks.every((c) => c.status === 'healthy') ? 'healthy'
-    : checks.some((c) => c.status === 'down') ? 'down' : 'degraded';
+  const overallStatus = checks.every((c) => c.status === 'healthy')
+    ? 'healthy'
+    : checks.some((c) => c.status === 'down')
+      ? 'down'
+      : 'degraded';
 
   return (
     <PermissionGuard module="monitoring" action="view">
@@ -432,11 +488,17 @@ export default function MonitoringPage() {
               }`}
             >
               {sseConnected === true ? (
-                <><Radio size={11} className="animate-pulse" /> Live</>
+                <>
+                  <Radio size={11} className="animate-pulse" /> Live
+                </>
               ) : sseConnected === false ? (
-                <><WifiOff size={11} /> Polling</>
+                <>
+                  <WifiOff size={11} /> Polling
+                </>
               ) : (
-                <><Radio size={11} className="animate-pulse" /> Menghubungkan...</>
+                <>
+                  <Radio size={11} className="animate-pulse" /> Menghubungkan...
+                </>
               )}
             </span>
           </div>
@@ -447,10 +509,15 @@ export default function MonitoringPage() {
           <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-center gap-3 mb-6">
             <XCircle size={20} className="text-red-500 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">Gagal memuat data</p>
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                Gagal memuat data
+              </p>
               <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{error}</p>
             </div>
-            <button onClick={fetchData} className="ml-auto px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition">
+            <button
+              onClick={fetchData}
+              className="ml-auto px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition"
+            >
               Coba Lagi
             </button>
           </div>
@@ -461,26 +528,42 @@ export default function MonitoringPage() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <span className={`relative flex w-4 h-4`}>
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusColor(overallStatus)}`} />
-                <span className={`relative inline-flex rounded-full w-4 h-4 ${statusColor(overallStatus)}`} />
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${statusColor(overallStatus)}`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full w-4 h-4 ${statusColor(overallStatus)}`}
+                />
               </span>
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {overallStatus === 'healthy' ? '✅ Semua Sistem Sehat'
-                    : overallStatus === 'degraded' ? '⚠️ Beberapa Sistem Bermasalah'
-                    : '❌ Sistem Mengalami Gangguan'}
+                  {overallStatus === 'healthy'
+                    ? '✅ Semua Sistem Sehat'
+                    : overallStatus === 'degraded'
+                      ? '⚠️ Beberapa Sistem Bermasalah'
+                      : '❌ Sistem Mengalami Gangguan'}
                 </p>
                 {lastUpdated && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    Terakhir diperbarui {lastUpdated.toLocaleTimeString('id-ID')} · {sseConnected ? 'Real-time via SSE' : 'Polling 15 detik'}
+                    Terakhir diperbarui {lastUpdated.toLocaleTimeString('id-ID')} ·{' '}
+                    {sseConnected ? 'Real-time via SSE' : 'Polling 15 detik'}
                   </p>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
-              <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-green-500" /> {checks.filter(c => c.status === 'healthy').length} Sehat</span>
-              <span className="flex items-center gap-1"><AlertTriangle size={12} className="text-yellow-500" /> {checks.filter(c => c.status === 'degraded').length} Degradasi</span>
-              <span className="flex items-center gap-1"><XCircle size={12} className="text-red-500" /> {checks.filter(c => c.status === 'down').length} Down</span>
+              <span className="flex items-center gap-1">
+                <CheckCircle2 size={12} className="text-green-500" />{' '}
+                {checks.filter((c) => c.status === 'healthy').length} Sehat
+              </span>
+              <span className="flex items-center gap-1">
+                <AlertTriangle size={12} className="text-yellow-500" />{' '}
+                {checks.filter((c) => c.status === 'degraded').length} Degradasi
+              </span>
+              <span className="flex items-center gap-1">
+                <XCircle size={12} className="text-red-500" />{' '}
+                {checks.filter((c) => c.status === 'down').length} Down
+              </span>
             </div>
           </div>
         </div>
@@ -492,9 +575,11 @@ export default function MonitoringPage() {
               {check.label === 'Queue (Document)' && health?.queue?.counts && (
                 <QueueStatsTable counts={health.queue.counts} />
               )}
-              {check.label === 'Queue (Document)' && health?.queue?.recentErrors && health.queue.recentErrors.length > 0 && (
-                <ErrorList errors={health.queue.recentErrors} />
-              )}
+              {check.label === 'Queue (Document)' &&
+                health?.queue?.recentErrors &&
+                health.queue.recentErrors.length > 0 && (
+                  <ErrorList errors={health.queue.recentErrors} />
+                )}
             </StatusCard>
           ))}
         </div>
@@ -503,52 +588,93 @@ export default function MonitoringPage() {
         {health?.auditLog && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Total Audit Entries</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.totalEntries.toLocaleString()}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                Total Audit Entries
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {health.auditLog.totalEntries.toLocaleString()}
+              </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Recent Violations</p>
-              <p className={`text-2xl font-bold ${health.auditLog.recentViolations > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>{health.auditLog.recentViolations}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                Recent Violations
+              </p>
+              <p
+                className={`text-2xl font-bold ${health.auditLog.recentViolations > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}
+              >
+                {health.auditLog.recentViolations}
+              </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">API Latency P95</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.latency.p95 > 0 ? `${health.auditLog.latency.p95}ms` : '-'}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                API Latency P95
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {health.auditLog.latency.p95 > 0 ? `${health.auditLog.latency.p95}ms` : '-'}
+              </p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">API Latency P99</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.latency.p99 > 0 ? `${health.auditLog.latency.p99}ms` : '-'}</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                API Latency P99
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {health.auditLog.latency.p99 > 0 ? `${health.auditLog.latency.p99}ms` : '-'}
+              </p>
             </div>
           </div>
         )}
 
         {/* Backup Status */}
         {health?.backup && (
-          <div className={`rounded-xl border p-5 mb-6 ${
-            health.backup.status === 'ok'
-              ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-              : health.backup.status === 'stale'
-                ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
-                : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
-          }`}>
+          <div
+            className={`rounded-xl border p-5 mb-6 ${
+              health.backup.status === 'ok'
+                ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
+                : health.backup.status === 'stale'
+                  ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
+                  : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+            }`}
+          >
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-lg ${
-                  health.backup.status === 'ok' ? 'bg-green-100 dark:bg-green-900' :
-                  health.backup.status === 'stale' ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-red-100 dark:bg-red-900'
-                }`}>
-                  <Database size={20} className={
-                    health.backup.status === 'ok' ? 'text-green-700 dark:text-green-400' :
-                    health.backup.status === 'stale' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
-                  } />
+                <div
+                  className={`p-2.5 rounded-lg ${
+                    health.backup.status === 'ok'
+                      ? 'bg-green-100 dark:bg-green-900'
+                      : health.backup.status === 'stale'
+                        ? 'bg-yellow-100 dark:bg-yellow-900'
+                        : 'bg-red-100 dark:bg-red-900'
+                  }`}
+                >
+                  <Database
+                    size={20}
+                    className={
+                      health.backup.status === 'ok'
+                        ? 'text-green-700 dark:text-green-400'
+                        : health.backup.status === 'stale'
+                          ? 'text-yellow-700 dark:text-yellow-400'
+                          : 'text-red-700 dark:text-red-400'
+                    }
+                  />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Database Backup</p>
-                  <p className={`text-xs mt-0.5 font-medium ${
-                    health.backup.status === 'ok' ? 'text-green-700 dark:text-green-400' :
-                    health.backup.status === 'stale' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
-                  }`}>
-                    {health.backup.status === 'ok' ? '✅ Backup fresh' :
-                     health.backup.status === 'stale' ? '⚠️ Backup older than 48h' : '❌ No backups found'}
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Database Backup
+                  </p>
+                  <p
+                    className={`text-xs mt-0.5 font-medium ${
+                      health.backup.status === 'ok'
+                        ? 'text-green-700 dark:text-green-400'
+                        : health.backup.status === 'stale'
+                          ? 'text-yellow-700 dark:text-yellow-400'
+                          : 'text-red-700 dark:text-red-400'
+                    }`}
+                  >
+                    {health.backup.status === 'ok'
+                      ? '✅ Backup fresh'
+                      : health.backup.status === 'stale'
+                        ? '⚠️ Backup older than 48h'
+                        : '❌ No backups found'}
                   </p>
                 </div>
               </div>
@@ -556,24 +682,36 @@ export default function MonitoringPage() {
                 {health.backup.lastBackupAge && (
                   <div className="text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Age</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{health.backup.lastBackupAge}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {health.backup.lastBackupAge}
+                    </p>
                   </div>
                 )}
                 {health.backup.lastBackupSize && (
                   <div className="text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Size</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{health.backup.lastBackupSize}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {health.backup.lastBackupSize}
+                    </p>
                   </div>
                 )}
                 <div className="text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
-                  <p className="font-semibold text-gray-900 dark:text-white">{health.backup.backupCount}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {health.backup.backupCount}
+                  </p>
                 </div>
                 {health.backup.lastBackup && (
                   <div className="text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Last Backup</p>
                     <p className="font-semibold text-gray-900 dark:text-white text-xs">
-                      {new Date(health.backup.lastBackup).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(health.backup.lastBackup).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 )}
@@ -589,7 +727,9 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BarChart3 size={16} className="text-gray-500 dark:text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Uptime History (24 Jam)</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Uptime History (24 Jam)
+                </h3>
               </div>
               {health?.queue && (
                 <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -608,21 +748,43 @@ export default function MonitoringPage() {
             </h3>
             <div className="space-y-3">
               <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Versi</p>
-                <p className="text-sm text-gray-800 dark:text-gray-200 font-mono">{health?.version || '-'}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                  Versi
+                </p>
+                <p className="text-sm text-gray-800 dark:text-gray-200 font-mono">
+                  {health?.version || '-'}
+                </p>
               </div>
               <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Environment</p>
-                <p className="text-sm text-gray-800 dark:text-gray-200">{health?.environment || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Cache</p>
-                <p className="text-sm text-gray-800 dark:text-gray-200">{health?.cache?.entries || 0} / {health?.cache?.maxEntries || 1000} entries</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Terakhir Update</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                  Environment
+                </p>
                 <p className="text-sm text-gray-800 dark:text-gray-200">
-                  {lastUpdated ? lastUpdated.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                  {health?.environment || '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                  Cache
+                </p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">
+                  {health?.cache?.entries || 0} / {health?.cache?.maxEntries || 1000} entries
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
+                  Terakhir Update
+                </p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">
+                  {lastUpdated
+                    ? lastUpdated.toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'}
                 </p>
               </div>
             </div>

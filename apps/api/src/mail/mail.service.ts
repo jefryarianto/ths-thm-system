@@ -57,13 +57,15 @@ export class MailService {
   // ── Konfigurasi auto-retry (insiden retry-loop 2026-09) ──
   // Guard anti-loop: email yang lama / sering gagal tidak diulang terus-menerus.
   /** Batas usia email yang boleh di-retry otomatis (env EMAIL_RETRY_MAX_AGE_HOURS, default 48). */
-  private readonly RETRY_MAX_AGE_MS = MailService.positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
+  private readonly RETRY_MAX_AGE_MS =
+    MailService.positiveIntEnv('EMAIL_RETRY_MAX_AGE_HOURS', 48) * 3_600_000;
   /** Ukuran batch per siklus (env EMAIL_RETRY_BATCH_SIZE, default 25). */
   private readonly RETRY_BATCH_SIZE = MailService.positiveIntEnv('EMAIL_RETRY_BATCH_SIZE', 25);
   /** Batas percobaan retry sebelum email ditandai `abandoned` (env EMAIL_RETRY_MAX_ATTEMPTS, default 3). */
   private readonly RETRY_MAX_ATTEMPTS = MailService.positiveIntEnv('EMAIL_RETRY_MAX_ATTEMPTS', 3);
   /** Jeda minimal antar percobaan per email (env EMAIL_RETRY_BACKOFF_MINUTES, default 60). */
-  private readonly RETRY_BACKOFF_MS = MailService.positiveIntEnv('EMAIL_RETRY_BACKOFF_MINUTES', 60) * 60_000;
+  private readonly RETRY_BACKOFF_MS =
+    MailService.positiveIntEnv('EMAIL_RETRY_BACKOFF_MINUTES', 60) * 60_000;
 
   /** Baca env integer positif; fallback ke default bila tidak valid. */
   private static positiveIntEnv(name: string, fallback: number): number {
@@ -106,7 +108,15 @@ export class MailService {
         ...(metadata || {}),
         ...(attempt.resendId ? { resendId: attempt.resendId } : {}),
       };
-      await this.logToDb(to, subject, 'sent', attempt.provider, null, enrichedMetadata, html || text);
+      await this.logToDb(
+        to,
+        subject,
+        'sent',
+        attempt.provider,
+        null,
+        enrichedMetadata,
+        html || text,
+      );
       return true;
     }
 
@@ -237,7 +247,7 @@ export class MailService {
       if (log.content && log.content.endsWith('...')) {
         this.logger.warn(
           `Retrying email to ${log.to}: content was truncated (max ${this.MAX_LOG_CONTENT_LENGTH} chars). ` +
-          `Consider re-rendering the template instead.`,
+            `Consider re-rendering the template instead.`,
         );
       }
 
@@ -258,7 +268,12 @@ export class MailService {
           continue;
         }
 
-        const attempt = await this.deliver(log.to, log.subject, undefined, log.content || undefined);
+        const attempt = await this.deliver(
+          log.to,
+          log.subject,
+          undefined,
+          log.content || undefined,
+        );
         // Counter di-update SETELAH update DB sukses — bila update gagal, hasil
         // tidak dihitung agar angka cron mencerminkan outcome yang benar-benar
         // tercatat (kegagalan update dicatat via logger di catch).

@@ -10,8 +10,6 @@ import PageContainer from '@/components/ui/page-container';
 import { Save, ArrowLeft, Upload } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
-
-
 export default function NewBeritaPage() {
   const router = useRouter();
   const toast = useToast();
@@ -75,10 +73,13 @@ export default function NewBeritaPage() {
           await apiClient.post(`/content/berita/${createdId}/image`, formData);
           toast('success', 'Berita berhasil dibuat dengan gambar');
         } catch (err) {
-          toast('error', extractErrorMessage(
-            err,
-            'Berita dibuat, tetapi gambar gagal diupload — tambahkan lewat halaman Edit',
-          ));
+          toast(
+            'error',
+            extractErrorMessage(
+              err,
+              'Berita dibuat, tetapi gambar gagal diupload — tambahkan lewat halaman Edit',
+            ),
+          );
         } finally {
           setUploading(false);
         }
@@ -112,7 +113,9 @@ export default function NewBeritaPage() {
             <div>
               <p className="font-medium text-gray-900">Status Tampil</p>
               <p className="text-sm text-gray-500">
-                {isVisible ? 'Berita akan ditampilkan di halaman public' : 'Berita akan tersembunyi dari halaman public'}
+                {isVisible
+                  ? 'Berita akan ditampilkan di halaman public'
+                  : 'Berita akan tersembunyi dari halaman public'}
               </p>
             </div>
             <button
@@ -192,7 +195,9 @@ export default function NewBeritaPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Konten (HTML) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Konten (HTML) *
+              </label>
               <RichTextEditor
                 value={konten}
                 onChange={setKonten}

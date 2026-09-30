@@ -30,7 +30,11 @@ interface MemberDetail {
   email: string | null;
   tingkat: string | null;
   rantingId: string;
-  ranting?: { id: string; nama: string; wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } } };
+  ranting?: {
+    id: string;
+    nama: string;
+    wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string } };
+  };
 }
 
 interface EditMemberModalProps {
@@ -40,7 +44,12 @@ interface EditMemberModalProps {
   onSuccess?: () => void;
 }
 
-export default function EditMemberModal({ open, memberId, onClose, onSuccess }: EditMemberModalProps) {
+export default function EditMemberModal({
+  open,
+  memberId,
+  onClose,
+  onSuccess,
+}: EditMemberModalProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -67,13 +76,20 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
   const [selectedDistrikId, setSelectedDistrikId] = useState('');
   const [wilayahs, setWilayahs] = useState<Array<{ id: string; nama: string }>>([]);
   const [selectedWilayahId, setSelectedWilayahId] = useState('');
-  const [rantings, setRantings] = useState<Array<{ id: string; nama: string; kodeRanting: string }>>([]);
+  const [rantings, setRantings] = useState<
+    Array<{ id: string; nama: string; kodeRanting: string }>
+  >([]);
   const [orgLoading, setOrgLoading] = useState(false);
   const orgReqSeq = useRef(0);
 
   useEffect(() => {
     if (!open || !memberId) return;
-    apiClient.get('/tingkatan').then((r) => setTingkatanList(r.data.data || [])).catch(() => {/* ignore */});
+    apiClient
+      .get('/tingkatan')
+      .then((r) => setTingkatanList(r.data.data || []))
+      .catch(() => {
+        /* ignore */
+      });
   }, [open, memberId]);
 
   useEffect(() => {
@@ -144,7 +160,9 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
       const res = await typedApi.get('/org-structure/wilayah', { query: { distrikId } });
       if (seq !== orgReqSeq.current) return;
       setWilayahs(unwrap<Array<{ id: string; nama: string }>>(res));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleWilayahChange = async (wilayahId: string) => {
@@ -156,7 +174,9 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
       const res = await typedApi.get('/org-structure/ranting', { query: { wilayahId } });
       if (seq !== orgReqSeq.current) return;
       setRantings(unwrap<Array<{ id: string; nama: string; kodeRanting: string }>>(res));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,7 +195,8 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
       if (form.namaLengkap !== original.namaLengkap) payload.namaLengkap = form.namaLengkap;
       if (form.jenisKelamin !== original.jenisKelamin) payload.jenisKelamin = form.jenisKelamin;
       if (form.tempatLahir !== (original.tempatLahir || '')) payload.tempatLahir = form.tempatLahir;
-      if (form.tanggalLahir !== (original.tanggalLahir || '')) payload.tanggalLahir = form.tanggalLahir;
+      if (form.tanggalLahir !== (original.tanggalLahir || ''))
+        payload.tanggalLahir = form.tanggalLahir;
       if (form.tempatDadar !== (original.tempatDadar || '')) payload.tempatDadar = form.tempatDadar;
       if (form.tahunDadar !== (original.tahunDadar || '')) payload.tahunDadar = form.tahunDadar;
       if (form.alamat !== (original.alamat || '')) payload.alamat = form.alamat;
@@ -202,7 +223,12 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
   };
 
   return createPortal(
-    <Modal open={open} onClose={onClose} title={`Edit Anggota - ${toProperCase(memberName) || 'Memuat...'}`} size="lg">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`Edit Anggota - ${toProperCase(memberName) || 'Memuat...'}`}
+      size="lg"
+    >
       {fetchError ? (
         <div className="flex items-center justify-center min-h-[40vh]">
           <div className="text-center">
@@ -227,33 +253,54 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
 
           <div className="space-y-5">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Data Pribadi</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                Data Pribadi
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <FormField label="Nama Lengkap" required>
-                    <input type="text" value={form.namaLengkap} onChange={(e) => setForm({ ...form, namaLengkap: e.target.value })} required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                    <input
+                      type="text"
+                      value={form.namaLengkap}
+                      onChange={(e) => setForm({ ...form, namaLengkap: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                    />
                   </FormField>
                 </div>
                 <FormField label="Jenis Kelamin">
-                  <select value={form.jenisKelamin} onChange={(e) => setForm({ ...form, jenisKelamin: e.target.value as 'L' | 'P' })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
+                  <select
+                    value={form.jenisKelamin}
+                    onChange={(e) =>
+                      setForm({ ...form, jenisKelamin: e.target.value as 'L' | 'P' })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  >
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
                   </select>
                 </FormField>
                 <FormField label="Tingkat">
-                  <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
+                  <select
+                    value={form.tingkat}
+                    onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  >
                     <option value="">Pilih Tingkat</option>
                     {tingkatanList.map((t) => (
-                      <option key={t.id} value={t.nama}>{t.nama}</option>
+                      <option key={t.id} value={t.nama}>
+                        {t.nama}
+                      </option>
                     ))}
                   </select>
                 </FormField>
                 <FormField label="Tempat Lahir">
-                  <input type="text" value={form.tempatLahir} onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <input
+                    type="text"
+                    value={form.tempatLahir}
+                    onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
                 </FormField>
                 <FormField label="Tanggal Lahir">
                   <CustomDatePicker
@@ -263,12 +310,21 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
                   />
                 </FormField>
                 <FormField label="Tempat Dadar">
-                  <input type="text" value={form.tempatDadar} onChange={(e) => setForm({ ...form, tempatDadar: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <input
+                    type="text"
+                    value={form.tempatDadar}
+                    onChange={(e) => setForm({ ...form, tempatDadar: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
                 </FormField>
                 <FormField label="Tahun Dadar">
-                  <input type="text" value={form.tahunDadar} onChange={(e) => setForm({ ...form, tahunDadar: e.target.value })} placeholder="2024"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <input
+                    type="text"
+                    value={form.tahunDadar}
+                    onChange={(e) => setForm({ ...form, tahunDadar: e.target.value })}
+                    placeholder="2024"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
                 </FormField>
               </div>
             </div>
@@ -277,49 +333,81 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Kontak</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label="No. HP">
-                  <input type="text" value={form.noHp} onChange={(e) => setForm({ ...form, noHp: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <input
+                    type="text"
+                    value={form.noHp}
+                    onChange={(e) => setForm({ ...form, noHp: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
                 </FormField>
                 <FormField label="Email">
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
                 </FormField>
                 <div className="sm:col-span-2">
                   <FormField label="Alamat">
-                    <textarea value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                    <textarea
+                      value={form.alamat}
+                      onChange={(e) => setForm({ ...form, alamat: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                    />
                   </FormField>
                 </div>
               </div>
             </div>
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Organisasi</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                Organisasi
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField label="Distrik">
-                  <select value={selectedDistrikId} onChange={(e) => handleDistrikChange(e.target.value)} disabled={orgLoading}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50">
+                  <select
+                    value={selectedDistrikId}
+                    onChange={(e) => handleDistrikChange(e.target.value)}
+                    disabled={orgLoading}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50"
+                  >
                     <option value="">Pilih Distrik...</option>
                     {distriks.map((d) => (
-                      <option key={d.id} value={d.id}>{d.nama}</option>
+                      <option key={d.id} value={d.id}>
+                        {d.nama}
+                      </option>
                     ))}
                   </select>
                 </FormField>
                 <FormField label="Wilayah">
-                  <select value={selectedWilayahId} onChange={(e) => handleWilayahChange(e.target.value)} disabled={!selectedDistrikId || orgLoading}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50">
+                  <select
+                    value={selectedWilayahId}
+                    onChange={(e) => handleWilayahChange(e.target.value)}
+                    disabled={!selectedDistrikId || orgLoading}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50"
+                  >
                     <option value="">Pilih Wilayah...</option>
                     {wilayahs.map((w) => (
-                      <option key={w.id} value={w.id}>{w.nama}</option>
+                      <option key={w.id} value={w.id}>
+                        {w.nama}
+                      </option>
                     ))}
                   </select>
                 </FormField>
                 <FormField label="Ranting">
-                  <select value={form.rantingId} onChange={(e) => setForm({ ...form, rantingId: e.target.value })} disabled={!selectedWilayahId || orgLoading}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50">
+                  <select
+                    value={form.rantingId}
+                    onChange={(e) => setForm({ ...form, rantingId: e.target.value })}
+                    disabled={!selectedWilayahId || orgLoading}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50"
+                  >
                     <option value="">Pilih Ranting...</option>
                     {rantings.map((r) => (
-                      <option key={r.id} value={r.id}>{r.nama}</option>
+                      <option key={r.id} value={r.id}>
+                        {r.nama}
+                      </option>
                     ))}
                   </select>
                 </FormField>
@@ -328,19 +416,25 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
           </div>
 
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose}
-              className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
               Batal
             </button>
-            <button type="submit" disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
               <Save size={16} />
               {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </div>
         </form>
       )}
-    </Modal>
-    , document.body
+    </Modal>,
+    document.body,
   );
 }

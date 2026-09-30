@@ -46,11 +46,20 @@ interface SessionStats {
   devices: Record<string, number>;
 }
 
-function parseDevice(userAgent: string | null, deviceName: string | null): { type: string; icon: React.ReactNode } {
-  if (deviceName?.toLowerCase().includes('mobile') || deviceName?.toLowerCase().includes('android')) {
+function parseDevice(
+  userAgent: string | null,
+  deviceName: string | null,
+): { type: string; icon: React.ReactNode } {
+  if (
+    deviceName?.toLowerCase().includes('mobile') ||
+    deviceName?.toLowerCase().includes('android')
+  ) {
     return { type: 'Mobile', icon: <Smartphone className="w-4 h-4" /> };
   }
-  if (deviceName?.toLowerCase().includes('electron') || deviceName?.toLowerCase().includes('desktop')) {
+  if (
+    deviceName?.toLowerCase().includes('electron') ||
+    deviceName?.toLowerCase().includes('desktop')
+  ) {
     return { type: 'Desktop App', icon: <Monitor className="w-4 h-4" /> };
   }
   if (!userAgent) return { type: 'Unknown', icon: <Globe className="w-4 h-4" /> };
@@ -97,21 +106,24 @@ export default function SessionsPage() {
   const [total, setTotal] = useState(0);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
-  const fetchSessions = useCallback(async (p = 1, q = '') => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({ page: String(p), limit: '20' });
-      if (q) params.set('search', q);
-      const { data } = await apiClient.get(`/auth/admin/sessions?${params}`);
-      setSessions(data.data.data);
-      setTotalPages(data.data.meta.totalPages);
-      setTotal(data.data.meta.total);
-    } catch {
-      toast('error', 'Gagal memuat data sesi');
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const fetchSessions = useCallback(
+    async (p = 1, q = '') => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({ page: String(p), limit: '20' });
+        if (q) params.set('search', q);
+        const { data } = await apiClient.get(`/auth/admin/sessions?${params}`);
+        setSessions(data.data.data);
+        setTotalPages(data.data.meta.totalPages);
+        setTotal(data.data.meta.total);
+      } catch {
+        toast('error', 'Gagal memuat data sesi');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast],
+  );
 
   const fetchStats = useCallback(async () => {
     try {
@@ -199,21 +211,27 @@ export default function SessionsPage() {
               <Wifi className="w-4 h-4" />
               Sesi Aktif
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalActive}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.totalActive}
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
               <Clock className="w-4 h-4" />
               Aktif 1 Jam
             </div>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.activeLastHour}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {stats.activeLastHour}
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
               <Users className="w-4 h-4" />
               Pengguna Unik
             </div>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.uniqueUsers}</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {stats.uniqueUsers}
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
@@ -224,7 +242,9 @@ export default function SessionsPage() {
               {Object.values(stats.devices).reduce((a, b) => a + b, 0)}
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              {Object.entries(stats.devices).map(([type, count]) => `${type}: ${count}`).join(' | ')}
+              {Object.entries(stats.devices)
+                .map(([type, count]) => `${type}: ${count}`)
+                .join(' | ')}
             </div>
           </div>
         </div>
@@ -250,7 +270,10 @@ export default function SessionsPage() {
           Cari
         </button>
         <button
-          onClick={() => { fetchSessions(page, search); fetchStats(); }}
+          onClick={() => {
+            fetchSessions(page, search);
+            fetchStats();
+          }}
           className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
@@ -276,23 +299,44 @@ export default function SessionsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Pengguna</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Perangkat</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">IP Address</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Terakhir Aktif</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Login Sejak</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Aksi</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Pengguna
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Perangkat
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    IP Address
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Terakhir Aktif
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Login Sejak
+                  </th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sessions.map((session) => {
                   const device = parseDevice(session.userAgent, session.deviceName);
                   return (
-                    <tr key={session.id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr
+                      key={session.id}
+                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-white">{session.user.namaLengkap}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{session.user.email}</div>
-                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleBadge(session.user.role)}`}>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {session.user.namaLengkap}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {session.user.email}
+                        </div>
+                        <span
+                          className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleBadge(session.user.role)}`}
+                        >
                           {session.user.role}
                         </span>
                       </td>
@@ -318,7 +362,12 @@ export default function SessionsPage() {
                         <div className="flex items-center justify-end gap-2">
                           {userSessionCounts[session.user.id] > 1 && (
                             <button
-                              onClick={() => handleRevokeAllUserSessions(session.user.id, session.user.namaLengkap)}
+                              onClick={() =>
+                                handleRevokeAllUserSessions(
+                                  session.user.id,
+                                  session.user.namaLengkap,
+                                )
+                              }
                               disabled={revokingId === session.user.id}
                               className="px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
                               title="Cabut semua sesi pengguna ini"
@@ -328,7 +377,9 @@ export default function SessionsPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handleRevokeSession(session.id, session.user.namaLengkap)}
+                            onClick={() =>
+                              handleRevokeSession(session.id, session.user.namaLengkap)
+                            }
                             disabled={revokingId === session.id}
                             className="px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
                           >
@@ -354,7 +405,10 @@ export default function SessionsPage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => { setPage(p => Math.max(1, p - 1)); fetchSessions(Math.max(1, page - 1), search); }}
+              onClick={() => {
+                setPage((p) => Math.max(1, p - 1));
+                fetchSessions(Math.max(1, page - 1), search);
+              }}
               disabled={page === 1}
               className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
@@ -364,7 +418,10 @@ export default function SessionsPage() {
               {page} / {totalPages}
             </span>
             <button
-              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); fetchSessions(Math.min(totalPages, page + 1), search); }}
+              onClick={() => {
+                setPage((p) => Math.min(totalPages, p + 1));
+                fetchSessions(Math.min(totalPages, page + 1), search);
+              }}
               disabled={page === totalPages}
               className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800"
             >

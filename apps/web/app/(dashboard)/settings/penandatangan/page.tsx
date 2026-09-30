@@ -6,7 +6,22 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { Plus, PenLine, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw, Save, IdCard, AlertCircle, Globe, Upload, Stamp as StampIcon } from 'lucide-react';
+import {
+  Plus,
+  PenLine,
+  Edit3,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Eye,
+  RefreshCw,
+  Save,
+  IdCard,
+  AlertCircle,
+  Globe,
+  Upload,
+  Stamp as StampIcon,
+} from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import SummaryBar from '@/components/ui/summary-bar';
@@ -114,7 +129,9 @@ export default function PenandatanganPage() {
 
   const fetchDistricts = useCallback(async () => {
     try {
-      const { data: res } = await apiClient.get('/org-structure/distrik', { params: { limit: 200 } });
+      const { data: res } = await apiClient.get('/org-structure/distrik', {
+        params: { limit: 200 },
+      });
       const list = (res.data ?? res ?? []) as DistrictOption[];
       setDistricts(list);
     } catch {
@@ -163,18 +180,24 @@ export default function PenandatanganPage() {
   // Fetch user scope on mount (auto-set for admin_distrik)
   useEffect(() => {
     if (!isSuperadmin && role) {
-      apiClient.get('/auth/scope').then(({ data: res }) => {
-        if (res?.distrikId) {
-          setScope(res.distrikId);
-          // Find the distrik name
-          apiClient.get('/org-structure/distrik', { params: { limit: 200 } }).then(({ data: dRes }) => {
-            const list = (dRes.data ?? dRes ?? []) as DistrictOption[];
-            setDistricts(list);
-            const match = list.find((d) => d.id === res.distrikId);
-            setScopeName(match?.nama || 'Distrik');
-          }).catch(() => {});
-        }
-      }).catch(() => {});
+      apiClient
+        .get('/auth/scope')
+        .then(({ data: res }) => {
+          if (res?.distrikId) {
+            setScope(res.distrikId);
+            // Find the distrik name
+            apiClient
+              .get('/org-structure/distrik', { params: { limit: 200 } })
+              .then(({ data: dRes }) => {
+                const list = (dRes.data ?? dRes ?? []) as DistrictOption[];
+                setDistricts(list);
+                const match = list.find((d) => d.id === res.distrikId);
+                setScopeName(match?.nama || 'Distrik');
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
     } else {
       fetchDistricts();
     }
@@ -185,9 +208,9 @@ export default function PenandatanganPage() {
     fetchTtdStamps();
   }, [fetchData, fetchTtdStamps]);
 
-useEffect(() => {
-  fetchDocAssignments();
-}, [fetchDocAssignments]);
+  useEffect(() => {
+    fetchDocAssignments();
+  }, [fetchDocAssignments]);
 
   const activeCount = data.filter((s) => s.isActive).length;
 
@@ -197,7 +220,9 @@ useEffect(() => {
     : data.filter((s) => !s.distrikId);
 
   const scopeLabel = scope
-    ? (isSuperadmin ? districts.find((d) => d.id === scope)?.nama || 'Distrik' : scopeName || 'Distrik')
+    ? isSuperadmin
+      ? districts.find((d) => d.id === scope)?.nama || 'Distrik'
+      : scopeName || 'Distrik'
     : 'Global (Nasional)';
 
   // Reset docSlots ketika scope berubah untuk mencegah data stale
@@ -228,14 +253,24 @@ useEffect(() => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ nama: '', jabatan: '', isActive: data.length === 0, distrikId: isSuperadmin ? scope : '' });
+    setForm({
+      nama: '',
+      jabatan: '',
+      isActive: data.length === 0,
+      distrikId: isSuperadmin ? scope : '',
+    });
     setFormError('');
     setShowModal(true);
   };
 
   const openEdit = (row: PenandatanganRow) => {
     setEditing(row);
-    setForm({ nama: row.nama, jabatan: row.jabatan, isActive: row.isActive, distrikId: row.distrikId || '' });
+    setForm({
+      nama: row.nama,
+      jabatan: row.jabatan,
+      isActive: row.isActive,
+      distrikId: row.distrikId || '',
+    });
     setFormError('');
     setShowModal(true);
   };
@@ -254,7 +289,7 @@ useEffect(() => {
         isActive: form.isActive,
         // Untuk admin distrik: backend akan menentukan distrik otomatis dari session
         // Hanya superadmin yang dapat memilih scope global vs distrik melalui form
-        distrikId: isSuperadmin ? (form.distrikId || null) : null,
+        distrikId: isSuperadmin ? form.distrikId || null : null,
       };
       if (editing) {
         await apiClient.patch(`/penandatangan/${editing.id}`, payload);
@@ -446,11 +481,10 @@ useEffect(() => {
           <IdCard size={16} className="shrink-0 mt-0.5" />
           <p>
             Penandatangan dengan status <strong>Aktif</strong> dipakai sebagai bawaan pada dokumen
-            (satu penandatangan aktif per distrik/global).
-            Untuk menampilkan lebih dari satu penandatangan pada satu dokumen (mis. Koordinator
-            Distrik + Pastor Moderator pada KTA), gunakan bagian <strong>Penandatangan per
-            Dokumen</strong> (bawah) — di sana Anda bisa mengatur 1-3 penandatangan khusus untuk
-            tiap jenis dokumen.
+            (satu penandatangan aktif per distrik/global). Untuk menampilkan lebih dari satu
+            penandatangan pada satu dokumen (mis. Koordinator Distrik + Pastor Moderator pada KTA),
+            gunakan bagian <strong>Penandatangan per Dokumen</strong> (bawah) — di sana Anda bisa
+            mengatur 1-3 penandatangan khusus untuk tiap jenis dokumen.
           </p>
         </div>
 
@@ -476,11 +510,21 @@ useEffect(() => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Jabatan</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Cakupan</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Nama
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                    Jabatan
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                    Cakupan
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -493,7 +537,9 @@ useEffect(() => {
                       <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{row.jabatan}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {row.jabatan}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {row.isActive ? (
@@ -514,7 +560,13 @@ useEffect(() => {
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                         }`}
                       >
-                        {row.distrikId ? row.distrik?.nama || 'Distrik' : <><Globe size={10} /> Global</>}
+                        {row.distrikId ? (
+                          row.distrik?.nama || 'Distrik'
+                        ) : (
+                          <>
+                            <Globe size={10} /> Global
+                          </>
+                        )}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -563,11 +615,13 @@ useEffect(() => {
           <div className="flex items-start gap-2.5">
             <Globe size={16} className="shrink-0 mt-0.5 text-indigo-500" />
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Cakupan Penandatangan</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Cakupan Penandatangan
+              </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                Atur penandatangan per <strong>distrik</strong> (setiap distrik bisa punya penandatangan &
-                tanda tangan sendiri) atau <strong>global</strong>. Bila satu distrik tidak diatur, kartunya
-                otomatis memakai penandatangan global.
+                Atur penandatangan per <strong>distrik</strong> (setiap distrik bisa punya
+                penandatangan & tanda tangan sendiri) atau <strong>global</strong>. Bila satu
+                distrik tidak diatur, kartunya otomatis memakai penandatangan global.
               </p>
             </div>
           </div>
@@ -644,7 +698,9 @@ useEffect(() => {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{s.nama}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {s.nama}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
                     </div>
                   </div>
@@ -716,7 +772,9 @@ useEffect(() => {
                         <StampIcon size={14} className="text-gray-400" />
                       </div>
                     )}
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{st.nama}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {st.nama}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {st.isActive ? (
@@ -831,7 +889,10 @@ useEffect(() => {
               />
             </FormField>
             <FormField label="Jabatan" required>
-              <JabatanSelect value={form.jabatan} onChange={(v) => setForm((p) => ({ ...p, jabatan: v }))} />
+              <JabatanSelect
+                value={form.jabatan}
+                onChange={(v) => setForm((p) => ({ ...p, jabatan: v }))}
+              />
             </FormField>
             <FormField label="Cakupan">
               {isSuperadmin ? (
@@ -853,7 +914,8 @@ useEffect(() => {
                 </div>
               )}
               <p className="text-xs text-gray-400 mt-1">
-                Penandatangan global dipakai sebagai <em>fallback</em> bila distrik belum punya penandatangan aktif.
+                Penandatangan global dipakai sebagai <em>fallback</em> bila distrik belum punya
+                penandatangan aktif.
               </p>
             </FormField>
             <FormField label="Status">
@@ -888,8 +950,7 @@ useEffect(() => {
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} />{' '}
-                {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+                <Save size={14} /> {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
               </button>
             </div>
           </div>
@@ -911,7 +972,10 @@ useEffect(() => {
               />
             </FormField>
             <FormField label="Jabatan" required>
-              <JabatanSelect value={ttdForm.jabatan} onChange={(v) => setTtdForm((p) => ({ ...p, jabatan: v }))} />
+              <JabatanSelect
+                value={ttdForm.jabatan}
+                onChange={(v) => setTtdForm((p) => ({ ...p, jabatan: v }))}
+              />
             </FormField>
             <FormField label="File Gambar" required>
               <input

@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Req,
+  Res,
+  HttpCode,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { DocumentsService, GenerateCertificateDto, GenerateAwardDto } from './documents.service';
@@ -39,21 +51,42 @@ export class DocumentsController {
   @Get(':id/file')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Download file PDF/PNG tersimpan dari dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'anggota',
+  )
   @RequireScope('branch')
-  async downloadDocumentFile(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
+  async downloadDocumentFile(
+    @Param('id') id: string,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+  ) {
     const { filePath, nomorDokumen, tipe } = await this.service.getDocumentFile(id, req.scope);
     const ext = filePath.toLowerCase().endsWith('.png') ? 'image/png' : 'application/pdf';
     const extName = ext === 'image/png' ? 'png' : 'pdf';
     res.setHeader('Content-Type', ext);
-    res.setHeader('Content-Disposition', `attachment; filename="${nomorDokumen}-${tipe}.${extName}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${nomorDokumen}-${tipe}.${extName}"`,
+    );
     res.sendFile(filePath);
   }
 
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'anggota',
+  )
   @RequireScope('branch')
   findAll(@Query() q: DocumentFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(q, req.scope);

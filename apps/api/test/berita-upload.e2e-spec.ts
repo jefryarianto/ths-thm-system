@@ -15,7 +15,9 @@ describe('Content — berita image upload (interceptor/multer layer)', () => {
   let updateBeritaMock: jest.Mock;
 
   beforeAll(async () => {
-    updateBeritaMock = jest.fn().mockResolvedValue({ success: true, data: { gambar: 'berita-x.png' } });
+    updateBeritaMock = jest
+      .fn()
+      .mockResolvedValue({ success: true, data: { gambar: 'berita-x.png' } });
     const moduleRef = await Test.createTestingModule({
       controllers: [ContentController],
       providers: [{ provide: ContentService, useValue: { updateBerita: updateBeritaMock } }],
@@ -35,13 +37,19 @@ describe('Content — berita image upload (interceptor/multer layer)', () => {
     // eslint-disable-next-line no-console
     console.log('[PNG] status=', res.status, 'body=', JSON.stringify(res.body).slice(0, 220));
     expect([200, 201]).toContain(res.status);
-    expect(updateBeritaMock).toHaveBeenCalledWith(BERITA_ID, expect.objectContaining({ gambar: expect.stringContaining('berita-') }));
+    expect(updateBeritaMock).toHaveBeenCalledWith(
+      BERITA_ID,
+      expect.objectContaining({ gambar: expect.stringContaining('berita-') }),
+    );
   });
 
   it('rejects a non-image extension with 400', async () => {
     const res = await request(app.getHttpServer())
       .post(`/content/berita/${BERITA_ID}/image`)
-      .attach('image', Buffer.from('bukan gambar'), { filename: 'evil.txt', contentType: 'text/plain' });
+      .attach('image', Buffer.from('bukan gambar'), {
+        filename: 'evil.txt',
+        contentType: 'text/plain',
+      });
     // eslint-disable-next-line no-console
     console.log('[TXT] status=', res.status, 'body=', JSON.stringify(res.body).slice(0, 220));
     expect(res.status).toBe(400);

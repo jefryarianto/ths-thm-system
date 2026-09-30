@@ -13,7 +13,11 @@ jest.mock('../../common/utils/image-upload.util', () => ({
 // Mock sharp — instance SHARED (dihoist, prefix `mock`) agar test bisa memeriksa
 // instance yang sama yang dipakai service. `mockSharpState` mengontrol metadata.
 // eslint-disable-next-line no-var
-var mockSharpState: { width: number; height: number; format: string } = { width: 856, height: 540, format: 'png' };
+var mockSharpState: { width: number; height: number; format: string } = {
+  width: 856,
+  height: 540,
+  format: 'png',
+};
 // eslint-disable-next-line no-var
 var mockSharpInstance = {
   metadata: jest.fn().mockImplementation(() => Promise.resolve(mockSharpState)),
@@ -28,7 +32,12 @@ jest.mock('sharp', () => () => mockSharpInstance);
 jest.mock('fs', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const actual = jest.requireActual('fs');
-  return { ...actual, unlinkSync: jest.fn(), existsSync: jest.fn(() => true), writeFileSync: jest.fn() };
+  return {
+    ...actual,
+    unlinkSync: jest.fn(),
+    existsSync: jest.fn(() => true),
+    writeFileSync: jest.fn(),
+  };
 });
 
 import * as fsMocked from 'fs';
@@ -94,8 +103,7 @@ describe('CardTemplatesService', () => {
     it('memprioritaskan template aktif distrik, fallback ke global', async () => {
       const scopedTpl = { id: 't-d', name: 'kta-lrt', isActive: true, distrikId: 'd-lrt' };
       const globalTpl = { id: 't-g', name: 'classic', isActive: true, distrikId: null };
-      mockPrisma.cardTemplate.findFirst
-        .mockResolvedValueOnce(scopedTpl);
+      mockPrisma.cardTemplate.findFirst.mockResolvedValueOnce(scopedTpl);
 
       await expect(service.resolveActive('d-lrt')).resolves.toEqual(scopedTpl);
       expect(mockPrisma.cardTemplate.findFirst).toHaveBeenCalledWith(
@@ -155,7 +163,11 @@ describe('CardTemplatesService', () => {
     });
 
     it('menolak nama duplicate pada scope yang sama', async () => {
-      mockPrisma.cardTemplate.findFirst.mockResolvedValue({ id: 'x', name: 'classic', distrikId: null });
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue({
+        id: 'x',
+        name: 'classic',
+        distrikId: null,
+      });
       await expect(service.create({ name: 'classic' })).rejects.toThrow(/sudah dipakai/);
       expect(mockPrisma.cardTemplate.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({ where: { name: 'classic', distrikId: null } }),
@@ -164,21 +176,33 @@ describe('CardTemplatesService', () => {
 
     it('nama yang sama di distrik berbeda diperbolehkan (unik per scope)', async () => {
       mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
-      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't2', ...data }));
+      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({
+        id: 't2',
+        ...data,
+      }));
       const result = await service.create({ name: 'kta-new' }, undefined, 'd-lrt');
       expect(result.name).toBe('kta-new');
       expect(result.distrikId).toBe('d-lrt');
       expect(mockPrisma.cardTemplate.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ distrikId: 'd-lrt', isActive: false }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ distrikId: 'd-lrt', isActive: false }),
+        }),
       );
     });
 
     it('membuat template dengan overlayConfig disanitasi & gambar divalidasi', async () => {
       mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
-      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't1', ...data }));
+      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({
+        id: 't1',
+        ...data,
+      }));
 
       const result = await service.create(
-        { name: 'kta-new', label: 'KTA Baru', overlayConfig: JSON.stringify({ guilloche: { strokeFront: '#fff' }, unknown: 'dropped' }) },
+        {
+          name: 'kta-new',
+          label: 'KTA Baru',
+          overlayConfig: JSON.stringify({ guilloche: { strokeFront: '#fff' }, unknown: 'dropped' }),
+        },
         { front: mockFile('front.png') },
       );
 
@@ -186,12 +210,14 @@ describe('CardTemplatesService', () => {
       expect(result.frontImage).toBe('front.png');
       expect(result.isActive).toBe(false);
       expect(result.overlayConfig).toEqual({ guilloche: { strokeFront: '#fff' } });
-      expect((validateImageUploadSecurity as jest.Mock)).toHaveBeenCalled();
+      expect(validateImageUploadSecurity as jest.Mock).toHaveBeenCalled();
     });
 
     it('menolak overlayConfig yang bukan objek', async () => {
       mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
-      await expect(service.create({ name: 'kta-x', overlayConfig: '[1,2]' })).rejects.toThrow(BadRequestException);
+      await expect(service.create({ name: 'kta-x', overlayConfig: '[1,2]' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('menolak gambar resolusi terlalu kecil (< 500×300)', async () => {
@@ -199,13 +225,18 @@ describe('CardTemplatesService', () => {
       mockSharpState = { width: 300, height: 200, format: 'png' };
       const small = mockFile('small.png');
       small.size = 100;
-      await expect(service.create({ name: 'kta-small' }, { front: small })).rejects.toThrow(/terlalu kecil/);
+      await expect(service.create({ name: 'kta-small' }, { front: small })).rejects.toThrow(
+        /terlalu kecil/,
+      );
       expect(mockPrisma.cardTemplate.create).not.toHaveBeenCalled();
     });
 
     it('menerima rasio apa pun & otomatis resize ke 856×540 (fit cover)', async () => {
       mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
-      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't1', ...data }));
+      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({
+        id: 't1',
+        ...data,
+      }));
       // Gambar rasio berbeda (mis. 1920×1080 ≈ 1,78) — sebelumnya ditolak
       mockSharpState = { width: 1920, height: 1080, format: 'jpeg' };
 
@@ -215,9 +246,15 @@ describe('CardTemplatesService', () => {
 
       expect(result.frontImage).toBe('wide.jpg');
       // Resize dipanggil ke dimensi tepat 856×540 pada instance yang sama dgn service
-      expect(mockSharpInstance.resize).toHaveBeenCalledWith(856, 540, { fit: 'cover', position: 'centre' });
+      expect(mockSharpInstance.resize).toHaveBeenCalledWith(856, 540, {
+        fit: 'cover',
+        position: 'centre',
+      });
       // Hasil resize ditulis kembali ke file
-      expect(writeFileSync as jest.Mock).toHaveBeenCalledWith('/tmp/wide.jpg', Buffer.from('resized-bytes'));
+      expect(writeFileSync as jest.Mock).toHaveBeenCalledWith(
+        '/tmp/wide.jpg',
+        Buffer.from('resized-bytes'),
+      );
     });
   });
 
@@ -226,7 +263,11 @@ describe('CardTemplatesService', () => {
       mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', distrikId: 'd-lrt' });
       mockPrisma.$transaction.mockResolvedValue([]);
       mockPrisma.cardTemplate.update.mockResolvedValue({ id: 't1', isActive: true });
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true, distrikId: 'd-lrt' });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't1',
+        isActive: true,
+        distrikId: 'd-lrt',
+      });
 
       const result = await service.activate('t1', { role: 'admin_distrik', distrikId: 'd-lrt' });
 
@@ -246,7 +287,11 @@ describe('CardTemplatesService', () => {
       mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', distrikId: null });
       mockPrisma.$transaction.mockResolvedValue([]);
       mockPrisma.cardTemplate.update.mockResolvedValue({ id: 't1', isActive: true });
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true, distrikId: null });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't1',
+        isActive: true,
+        distrikId: null,
+      });
 
       await service.activate('t1', { role: 'superadmin', distrikId: undefined });
       expect(mockPrisma.cardTemplate.updateMany).toHaveBeenCalledWith({
@@ -257,9 +302,9 @@ describe('CardTemplatesService', () => {
 
     it('admin_distrik tidak bisa mengaktifkan template global', async () => {
       mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-global', distrikId: null });
-      await expect(service.activate('t-global', { role: 'admin_distrik', distrikId: 'd-lrt' })).rejects.toThrow(
-        /distrik Anda sendiri/,
-      );
+      await expect(
+        service.activate('t-global', { role: 'admin_distrik', distrikId: 'd-lrt' }),
+      ).rejects.toThrow(/distrik Anda sendiri/);
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -271,12 +316,21 @@ describe('CardTemplatesService', () => {
 
   describe('remove', () => {
     it('menolak hapus template aktif', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true, frontImage: 'a.png' });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't1',
+        isActive: true,
+        frontImage: 'a.png',
+      });
       await expect(service.remove('t1')).rejects.toThrow(BadRequestException);
     });
 
     it('menghapus template non-aktif + file gambarnya', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: false, frontImage: 'a.png', backImage: 'b.png' });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't1',
+        isActive: false,
+        frontImage: 'a.png',
+        backImage: 'b.png',
+      });
       mockPrisma.cardTemplate.delete.mockResolvedValue({});
       const result = await service.remove('t1');
       expect(result.deleted).toBe(true);
@@ -284,17 +338,28 @@ describe('CardTemplatesService', () => {
     });
 
     it('admin_distrik tidak bisa menghapus template distrik lain', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-lain', isActive: false, distrikId: 'd-lain' });
-      await expect(service.remove('t-lain', { role: 'admin_distrik', distrikId: 'd-lrt' })).rejects.toThrow(
-        /distrik Anda sendiri/,
-      );
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't-lain',
+        isActive: false,
+        distrikId: 'd-lain',
+      });
+      await expect(
+        service.remove('t-lain', { role: 'admin_distrik', distrikId: 'd-lrt' }),
+      ).rejects.toThrow(/distrik Anda sendiri/);
       expect(mockPrisma.cardTemplate.delete).not.toHaveBeenCalled();
     });
 
     it('admin_distrik boleh menghapus template distriknya sendiri', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-sendiri', isActive: false, distrikId: 'd-lrt' });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({
+        id: 't-sendiri',
+        isActive: false,
+        distrikId: 'd-lrt',
+      });
       mockPrisma.cardTemplate.delete.mockResolvedValue({});
-      const result = await service.remove('t-sendiri', { role: 'admin_distrik', distrikId: 'd-lrt' });
+      const result = await service.remove('t-sendiri', {
+        role: 'admin_distrik',
+        distrikId: 'd-lrt',
+      });
       expect(result.deleted).toBe(true);
       expect(mockPrisma.cardTemplate.delete).toHaveBeenCalledWith({ where: { id: 't-sendiri' } });
     });

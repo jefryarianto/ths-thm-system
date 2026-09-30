@@ -30,13 +30,7 @@ export async function cleanupStaleNotifications(): Promise<void> {
     const completeIds = new Set(
       members
         .filter(
-          (m) =>
-            m.namaLengkap &&
-            m.tempatLahir &&
-            m.tanggalLahir &&
-            m.alamat &&
-            m.noHp &&
-            m.email,
+          (m) => m.namaLengkap && m.tempatLahir && m.tanggalLahir && m.alamat && m.noHp && m.email,
         )
         .map((m) => m.id),
     );

@@ -47,9 +47,7 @@ export default function KpiGrid({ data }: { data: DashboardData }) {
                   <Icon size={22} className={styles.icon} aria-hidden="true" />
                 </div>
               </div>
-              <p className="mt-2 text-xs font-medium text-primary group-hover:underline">
-                {cta} →
-              </p>
+              <p className="mt-2 text-xs font-medium text-primary group-hover:underline">{cta} →</p>
             </Link>
           );
         })}

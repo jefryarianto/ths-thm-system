@@ -67,118 +67,126 @@ export default function ActivitiesPage() {
 
   return (
     <PermissionGuard module="activities" action="view">
-    <PageContainer>
-      <PageHeader title="Manajemen Kegiatan">
-        <CanExport module="activities">
-          <ExportMenu
-            data={data.map((a: ActivityRow) => ({
-              'Nama Kegiatan': a.nama,
-              Tipe: a.tipe,
-              Tanggal: new Date(a.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
-              Lokasi: a.lokasi || '-',
-              Peserta: a.pesertaCount ?? 0,
-              Status: a.status,
-            }))}
-            headers={['Nama Kegiatan', 'Tipe', 'Tanggal', 'Lokasi', 'Peserta', 'Status']}
-            filename="kegiatan-export"
+      <PageContainer>
+        <PageHeader title="Manajemen Kegiatan">
+          <CanExport module="activities">
+            <ExportMenu
+              data={data.map((a: ActivityRow) => ({
+                'Nama Kegiatan': a.nama,
+                Tipe: a.tipe,
+                Tanggal: new Date(a.tanggalMulai).toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                }),
+                Lokasi: a.lokasi || '-',
+                Peserta: a.pesertaCount ?? 0,
+                Status: a.status,
+              }))}
+              headers={['Nama Kegiatan', 'Tipe', 'Tanggal', 'Lokasi', 'Peserta', 'Status']}
+              filename="kegiatan-export"
+            />
+          </CanExport>
+          <CanCreate module="activities">
+            <button
+              onClick={() => router.push('/activities/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Tambah
+            </button>
+          </CanCreate>
+        </PageHeader>
+
+        <SummaryBar icon={Calendar} label="Total Kegiatan" total={meta.total} onRefresh={refetch} />
+
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder="Cari kegiatan..."
+          debounceMs={300}
+          onDebouncedSearch={() => {}}
+        >
+          <FilterSelect
+            value={filters.tipe}
+            onChange={(v) => setFilter('tipe', v)}
+            options={ACTIVITY_TIPE_OPTIONS}
+            placeholder="Semua Tipe"
           />
-        </CanExport>
-        <CanCreate module="activities">
-          <button
-            onClick={() => router.push('/activities/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={14} /> Tambah
-          </button>
-        </CanCreate>
-      </PageHeader>
+          <FilterSelect
+            value={filters.status}
+            onChange={(v) => setFilter('status', v)}
+            options={ACTIVITY_STATUS_OPTIONS}
+            placeholder="Semua Status"
+          />
+        </SearchBar>
 
-      <SummaryBar icon={Calendar} label="Total Kegiatan" total={meta.total} onRefresh={refetch} />
-
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari kegiatan..."
-        debounceMs={300}
-        onDebouncedSearch={() => {}}
-      >
-        <FilterSelect
-          value={filters.tipe}
-          onChange={(v) => setFilter('tipe', v)}
-          options={ACTIVITY_TIPE_OPTIONS}
-          placeholder="Semua Tipe"
+        <DataTable
+          columns={[
+            { label: 'Nama Kegiatan' },
+            { label: 'Tipe', hidden: 'hidden sm:table-cell' },
+            { label: 'Tanggal', hidden: 'hidden md:table-cell' },
+            { label: 'Lokasi', hidden: 'hidden lg:table-cell' },
+            { label: 'Peserta', align: 'center', hidden: 'hidden xl:table-cell' },
+            { label: 'Status' },
+            { label: 'Aksi', align: 'right' },
+          ]}
+          data={data}
+          loading={loading}
+          empty={{
+            icon: Calendar,
+            ...buildEmptyMessage('kegiatan', hasActiveFilters, resetFilters),
+          }}
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={handlePageChange}
+          colSpan={7}
+          renderRow={(row: ActivityRow) => (
+            <tr
+              key={row.id}
+              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-navy-50/50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <td className="px-4 py-3">
+                <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden sm:table-cell">
+                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                  {row.tipe}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden md:table-cell whitespace-nowrap">
+                {new Date(row.tanggalMulai).toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+                {row.tanggalSelesai &&
+                  ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden lg:table-cell">
+                <div className="flex items-center gap-1">
+                  <MapPin size={12} className="text-navy-400" />
+                  {row.lokasi || '-'}
+                </div>
+              </td>
+              <td className="px-4 py-3 text-center hidden xl:table-cell">
+                <span className="text-gray-600 dark:text-navy-400">{row.pesertaCount ?? '-'}</span>
+              </td>
+              <td className="px-4 py-3">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTIVITY_STATUS_COLORS[row.status] || ''}`}
+                >
+                  {row.status}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <ActivityActions activity={row} onSuccess={refetch} />
+              </td>
+            </tr>
+          )}
         />
-        <FilterSelect
-          value={filters.status}
-          onChange={(v) => setFilter('status', v)}
-          options={ACTIVITY_STATUS_OPTIONS}
-          placeholder="Semua Status"
-        />
-      </SearchBar>
-
-      <DataTable
-        columns={[
-          { label: 'Nama Kegiatan' },
-          { label: 'Tipe', hidden: 'hidden sm:table-cell' },
-          { label: 'Tanggal', hidden: 'hidden md:table-cell' },
-          { label: 'Lokasi', hidden: 'hidden lg:table-cell' },
-          { label: 'Peserta', align: 'center', hidden: 'hidden xl:table-cell' },
-          { label: 'Status' },
-          { label: 'Aksi', align: 'right' },
-        ]}
-        data={data}
-        loading={loading}
-        empty={{
-          icon: Calendar,
-          ...buildEmptyMessage('kegiatan', hasActiveFilters, resetFilters),
-        }}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={handlePageChange}
-        colSpan={7}
-        renderRow={(row: ActivityRow) => (
-          <tr
-            key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-navy-50/50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <td className="px-4 py-3">
-              <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden sm:table-cell">
-              <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                {row.tipe}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden md:table-cell whitespace-nowrap">
-              {new Date(row.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-              {row.tanggalSelesai &&
-                ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden lg:table-cell">
-              <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-navy-400" />
-                {row.lokasi || '-'}
-              </div>
-            </td>
-            <td className="px-4 py-3 text-center hidden xl:table-cell">
-              <span className="text-gray-600 dark:text-navy-400">{row.pesertaCount ?? '-'}</span>
-            </td>
-            <td className="px-4 py-3">
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTIVITY_STATUS_COLORS[row.status] || ''}`}
-              >
-                {row.status}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-right">
-              <ActivityActions activity={row} onSuccess={refetch} />
-            </td>
-          </tr>
-        )}
-      />
-    </PageContainer>
+      </PageContainer>
     </PermissionGuard>
   );
 }

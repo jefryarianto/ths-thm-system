@@ -15,9 +15,7 @@ jest.mock('bcryptjs', () => ({
 jest.mock('../../common/utils/totp.util', () => ({
   generateTotpSecret: jest.fn(() => 'MOCK2FASECRET'),
   verifyTotpCode: jest.fn(() => true),
-  buildOtpauthUrl: jest.fn(
-    () => 'otpauth://totp/THS-THM:test%40ths-thm.org?secret=MOCK2FASECRET',
-  ),
+  buildOtpauthUrl: jest.fn(() => 'otpauth://totp/THS-THM:test%40ths-thm.org?secret=MOCK2FASECRET'),
   totpQrDataUrl: jest.fn(() => Promise.resolve('data:image/png;base64,xxxx')),
 }));
 
@@ -97,7 +95,15 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
         { provide: MailService, useValue: mockMailService },
-        { provide: 'ENV', useValue: { jwtRefreshSecret: 'test-refresh-secret', jwtRefreshExpiresIn: '7d', nodeEnv: 'test', frontendUrl: 'http://localhost:3000' } },
+        {
+          provide: 'ENV',
+          useValue: {
+            jwtRefreshSecret: 'test-refresh-secret',
+            jwtRefreshExpiresIn: '7d',
+            nodeEnv: 'test',
+            frontendUrl: 'http://localhost:3000',
+          },
+        },
         { provide: PersistentAuditService, useValue: mockAudit },
       ],
     }).compile();
@@ -122,7 +128,10 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
 
-      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
+      const result = await service.login({
+        identifier: 'test@ths-thm.org',
+        password: 'password123',
+      });
       expect(result.user.email).toBe('test@ths-thm.org');
       expect(result.accessToken).toBe('mock-jwt-token');
       // login() without response param returns refreshToken in data
@@ -145,7 +154,9 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
 
       const result = await service.login({ identifier: '+628123456789', password: 'password123' });
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+628123456789' } });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { phone: '+628123456789' },
+      });
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '08123456789' } });
       expect(result.user.email).toBe('test@ths-thm.org');
     });
@@ -161,18 +172,18 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
 
-      await expect(service.login({ identifier: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ identifier: 'test@ths-thm.org', password: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should record failed attempt and lock account after max attempts', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, failedLoginAttempts: 4 });
       (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
 
-      await expect(service.login({ identifier: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ identifier: 'test@ths-thm.org', password: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedException);
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: expect.objectContaining({ lockedUntil: expect.any(Date) }),
@@ -199,7 +210,10 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, failedLoginAttempts: 2 });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, failedLoginAttempts: 0 });
 
-      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
+      const result = await service.login({
+        identifier: 'test@ths-thm.org',
+        password: 'password123',
+      });
       expect(result.user.email).toBe('test@ths-thm.org');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
@@ -215,22 +229,38 @@ describe('AuthService', () => {
     });
 
     it('should require TOTP code when 2FA is enabled', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: true,
+        totpSecret: 'MOCK2FASECRET',
+      });
       await expect(
         service.login({ identifier: 'test@ths-thm.org', password: 'password123' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should reject invalid TOTP code', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: true,
+        totpSecret: 'MOCK2FASECRET',
+      });
       (verifyTotpCode as jest.Mock).mockReturnValueOnce(false);
       await expect(
-        service.login({ identifier: 'test@ths-thm.org', password: 'password123', totpCode: '000000' }),
+        service.login({
+          identifier: 'test@ths-thm.org',
+          password: 'password123',
+          totpCode: '000000',
+        }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should login successfully with valid TOTP code', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: true,
+        totpSecret: 'MOCK2FASECRET',
+      });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: true });
       const result = await service.login({
         identifier: 'test@ths-thm.org',
@@ -267,7 +297,11 @@ describe('AuthService', () => {
     });
 
     it('should reject setup when 2FA already enabled', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: true,
+        totpSecret: 'MOCK2FASECRET',
+      });
       await expect(service.setup2fa('u1')).rejects.toThrow(ConflictException);
     });
 
@@ -289,8 +323,16 @@ describe('AuthService', () => {
     });
 
     it('should disable 2FA after verifying current code', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: false, totpSecret: null });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: true,
+        totpSecret: 'MOCK2FASECRET',
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        totpEnabled: false,
+        totpSecret: null,
+      });
       const result = await service.disable2fa('u1', '123456');
       expect(result.enabled).toBe(false);
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
@@ -300,7 +342,11 @@ describe('AuthService', () => {
     });
 
     it('should not expose totpSecret in sanitized user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpSecret: 'SECRET', totpEnabled: true });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        totpSecret: 'SECRET',
+        totpEnabled: true,
+      });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: true });
       const result = await service.login({
         identifier: 'test@ths-thm.org',
@@ -334,17 +380,17 @@ describe('AuthService', () => {
     });
   });
 
-    it('should return mustChangePassword without tokens when flag is set', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, mustChangePassword: true });
-      mockJwt.sign.mockReturnValue('force-change-token');
+  it('should return mustChangePassword without tokens when flag is set', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, mustChangePassword: true });
+    mockJwt.sign.mockReturnValue('force-change-token');
 
-      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
+    const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
 
-      expect((result as { mustChangePassword: boolean }).mustChangePassword).toBe(true);
-      expect((result as { resetToken: string }).resetToken).toBe('force-change-token');
-      expect((result as { accessToken?: string }).accessToken).toBeUndefined();
-      expect(mockPrisma.user.update).not.toHaveBeenCalled();
-    });
+    expect((result as { mustChangePassword: boolean }).mustChangePassword).toBe(true);
+    expect((result as { resetToken: string }).resetToken).toBe('force-change-token');
+    expect((result as { accessToken?: string }).accessToken).toBeUndefined();
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
 
   describe('forceChangePassword', () => {
     it('should update password and clear mustChangePassword flag', async () => {
@@ -539,7 +585,9 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, namaLengkap: 'Anggota User' });
       // Email tidak cocok, tapi ada anggota bernama sama dengan email kosong (hasil import CSV)
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
-      mockPrisma.anggota.findMany.mockResolvedValue([{ id: 'a9', email: null, namaLengkap: 'Anggota User' }]);
+      mockPrisma.anggota.findMany.mockResolvedValue([
+        { id: 'a9', email: null, namaLengkap: 'Anggota User' },
+      ]);
       mockPrisma.anggota.update.mockResolvedValue({});
 
       await service.updateProfile('u1', {
@@ -693,9 +741,7 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'current-rt' });
       mockPrisma.userSession.findUnique.mockResolvedValue(undefined);
 
-      await expect(service.refreshToken('old-stolen-rt')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken('old-stolen-rt')).rejects.toThrow(UnauthorizedException);
 
       // JANGAN cabut seluruh sesi — mencegah logout massal akibat race
       // condition (refresh konkuren antar-tab/perangkat atau banyak 401 bersamaan).
@@ -728,15 +774,15 @@ describe('AuthService', () => {
       // (baris ter-rotasi) — call berikutnya dengan token yang sama gagal
       // (count: 0), seperti DB sungguhan setelah baris berisi token baru.
       let rotated = false;
-      mockPrisma.userSession.updateMany.mockImplementation(async (args: {
-        where?: { refreshToken?: string };
-      }) => {
-        if (args.where?.refreshToken === 'valid-rt' && !rotated) {
-          rotated = true;
-          return { count: 1 };
-        }
-        return { count: 0 };
-      });
+      mockPrisma.userSession.updateMany.mockImplementation(
+        async (args: { where?: { refreshToken?: string } }) => {
+          if (args.where?.refreshToken === 'valid-rt' && !rotated) {
+            rotated = true;
+            return { count: 1 };
+          }
+          return { count: 0 };
+        },
+      );
 
       // Tab A menang rotasi.
       const winner = await service.refreshToken('valid-rt');
@@ -792,17 +838,31 @@ describe('AuthService', () => {
         throw new Error('invalid');
       });
 
-      await expect(service.refreshToken('invalid-rt')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.refreshToken('invalid-rt')).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('sessions', () => {
     it('should list active sessions with isCurrent flag', async () => {
       mockPrisma.userSession.findMany.mockResolvedValue([
-        { id: 's1', deviceName: null, ipAddress: '1.1.1.1', userAgent: 'ua', lastUsedAt: new Date(), createdAt: new Date(), refreshToken: 'rt-active' },
-        { id: 's2', deviceName: 'Android', ipAddress: '2.2.2.2', userAgent: 'ua2', lastUsedAt: new Date(), createdAt: new Date(), refreshToken: 'rt-other' },
+        {
+          id: 's1',
+          deviceName: null,
+          ipAddress: '1.1.1.1',
+          userAgent: 'ua',
+          lastUsedAt: new Date(),
+          createdAt: new Date(),
+          refreshToken: 'rt-active',
+        },
+        {
+          id: 's2',
+          deviceName: 'Android',
+          ipAddress: '2.2.2.2',
+          userAgent: 'ua2',
+          lastUsedAt: new Date(),
+          createdAt: new Date(),
+          refreshToken: 'rt-other',
+        },
       ]);
       mockPrisma.user.findUnique.mockResolvedValue({ refreshToken: 'rt-active' });
 
@@ -835,7 +895,11 @@ describe('AuthService', () => {
     });
 
     it('should throw NotFound when session belongs to another user', async () => {
-      mockPrisma.userSession.findUnique.mockResolvedValue({ id: 's9', userId: 'other', refreshToken: 'x' });
+      mockPrisma.userSession.findUnique.mockResolvedValue({
+        id: 's9',
+        userId: 'other',
+        refreshToken: 'x',
+      });
 
       await expect(service.revokeSession('u1', 's9')).rejects.toThrow(NotFoundException);
     });
@@ -867,9 +931,16 @@ describe('AuthService', () => {
           cookies.push({ name, value, options }),
       } as unknown as import('express').Response;
 
-      const serviceWithShortTtl = Object.assign(Object.create(Object.getPrototypeOf(service)), service, {
-        envConfig: { ...(service as unknown as { envConfig: Record<string, unknown> }).envConfig, jwtRefreshExpiresIn: '15m' },
-      });
+      const serviceWithShortTtl = Object.assign(
+        Object.create(Object.getPrototypeOf(service)),
+        service,
+        {
+          envConfig: {
+            ...(service as unknown as { envConfig: Record<string, unknown> }).envConfig,
+            jwtRefreshExpiresIn: '15m',
+          },
+        },
+      );
 
       serviceWithShortTtl.setRefreshTokenCookie(res, 'rt');
       expect(cookies[0].options.maxAge).toBe(15 * 60 * 1000);

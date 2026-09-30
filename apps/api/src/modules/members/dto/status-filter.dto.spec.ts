@@ -153,7 +153,10 @@ describe('DTO enum validation (cross-module)', () => {
     });
 
     it('accepts status & tipe valid', async () => {
-      const errors = await validateDto(ClaimFilterDto, { status: 'disetujui', tipe: 'keanggotaan' });
+      const errors = await validateDto(ClaimFilterDto, {
+        status: 'disetujui',
+        tipe: 'keanggotaan',
+      });
       expect(errors).toHaveLength(0);
     });
   });

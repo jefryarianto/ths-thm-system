@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { validateImageUploadSecurity } from '../../common/utils/image-upload.util';
 import { CacheService } from '../../common/services/cache.service';
@@ -6,13 +12,26 @@ import { existsSync, unlinkSync, writeFileSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 
 /** Warna overlay: hex (3-8 digit) atau rgba()/rgb() CSS. */
-const COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgba?\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*(,\\s*(0|1|0?\\.\\d+)\\s*)?\\))$/;
+const COLOR_RE =
+  /^(#[0-9a-fA-F]{3,8}|rgba?\\(\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*,\\s*\\d{1,3}\\s*(,\\s*(0|1|0?\\.\\d+)\\s*)?\\))$/;
 const NAME_RE = /^[a-z0-9][a-z0-9-]{1,48}$/;
 
 /** Kunci overlayConfig yang dikenal — kunci lain dibuang (bukan error). */
 const ALLOWED_OVERLAY_KEYS = new Set([
-  'guilloche', 'watermark', 'photo', 'nama', 'nomorAnggota', 'ttl',
-  'tempatDadar', 'tahunDadar', 'ranting', 'wilayah', 'tingkat', 'qr', 'ttd', 'status',
+  'guilloche',
+  'watermark',
+  'photo',
+  'nama',
+  'nomorAnggota',
+  'ttl',
+  'tempatDadar',
+  'tahunDadar',
+  'ranting',
+  'wilayah',
+  'tingkat',
+  'qr',
+  'ttd',
+  'status',
 ]);
 
 /**
@@ -25,7 +44,10 @@ const ALLOWED_OVERLAY_KEYS = new Set([
 export class CardTemplatesService {
   private readonly logger = new Logger(CardTemplatesService.name);
 
-  constructor(private readonly prisma: PrismaService, private readonly cache: CacheService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   // ── Read ──────────────────────────────────────────────────────────────
 
@@ -59,9 +81,7 @@ export class CardTemplatesService {
   findAll(scope?: { role?: string; distrikId?: string | null }) {
     const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.cardTemplate.findMany({
-      where: isScoped
-        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
-        : undefined,
+      where: isScoped ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] } : undefined,
       orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
       include: { distrik: { select: { id: true, nama: true } } },
     });
@@ -84,7 +104,9 @@ export class CardTemplatesService {
   ) {
     if (scope?.role && scope.role !== 'superadmin') {
       if (!scope.distrikId || (template.distrikId ?? null) !== scope.distrikId) {
-        throw new ForbiddenException('Anda hanya dapat mengelola template kartu distrik Anda sendiri');
+        throw new ForbiddenException(
+          'Anda hanya dapat mengelola template kartu distrik Anda sendiri',
+        );
       }
     }
   }
@@ -104,7 +126,8 @@ export class CardTemplatesService {
     const exists = await this.prisma.cardTemplate.findFirst({
       where: { name, distrikId: distrikId ?? null },
     });
-    if (exists) throw new BadRequestException(`Nama template "${name}" sudah dipakai pada scope ini`);
+    if (exists)
+      throw new BadRequestException(`Nama template "${name}" sudah dipakai pada scope ini`);
 
     const overlayConfig = this.validateOverlayConfig(dto.overlayConfig);
     const frontImage = files?.front ? await this.validateCardImage(files.front) : null;
@@ -133,7 +156,8 @@ export class CardTemplatesService {
     this.assertCanManage(existing, scope);
     const data: Record<string, unknown> = {};
     if (dto.label !== undefined) data.label = dto.label.trim();
-    if (dto.overlayConfig !== undefined) data.overlayConfig = this.validateOverlayConfig(dto.overlayConfig);
+    if (dto.overlayConfig !== undefined)
+      data.overlayConfig = this.validateOverlayConfig(dto.overlayConfig);
     if (files?.front) {
       data.frontImage = await this.validateCardImage(files.front);
       this.unlinkQuietly(existing.frontImage);
@@ -142,7 +166,8 @@ export class CardTemplatesService {
       data.backImage = await this.validateCardImage(files.back);
       this.unlinkQuietly(existing.backImage);
     }
-    if (Object.keys(data).length === 0) throw new BadRequestException('Tidak ada perubahan yang dikirim');
+    if (Object.keys(data).length === 0)
+      throw new BadRequestException('Tidak ada perubahan yang dikirim');
     const updated = await this.prisma.cardTemplate.update({ where: { id }, data });
     // If the updated template was the active one, invalidate cache.
     if (existing.isActive) {
@@ -173,7 +198,9 @@ export class CardTemplatesService {
     this.assertCanManage(existing, scope);
     if (existing.isActive) {
       // Active template can't be removed, so no cache invalidation needed.
-      throw new BadRequestException('Template aktif tidak dapat dihapus. Aktifkan template lain terlebih dahulu.');
+      throw new BadRequestException(
+        'Template aktif tidak dapat dihapus. Aktifkan template lain terlebih dahulu.',
+      );
     }
     this.unlinkQuietly(existing.frontImage);
     this.unlinkQuietly(existing.backImage);
@@ -281,7 +308,10 @@ export class CardTemplatesService {
       return s;
     }
     if (Array.isArray(value)) {
-      return value.slice(0, 32).map((v) => this.sanitizeValue(v, depth + 1)).filter((v) => v !== undefined);
+      return value
+        .slice(0, 32)
+        .map((v) => this.sanitizeValue(v, depth + 1))
+        .filter((v) => v !== undefined);
     }
     if (typeof value === 'object' && value !== null) {
       const obj: Record<string, unknown> = {};

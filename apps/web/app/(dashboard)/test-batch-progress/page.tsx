@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   Play,
   Square,
   Sliders,
@@ -92,10 +91,7 @@ function randomError(): string {
   return errors[Math.floor(Math.random() * errors.length)];
 }
 
-function createMockBatch(
-  type: string,
-  total: number,
-): MockBatch {
+function createMockBatch(type: string, total: number): MockBatch {
   const id = generateMockId();
   const now = new Date();
   const jobs: MockJob[] = [];
@@ -221,9 +217,7 @@ export default function TestBatchProgressPage() {
       job.status = willFail ? 'failed' : 'completed';
       job.startedAt = new Date(Date.now() - Math.random() * 1000).toISOString();
       job.completedAt = new Date().toISOString();
-      job.nomorDokumen = willFail
-        ? null
-        : randomDocNumber(config.docType, batch.completed + 1);
+      job.nomorDokumen = willFail ? null : randomDocNumber(config.docType, batch.completed + 1);
 
       if (willFail) {
         job.error = randomError();
@@ -372,7 +366,8 @@ export default function TestBatchProgressPage() {
                 {/* Batch Size */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    Jumlah Dokumen: <strong className="text-gray-800 dark:text-gray-200">{config.batchSize}</strong>
+                    Jumlah Dokumen:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">{config.batchSize}</strong>
                   </label>
                   <input
                     type="range"
@@ -395,7 +390,8 @@ export default function TestBatchProgressPage() {
                 {/* Speed */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    Kecepatan: <strong className="text-gray-800 dark:text-gray-200">
+                    Kecepatan:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
                       {config.speed < 200 ? 'Cepat' : config.speed < 500 ? 'Normal' : 'Lambat'}
                     </strong>
                   </label>
@@ -405,9 +401,7 @@ export default function TestBatchProgressPage() {
                     max={1000}
                     step={50}
                     value={config.speed}
-                    onChange={(e) =>
-                      setConfig((c) => ({ ...c, speed: Number(e.target.value) }))
-                    }
+                    onChange={(e) => setConfig((c) => ({ ...c, speed: Number(e.target.value) }))}
                     disabled={simulatorState === 'running'}
                     className="w-full accent-blue-600"
                   />
@@ -421,7 +415,8 @@ export default function TestBatchProgressPage() {
                 {/* Error Rate */}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    Error Rate: <strong className="text-gray-800 dark:text-gray-200">
+                    Error Rate:{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">
                       {Math.round(config.errorRate * 100)}%
                     </strong>
                   </label>
@@ -454,9 +449,7 @@ export default function TestBatchProgressPage() {
                     (type) => (
                       <button
                         key={type}
-                        onClick={() =>
-                          setConfig((c) => ({ ...c, docType: type }))
-                        }
+                        onClick={() => setConfig((c) => ({ ...c, docType: type }))}
                         disabled={simulatorState === 'running'}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
                           config.docType === type
@@ -505,8 +498,8 @@ export default function TestBatchProgressPage() {
               {simulatorState === 'running' && (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-400">
                   <Bug size={16} className="shrink-0" />
-                  Simulasi berjalan - progress bar akan bergerak secara real-time.
-                  Batch dummy menggunakan data in-memory (tidak ada API call).
+                  Simulasi berjalan - progress bar akan bergerak secara real-time. Batch dummy
+                  menggunakan data in-memory (tidak ada API call).
                 </div>
               )}
             </div>
@@ -557,11 +550,21 @@ export default function TestBatchProgressPage() {
             sesungguhnya membutuhkan endpoint API berikut:
           </p>
           <ul className="mt-2 space-y-1 text-amber-600 dark:text-amber-500 font-mono text-xs">
-            <li><code>GET    /documents/batch</code> - daftar batch (pagination)</li>
-            <li><code>POST   /documents/batch</code> - buat batch baru</li>
-            <li><code>GET    /documents/batch/:id</code> - detail batch + jobs</li>
-            <li><code>PATCH  /documents/batch/:id/cancel</code> - batalkan batch</li>
-            <li><code>POST   /documents/batch/:id/retry</code> - ulangi job gagal</li>
+            <li>
+              <code>GET /documents/batch</code> - daftar batch (pagination)
+            </li>
+            <li>
+              <code>POST /documents/batch</code> - buat batch baru
+            </li>
+            <li>
+              <code>GET /documents/batch/:id</code> - detail batch + jobs
+            </li>
+            <li>
+              <code>PATCH /documents/batch/:id/cancel</code> - batalkan batch
+            </li>
+            <li>
+              <code>POST /documents/batch/:id/retry</code> - ulangi job gagal
+            </li>
           </ul>
         </div>
       </div>
@@ -624,9 +627,7 @@ function MockBatchProgressCard({
   onComplete?: (batchId: string) => void;
 }) {
   const progress =
-    batch.total > 0
-      ? Math.round(((batch.completed + batch.failed) / batch.total) * 100)
-      : 0;
+    batch.total > 0 ? Math.round(((batch.completed + batch.failed) / batch.total) * 100) : 0;
   const isFinal = ['completed', 'completed_with_errors', 'cancelled'].includes(batch.status);
   const hasFailed = batch.failed > 0;
   const [showJobs, setShowJobs] = useState(false);
@@ -671,7 +672,9 @@ function MockBatchProgressCard({
           : 'border-gray-200 dark:border-gray-700';
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl border transition-shadow ${borderColor} shadow-sm`}>
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-xl border transition-shadow ${borderColor} shadow-sm`}
+    >
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -730,7 +733,11 @@ function MockBatchProgressCard({
         <div className="grid grid-cols-4 gap-2 mt-3">
           {[
             { label: 'Total', value: batch.total, color: 'text-gray-900 dark:text-white' },
-            { label: 'Berhasil', value: batch.completed, color: 'text-green-600 dark:text-green-400' },
+            {
+              label: 'Berhasil',
+              value: batch.completed,
+              color: 'text-green-600 dark:text-green-400',
+            },
             {
               label: 'Gagal',
               value: batch.failed,
@@ -753,11 +760,7 @@ function MockBatchProgressCard({
               disabled={cancelling}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
             >
-              {cancelling ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : (
-                <XSquare size={12} />
-              )}
+              {cancelling ? <Loader2 size={12} className="animate-spin" /> : <XSquare size={12} />}
               Batalkan
             </button>
           )}
@@ -935,10 +938,8 @@ function MockBatchHistoryPanel() {
                       <span className="text-red-500 font-medium">{batch.failed} gagal</span>
                     )}
                     <span>
-                      {Math.floor(
-                        (Date.now() - new Date(batch.createdAt).getTime()) / 3600000,
-                      )}
-                      j lalu
+                      {Math.floor((Date.now() - new Date(batch.createdAt).getTime()) / 3600000)}j
+                      lalu
                     </span>
                   </div>
                 </div>

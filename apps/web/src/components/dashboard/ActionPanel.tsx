@@ -2,11 +2,7 @@
 
 import Link from 'next/link';
 import { CheckCircle2, ChevronRight, TriangleAlert } from 'lucide-react';
-import {
-  actionItems,
-  type ActionItemConfig,
-  type ActionItemKey,
-} from './constants';
+import { actionItems, type ActionItemConfig, type ActionItemKey } from './constants';
 
 /**
  * Kelas visual per severity — item paling mendesak paling tegas.
@@ -71,20 +67,14 @@ export default function ActionPanel({ values }: ActionPanelProps) {
   const totalPending = active.reduce((sum, i) => sum + (values[i.key] ?? 0), 0);
 
   return (
-    <section
-      aria-labelledby="perlu-tindakan-title"
-      className="card-elegant p-5 sm:p-6"
-    >
+    <section aria-labelledby="perlu-tindakan-title" className="card-elegant p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
           <span className="p-2 rounded-lg bg-surface-variant text-muted shrink-0">
             <TriangleAlert size={17} aria-hidden="true" />
           </span>
           <div>
-            <h2
-              id="perlu-tindakan-title"
-              className="text-base font-semibold text-text"
-            >
+            <h2 id="perlu-tindakan-title" className="text-base font-semibold text-text">
               Perlu Tindakan
             </h2>
             <p className="text-xs text-muted mt-0.5">
@@ -122,10 +112,7 @@ export default function ActionPanel({ values }: ActionPanelProps) {
           <p className="text-2xs text-muted mb-1.5">Sudah ditindaklanjuti</p>
           <ul className="flex flex-wrap gap-x-4 gap-y-1">
             {cleared.map((item) => (
-              <li
-                key={item.key}
-                className="flex items-center gap-1.5 text-xs text-muted"
-              >
+              <li key={item.key} className="flex items-center gap-1.5 text-xs text-muted">
                 <CheckCircle2 size={12} className="text-success-500" aria-hidden="true" />
                 {item.label}
               </li>

@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, Req, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { PenandatanganService, DOKUMEN_SIGNER_TYPES } from './penandatangan.service';
 import { CreatePenandatanganDto, UpdatePenandatanganDto } from './dto/penandatangan.dto';
@@ -32,7 +44,9 @@ export class PenandatanganController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah penandatangan baru (scope distrik opsional)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Tambah penandatangan baru (scope distrik opsional)',
+  })
   create(@Req() req: ScopedRequest, @Body() dto: CreatePenandatanganDto) {
     dto.distrikId = resolveWriteDistrikId(req, dto.distrikId ?? null) ?? undefined;
     return this.service.create(dto);
@@ -41,14 +55,18 @@ export class PenandatanganController {
   @Patch(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Update penandatangan' })
   update(@Req() req: ScopedRequest, @Param('id') id: string, @Body() dto: UpdatePenandatanganDto) {
-    return this.service.update(id, dto, { role: req?.user?.role, distrikId: req?.scope?.distrikId });
+    return this.service.update(id, dto, {
+      role: req?.user?.role,
+      distrikId: req?.scope?.distrikId,
+    });
   }
 
   // ── Penugasan per tipe dokumen (1-3 penandatangan, per scope distrik) ──
 
   @Get('dokumen')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
-    summary: 'Penugasan penandatangan per tipe dokumen pada scope (query: distrikId, default global)',
+    summary:
+      'Penugasan penandatangan per tipe dokumen pada scope (query: distrikId, default global)',
   })
   getDocSigners(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
     return this.service.getDocSignerAssignments(resolveReadDistrikId(req, distrikId) ?? undefined);
@@ -58,7 +76,10 @@ export class PenandatanganController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     summary: 'Set penandatangan untuk satu tipe dokumen pada scope (1-3 orang)',
   })
-  @ApiBody({ description: '{ penandatanganIds: string[], distrikId?: string } — urutan = posisi tanda tangan' })
+  @ApiBody({
+    description:
+      '{ penandatanganIds: string[], distrikId?: string } — urutan = posisi tanda tangan',
+  })
   @ApiOkResponse({ description: 'Penugasan tersimpan' })
   setDocSigners(
     @Req() req: ScopedRequest,

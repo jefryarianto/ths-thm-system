@@ -62,9 +62,8 @@ export default function NewIncomingLetterPage() {
       const { data: res } = await apiClient.post('/letters/incoming', payload);
       router.push(`/letters/incoming/${res.data?.id || res.id}`);
     } catch (err: unknown) {
-      const apiErr = (
-        err as { response?: { data?: { message?: string } } }
-      )?.response?.data?.message;
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       setError(apiErr || 'Gagal menyimpan surat masuk');
     } finally {
       setSaving(false);
@@ -72,78 +71,78 @@ export default function NewIncomingLetterPage() {
   };
 
   return (
-      <PermissionGuard module="letters" action="create">
-        <FormLayout
-              backHref="/letters"
-              title="Tambah Surat Masuk"
-              subtitle="Buat catatan surat masuk baru"
-              error={error}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={() => router.push('/letters')}
-              submitLabel="Tambah Surat"
-              savingLabel="Menyimpan..."
-            >
-              <Field label="Nomor Surat" required>
-                <input
-                  type="text"
-                  value={form.nomorSurat}
-                  onChange={(e) => handleChange('nomorSurat', e.target.value)}
-                  placeholder="Contoh: 001/THS-THM/V/2026"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <Field label="Pengirim" required>
-                <input
-                  type="text"
-                  value={form.pengirim}
-                  onChange={(e) => handleChange('pengirim', e.target.value)}
-                  placeholder="Nama pengirim / instansi"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <Field label="Perihal" required>
-                <input
-                  type="text"
-                  value={form.perihal}
-                  onChange={(e) => handleChange('perihal', e.target.value)}
-                  placeholder="Perihal surat"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Tanggal Surat">
-                  <input
-                    type="date"
-                    value={form.tanggalSurat}
-                    onChange={(e) => handleChange('tanggalSurat', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </Field>
-        
-                <Field label="Tanggal Terima">
-                  <input
-                    type="date"
-                    value={form.tanggalTerima}
-                    onChange={(e) => handleChange('tanggalTerima', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </Field>
-              </div>
-        
-              <Field label="File Scan (URL)">
-                <input
-                  type="url"
-                  value={form.fileScanPath}
-                  onChange={(e) => handleChange('fileScanPath', e.target.value)}
-                  placeholder="URL file scan surat (opsional)"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-            </FormLayout>
-      </PermissionGuard>
-    );
+    <PermissionGuard module="letters" action="create">
+      <FormLayout
+        backHref="/letters"
+        title="Tambah Surat Masuk"
+        subtitle="Buat catatan surat masuk baru"
+        error={error}
+        saving={saving}
+        onSubmit={handleSubmit}
+        onCancel={() => router.push('/letters')}
+        submitLabel="Tambah Surat"
+        savingLabel="Menyimpan..."
+      >
+        <Field label="Nomor Surat" required>
+          <input
+            type="text"
+            value={form.nomorSurat}
+            onChange={(e) => handleChange('nomorSurat', e.target.value)}
+            placeholder="Contoh: 001/THS-THM/V/2026"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <Field label="Pengirim" required>
+          <input
+            type="text"
+            value={form.pengirim}
+            onChange={(e) => handleChange('pengirim', e.target.value)}
+            placeholder="Nama pengirim / instansi"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <Field label="Perihal" required>
+          <input
+            type="text"
+            value={form.perihal}
+            onChange={(e) => handleChange('perihal', e.target.value)}
+            placeholder="Perihal surat"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Tanggal Surat">
+            <input
+              type="date"
+              value={form.tanggalSurat}
+              onChange={(e) => handleChange('tanggalSurat', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </Field>
+
+          <Field label="Tanggal Terima">
+            <input
+              type="date"
+              value={form.tanggalTerima}
+              onChange={(e) => handleChange('tanggalTerima', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </Field>
+        </div>
+
+        <Field label="File Scan (URL)">
+          <input
+            type="url"
+            value={form.fileScanPath}
+            onChange={(e) => handleChange('fileScanPath', e.target.value)}
+            placeholder="URL file scan surat (opsional)"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+      </FormLayout>
+    </PermissionGuard>
+  );
 }

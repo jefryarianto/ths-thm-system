@@ -83,9 +83,7 @@ function StatCard({ label, value, icon: Icon, href, gradient, subtitle }: StatCa
         <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1 tabular-nums">
           {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
         </p>
-        {subtitle && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       <ChevronRight
         size={16}
@@ -114,9 +112,7 @@ function QuickLink({ label, icon: Icon, href, description }: QuickLinkProps) {
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-          {label}
-        </p>
+        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{label}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{description}</p>
       </div>
       <ChevronRight
@@ -138,14 +134,14 @@ interface SectionCardProps {
 
 function SectionCard({ title, icon: Icon, children, className = '' }: SectionCardProps) {
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}>
+    <div
+      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}
+    >
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
         <Icon size={18} className="text-gray-500 dark:text-gray-400" />
         <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{title}</h2>
       </div>
-      <div className="p-5">
-        {children}
-      </div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -180,31 +176,111 @@ export default function AdminDashboardPage() {
 
   const adminLinks: QuickLinkProps[] = [
     { label: 'Anggota', icon: Users, href: '/members', description: 'Kelola data anggota' },
-    { label: 'Calon Anggota', icon: UserPlus, href: '/candidates', description: 'Manajemen calon anggota' },
-    { label: 'Pendaftaran', icon: ScrollText, href: '/registrations', description: 'Pendaftaran baru' },
-    { label: 'Pelatihan', icon: Dumbbell, href: '/trainings', description: 'Jadwal dan materi latihan' },
-    { label: 'Kegiatan', icon: Calendar, href: '/activities', description: 'Semua kegiatan organisasi' },
-    { label: 'Pendadaran', icon: GraduationCap, href: '/graduations', description: 'Ujian pendadaran' },
+    {
+      label: 'Calon Anggota',
+      icon: UserPlus,
+      href: '/candidates',
+      description: 'Manajemen calon anggota',
+    },
+    {
+      label: 'Pendaftaran',
+      icon: ScrollText,
+      href: '/registrations',
+      description: 'Pendaftaran baru',
+    },
+    {
+      label: 'Pelatihan',
+      icon: Dumbbell,
+      href: '/trainings',
+      description: 'Jadwal dan materi latihan',
+    },
+    {
+      label: 'Kegiatan',
+      icon: Calendar,
+      href: '/activities',
+      description: 'Semua kegiatan organisasi',
+    },
+    {
+      label: 'Pendadaran',
+      icon: GraduationCap,
+      href: '/graduations',
+      description: 'Ujian pendadaran',
+    },
     { label: 'Penguji', icon: ClipboardCheck, href: '/examiners', description: 'Daftar penguji' },
-    { label: 'Penilaian',    icon: ListChecks, href: '/assessments', description: 'Aspek dan item penilaian' },
+    {
+      label: 'Penilaian',
+      icon: ListChecks,
+      href: '/assessments',
+      description: 'Aspek dan item penilaian',
+    },
     { label: 'Iuran', icon: CreditCard, href: '/dues', description: 'Manajemen iuran anggota' },
-    { label: 'Pembayaran',    icon: Wallet, href: '/payments', description: 'Pengaturan pembayaran' },
+    { label: 'Pembayaran', icon: Wallet, href: '/payments', description: 'Pengaturan pembayaran' },
     { label: 'Klaim', icon: Shield, href: '/claims', description: 'Pengajuan klaim' },
-    { label: 'Persetujuan', icon: ShieldAlert, href: '/approvals', description: 'Proses persetujuan' },
+    {
+      label: 'Persetujuan',
+      icon: ShieldAlert,
+      href: '/approvals',
+      description: 'Proses persetujuan',
+    },
     { label: 'Dokumen', icon: FileText, href: '/documents', description: 'Dokumen anggota' },
-    { label: 'Dok. Organisasi', icon: BookOpen, href: '/org-documents', description: 'Dokumen organisasi' },
+    {
+      label: 'Dok. Organisasi',
+      icon: BookOpen,
+      href: '/org-documents',
+      description: 'Dokumen organisasi',
+    },
     { label: 'Surat', icon: Mail, href: '/letters', description: 'Surat masuk & keluar' },
-    { label: 'Notifikasi', icon: Bell, href: '/notifications', description: 'Kirim & kelola notifikasi' },
+    {
+      label: 'Notifikasi',
+      icon: Bell,
+      href: '/notifications',
+      description: 'Kirim & kelola notifikasi',
+    },
     { label: 'Forum', icon: MessageSquare, href: '/forum', description: 'Forum diskusi' },
-    { label: 'Forum Kategori', icon: Layers, href: '/forum?tab=categories', description: 'Kategori thread forum' },
-    { label: 'Gamifikasi', icon: Puzzle, href: '/gamification', description: 'Poin, level & reward' },
-    { label: 'Laporan', icon: BarChart3, href: '/reports', description: 'Laporan data & statistik' },
+    {
+      label: 'Forum Kategori',
+      icon: Layers,
+      href: '/forum?tab=categories',
+      description: 'Kategori thread forum',
+    },
+    {
+      label: 'Gamifikasi',
+      icon: Puzzle,
+      href: '/gamification',
+      description: 'Poin, level & reward',
+    },
+    {
+      label: 'Laporan',
+      icon: BarChart3,
+      href: '/reports',
+      description: 'Laporan data & statistik',
+    },
     { label: 'Pengaturan', icon: Settings, href: '/settings', description: 'Pengaturan sistem' },
     { label: 'Pengguna', icon: Users, href: '/users', description: 'Manajemen pengguna' },
-    { label: 'Struktur Org', icon: Network, href: '/org-chart', description: 'Struktur organisasi' },
-    { label: 'Kalender', icon: Calendar, href: '/calendar', description: 'Kalender kegiatan & hari libur' },
-    { label: 'Monitor Antrean', icon: Activity, href: '/admin/queues', description: 'Status queue & dokumen' },
-    { label: 'Audit Log', icon: Database, href: '/audit-logs', description: 'Log aktivitas sistem' },
+    {
+      label: 'Struktur Org',
+      icon: Network,
+      href: '/org-chart',
+      description: 'Struktur organisasi',
+    },
+    {
+      label: 'Kalender',
+      icon: Calendar,
+      href: '/calendar',
+      description: 'Kalender kegiatan & hari libur',
+    },
+    {
+      label: 'Monitor Antrean',
+      icon: Activity,
+      href: '/admin/queues',
+      description: 'Status queue & dokumen',
+    },
+    {
+      label: 'Audit Log',
+      icon: Database,
+      href: '/audit-logs',
+      description: 'Log aktivitas sistem',
+    },
   ];
 
   return (
@@ -224,7 +300,8 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-3">
             {lastUpdated && (
               <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
-                Terakhir: {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                Terakhir:{' '}
+                {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
             <button
@@ -245,7 +322,10 @@ export default function AdminDashboardPage() {
               <AlertCircle size={16} />
               <span>{error}</span>
             </div>
-            <button onClick={fetchStats} className="underline hover:no-underline text-xs font-medium shrink-0">
+            <button
+              onClick={fetchStats}
+              className="underline hover:no-underline text-xs font-medium shrink-0"
+            >
               Coba lagi
             </button>
           </div>
@@ -256,7 +336,10 @@ export default function AdminDashboardPage() {
           {loading && !data ? (
             // Skeleton loading
             Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700" />
                   <div className="flex-1 space-y-2">
@@ -292,7 +375,11 @@ export default function AdminDashboardPage() {
               />
               <StatCard
                 label="Iuran Terkumpul"
-                value={data.totalDuesCollected > 0 ? `Rp ${(data.totalDuesCollected / 1000000).toFixed(1)}jt` : 'Rp 0'}
+                value={
+                  data.totalDuesCollected > 0
+                    ? `Rp ${(data.totalDuesCollected / 1000000).toFixed(1)}jt`
+                    : 'Rp 0'
+                }
                 icon={CreditCard}
                 href="/dues"
                 gradient="bg-gradient-to-br from-yellow-500 to-yellow-700"
@@ -349,8 +436,6 @@ export default function AdminDashboardPage() {
                 gradient="bg-gradient-to-br from-red-500 to-red-700"
                 subtitle={data.incompleteData > 0 ? 'Perlu diperbaiki' : 'Semua lengkap'}
               />
-
-
             </>
           ) : null}
         </div>
@@ -394,7 +479,16 @@ export default function AdminDashboardPage() {
           {lastUpdated && (
             <div className="flex items-center gap-1.5">
               <Clock size={12} />
-              <span>Data diperbarui: {lastUpdated.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+              <span>
+                Data diperbarui:{' '}
+                {lastUpdated.toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
             </div>
           )}
         </div>

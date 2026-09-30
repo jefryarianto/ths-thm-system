@@ -32,7 +32,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
           break;
         case 'P2003':
           status = HttpStatus.BAD_REQUEST;
-          message = 'Gagal menghapus atau memperbarui: data masih terikat dengan data lain (foreign key constraint)';
+          message =
+            'Gagal menghapus atau memperbarui: data masih terikat dengan data lain (foreign key constraint)';
           break;
         case 'P2024':
           status = HttpStatus.GATEWAY_TIMEOUT;

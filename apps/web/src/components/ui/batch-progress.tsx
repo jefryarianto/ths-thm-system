@@ -16,7 +16,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { useBatchProgress, formatBatchType, type BatchDetail, type BatchJobItem } from '@/lib/hooks/use-batch-progress';
+import {
+  useBatchProgress,
+  formatBatchType,
+  type BatchDetail,
+  type BatchJobItem,
+} from '@/lib/hooks/use-batch-progress';
 import apiClient from '@/lib/api-client';
 
 // ─── Status Helpers ───
@@ -68,9 +73,7 @@ function JobRow({ job }: { job: BatchJobItem }) {
         </span>
       )}
       {job.retryCount > 0 && (
-        <span className="text-warning-600 font-medium shrink-0">
-          retry {job.retryCount}x
-        </span>
+        <span className="text-warning-600 font-medium shrink-0">retry {job.retryCount}x</span>
       )}
     </div>
   );
@@ -276,10 +279,9 @@ export function BatchProgressCard({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm font-semibold text-text">
-                  {formatBatchType(detail.type)}
-                </h4>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border"
+                <h4 className="text-sm font-semibold text-text">{formatBatchType(detail.type)}</h4>
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border"
                   style={{
                     borderColor: PROGRESS_COLORS[progress.status] || 'bg-muted',
                     backgroundColor: `${PROGRESS_COLORS[progress.status]}15`,
@@ -289,9 +291,7 @@ export function BatchProgressCard({
                   {STATUS_LABELS[progress.status] || progress.status}
                 </span>
               </div>
-              <p className="text-xs text-muted mt-1">
-                {jobSummary}
-              </p>
+              <p className="text-xs text-muted mt-1">{jobSummary}</p>
             </div>
           </div>
 
@@ -319,11 +319,7 @@ export function BatchProgressCard({
 
         {/* Stats Row */}
         <div className="grid grid-cols-4 gap-2 mt-3">
-          <StatBox
-            label="Total"
-            value={progress.total}
-            color="text-text"
-          />
+          <StatBox label="Total" value={progress.total} color="text-text" />
           <StatBox
             label="Berhasil"
             value={progress.completed}
@@ -334,11 +330,7 @@ export function BatchProgressCard({
             value={progress.failed}
             color={progress.failed > 0 ? 'text-error-600 dark:text-error-400' : 'text-muted'}
           />
-          <StatBox
-            label="Progress"
-            value={`${progress.progress}%`}
-            color="text-primary"
-          />
+          <StatBox label="Progress" value={`${progress.progress}%`} color="text-primary" />
         </div>
 
         {/* Actions */}
@@ -356,11 +348,7 @@ export function BatchProgressCard({
               disabled={cancelling}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-error-600 dark:text-error-400 border border-error-200 dark:border-error-800 rounded-lg hover:bg-error-50 dark:hover:bg-error-950 transition disabled:opacity-50"
             >
-              {cancelling ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : (
-                <XSquare size={12} />
-              )}
+              {cancelling ? <Loader2 size={12} className="animate-spin" /> : <XSquare size={12} />}
               Batalkan
             </button>
           )}

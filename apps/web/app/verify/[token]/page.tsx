@@ -59,7 +59,10 @@ const DOCUMENT_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  aktif: { label: 'Anggota Aktif', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  aktif: {
+    label: 'Anggota Aktif',
+    className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  },
   nonaktif: { label: 'Nonaktif', className: 'bg-amber-100 text-amber-700 border-amber-200' },
   pindah: { label: 'Pindah', className: 'bg-blue-100 text-blue-700 border-blue-200' },
   keluar: { label: 'Keluar', className: 'bg-red-100 text-red-700 border-red-200' },
@@ -138,7 +141,8 @@ export default function VerifyDocumentPage() {
         const detail = Array.isArray(msg) ? msg[0] : typeof msg === 'string' ? msg : undefined;
         setResult({
           valid: false,
-          message: detail || 'Dokumen atau kartu tidak ditemukan, sudah dicabut, atau tidak berlaku',
+          message:
+            detail || 'Dokumen atau kartu tidak ditemukan, sudah dicabut, atau tidak berlaku',
         });
       } else {
         setError('Gagal terhubung ke server verifikasi');
@@ -257,7 +261,9 @@ export default function VerifyDocumentPage() {
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-medium text-gray-400 uppercase">Pemegang Kartu</p>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase">
+                        Pemegang Kartu
+                      </p>
                       <p className="text-base font-bold text-gray-900 truncate">
                         {member.namaLengkap || '-'}
                       </p>
@@ -277,7 +283,8 @@ export default function VerifyDocumentPage() {
                     <div>
                       <p className="text-[10px] font-medium text-gray-400 uppercase">Jenis</p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {DOCUMENT_LABELS[docType] || (isKta ? 'Kartu Tanda Anggota (KTA)' : docType)}
+                        {DOCUMENT_LABELS[docType] ||
+                          (isKta ? 'Kartu Tanda Anggota (KTA)' : docType)}
                       </p>
                     </div>
                   </div>
@@ -291,11 +298,17 @@ export default function VerifyDocumentPage() {
                               <User size={16} className="text-indigo-600" />
                             </div>
                             <div>
-                              <p className="text-[10px] font-medium text-gray-400 uppercase">Status Keanggotaan</p>
-                              <p className="text-sm font-semibold text-gray-900">{statusMeta.label}</p>
+                              <p className="text-[10px] font-medium text-gray-400 uppercase">
+                                Status Keanggotaan
+                              </p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {statusMeta.label}
+                              </p>
                             </div>
                           </div>
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-semibold ${statusMeta.className}`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-semibold ${statusMeta.className}`}
+                          >
                             {statusMeta.label}
                           </span>
                         </div>
@@ -305,9 +318,13 @@ export default function VerifyDocumentPage() {
                           <MapPin size={16} className="text-teal-600" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-medium text-gray-400 uppercase">Ranting / Wilayah / Distrik</p>
+                          <p className="text-[10px] font-medium text-gray-400 uppercase">
+                            Ranting / Wilayah / Distrik
+                          </p>
                           <p className="text-sm font-semibold text-gray-900">
-                            {[member.ranting, member.wilayah, member.distrik].filter(Boolean).join(' · ') || '-'}
+                            {[member.ranting, member.wilayah, member.distrik]
+                              .filter(Boolean)
+                              .join(' · ') || '-'}
                           </p>
                         </div>
                       </div>
@@ -321,7 +338,9 @@ export default function VerifyDocumentPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-medium text-gray-400 uppercase">No. Seri</p>
-                        <p className="text-sm font-mono font-semibold text-gray-900">{result.nomorDokumen}</p>
+                        <p className="text-sm font-mono font-semibold text-gray-900">
+                          {result.nomorDokumen}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -332,8 +351,12 @@ export default function VerifyDocumentPage() {
                         <Calendar size={16} className="text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase">Tanggal Terbit</p>
-                        <p className="text-sm font-medium text-gray-900">{formatDate(result.createdAt)}</p>
+                        <p className="text-[10px] font-medium text-gray-400 uppercase">
+                          Tanggal Terbit
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatDate(result.createdAt)}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -344,11 +367,15 @@ export default function VerifyDocumentPage() {
                         <Hash size={16} className="text-amber-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase">Pemindaian QR</p>
+                        <p className="text-[10px] font-medium text-gray-400 uppercase">
+                          Pemindaian QR
+                        </p>
                         <p className="text-sm font-medium text-gray-900">
                           {result.scanCount} kali
                           {typeof result.scanLeft === 'number' && ` · sisa ${result.scanLeft}`}
-                          {result.scanCount > 3 ? ' (aktifitas tinggi — periksa keaslian fisik)' : ''}
+                          {result.scanCount > 3
+                            ? ' (aktifitas tinggi — periksa keaslian fisik)'
+                            : ''}
                         </p>
                       </div>
                     </div>
@@ -360,8 +387,12 @@ export default function VerifyDocumentPage() {
                         <Clock size={16} className="text-sky-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase">Terakhir Dipindai</p>
-                        <p className="text-sm font-medium text-gray-900">{formatDateTime(result.lastScannedAt)}</p>
+                        <p className="text-[10px] font-medium text-gray-400 uppercase">
+                          Terakhir Dipindai
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatDateTime(result.lastScannedAt)}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -372,8 +403,8 @@ export default function VerifyDocumentPage() {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
                     <ShieldAlert size={18} className="text-amber-500 flex-shrink-0" />
                     <p className="text-xs text-amber-700">
-                      QR ini sudah sangat sering dipindai (sisa {result.scanLeft}). Kartu berisiko terduga
-                      difotokopi/digandakan dan dapat otomatis dinonaktifkan.
+                      QR ini sudah sangat sering dipindai (sisa {result.scanLeft}). Kartu berisiko
+                      terduga difotokopi/digandakan dan dapat otomatis dinonaktifkan.
                     </p>
                   </div>
                 )}
@@ -395,14 +426,15 @@ export default function VerifyDocumentPage() {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50">
                     <XCircle size={18} className="text-red-500 flex-shrink-0" />
                     <p className="text-sm text-red-700">
-                      Kartu/dokumen dengan token ini tidak tercatat, sudah dicabut, atau tidak berlaku di sistem
-                      THS-THM.
+                      Kartu/dokumen dengan token ini tidak tercatat, sudah dicabut, atau tidak
+                      berlaku di sistem THS-THM.
                     </p>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50">
                     <ShieldAlert size={18} className="text-amber-500 flex-shrink-0" />
                     <p className="text-sm text-amber-700">
-                      Hati-hati terhadap pemalsuan. Hubungi admin THS-THM untuk verifikasi lebih lanjut.
+                      Hati-hati terhadap pemalsuan. Hubungi admin THS-THM untuk verifikasi lebih
+                      lanjut.
                     </p>
                   </div>
                 </div>

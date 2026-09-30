@@ -63,4 +63,3 @@ describe('THS-THM Official Statuta 2023 Data Constants', () => {
     expect(MAKNA_LAMBANG_DATA.thm.nama).toContain('Tunggal Hati Maria');
   });
 });
-

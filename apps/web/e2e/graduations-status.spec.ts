@@ -50,7 +50,11 @@ async function registerGraduationMocks(page: Page, initialStatus: string) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { ...DETAIL_BASE, status: currentStatus }, message: 'ok' }),
+        body: JSON.stringify({
+          success: true,
+          data: { ...DETAIL_BASE, status: currentStatus },
+          message: 'ok',
+        }),
       });
       return;
     }
@@ -67,7 +71,9 @@ test.describe('Graduations — edit & status quick actions', () => {
     await mockAuth(page, { mockDashboardPages: false });
   });
 
-  test('draft detail shows Publish quick action and Edit button; publish flow works', async ({ page }) => {
+  test('draft detail shows Publish quick action and Edit button; publish flow works', async ({
+    page,
+  }) => {
     await registerGraduationMocks(page, 'draft');
     await page.goto(`/graduations/${GRAD_ID}`);
     await expect(page.locator('h1')).toContainText('Pendadaran Uji', { timeout: 10000 });
@@ -113,12 +119,16 @@ test.describe('Graduations — edit & status quick actions', () => {
 
     // Navigasi programatik (router.push) — referrerPolicy mencegah proxy
     // salah klasifikasi navigasi lintas situs → kick ke /login.
-    await page.locator('button[title="Edit / Ubah Status"]').click({ referrerPolicy: 'no-referrer' });
+    await page
+      .locator('button[title="Edit / Ubah Status"]')
+      .click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(new RegExp(`/graduations/${GRAD_ID}/edit`));
     await expect(page.locator('h1')).toContainText('Edit Pendadaran', { timeout: 10000 });
   });
 
-  test('superadmin session publish flow sends correct PATCH payload and reveals QR section', async ({ page }) => {
+  test('superadmin session publish flow sends correct PATCH payload and reveals QR section', async ({
+    page,
+  }) => {
     // Verify the session is really superadmin (mockAuth default user)
     await page.goto('/dashboard');
     const stored = await page.evaluate(() => localStorage.getItem('user'));
@@ -138,7 +148,10 @@ test.describe('Graduations — edit & status quick actions', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { qrDataUrl: 'data:image/png;base64,iVBORw0KGgo=' } }),
+        body: JSON.stringify({
+          success: true,
+          data: { qrDataUrl: 'data:image/png;base64,iVBORw0KGgo=' },
+        }),
       });
     });
 
@@ -203,7 +216,10 @@ test.describe('Graduations — edit & status quick actions', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { skipped: false, total: 4, clonedAspects: 4, clonedItems: 18 } }),
+        body: JSON.stringify({
+          success: true,
+          data: { skipped: false, total: 4, clonedAspects: 4, clonedItems: 18 },
+        }),
       });
     });
 
@@ -217,7 +233,9 @@ test.describe('Graduations — edit & status quick actions', () => {
     await cloneBtn.click();
 
     // Toast sukses + tombol hilang (aspek > 0 setelah refresh checklist)
-    await expect(page.getByText('4 aspek & 18 item penilaian berhasil disalin')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('4 aspek & 18 item penilaian berhasil disalin')).toBeVisible({
+      timeout: 8000,
+    });
     await expect(cloneBtn).toHaveCount(0);
     expect(cloneCalls).toBe(1);
   });
@@ -242,7 +260,10 @@ test.describe('Graduations — edit & status quick actions', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { skipped: false, total: 0, clonedAspects: 0, clonedItems: 0 } }),
+        body: JSON.stringify({
+          success: true,
+          data: { skipped: false, total: 0, clonedAspects: 0, clonedItems: 0 },
+        }),
       });
     });
 
@@ -250,7 +271,9 @@ test.describe('Graduations — edit & status quick actions', () => {
     await expect(page.locator('h1')).toContainText('Pendadaran Uji', { timeout: 10000 });
 
     await page.getByRole('button', { name: 'Salin dari Template' }).click();
-    await expect(page.getByText('Template aspek penilaian global masih kosong')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Template aspek penilaian global masih kosong')).toBeVisible({
+      timeout: 8000,
+    });
     expect(cloneCalls).toBe(1);
   });
 
@@ -282,7 +305,16 @@ test.describe('Graduations — edit & status quick actions', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: [{ id: 'aspek-1', kodeAspek: 'A1', namaAspek: 'Sikap & Mental', bobot: 40, isActive: true, itemPenilaian: [] }],
+          data: [
+            {
+              id: 'aspek-1',
+              kodeAspek: 'A1',
+              namaAspek: 'Sikap & Mental',
+              bobot: 40,
+              isActive: true,
+              itemPenilaian: [],
+            },
+          ],
           meta: { total: 1 },
         }),
       });

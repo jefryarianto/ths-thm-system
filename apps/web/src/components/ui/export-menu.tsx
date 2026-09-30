@@ -97,10 +97,7 @@ export default function ExportMenu({
       >
         <Download size={14} />
         {label}
-        <ChevronDown
-          size={12}
-          className={`transition-transform ${open ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (

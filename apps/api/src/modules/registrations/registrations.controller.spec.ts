@@ -23,9 +23,7 @@ describe('RegistrationsController & DTO', () => {
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       controllers: [RegistrationsController],
-      providers: [
-        { provide: RegistrationsService, useValue: mockRegistrationsService },
-      ],
+      providers: [{ provide: RegistrationsService, useValue: mockRegistrationsService }],
     }).compile();
 
     controller = module.get<RegistrationsController>(RegistrationsController);

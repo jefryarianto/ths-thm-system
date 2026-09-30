@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Res, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Res,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseCrudController } from '../../common/utils/base-crud.controller';
 import { OrgDocumentsService } from './org-documents.service';
@@ -24,9 +35,17 @@ export class OrgDocumentsController extends BaseCrudController {
   // After:  @CrudAuth(...) = 1 line
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', {
-    summary: 'Ambil semua dokumen organisasi',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'anggota',
+    {
+      summary: 'Ambil semua dokumen organisasi',
+    },
+  )
   findAll(@Query() q: OrgDocumentFilterDto) {
     return super.findAll(q);
   }

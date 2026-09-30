@@ -13,7 +13,6 @@ import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import ScanChart from '@/components/scan-stats/ScanChart';
 import RecentAbsensiTable from '@/components/scan-stats/RecentAbsensiTable';
 
-
 interface ScanStats {
   totalAbsensi: number;
   totalDokumen: number;
@@ -64,7 +63,13 @@ export default function ScanStatsPage() {
         `"${(a.kegiatan || '').replace(/"/g, '""')}"`,
         a.hadir ? 'Hadir' : 'Absen',
         `"${(a.catatan || '-').replace(/"/g, '""')}"`,
-        new Date(a.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        new Date(a.tanggal).toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
       ]);
       const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -119,66 +124,66 @@ export default function ScanStatsPage() {
     : [];
 
   return (
-      <PermissionGuard module="scan-stats" action="view">
-        <PageContainer>
-              <PageHeader
-                title="Statistik Scan"
-                onRefresh={() => {
-                  fetchData();
-                  resetFilters();
-                }}
+    <PermissionGuard module="scan-stats" action="view">
+      <PageContainer>
+        <PageHeader
+          title="Statistik Scan"
+          onRefresh={() => {
+            fetchData();
+            resetFilters();
+          }}
+        >
+          <button
+            onClick={handleExportCSV}
+            disabled={exporting || !stats?.recentAbsensi?.length}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+          >
+            <Download size={14} /> {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+        </PageHeader>
+
+        {/* Stat Cards */}
+        {!stats ? (
+          <StatCardGridSkeleton count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {statCards.map((s) => (
+              <div
+                key={s.label}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3"
               >
-                <button
-                  onClick={handleExportCSV}
-                  disabled={exporting || !stats?.recentAbsensi?.length}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
-                >
-                  <Download size={14} /> {exporting ? 'Exporting...' : 'Export CSV'}
-                </button>
-              </PageHeader>
-        
-              {/* Stat Cards */}
-              {!stats ? (
-                <StatCardGridSkeleton count={4} />
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {statCards.map((s) => (
-                    <div
-                      key={s.label}
-                      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3"
-                    >
-                      <div className={`p-2.5 rounded-lg ${s.color}`}>
-                        <s.icon size={18} className={s.iconColor} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {s.value.toLocaleString('id-ID')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div className={`p-2.5 rounded-lg ${s.color}`}>
+                  <s.icon size={18} className={s.iconColor} />
                 </div>
-              )}
-        
-              {/* Absensi Harian Chart */}
-              {stats?.absensiHarian && <ScanChart key={refreshKey} data={stats.absensiHarian} />}
-        
-              {/* Recent Absensi */}
-              {stats?.recentAbsensi && (
-                <RecentAbsensiTable
-                  data={stats.recentAbsensi}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  statusFilter={filters.hadir}
-                  onStatusFilterChange={(v) => setFilter('hadir', v)}
-                  onReset={() => {
-                    setSearchQuery('');
-                    setFilter('hadir', '');
-                  }}
-                />
-              )}
-            </PageContainer>
-      </PermissionGuard>
-    );
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {s.value.toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Absensi Harian Chart */}
+        {stats?.absensiHarian && <ScanChart key={refreshKey} data={stats.absensiHarian} />}
+
+        {/* Recent Absensi */}
+        {stats?.recentAbsensi && (
+          <RecentAbsensiTable
+            data={stats.recentAbsensi}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={filters.hadir}
+            onStatusFilterChange={(v) => setFilter('hadir', v)}
+            onReset={() => {
+              setSearchQuery('');
+              setFilter('hadir', '');
+            }}
+          />
+        )}
+      </PageContainer>
+    </PermissionGuard>
+  );
 }

@@ -1,4 +1,8 @@
-import { seedAspekTemplate, aspekTemplateSeed, SeedAspekTemplatePrisma } from './seed-aspek-template';
+import {
+  seedAspekTemplate,
+  aspekTemplateSeed,
+  SeedAspekTemplatePrisma,
+} from './seed-aspek-template';
 
 /**
  * Mock prisma in-memory yang meniru perilaku unik:
@@ -6,15 +10,21 @@ import { seedAspekTemplate, aspekTemplateSeed, SeedAspekTemplatePrisma } from '.
  * - itemPenilaian unik per (aspekId, kodeItem)
  * Sehingga menjalankan seed dua kali terbukti tidak menduplikasi data.
  */
-function createMockPrisma(): SeedAspekTemplatePrisma & { _dump(): { aspek: unknown[]; item: unknown[] } } {
-  const aspekRows: Array<{ id: string; kegiatanId: null; kodeAspek: string; isActive: boolean }> = [];
-  const itemRows: Array<{ aspekId: string; kodeItem: string; namaItem: string; urutan: number }> = [];
+function createMockPrisma(): SeedAspekTemplatePrisma & {
+  _dump(): { aspek: unknown[]; item: unknown[] };
+} {
+  const aspekRows: Array<{ id: string; kegiatanId: null; kodeAspek: string; isActive: boolean }> =
+    [];
+  const itemRows: Array<{ aspekId: string; kodeItem: string; namaItem: string; urutan: number }> =
+    [];
   let nextId = 1;
 
   return {
     aspekPenilaian: {
       findFirst: async ({ where }) =>
-        aspekRows.find((r) => r.kegiatanId === where.kegiatanId && r.kodeAspek === where.kodeAspek) ?? null,
+        aspekRows.find(
+          (r) => r.kegiatanId === where.kegiatanId && r.kodeAspek === where.kodeAspek,
+        ) ?? null,
       create: async ({ data }) => {
         if (aspekRows.some((r) => r.kodeAspek === data.kodeAspek)) {
           const err = new Error('Unique constraint failed') as Error & { code?: string };

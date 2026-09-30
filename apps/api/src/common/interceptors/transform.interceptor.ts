@@ -50,12 +50,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         }
 
         // ── 3. Mutate result (create / update): { data, message? } ──
-        if (
-          data &&
-          typeof data === 'object' &&
-          'data' in data &&
-          !Array.isArray(data.data)
-        ) {
+        if (data && typeof data === 'object' && 'data' in data && !Array.isArray(data.data)) {
           const result: Response<T> = { success: true, data: data.data, timestamp };
           if (data.message) result.message = data.message;
           return result;

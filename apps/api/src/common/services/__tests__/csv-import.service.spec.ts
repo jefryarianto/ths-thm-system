@@ -16,10 +16,7 @@ describe('CsvImportService — escapeCsvValue', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CsvImportService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [CsvImportService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<CsvImportService>(CsvImportService);

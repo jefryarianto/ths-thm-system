@@ -10,7 +10,9 @@ test.describe('Notifications — /notifications', () => {
 
   test('renders page title and action buttons', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Notifikasi');
-    await expect(page.getByRole('button', { name: /kirim/i }).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: /kirim/i }).first()).toBeVisible({
+      timeout: 8000,
+    });
     await expect(page.getByText('Laporan').first()).toBeVisible({ timeout: 8000 });
     await expect(page.getByText('Pengaturan').first()).toBeVisible({ timeout: 8000 });
   });
@@ -26,11 +28,19 @@ test.describe('Notifications — /notifications', () => {
   test('renders notification list table', async ({ page }) => {
     await page.waitForTimeout(800);
     // Column headers (may be hidden on small viewport — check conditionally)
-    const judulVisible = await page.getByText('Judul').first().isVisible().catch(() => false);
+    const judulVisible = await page
+      .getByText('Judul')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (judulVisible) {
       await expect(page.getByText('Judul').first()).toBeVisible({ timeout: 8000 });
     }
-    const statusVisible = await page.getByText('Status').first().isVisible().catch(() => false);
+    const statusVisible = await page
+      .getByText('Status')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (statusVisible) {
       await expect(page.getByText('Status').first()).toBeVisible({ timeout: 8000 });
     }

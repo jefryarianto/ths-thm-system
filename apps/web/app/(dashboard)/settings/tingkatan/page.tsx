@@ -106,7 +106,12 @@ export default function TingkatanPage() {
   // ─── Row actions ───
 
   const handleDelete = async (row: TingkatanRow) => {
-    if (!(await confirm(`Hapus tingkatan "${row.nama}"? Anggota dengan tingkat ini akan tampil tanpa strip.`))) return;
+    if (
+      !(await confirm(
+        `Hapus tingkatan "${row.nama}"? Anggota dengan tingkat ini akan tampil tanpa strip.`,
+      ))
+    )
+      return;
     try {
       await apiClient.delete(`/tingkatan/${row.id}`);
       toast('success', 'Tingkatan dihapus');
@@ -184,16 +189,29 @@ export default function TingkatanPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">No</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Tingkatan</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Strip</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pratinjau</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
+                    No
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Nama Tingkatan
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Strip
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Pratinjau
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {data.map((row, i) => (
-                  <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <tr
+                    key={row.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{i + 1}</td>
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
@@ -300,7 +318,10 @@ export default function TingkatanPage() {
                         : 'border-gray-300 dark:border-gray-600'
                     }`}
                   >
-                    <span className="w-3.5 h-3.5 rounded-sm border border-black/20" style={{ backgroundColor: c.value }} />
+                    <span
+                      className="w-3.5 h-3.5 rounded-sm border border-black/20"
+                      style={{ backgroundColor: c.value }}
+                    />
                     {c.label}
                   </button>
                 ))}
@@ -309,7 +330,10 @@ export default function TingkatanPage() {
             {form.stripCount > 0 && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pratinjau:</p>
-                <div className="flex flex-col gap-[4px] border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900" style={{ width: 120 }}>
+                <div
+                  className="flex flex-col gap-[4px] border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900"
+                  style={{ width: 120 }}
+                >
                   {Array.from({ length: form.stripCount }).map((_, s) => (
                     <div
                       key={s}
@@ -333,8 +357,7 @@ export default function TingkatanPage() {
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} />{' '}
-                {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+                <Save size={14} /> {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
               </button>
             </div>
           </div>

@@ -196,6 +196,7 @@ Cascade selector **Distrik → Wilayah → Ranting** (3 select bertingkat). Mema
 **Ekspor tambahan:** `OrgSelection` (type), `EMPTY_ORG_SELECTION` (konstanta state awal).
 
 **Perilaku penting:**
+
 - Ganti distrik → wilayah & ranting direset; ganti wilayah → ranting direset (handler, bukan effect).
 - Kunci scope **menyelaraskan nilai** bila masih kosong sehingga select disabled tidak pernah tampil kosong; prefill dari server tetap dipertahankan.
 - Semua select punya `data-testid`: `org-cascade-distrik`, `org-cascade-wilayah`, `org-cascade-ranting`.
@@ -214,7 +215,7 @@ const [org, setOrg] = useState(EMPTY_ORG_SELECTION);
   error={errors.ranting}
   lockDistrikId={scope.lockDistrikId}
   lockWilayahId={scope.lockWilayahId}
-/>
+/>;
 ```
 
 **Kaitan scope aktor:** gunakan hook `useOrgScopeLocks(open)` (`@/hooks/use-org-scope`) yang membaca `/auth/scope` dan menurunkan kunci distrik/wilayah untuk `admin_distrik`, `admin_wilayah`, dan `admin_ranting` (superadmin bebas).

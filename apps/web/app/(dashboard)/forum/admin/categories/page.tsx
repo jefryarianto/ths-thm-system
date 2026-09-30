@@ -107,10 +107,7 @@ export default function ForumAdminCategoriesPage() {
   return (
     <PermissionGuard module="forum" action="admin">
       <PageContainer>
-        <PageHeader
-          title="Kelola Kategori Forum"
-          onRefresh={fetchCategories}
-        >
+        <PageHeader title="Kelola Kategori Forum" onRefresh={fetchCategories}>
           <Link
             href="/forum"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
@@ -119,7 +116,10 @@ export default function ForumAdminCategoriesPage() {
           </Link>
           {!showForm && (
             <button
-              onClick={() => { resetForm(); setShowForm(true); }}
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Plus size={16} /> Tambah Kategori
@@ -139,7 +139,9 @@ export default function ForumAdminCategoriesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Kategori</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nama Kategori
+                </label>
                 <input
                   value={form.nama}
                   onChange={(e) => setForm({ ...form, nama: e.target.value })}
@@ -148,7 +150,9 @@ export default function ForumAdminCategoriesPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi (opsional)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Deskripsi (opsional)
+                </label>
                 <textarea
                   value={form.deskripsi}
                   onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
@@ -158,7 +162,9 @@ export default function ForumAdminCategoriesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Urutan</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Urutan
+                </label>
                 <input
                   type="number"
                   value={form.order}
@@ -197,11 +203,21 @@ export default function ForumAdminCategoriesPage() {
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                   <th className="px-4 py-3 w-10"></th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Nama</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Deskripsi</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Urutan</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Thread</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Aksi</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Nama
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                    Deskripsi
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Urutan
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Thread
+                  </th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -219,9 +235,7 @@ export default function ForumAdminCategoriesPage() {
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
                       {cat.deskripsi || '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                      {cat.order}
-                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{cat.order}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                       {cat._count?.threads ?? 0}
                     </td>

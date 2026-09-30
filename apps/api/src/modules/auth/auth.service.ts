@@ -64,7 +64,10 @@ const MAX_FAILED_ATTEMPTS = Math.max(
   parseInt(process.env.MAX_FAILED_LOGIN_ATTEMPTS || '5', 10) || 5,
 );
 /** Durasi kunci akun (ms) setelah melewati batas gagal login. */
-const LOCKOUT_MS = Math.max(60_000, parseInt(process.env.ACCOUNT_LOCKOUT_MS || '900000', 10) || 900_000);
+const LOCKOUT_MS = Math.max(
+  60_000,
+  parseInt(process.env.ACCOUNT_LOCKOUT_MS || '900000', 10) || 900_000,
+);
 
 /**
  * Grace window rotasi refresh token (anti race condition antar-tab/perangkat).
@@ -245,7 +248,11 @@ export class AuthService {
     await this.createSession(user.id, tokens.refreshToken, meta);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+      return {
+        user: await this.sanitizeUser(user),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
   }
@@ -259,7 +266,12 @@ export class AuthService {
     meta?: AuthMeta,
   ): Promise<void> {
     const next = (user.failedLoginAttempts ?? 0) + 1;
-    this.logAuthAudit('LOGIN_FAIL', user.id, { attempt: next, maxAttempts: MAX_FAILED_ATTEMPTS }, meta);
+    this.logAuthAudit(
+      'LOGIN_FAIL',
+      user.id,
+      { attempt: next, maxAttempts: MAX_FAILED_ATTEMPTS },
+      meta,
+    );
     if (next >= MAX_FAILED_ATTEMPTS) {
       const lockedUntil = new Date(Date.now() + LOCKOUT_MS);
       await this.prisma.user.update({
@@ -336,7 +348,11 @@ export class AuthService {
     await this.createSession(user.id, tokens.refreshToken);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+      return {
+        user: await this.sanitizeUser(user),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
   }
@@ -356,8 +372,7 @@ export class AuthService {
         where: { refreshToken },
       });
 
-      const sessionValid =
-        !!session && session.userId === user.id && !session.revokedAt;
+      const sessionValid = !!session && session.userId === user.id && !session.revokedAt;
 
       const isCurrentDenormalized = !session && user.refreshToken === refreshToken;
 
@@ -739,10 +754,15 @@ export class AuthService {
       });
     }
 
-    this.logAuthAudit('ADMIN_SESSION_REVOKE', session.userId, {
-      sessionId,
-      adminAction: true,
-    }, meta);
+    this.logAuthAudit(
+      'ADMIN_SESSION_REVOKE',
+      session.userId,
+      {
+        sessionId,
+        adminAction: true,
+      },
+      meta,
+    );
 
     return { success: true, message: 'Sesi dicabut' };
   }
@@ -764,10 +784,15 @@ export class AuthService {
       data: { refreshToken: null },
     });
 
-    this.logAuthAudit('ADMIN_SESSION_REVOKE_ALL', userId, {
-      sessionsRevoked: result.count,
-      adminAction: true,
-    }, meta);
+    this.logAuthAudit(
+      'ADMIN_SESSION_REVOKE_ALL',
+      userId,
+      {
+        sessionsRevoked: result.count,
+        adminAction: true,
+      },
+      meta,
+    );
 
     return { success: true, message: `${result.count} sesi dicabut`, count: result.count };
   }
@@ -910,13 +935,21 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { unlinkSync } = require('fs');
     if (!validateImageMagicBytes(file.path)) {
-      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort */
+      }
       throw new BadRequestException('File tidak valid: format gambar tidak dikenali.');
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort */
+      }
       throw new NotFoundException('User tidak ditemukan');
     }
 
@@ -932,7 +965,11 @@ export class AuthService {
       if (byName.length === 1) anggota = byName[0];
     }
     if (!anggota) {
-      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort */
+      }
       throw new NotFoundException('Data anggota tidak ditemukan. Hubungi admin.');
     }
 
@@ -1044,7 +1081,9 @@ export class AuthService {
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to trigger profile approval for member ${anggotaId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to trigger profile approval for member ${anggotaId}: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -1084,12 +1123,13 @@ export class AuthService {
       html: tpl.html,
       metadata: { module: 'auth', template: 'resetPasswordEmail' },
     });
-
   }
 
   async resetPassword(dto: ResetPasswordDto) {
     try {
-      const payload = this.jwtService.verify(dto.token, { secret: this.envConfig.jwtRefreshSecret });
+      const payload = this.jwtService.verify(dto.token, {
+        secret: this.envConfig.jwtRefreshSecret,
+      });
       if (payload.purpose !== 'reset-password') {
         throw new UnauthorizedException('Token reset password tidak valid');
       }
@@ -1103,8 +1143,6 @@ export class AuthService {
         where: { id: user.id },
         data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) },
       });
-
-    
     } catch (error) {
       this.logger.error(`Reset password failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Token reset password tidak valid atau kadaluarsa');
@@ -1170,7 +1208,6 @@ export class AuthService {
       ...tpl,
       metadata: { module: 'auth', template: 'magicLink' },
     });
-
   }
 
   async loginWithMagicLink(token: string) {
@@ -1275,21 +1312,25 @@ export class AuthService {
   }
 
   private getCookieDomain(): string | undefined {
-      if (!this.envConfig.frontendUrl) return undefined;
-      try {
-        const url = new URL(this.envConfig.frontendUrl);
-        const hostname = url.hostname;
-        // If hostname is localhost or an IP address, return undefined
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-          return undefined;
-        }
-        return `.${hostname}`;
-      } catch {
+    if (!this.envConfig.frontendUrl) return undefined;
+    try {
+      const url = new URL(this.envConfig.frontendUrl);
+      const hostname = url.hostname;
+      // If hostname is localhost or an IP address, return undefined
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
+      ) {
         return undefined;
       }
+      return `.${hostname}`;
+    } catch {
+      return undefined;
     }
-    
-    setRefreshTokenCookie(res: Response, refreshToken: string) {
+  }
+
+  setRefreshTokenCookie(res: Response, refreshToken: string) {
     // Convert JWT duration ('14d') to milliseconds for cookie maxAge.
     const maxAge = parseDurationToMs(this.envConfig.jwtRefreshExpiresIn) ?? 7 * 24 * 60 * 60 * 1000;
 
@@ -1394,7 +1435,10 @@ export class AuthService {
       },
     });
 
-    return { ...(await this.sanitizeUser(user)), refreshToken: await this.generateTokens(user).then((tokens) => tokens.refreshToken) };
+    return {
+      ...(await this.sanitizeUser(user)),
+      refreshToken: await this.generateTokens(user).then((tokens) => tokens.refreshToken),
+    };
   }
 
   // ── 2FA (TOTP) ───────────────────────────────────────────

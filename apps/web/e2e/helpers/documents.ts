@@ -34,10 +34,26 @@ export async function registerDocumentsMocks(page: Page) {
       body: JSON.stringify({
         success: true,
         data: [
-          { type: 'kartu_anggota', label: 'Kartu Anggota', description: 'Kartu identitas anggota THS-THM' },
-          { type: 'sertifikat_pendadaran', label: 'Sertifikat Pendadaran', description: 'Sertifikat kelulusan pendadaran' },
-          { type: 'sertifikat_pelatihan', label: 'Sertifikat Pelatihan', description: 'Sertifikat keikutsertaan pelatihan' },
-          { type: 'piagam_prestasi', label: 'Piagam Prestasi', description: 'Piagam penghargaan prestasi' },
+          {
+            type: 'kartu_anggota',
+            label: 'Kartu Anggota',
+            description: 'Kartu identitas anggota THS-THM',
+          },
+          {
+            type: 'sertifikat_pendadaran',
+            label: 'Sertifikat Pendadaran',
+            description: 'Sertifikat kelulusan pendadaran',
+          },
+          {
+            type: 'sertifikat_pelatihan',
+            label: 'Sertifikat Pelatihan',
+            description: 'Sertifikat keikutsertaan pelatihan',
+          },
+          {
+            type: 'piagam_prestasi',
+            label: 'Piagam Prestasi',
+            description: 'Piagam penghargaan prestasi',
+          },
         ],
       }),
     });

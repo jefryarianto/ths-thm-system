@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
@@ -20,7 +27,13 @@ export const OPTIMISTIC_VERSIONED_MODELS = new Set(['anggota', 'klaim']);
  * baseUpdate. Data kritikal yang keliru diedit bisa dipulihkan lewat
  * endpoint admin/revisions.
  */
-export const REVISION_TRACKED_MODELS = new Set(['anggota', 'klaim', 'iuran', 'calonAnggota', 'latihan']);
+export const REVISION_TRACKED_MODELS = new Set([
+  'anggota',
+  'klaim',
+  'iuran',
+  'calonAnggota',
+  'latihan',
+]);
 
 /**
  * Scope strategy determines how the base class verifies data access.
@@ -153,10 +166,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
    * - `anggota_indirect` strategy: fetches the entity with nested
    *   `anggota.rantingId` and calls `verifyResourceAccess`.
    */
-  protected async verifyScope(
-    id: string,
-    scope?: UserScope,
-  ): Promise<void> {
+  protected async verifyScope(id: string, scope?: UserScope): Promise<void> {
     if (!scope) return;
 
     const strategy = this.scopeStrategy;
@@ -170,7 +180,12 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       if (!entity) {
         throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
       }
-      await this.scopeHelper.verifyKegiatanScope(this.prisma, scope, entity.scopeType, entity.scopeId);
+      await this.scopeHelper.verifyKegiatanScope(
+        this.prisma,
+        scope,
+        entity.scopeType,
+        entity.scopeId,
+      );
       return;
     }
 
@@ -303,7 +318,11 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
    * Melempar ForbiddenException bila klien mencoba membuat kegiatan di luar cakupan.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async assertKegiatanCreateScope(scope: UserScope | undefined, scopeType?: string, scopeId?: string): Promise<void> {
+  async assertKegiatanCreateScope(
+    scope: UserScope | undefined,
+    scopeType?: string,
+    scopeId?: string,
+  ): Promise<void> {
     if (!scope || !scopeType || !scopeId) return; // superadmin atau kegiatan tanpa scope eksplisit
 
     if (scopeType === 'nasional') return; // khusus superadmin — divalidasi di bawah
@@ -461,7 +480,14 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.afterCreate(entity, dto);
     this.invalidateCache();
     const entityRow = entity as { id?: string; rantingId?: string | null } | null;
-    this.audit('CREATE', this.config.model, entityRow?.id ?? null, userId, null, entityRow?.rantingId);
+    this.audit(
+      'CREATE',
+      this.config.model,
+      entityRow?.id ?? null,
+      userId,
+      null,
+      entityRow?.rantingId,
+    );
     return {
       data: entity,
       message: message || 'Data berhasil ditambahkan',
@@ -493,7 +519,10 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     let beforeRow: Record<string, unknown> | null = null;
     if (REVISION_TRACKED_MODELS.has(this.config.model) && this.revisions) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      beforeRow = (await this.prismaDelegate.findUnique({ where: { id } })) as Record<string, unknown> | null;
+      beforeRow = (await this.prismaDelegate.findUnique({ where: { id } })) as Record<
+        string,
+        unknown
+      > | null;
     }
 
     // ── Optimistic locking ─────────────────────────────────
@@ -615,7 +644,14 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
 
     await this.afterRemove(id);
     this.invalidateCache();
-    this.audit(this.config.softDelete ? 'SOFT_DELETE' : 'DELETE', this.config.model, id, undefined, undefined, rid);
+    this.audit(
+      this.config.softDelete ? 'SOFT_DELETE' : 'DELETE',
+      this.config.model,
+      id,
+      undefined,
+      undefined,
+      rid,
+    );
     return { message: message || 'Data berhasil dihapus' };
   }
 
@@ -644,10 +680,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
   }
 
   /** Transform DTO before updating. */
-  protected async beforeUpdate(
-    id: string,
-    dto: TUpdateDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeUpdate(id: string, dto: TUpdateDto): Promise<Record<string, unknown>> {
     return { ...dto } as Record<string, unknown>;
   }
 

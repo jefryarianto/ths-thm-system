@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  UserPlus,
-  ArrowLeft,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  ChevronRight,
-} from 'lucide-react';
+import { UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import { z } from 'zod';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
@@ -45,11 +38,7 @@ const registrationSchema = z.object({
     .regex(/^[0-9]+$/, 'Nomor HP hanya boleh berisi angka')
     .optional()
     .or(z.literal('')),
-  email: z
-    .string()
-    .email('Format email tidak valid')
-    .optional()
-    .or(z.literal('')),
+  email: z.string().email('Format email tidak valid').optional().or(z.literal('')),
   tempatLahir: z.string().optional(),
   tanggalLahir: z.string().optional(),
   alamat: z.string().optional(),
@@ -119,7 +108,9 @@ export default function DaftarPage() {
 
       setWilayahLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`);
+        const res = await fetch(
+          `${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`,
+        );
         if (!res.ok) throw new Error('Failed to fetch wilayahs');
         const json = await res.json();
         setWilayahs(json?.data ?? []);
@@ -147,7 +138,9 @@ export default function DaftarPage() {
       try {
         // Endpoint publik ranting (filter by wilayahId) — envelope {success,data}.
         // JANGAN memanggil /api/ranting: endpoint itu tidak ada di API.
-        const res = await fetch(`${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`);
+        const res = await fetch(
+          `${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`,
+        );
         if (!res.ok) throw new Error('Failed to fetch rantings');
         const json = await res.json();
         setRantings(json?.data ?? []);
@@ -230,51 +223,92 @@ export default function DaftarPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-if (step === 'success') {
-  return (
-    <PublicLayout>
-      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
-            <Link href="/" className="hover:text-white transition-colors">
-              Beranda
-            </Link>
-            <ChevronRight size={14} />
-            <span className="text-gold-400">{t.nav.daftar}</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
-            Pendaftaran Berhasil!
-          </h1>
-          <p className="text-white/70 mt-3 max-w-2xl text-base">
-            Data Anda telah kami terima. Tim admin akan memproses pendaftaran Anda dan menghubungi
-            melalui nomor HP atau email yang didaftarkan.
-          </p>
-          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
-        </div>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={36} className="text-green-600 dark:text-green-400" />
+  if (step === 'success') {
+    return (
+      <PublicLayout>
+        <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+              <Link href="/" className="hover:text-white transition-colors">
+                Beranda
+              </Link>
+              <ChevronRight size={14} />
+              <span className="text-gold-400">{t.nav.daftar}</span>
             </div>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
-            >
-              <ArrowLeft size={18} />
-              Kembali ke Login
-            </Link>
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+              Pendaftaran Berhasil!
+            </h1>
+            <p className="text-white/70 mt-3 max-w-2xl text-base">
+              Data Anda telah kami terima. Tim admin akan memproses pendaftaran Anda dan menghubungi
+              melalui nomor HP atau email yang didaftarkan.
+            </p>
+            <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
           </div>
         </div>
-      </div>
-    </PublicLayout>
-  );
-}
-if (step === 'error') {
+
+        <div className="flex-1 flex items-center justify-center">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={36} className="text-green-600 dark:text-green-400" />
+              </div>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
+              >
+                <ArrowLeft size={18} />
+                Kembali ke Login
+              </Link>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+  if (step === 'error') {
+    return (
+      <PublicLayout>
+        <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+              <Link href="/" className="hover:text-white transition-colors">
+                Beranda
+              </Link>
+              <ChevronRight size={14} />
+              <span className="text-gold-400">{t.nav.daftar}</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+              Pendaftaran Calon Anggota
+            </h1>
+            <p className="text-white/70 mt-3 max-w-2xl text-base">
+              Isi formulir berikut untuk menjadi calon anggota THS-THM
+            </p>
+            <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle size={36} className="text-red-600 dark:text-red-400" />
+              </div>
+              <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
+              <Link
+                href="/daftar"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
+              >
+                <ArrowLeft size={18} />
+                Ulangi
+              </Link>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
   return (
     <PublicLayout>
       <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
@@ -298,85 +332,44 @@ if (step === 'error') {
 
       <div className="flex-1 flex items-center justify-center">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={36} className="text-red-600 dark:text-red-400" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
+          {/* Tab Switcher */}
+          <div className="flex items-center space-x-4 mb-8 border-b border-gray-200 dark:border-gray-700">
+            <span className="px-4 py-2 font-medium text-navy-600 border-b-2 border-navy-600">
+              Daftar Calon Anggota
+            </span>
             <Link
-              href="/daftar"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
+              href="/klaim"
+              className="px-4 py-2 rounded-t-lg font-medium text-gray-500 hover:text-navy-600 transition-colors border-b-2 border-transparent"
             >
-              <ArrowLeft size={18} />
-              Ulangi
+              Klaim Anggota
             </Link>
           </div>
-        </div>
-      </div>
-    </PublicLayout>
-  );
-}
-return (
-  <PublicLayout>
-    <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
-          <Link href="/" className="hover:text-white transition-colors">
-            Beranda
-          </Link>
-          <ChevronRight size={14} />
-          <span className="text-gold-400">{t.nav.daftar}</span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
-          Pendaftaran Calon Anggota
-        </h1>
-        <p className="text-white/70 mt-3 max-w-2xl text-base">
-          Isi formulir berikut untuk menjadi calon anggota THS-THM
-        </p>
-        <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
-      </div>
-    </div>
 
-    <div className="flex-1 flex items-center justify-center">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Tab Switcher */}
-        <div className="flex items-center space-x-4 mb-8 border-b border-gray-200 dark:border-gray-700">
-          <span className="px-4 py-2 font-medium text-navy-600 border-b-2 border-navy-600">
-            Daftar Calon Anggota
-          </span>
-          <Link
-            href="/klaim"
-            className="px-4 py-2 rounded-t-lg font-medium text-gray-500 hover:text-navy-600 transition-colors border-b-2 border-transparent"
-          >
-            Klaim Anggota
-          </Link>
-        </div>
-
-        {/* Error Alert */}
-        {errorMsg && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-            <AlertCircle size={20} className="text-red-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg w-full">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-navy-100 dark:bg-navy-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                <UserPlus size={28} className="text-navy-600 dark:text-navy-400" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Daftar Calon Anggota
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Isi formulir berikut untuk menjadi bagian dari komunitas THS-THM
-              </p>
+          {/* Error Alert */}
+          {errorMsg && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+              <AlertCircle size={20} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-700 dark:text-red-400">{errorMsg}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-{/* Nama Lengkap */}
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg w-full">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-navy-100 dark:bg-navy-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <UserPlus size={28} className="text-navy-600 dark:text-navy-400" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Daftar Calon Anggota
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Isi formulir berikut untuk menjadi bagian dari komunitas THS-THM
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Nama Lengkap */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nama Lengkap <span className="text-red-500">*</span>
@@ -390,7 +383,7 @@ return (
                     placeholder="Masukkan nama lengkap"
                   />
                 </div>
-{/* Jenis Kelamin */}
+                {/* Jenis Kelamin */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Jenis Kelamin <span className="text-red-500">*</span>
@@ -405,7 +398,7 @@ return (
                     <option value="P">Perempuan</option>
                   </select>
                 </div>
-{/* No HP */}
+                {/* No HP */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     No. HP
@@ -418,7 +411,7 @@ return (
                     placeholder="08xxxxxxxxxx"
                   />
                 </div>
-{/* Tempat Lahir */}
+                {/* Tempat Lahir */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tempat Lahir
@@ -431,7 +424,7 @@ return (
                     placeholder="Kota lahir"
                   />
                 </div>
-{/* Tanggal Lahir */}
+                {/* Tanggal Lahir */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tanggal Lahir
@@ -443,7 +436,7 @@ return (
                     className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                   />
                 </div>
-{/* Email */}
+                {/* Email */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email
@@ -456,7 +449,7 @@ return (
                     placeholder="email@contoh.com"
                   />
                 </div>
-{/* Alamat */}
+                {/* Alamat */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Alamat
@@ -469,7 +462,7 @@ return (
                     placeholder="Alamat lengkap"
                   />
                 </div>
-{/* Sumber Info */}
+                {/* Sumber Info */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Dari mana Anda tahu THS-THM?
@@ -482,7 +475,7 @@ return (
                     placeholder="Teman, media sosial, brosur, dll."
                   />
                 </div>
-{/* Distrik Asal (Cascade) */}
+                {/* Distrik Asal (Cascade) */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Distrik <span className="text-red-500">*</span>
@@ -554,7 +547,7 @@ return (
                   </select>
                 </div>
               </div>
-{/* Submit */}
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

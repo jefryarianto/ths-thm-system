@@ -113,11 +113,13 @@ function ChannelBadge({ channel }: { channel: string }) {
   if (!ch) return null;
   const Icon = ch.icon;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-      channel === 'telegram'
-        ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-        : 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
-    }`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+        channel === 'telegram'
+          ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
+          : 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
+      }`}
+    >
       <Icon size={10} />
       {ch.label}
     </span>
@@ -159,14 +161,15 @@ function AlertFormModal({
   const toggleChannel = (ch: string) => {
     setForm((f) => ({
       ...f,
-      channels: f.channels.includes(ch)
-        ? f.channels.filter((c) => c !== ch)
-        : [...f.channels, ch],
+      channels: f.channels.includes(ch) ? f.channels.filter((c) => c !== ch) : [...f.channels, ch],
     }));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
       <div
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4"
         onClick={(e) => e.stopPropagation()}
@@ -181,7 +184,9 @@ function AlertFormModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Alert</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nama Alert
+            </label>
             <input
               type="text"
               value={form.name}
@@ -194,14 +199,18 @@ function AlertFormModal({
 
           {/* Metric */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Metric</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Metric
+            </label>
             <select
               value={form.metric}
               onChange={(e) => setForm((f) => ({ ...f, metric: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
             >
               {METRICS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
               ))}
             </select>
           </div>
@@ -209,23 +218,31 @@ function AlertFormModal({
           {/* Operator + Threshold */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Operator</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Operator
+              </label>
               <select
                 value={form.operator}
                 onChange={(e) => setForm((f) => ({ ...f, operator: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
               >
                 {OPERATORS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Threshold</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Threshold
+              </label>
               <input
                 type="number"
                 value={form.threshold}
-                onChange={(e) => setForm((f) => ({ ...f, threshold: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, threshold: parseFloat(e.target.value) || 0 }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
                 step="any"
                 required
@@ -255,7 +272,9 @@ function AlertFormModal({
             <input
               type="number"
               value={form.cooldown}
-              onChange={(e) => setForm((f) => ({ ...f, cooldown: parseInt(e.target.value) || 300 }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, cooldown: parseInt(e.target.value) || 300 }))
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
               min={60}
             />
@@ -263,7 +282,9 @@ function AlertFormModal({
 
           {/* Channels */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Channel Notifikasi</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Channel Notifikasi
+            </label>
             <div className="flex gap-3">
               {CHANNEL_OPTIONS.map((ch) => {
                 const Icon = ch.icon;
@@ -290,9 +311,13 @@ function AlertFormModal({
           {/* Telegram Config */}
           {form.channels.includes('telegram') && (
             <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Konfigurasi Telegram</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Konfigurasi Telegram
+              </p>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bot Token</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  Bot Token
+                </label>
                 <input
                   type="password"
                   value={form.telegramBotToken}
@@ -302,7 +327,9 @@ function AlertFormModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Chat ID</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  Chat ID
+                </label>
                 <input
                   type="text"
                   value={form.telegramChatId}
@@ -317,9 +344,13 @@ function AlertFormModal({
           {/* Email Config */}
           {form.channels.includes('email') && (
             <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Konfigurasi Email</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Konfigurasi Email
+              </p>
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email Penerima (pisahkan dengan koma)</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  Email Penerima (pisahkan dengan koma)
+                </label>
                 <input
                   type="text"
                   value={form.emailRecipients}
@@ -435,160 +466,201 @@ export default function MonitoringAlertsPage() {
   return (
     <PermissionGuard module="monitoring" action="view">
       <PageContainer>
-      <Breadcrumbs />
-      <div className="space-y-6 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Bell size={24} className="text-blue-600" />
-              Alert Thresholds
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Konfigurasi threshold alert dan channel notifikasi (Telegram/Email)
-            </p>
+        <Breadcrumbs />
+        <div className="space-y-6 max-w-4xl">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Bell size={24} className="text-blue-600" />
+                Alert Thresholds
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Konfigurasi threshold alert dan channel notifikasi (Telegram/Email)
+              </p>
+            </div>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+            >
+              <Plus size={16} />
+              Tambah Alert
+            </button>
           </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-          >
-            <Plus size={16} />
-            Tambah Alert
-          </button>
-        </div>
 
-        {/* List */}
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse">
-                <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-                <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
-              </div>
-            ))}
-          </div>
-        ) : alerts.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-10 text-center">
-            <Bell size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400 font-medium">Belum ada alert threshold</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Klik "Tambah Alert" untuk membuat aturan monitoring pertama
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`bg-white dark:bg-gray-800 rounded-xl border p-5 transition ${
-                  alert.isActive
-                    ? 'border-gray-200 dark:border-gray-700'
-                    : 'border-gray-200 dark:border-gray-700 opacity-60'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{alert.name}</h3>
-                      <MetricBadge metric={alert.metric} />
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                      Threshold: <span className="font-mono font-medium text-gray-700 dark:text-gray-300">
-                        {alert.operator === 'gt' ? '>' : alert.operator === 'gte' ? '>=' : alert.operator === 'lt' ? '<' : '<='}
-                      </span>{' '}
-                      <span className="font-mono font-medium text-gray-700 dark:text-gray-300">{alert.threshold}</span>
-                      {alert.duration > 0 && (
-                        <> · Durasi: <span className="font-mono">{alert.duration}s</span></>
-                      )}
-                      · Cooldown: <span className="font-mono">{alert.cooldown}s</span>
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {alert.channels.map((ch) => (
-                        <ChannelBadge key={ch} channel={ch} />
-                      ))}
-                      {alert.lastTriggeredAt && (
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">
-                          Terakhir triggered: {new Date(alert.lastTriggeredAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          {/* List */}
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse"
+                >
+                  <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                  <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-10 text-center">
+              <Bell size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">
+                Belum ada alert threshold
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Klik "Tambah Alert" untuk membuat aturan monitoring pertama
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`bg-white dark:bg-gray-800 rounded-xl border p-5 transition ${
+                    alert.isActive
+                      ? 'border-gray-200 dark:border-gray-700'
+                      : 'border-gray-200 dark:border-gray-700 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {alert.name}
+                        </h3>
+                        <MetricBadge metric={alert.metric} />
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        Threshold:{' '}
+                        <span className="font-mono font-medium text-gray-700 dark:text-gray-300">
+                          {alert.operator === 'gt'
+                            ? '>'
+                            : alert.operator === 'gte'
+                              ? '>='
+                              : alert.operator === 'lt'
+                                ? '<'
+                                : '<='}
+                        </span>{' '}
+                        <span className="font-mono font-medium text-gray-700 dark:text-gray-300">
+                          {alert.threshold}
                         </span>
-                      )}
+                        {alert.duration > 0 && (
+                          <>
+                            {' '}
+                            · Durasi: <span className="font-mono">{alert.duration}s</span>
+                          </>
+                        )}
+                        · Cooldown: <span className="font-mono">{alert.cooldown}s</span>
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {alert.channels.map((ch) => (
+                          <ChannelBadge key={ch} channel={ch} />
+                        ))}
+                        {alert.lastTriggeredAt && (
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">
+                            Terakhir triggered:{' '}
+                            {new Date(alert.lastTriggeredAt).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 ml-4 shrink-0">
-                    <button
-                      onClick={() => handleToggle(alert.id)}
-                      className={`p-2 rounded-lg transition ${
-                        alert.isActive
-                          ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
-                          : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                      title={alert.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                    >
-                      {alert.isActive ? <Power size={16} /> : <PowerOff size={16} />}
-                    </button>
-                    <button
-                      onClick={() => openEdit(alert)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                      title="Edit"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(alert.id)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition"
-                      title="Hapus"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1 ml-4 shrink-0">
+                      <button
+                        onClick={() => handleToggle(alert.id)}
+                        className={`p-2 rounded-lg transition ${
+                          alert.isActive
+                            ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
+                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                        title={alert.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                      >
+                        {alert.isActive ? <Power size={16} /> : <PowerOff size={16} />}
+                      </button>
+                      <button
+                        onClick={() => openEdit(alert)}
+                        className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                        title="Edit"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(alert.id)}
+                        className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition"
+                        title="Hapus"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
 
-        {/* Info Card */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
-          <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
-            <Activity size={16} className="text-blue-600" />
-            Cara Kerja Alert Threshold
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div className="space-y-1">
-              <p className="font-medium text-gray-700 dark:text-gray-300">📊 Evaluasi Otomatis</p>
-              <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                <li>Setiap 5 detik, sistem mengecek semua alert aktif</li>
-                <li>Membandingkan nilai metric vs threshold</li>
-                <li>Jika kondisi terpenuhi & cooldown sudah lewat → kirim notifikasi</li>
-              </ul>
-            </div>
-            <div className="space-y-1">
-              <p className="font-medium text-gray-700 dark:text-gray-300">🔔 Channel Notifikasi</p>
-              <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                <li><strong>Telegram</strong>: Kirim pesan ke chat/group via Bot API</li>
-                <li><strong>Email</strong>: Kirim via Resend/SMTP ke daftar email</li>
-                <li>Bisa kombinasikan kedua channel sekaligus</li>
-              </ul>
-            </div>
-            <div className="space-y-1 sm:col-span-2">
-              <p className="font-medium text-gray-700 dark:text-gray-300">🛡️ Best Practices</p>
-              <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                <li>Gunakan cooldown minimal 5 menit (300 detik) untuk menghindari spam notifikasi</li>
-                <li>Set durasi &gt; 0 untuk transient issues (misal: DB reconnect dalam 5 detik)</li>
-                <li>Nonaktifkan alert sementara saat maintenance untuk menghindari false alarm</li>
-              </ul>
+          {/* Info Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
+              <Activity size={16} className="text-blue-600" />
+              Cara Kerja Alert Threshold
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="space-y-1">
+                <p className="font-medium text-gray-700 dark:text-gray-300">📊 Evaluasi Otomatis</p>
+                <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>Setiap 5 detik, sistem mengecek semua alert aktif</li>
+                  <li>Membandingkan nilai metric vs threshold</li>
+                  <li>Jika kondisi terpenuhi & cooldown sudah lewat → kirim notifikasi</li>
+                </ul>
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-gray-700 dark:text-gray-300">
+                  🔔 Channel Notifikasi
+                </p>
+                <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>
+                    <strong>Telegram</strong>: Kirim pesan ke chat/group via Bot API
+                  </li>
+                  <li>
+                    <strong>Email</strong>: Kirim via Resend/SMTP ke daftar email
+                  </li>
+                  <li>Bisa kombinasikan kedua channel sekaligus</li>
+                </ul>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <p className="font-medium text-gray-700 dark:text-gray-300">🛡️ Best Practices</p>
+                <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>
+                    Gunakan cooldown minimal 5 menit (300 detik) untuk menghindari spam notifikasi
+                  </li>
+                  <li>
+                    Set durasi &gt; 0 untuk transient issues (misal: DB reconnect dalam 5 detik)
+                  </li>
+                  <li>
+                    Nonaktifkan alert sementara saat maintenance untuk menghindari false alarm
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <AlertFormModal
-        open={modalOpen}
-        data={formData}
-        onSave={handleSave}
-        onClose={() => { setModalOpen(false); setEditingAlert(null); }}
-      />
-      {confirmModal}
-    </PageContainer>
+        <AlertFormModal
+          open={modalOpen}
+          data={formData}
+          onSave={handleSave}
+          onClose={() => {
+            setModalOpen(false);
+            setEditingAlert(null);
+          }}
+        />
+        {confirmModal}
+      </PageContainer>
     </PermissionGuard>
   );
 }

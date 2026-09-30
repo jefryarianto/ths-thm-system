@@ -79,9 +79,14 @@ test.describe('CSV Export for Batch Generation', () => {
       await genTab.click();
     }
     await page.waitForTimeout(1000);
-    const historyVisible = await page.getByText('Riwayat Generate Dokumen').isVisible().catch(() => false);
+    const historyVisible = await page
+      .getByText('Riwayat Generate Dokumen')
+      .isVisible()
+      .catch(() => false);
     if (historyVisible) {
-      await expect(page.getByText('Riwayat Generate Dokumen').first()).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Riwayat Generate Dokumen').first()).toBeVisible({
+        timeout: 5000,
+      });
     }
 
     // Expand the completed KTA batch
@@ -100,14 +105,18 @@ test.describe('CSV Export for Batch Generation', () => {
     }
   });
 
-  test('downloads CSV with correct Content-Type and Content-Disposition headers', async ({ page }) => {
+  test('downloads CSV with correct Content-Type and Content-Disposition headers', async ({
+    page,
+  }) => {
     await mockCompletedBatch(page);
 
     // Mock the CSV export endpoint
     const BOM = '\uFEFF';
     const header = 'Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At';
-    const row1 = 'member-1,John Doe,DOC-0001,completed,,2026-07-21T10:00:00.000Z,2026-07-21T10:00:05.000Z';
-    const row2 = 'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
+    const row1 =
+      'member-1,John Doe,DOC-0001,completed,,2026-07-21T10:00:00.000Z,2026-07-21T10:00:05.000Z';
+    const row2 =
+      'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
     const row3 = 'member-3,Budi Santoso,,pending,,2026-07-21T10:00:00.000Z,';
     const MOCK_CSV = BOM + header + '\n' + row1 + '\n' + row2 + '\n' + row3 + '\n';
 
@@ -156,12 +165,15 @@ test.describe('CSV Export for Batch Generation', () => {
       const exportResponse = await exportResponsePromise;
 
       // Verify Content-Type header
-      const contentType = exportResponse.headers()['content-type'] || exportResponse.headers()['Content-Type'];
+      const contentType =
+        exportResponse.headers()['content-type'] || exportResponse.headers()['Content-Type'];
       expect(contentType).toBeDefined();
       expect(contentType.toLowerCase()).toContain('text/csv');
 
       // Verify Content-Disposition header
-      const disposition = exportResponse.headers()['content-disposition'] || exportResponse.headers()['Content-Disposition'];
+      const disposition =
+        exportResponse.headers()['content-disposition'] ||
+        exportResponse.headers()['Content-Disposition'];
       expect(disposition).toBeDefined();
       expect(disposition).toContain('attachment; filename=');
       expect(disposition).toContain('.csv');
@@ -169,13 +181,17 @@ test.describe('CSV Export for Batch Generation', () => {
     }
   });
 
-  test('downloaded CSV contains BOM, correct header row, and properly formatted data', async ({ page }) => {
+  test('downloaded CSV contains BOM, correct header row, and properly formatted data', async ({
+    page,
+  }) => {
     await mockCompletedBatch(page);
 
     const BOM = '\uFEFF';
     const header = 'Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At';
-    const row1 = 'member-1,John Doe,DOC-0001,completed,,2026-07-21T10:00:00.000Z,2026-07-21T10:00:05.000Z';
-    const row2 = 'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
+    const row1 =
+      'member-1,John Doe,DOC-0001,completed,,2026-07-21T10:00:00.000Z,2026-07-21T10:00:05.000Z';
+    const row2 =
+      'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
     const row3 = 'member-3,Budi Santoso,,pending,,2026-07-21T10:00:00.000Z,';
     const MOCK_CSV = BOM + header + '\n' + row1 + '\n' + row2 + '\n' + row3 + '\n';
 
@@ -228,7 +244,9 @@ test.describe('CSV Export for Batch Generation', () => {
       const hasBom = csvText.charCodeAt(0) === 0xfeff;
       const lines = csvText.split('\n');
       const headerLine = lines[0].slice(hasBom ? 1 : 0);
-      expect(headerLine).toBe('Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At');
+      expect(headerLine).toBe(
+        'Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At',
+      );
 
       const columns = headerLine.split(',');
       expect(columns).toHaveLength(7);
@@ -250,7 +268,8 @@ test.describe('CSV Export for Batch Generation', () => {
 
     const BOM = '\uFEFF';
     const header = 'Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At';
-    const rowWithComma = 'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
+    const rowWithComma =
+      'member-2,"Smith, Jane",DOC-0002,failed,"PDF generation timeout",2026-07-21T10:00:00.000Z,2026-07-21T10:00:03.000Z';
     const MOCK_CSV = BOM + header + '\n' + rowWithComma + '\n';
 
     await page.route(/\/api\/documents\/batch\/batch-history-1\/export$/, async (route) => {

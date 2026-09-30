@@ -32,9 +32,7 @@ describe('CronTasksService — cleanupStaleSessions', () => {
   const expectRoughlyDaysAgo = (received: Date, days: number) => {
     const expected = new Date();
     expected.setDate(expected.getDate() - days);
-    expect(Math.abs(received.getTime() - expected.getTime())).toBeLessThan(
-      60_000,
-    );
+    expect(Math.abs(received.getTime() - expected.getTime())).toBeLessThan(60_000);
   };
 
   it('menghapus sesi tidak aktif lebih dari 14 hari', async () => {
@@ -61,9 +59,7 @@ describe('CronTasksService — cleanupStaleSessions', () => {
   });
 
   it('mencatat audit SESSION_CLEANUP ketika ada sesi dihapus', async () => {
-    deleteMany
-      .mockResolvedValueOnce({ count: 12 })
-      .mockResolvedValueOnce({ count: 5 });
+    deleteMany.mockResolvedValueOnce({ count: 12 }).mockResolvedValueOnce({ count: 5 });
 
     await service.cleanupStaleSessions();
 
@@ -118,7 +114,10 @@ describe('CronTasksService — cleanupOldEmailLogs', () => {
 
   const buildService = () =>
     new CronTasksService(
-      { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
+      {
+        userSession: { deleteMany: jest.fn() },
+        emailLog: { deleteMany: emailDeleteMany },
+      } as never,
       {} as never,
       {} as never,
       { enqueue: jest.fn().mockResolvedValue(0) } as never,
@@ -188,7 +187,10 @@ describe('CronTasksService — cleanupOldEmailLogs', () => {
   it('tetap jalan tanpa PersistentAuditService (opsional)', async () => {
     emailDeleteMany.mockResolvedValue({ count: 3 });
     service = new CronTasksService(
-      { userSession: { deleteMany: jest.fn() }, emailLog: { deleteMany: emailDeleteMany } } as never,
+      {
+        userSession: { deleteMany: jest.fn() },
+        emailLog: { deleteMany: emailDeleteMany },
+      } as never,
       {} as never,
       {} as never,
       { enqueue: jest.fn().mockResolvedValue(0) } as never,
@@ -234,7 +236,12 @@ describe('CronTasksService — sendDuesReminders (email blast)', () => {
             },
             {
               id: 'r2',
-              anggota: { id: 'a2', namaLengkap: 'B', email: 'b@x.co', statusKeanggotaan: 'nonaktif' },
+              anggota: {
+                id: 'a2',
+                namaLengkap: 'B',
+                email: 'b@x.co',
+                statusKeanggotaan: 'nonaktif',
+              },
             },
           ])
           .mockResolvedValue([]),
@@ -246,11 +253,13 @@ describe('CronTasksService — sendDuesReminders (email blast)', () => {
     };
     // resolveUserIdFromAnggotaId: anggota a1 → user u1 via email
     prisma.anggota = {
-      findUnique: jest.fn().mockImplementation(({ where }: { where: { id: string } }) =>
-        where.id === 'a1'
-          ? { id: 'a1', email: 'a@x.co', noHp: null, namaLengkap: 'A', rantingId: null }
-          : null,
-      ),
+      findUnique: jest
+        .fn()
+        .mockImplementation(({ where }: { where: { id: string } }) =>
+          where.id === 'a1'
+            ? { id: 'a1', email: 'a@x.co', noHp: null, namaLengkap: 'A', rantingId: null }
+            : null,
+        ),
       findMany: jest.fn().mockResolvedValue([]),
     };
     prisma.user = { findUnique: jest.fn().mockResolvedValue({ id: 'u1' }), create: jest.fn() };
@@ -296,7 +305,15 @@ describe('CronTasksService — sendDuesReminders (email blast)', () => {
         updateMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
       anggota: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'a1', email: 'a@x.co', noHp: null, namaLengkap: 'A', rantingId: null }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({
+            id: 'a1',
+            email: 'a@x.co',
+            noHp: null,
+            namaLengkap: 'A',
+            rantingId: null,
+          }),
         findMany: jest.fn().mockResolvedValue([]),
       },
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'uX' }), create: jest.fn() },

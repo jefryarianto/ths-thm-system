@@ -123,7 +123,8 @@ export function buildBreadcrumbs(pathname: string): BreadcrumbSegment[] {
     }
 
     // Look up the label from config
-    const label = SEGMENT_LABELS[seg] || seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' ');
+    const label =
+      SEGMENT_LABELS[seg] || seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' ');
     breadcrumbs.push({ href: currentHref, label });
   }
 

@@ -19,16 +19,16 @@ export default function ColumnVisibility({
   const [isOpen, setIsOpen] = useState(false);
 
   const [visibleColumnsFromStorage, setVisibleColumnsFromStorage] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return columns.map(c => c.key);
+    if (typeof window === 'undefined') return columns.map((c) => c.key);
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return columns.map(c => c.key);
+        return columns.map((c) => c.key);
       }
     }
-    return columns.map(c => c.key);
+    return columns.map((c) => c.key);
   });
 
   const displayColumns = visibleColumns ?? visibleColumnsFromStorage;
@@ -45,17 +45,20 @@ export default function ColumnVisibility({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
-  const handleToggle = useCallback((key: string) => {
-    const exists = displayColumns.includes(key);
-    const newVisible = exists 
-      ? displayColumns.filter(k => k !== key) 
-      : [...displayColumns, key];
-    localStorage.setItem(storageKey, JSON.stringify(newVisible));
-    onVisibleColumnsChange?.(newVisible);
-  }, [displayColumns, storageKey, onVisibleColumnsChange]);
+  const handleToggle = useCallback(
+    (key: string) => {
+      const exists = displayColumns.includes(key);
+      const newVisible = exists
+        ? displayColumns.filter((k) => k !== key)
+        : [...displayColumns, key];
+      localStorage.setItem(storageKey, JSON.stringify(newVisible));
+      onVisibleColumnsChange?.(newVisible);
+    },
+    [displayColumns, storageKey, onVisibleColumnsChange],
+  );
 
   const handleReset = useCallback(() => {
-    const defaultKeys = columns.map(c => c.key);
+    const defaultKeys = columns.map((c) => c.key);
     localStorage.setItem(storageKey, JSON.stringify(defaultKeys));
     setVisibleColumnsFromStorage(defaultKeys);
     onVisibleColumnsChange?.(defaultKeys);
@@ -80,28 +83,24 @@ export default function ColumnVisibility({
           <div className="p-3">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-semibold text-muted">Kolom</p>
-              <button
-                onClick={handleReset}
-                className="text-2xs text-primary hover:underline"
-              >
+              <button onClick={handleReset} className="text-2xs text-primary hover:underline">
                 Reset
               </button>
             </div>
             <div className="space-y-2">
-              {columns.filter(c => c.key).map(col => (
-                <label
-                  key={col.key}
-                  className="flex items-center gap-2"
-                >
-                  <input
-                    type="checkbox"
-                    checked={displayColumns.includes(col.key)}
-                    onChange={() => handleToggle(col.key)}
-                    className="w-4 h-4 accent-primary rounded"
-                  />
-                  <span className="text-sm text-text">{col.label}</span>
-                </label>
-              ))}
+              {columns
+                .filter((c) => c.key)
+                .map((col) => (
+                  <label key={col.key} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={displayColumns.includes(col.key)}
+                      onChange={() => handleToggle(col.key)}
+                      className="w-4 h-4 accent-primary rounded"
+                    />
+                    <span className="text-sm text-text">{col.label}</span>
+                  </label>
+                ))}
             </div>
           </div>
         </div>

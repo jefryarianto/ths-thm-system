@@ -4,7 +4,28 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Shield, PenLine, Layers, Upload, ImagePlus, User, Lock, Settings as SettingsIcon, Mail, Smartphone, Database, FileText, Users } from 'lucide-react';
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  RefreshCw,
+  Save,
+  Building2,
+  ArrowRight,
+  Shield,
+  PenLine,
+  Layers,
+  Upload,
+  ImagePlus,
+  User,
+  Lock,
+  Settings as SettingsIcon,
+  Mail,
+  Smartphone,
+  Database,
+  FileText,
+  Users,
+} from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import JabatanSelect from '@/components/ui/jabatan-select';
@@ -47,8 +68,15 @@ interface Stamp {
   imagePath?: string | null;
 }
 
-
-function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div className="flex items-center gap-3 mb-2 mt-2 first:mt-0">
       {icon}
@@ -65,10 +93,13 @@ function GoogleOAuthToggle() {
   const toast = useToast();
 
   useEffect(() => {
-    apiClient.get('/settings/auth-providers').then(({ data }) => {
-      setEnabled(data.googleOAuthEnabled !== false);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    apiClient
+      .get('/settings/auth-providers')
+      .then(({ data }) => {
+        setEnabled(data.googleOAuthEnabled !== false);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const toggleFn = async () => {
@@ -84,25 +115,51 @@ function GoogleOAuthToggle() {
   };
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800" id="autentikasi">
+    <div
+      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+      id="autentikasi"
+    >
       <div className="flex items-center gap-3">
         <svg className="h-6 w-6" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+          <path
+            fill="#4285F4"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+          />
+          <path
+            fill="#34A853"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+          />
+          <path
+            fill="#EA4335"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+          />
         </svg>
         <div>
           <p className="text-sm font-medium text-gray-900 dark:text-white">Login dengan Google</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Izinkan pengguna login menggunakan akun Google</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Izinkan pengguna login menggunakan akun Google
+          </p>
         </div>
       </div>
       <button
         onClick={toggleFn}
         disabled={loading}
-        className={'relative inline-flex h-6 w-11 items-center rounded-full transition-colors ' + (enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600') + (loading ? ' opacity-50' : '')}
+        className={
+          'relative inline-flex h-6 w-11 items-center rounded-full transition-colors ' +
+          (enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600') +
+          (loading ? ' opacity-50' : '')
+        }
       >
-        <span className={'inline-block h-4 w-4 transform rounded-full bg-white transition-transform ' + (enabled ? 'translate-x-6' : 'translate-x-1')} />
+        <span
+          className={
+            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform ' +
+            (enabled ? 'translate-x-6' : 'translate-x-1')
+          }
+        />
       </button>
     </div>
   );
@@ -111,7 +168,9 @@ function GoogleOAuthToggle() {
 export default function SettingsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'organisasi' | 'autentikasi' | 'sistem' | 'pemeliharaan'>('organisasi');
+  const [activeTab, setActiveTab] = useState<
+    'organisasi' | 'autentikasi' | 'sistem' | 'pemeliharaan'
+  >('organisasi');
   const [org, setOrg] = useState<OrgSettings | null>(null);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -361,832 +420,915 @@ export default function SettingsPage() {
 
   return (
     <PermissionGuard module="settings" action="view">
-    <div className="space-y-6">
-      <Breadcrumbs />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Settings Hub</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Pusat konfigurasi tata kelola organisasi, integrasi, keamanan, dan pemeliharaan sistem
-          </p>
-        </div>
-        <button
-          onClick={fetchData}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm"
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
-
-      {/* Tabs Bar */}
-      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-px">
-        <button
-          type="button"
-          onClick={() => setActiveTab('organisasi')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-            activeTab === 'organisasi'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
-        >
-          <Building2 size={16} />
-          <span>Organisasi & Distrik</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('autentikasi')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-            activeTab === 'autentikasi'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
-        >
-          <Lock size={16} />
-          <span>Autentikasi & Keamanan</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('sistem')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-            activeTab === 'sistem'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
-        >
-          <SettingsIcon size={16} />
-          <span>Komunikasi & Dokumen</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('pemeliharaan')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-            activeTab === 'pemeliharaan'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-          }`}
-        >
-          <Database size={16} />
-          <span>Pemeliharaan & Server</span>
-        </button>
-      </div>
-
-      {/* ── TAB 1: ORGANISASI & DISTRIK ── */}
-      {activeTab === 'organisasi' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Link
-              href="/settings/org-structure"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
-                  <Building2 size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                    Struktur Distrik
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Distrik, Wilayah & Ranting</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/jabatan"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
-                  <Users size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                    Daftar Jabatan
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Kelola hierarki jabatan</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/tingkatan"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
-                  <Layers size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
-                    Tingkatan / Sabuk
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Strip & balok sabuk anggota</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition" />
-            </Link>
-          </div>
-      <SectionHeader icon={<SettingsIcon size={20} className="text-purple-600 dark:text-purple-400" />} title="Sistem" subtitle="Pengaturan teknis, email, keamanan, dan cadangan data" />
-
-      <Link
-        href="/audit-logs"
-        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
-            <Shield size={20} className="text-purple-600 dark:text-purple-400" />
-          </div>
+      <div className="space-y-6">
+        <Breadcrumbs />
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
-              Audit Log
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Lacak aktivitas, akses data, dan pelanggaran scope
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Settings Hub</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Pusat konfigurasi tata kelola organisasi, integrasi, keamanan, dan pemeliharaan sistem
             </p>
           </div>
+          <button
+            onClick={fetchData}
+            className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm"
+          >
+            <RefreshCw size={14} /> Refresh
+          </button>
         </div>
-        <ArrowRight size={18} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition" />
-      </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Informasi Organisasi */}
-        <Card
-          title="Informasi Organisasi"
-          action={
-            org ? (
-              <button
-                onClick={openOrgEdit}
-                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
-                title="Edit"
+        {/* Tabs Bar */}
+        <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-px">
+          <button
+            type="button"
+            onClick={() => setActiveTab('organisasi')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+              activeTab === 'organisasi'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+            }`}
+          >
+            <Building2 size={16} />
+            <span>Organisasi & Distrik</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('autentikasi')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+              activeTab === 'autentikasi'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+            }`}
+          >
+            <Lock size={16} />
+            <span>Autentikasi & Keamanan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('sistem')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+              activeTab === 'sistem'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+            }`}
+          >
+            <SettingsIcon size={16} />
+            <span>Komunikasi & Dokumen</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pemeliharaan')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+              activeTab === 'pemeliharaan'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+            }`}
+          >
+            <Database size={16} />
+            <span>Pemeliharaan & Server</span>
+          </button>
+        </div>
+
+        {/* ── TAB 1: ORGANISASI & DISTRIK ── */}
+        {activeTab === 'organisasi' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link
+                href="/settings/org-structure"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
               >
-                <Edit3 size={14} />
-              </button>
-            ) : undefined
-          }
-        >
-          {org ? (
-            <div className="space-y-2 text-sm">
-              <InfoRow label="Nama" value={org.nama} />
-              <InfoRow label="Alamat" value={org.alamat} />
-              <InfoRow label="No. Telepon" value={org.noTelp} />
-              <InfoRow label="Email" value={org.email} />
-              <InfoRow label="Website" value={org.website} />
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada data</p>
-          )}
-        </Card>
-
-        {/* Stempel */}
-        <Card
-          title="Stempel"
-          action={
-            <button
-              onClick={openStampModal}
-              className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
-              title="Upload stempel"
-            >
-              <Upload size={14} />
-            </button>
-          }
-        >
-          {stamp ? (
-            <div className="space-y-2 text-sm">
-              <InfoRow label="Nama" value={stamp.nama || stamp.label} />
-              {stamp.imagePath && (
-                <div className="mt-2 flex items-center gap-4">
-                  <img
-                    src={`/api/uploads/${encodeURIComponent(stamp.imagePath)}`}
-                    alt="Stempel"
-                    className="h-24 border rounded dark:border-gray-600 object-contain"
-                  />
-                </div>
-              )}
-              <div className="pt-1">
-                <button
-                  onClick={openStampModal}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition"
-                >
-                  <Upload size={12} />
-                  Ganti Stempel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={openStampModal}
-              className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-green-400 hover:text-green-600 dark:hover:border-green-700 transition"
-            >
-              <Upload size={16} />
-              Upload Stempel Distrik
-            </button>
-          )}
-        </Card>
-
-        {/* Daftar Periode */}
-        <Card
-          title="Daftar Periode"
-          action={
-            <button
-              onClick={openPeriodCreate}
-              className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
-              title="Tambah"
-            >
-              <Plus size={14} />
-            </button>
-          }
-        >
-          {periods.length > 0 ? (
-            <div className="space-y-2">
-              {periods.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-900 dark:text-white">
-                      {p.nama || p.periode}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        p.isActive
-                          ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}
-                    >
-                      {p.isActive ? 'Aktif' : 'Nonaktif'}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                    <Building2 size={20} />
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      Struktur Distrik
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Distrik, Wilayah & Ranting
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/jabatan"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                    <Users size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                      Daftar Jabatan
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Kelola hierarki jabatan
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/tingkatan"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                    <Layers size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                      Tingkatan / Sabuk
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Strip & balok sabuk anggota
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+            </div>
+            <SectionHeader
+              icon={<SettingsIcon size={20} className="text-purple-600 dark:text-purple-400" />}
+              title="Sistem"
+              subtitle="Pengaturan teknis, email, keamanan, dan cadangan data"
+            />
+
+            <Link
+              href="/audit-logs"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
+                  <Shield size={20} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
+                    Audit Log
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Lacak aktivitas, akses data, dan pelanggaran scope
+                  </p>
+                </div>
+              </div>
+              <ArrowRight
+                size={18}
+                className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition"
+              />
+            </Link>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Informasi Organisasi */}
+              <Card
+                title="Informasi Organisasi"
+                action={
+                  org ? (
                     <button
-                      onClick={() => openPeriodEdit(p)}
+                      onClick={openOrgEdit}
                       className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
                       title="Edit"
                     >
                       <Edit3 size={14} />
                     </button>
-                    <button
-                      onClick={() => deletePeriod(p.id)}
-                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  ) : undefined
+                }
+              >
+                {org ? (
+                  <div className="space-y-2 text-sm">
+                    <InfoRow label="Nama" value={org.nama} />
+                    <InfoRow label="Alamat" value={org.alamat} />
+                    <InfoRow label="No. Telepon" value={org.noTelp} />
+                    <InfoRow label="Email" value={org.email} />
+                    <InfoRow label="Website" value={org.website} />
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada periode</p>
-          )}
-        </Card>
+                ) : (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada data</p>
+                )}
+              </Card>
 
-        {/* Daftar Tanda Tangan */}
-        <Card
-          title="Daftar Tanda Tangan"
-          action={
-            <button
-              onClick={openSignatureModal}
-              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
-              title="Tambah tanda tangan"
-            >
-              <Plus size={14} />
-            </button>
-          }
-        >
-          {signatures.length > 0 ? (
-            <div className="space-y-2">
-              {signatures.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    {s.imagePath ? (
-                      <img
-                        src={`/api/uploads/${encodeURIComponent(s.imagePath)}`}
-                        alt={s.nama || s.namaLengkap || 'Tanda tangan'}
-                        className="w-10 h-8 object-contain bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
-                      />
-                    ) : (
-                      <div className="w-10 h-8 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                        <PenLine size={12} className="text-gray-400" />
+              {/* Stempel */}
+              <Card
+                title="Stempel"
+                action={
+                  <button
+                    onClick={openStampModal}
+                    className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
+                    title="Upload stempel"
+                  >
+                    <Upload size={14} />
+                  </button>
+                }
+              >
+                {stamp ? (
+                  <div className="space-y-2 text-sm">
+                    <InfoRow label="Nama" value={stamp.nama || stamp.label} />
+                    {stamp.imagePath && (
+                      <div className="mt-2 flex items-center gap-4">
+                        <img
+                          src={`/api/uploads/${encodeURIComponent(stamp.imagePath)}`}
+                          alt="Stempel"
+                          className="h-24 border rounded dark:border-gray-600 object-contain"
+                        />
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm text-gray-900 dark:text-white font-medium">
-                        {s.nama || s.namaLengkap}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
+                    <div className="pt-1">
+                      <button
+                        onClick={openStampModal}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition"
+                      >
+                        <Upload size={12} />
+                        Ganti Stempel
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        s.isActive
-                          ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}
-                    >
-                      {s.isActive ? 'Aktif' : 'Nonaktif'}
-                    </span>
+                ) : (
+                  <button
+                    onClick={openStampModal}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-green-400 hover:text-green-600 dark:hover:border-green-700 transition"
+                  >
+                    <Upload size={16} />
+                    Upload Stempel Distrik
+                  </button>
+                )}
+              </Card>
+
+              {/* Daftar Periode */}
+              <Card
+                title="Daftar Periode"
+                action={
+                  <button
+                    onClick={openPeriodCreate}
+                    className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
+                    title="Tambah"
+                  >
+                    <Plus size={14} />
+                  </button>
+                }
+              >
+                {periods.length > 0 ? (
+                  <div className="space-y-2">
+                    {periods.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-gray-900 dark:text-white">
+                            {p.nama || p.periode}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              p.isActive
+                                ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            }`}
+                          >
+                            {p.isActive ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openPeriodEdit(p)}
+                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+                            title="Edit"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            onClick={() => deletePeriod(p.id)}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
+                            title="Hapus"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada periode</p>
+                )}
+              </Card>
+
+              {/* Daftar Tanda Tangan */}
+              <Card
+                title="Daftar Tanda Tangan"
+                action={
+                  <button
+                    onClick={openSignatureModal}
+                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+                    title="Tambah tanda tangan"
+                  >
+                    <Plus size={14} />
+                  </button>
+                }
+              >
+                {signatures.length > 0 ? (
+                  <div className="space-y-2">
+                    {signatures.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          {s.imagePath ? (
+                            <img
+                              src={`/api/uploads/${encodeURIComponent(s.imagePath)}`}
+                              alt={s.nama || s.namaLengkap || 'Tanda tangan'}
+                              className="w-10 h-8 object-contain bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                            />
+                          ) : (
+                            <div className="w-10 h-8 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                              <PenLine size={12} className="text-gray-400" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium">
+                              {s.nama || s.namaLengkap}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              s.isActive
+                                ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            }`}
+                          >
+                            {s.isActive ? 'Aktif' : 'Nonaktif'}
+                          </span>
+                          <button
+                            onClick={() => deleteSignature(s.id)}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
+                            title="Hapus"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                     <button
-                      onClick={() => deleteSignature(s.id)}
-                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
-                      title="Hapus"
+                      onClick={openSignatureModal}
+                      className="w-full mt-2 flex items-center justify-center gap-1.5 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
                     >
-                      <Trash2 size={14} />
+                      <Plus size={12} />
+                      Tambah Tanda Tangan
                     </button>
                   </div>
-                </div>
-              ))}
-              <button
-                onClick={openSignatureModal}
-                className="w-full mt-2 flex items-center justify-center gap-1.5 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
+                ) : (
+                  <button
+                    onClick={openSignatureModal}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
+                  >
+                    <Upload size={16} />
+                    Upload Tanda Tangan
+                  </button>
+                )}
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 2: AUTENTIKASI & KEAMANAN ── */}
+        {activeTab === 'autentikasi' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="space-y-4">
+              <SectionHeader
+                icon={<Lock size={20} className="text-blue-600 dark:text-blue-400" />}
+                title="Metode Masuk"
+                subtitle="Konfigurasi autentikasi pihak ketiga dan single sign-on"
+              />
+              <GoogleOAuthToggle />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <Link
+                href="/settings/sessions"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
               >
-                <Plus size={12} />
-                Tambah Tanda Tangan
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                    <User size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      Manajemen Sesi Pengguna
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Sesi aktif dan cabut token login
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/audit-logs"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-400 dark:hover:border-purple-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
+                      Audit Log & Keamanan
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Lacak jejak akses data & audit perubahan
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 3: KOMUNIKASI & DOKUMEN ── */}
+        {activeTab === 'sistem' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link
+                href="/settings/email"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                    <Mail size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      Konfigurasi SMTP Email
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Server SMTP, kredensial & pengirim resmi
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/email/logs"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">
+                      Riwayat Pengiriman Email
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Log pesan terkirim, gagal & status antrean
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-sky-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/fcm-test"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                    <Smartphone size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                      Pengujian Notifikasi FCM
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Uji push notification Firebase ke perangkat
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/kartu"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                      Template Kartu Anggota
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Desain & layout kartu fisik/digital
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/settings/dokumen"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-teal-400 dark:hover:border-teal-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
+                      Template Surat & Dokumen
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Kop surat, format sertifikat & ijazah
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-teal-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 4: PEMELIHARAAN & SERVER ── */}
+        {activeTab === 'pemeliharaan' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link
+                href="/settings/backup"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                    <Database size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      Database Backup
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Unduh & jadwalkan cadangan data
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/admin/queues"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
+                    <SettingsIcon size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
+                      Antrean Tugas (BullMQ)
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Monitor antrean background job
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+
+              <Link
+                href="/ws-monitor"
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                    <RefreshCw size={20} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                      WebSocket Monitor
+                    </p>
+                    <p className="text-2xs text-gray-500 dark:text-gray-400">
+                      Koneksi realtime & channel aktif
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition"
+                />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Edit Org Modal ─── */}
+        <Modal
+          open={showOrgModal}
+          onClose={() => setShowOrgModal(false)}
+          title="Edit Informasi Organisasi"
+        >
+          <div className="space-y-4">
+            <FormField label="Nama Organisasi" required>
+              <input
+                type="text"
+                value={orgForm.nama}
+                onChange={(e) => setOrgForm((p) => ({ ...p, nama: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+            <FormField label="Alamat">
+              <textarea
+                value={orgForm.alamat || ''}
+                onChange={(e) => setOrgForm((p) => ({ ...p, alamat: e.target.value }))}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+              />
+            </FormField>
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="No. Telepon">
+                <input
+                  type="text"
+                  value={orgForm.noTelp || ''}
+                  onChange={(e) => setOrgForm((p) => ({ ...p, noTelp: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </FormField>
+              <FormField label="Email">
+                <input
+                  type="email"
+                  value={orgForm.email || ''}
+                  onChange={(e) => setOrgForm((p) => ({ ...p, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </FormField>
+            </div>
+            <FormField label="Website">
+              <input
+                type="text"
+                value={orgForm.website || ''}
+                onChange={(e) => setOrgForm((p) => ({ ...p, website: e.target.value }))}
+                placeholder="https://"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+            {orgError && <p className="text-sm text-red-600 dark:text-red-400">{orgError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowOrgModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveOrg}
+                disabled={savingOrg}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Save size={14} /> {savingOrg ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
-          ) : (
-            <button
-              onClick={openSignatureModal}
-              className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
-            >
-              <Upload size={16} />
-              Upload Tanda Tangan
-            </button>
-          )}
-        </Card>
-      </div>
-      </div>
-      )}
+          </div>
+        </Modal>
 
-      {/* ── TAB 2: AUTENTIKASI & KEAMANAN ── */}
-      {activeTab === 'autentikasi' && (
-        <div className="space-y-6 animate-fade-in">
+        {/* ─── Period Modal ─── */}
+        <Modal
+          open={showPeriodModal}
+          onClose={() => setShowPeriodModal(false)}
+          title={editingPeriod ? 'Edit Periode' : 'Tambah Periode'}
+        >
           <div className="space-y-4">
-            <SectionHeader icon={<Lock size={20} className="text-blue-600 dark:text-blue-400" />} title="Metode Masuk" subtitle="Konfigurasi autentikasi pihak ketiga dan single sign-on" />
-            <GoogleOAuthToggle />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <Link
-              href="/settings/sessions"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
-                  <User size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                    Manajemen Sesi Pengguna
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Sesi aktif dan cabut token login</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/audit-logs"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-400 dark:hover:border-purple-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
-                  <Shield size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
-                    Audit Log & Keamanan
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Lacak jejak akses data & audit perubahan</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition" />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── TAB 3: KOMUNIKASI & DOKUMEN ── */}
-      {activeTab === 'sistem' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link
-              href="/settings/email"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
-                  <Mail size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                    Konfigurasi SMTP Email
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Server SMTP, kredensial & pengirim resmi</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/email/logs"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">
-                    Riwayat Pengiriman Email
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Log pesan terkirim, gagal & status antrean</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-sky-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/fcm-test"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
-                  <Smartphone size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
-                    Pengujian Notifikasi FCM
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Uji push notification Firebase ke perangkat</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/kartu"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
-                    Template Kartu Anggota
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Desain & layout kartu fisik/digital</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/settings/dokumen"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-teal-400 dark:hover:border-teal-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400">
-                  <FileText size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
-                    Template Surat & Dokumen
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Kop surat, format sertifikat & ijazah</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-teal-500 group-hover:translate-x-1 transition" />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ── TAB 4: PEMELIHARAAN & SERVER ── */}
-      {activeTab === 'pemeliharaan' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Link
-              href="/settings/backup"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
-                  <Database size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                    Database Backup
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Unduh & jadwalkan cadangan data</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/admin/queues"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
-                  <SettingsIcon size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
-                    Antrean Tugas (BullMQ)
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Monitor antrean background job</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition" />
-            </Link>
-
-            <Link
-              href="/ws-monitor"
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
-                  <RefreshCw size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
-                    WebSocket Monitor
-                  </p>
-                  <p className="text-2xs text-gray-500 dark:text-gray-400">Koneksi realtime & channel aktif</p>
-                </div>
-              </div>
-              <ArrowRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition" />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Edit Org Modal ─── */}
-      <Modal
-        open={showOrgModal}
-        onClose={() => setShowOrgModal(false)}
-        title="Edit Informasi Organisasi"
-      >
-        <div className="space-y-4">
-          <FormField label="Nama Organisasi" required>
-            <input
-              type="text"
-              value={orgForm.nama}
-              onChange={(e) => setOrgForm((p) => ({ ...p, nama: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </FormField>
-          <FormField label="Alamat">
-            <textarea
-              value={orgForm.alamat || ''}
-              onChange={(e) => setOrgForm((p) => ({ ...p, alamat: e.target.value }))}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-            />
-          </FormField>
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="No. Telepon">
+            <FormField label="Nama Periode" required>
               <input
                 type="text"
-                value={orgForm.noTelp || ''}
-                onChange={(e) => setOrgForm((p) => ({ ...p, noTelp: e.target.value }))}
+                value={periodForm.nama}
+                onChange={(e) => setPeriodForm((p) => ({ ...p, nama: e.target.value }))}
+                placeholder="Contoh: 2026/2027"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </FormField>
-            <FormField label="Email">
-              <input
-                type="email"
-                value={orgForm.email || ''}
-                onChange={(e) => setOrgForm((p) => ({ ...p, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
+            <FormField label="Status">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={periodForm.isActive}
+                  onChange={(e) => setPeriodForm((p) => ({ ...p, isActive: e.target.checked }))}
+                  className="rounded border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-gray-700 dark:text-gray-300">Aktif</span>
+              </label>
             </FormField>
-          </div>
-          <FormField label="Website">
-            <input
-              type="text"
-              value={orgForm.website || ''}
-              onChange={(e) => setOrgForm((p) => ({ ...p, website: e.target.value }))}
-              placeholder="https://"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </FormField>
-          {orgError && <p className="text-sm text-red-600 dark:text-red-400">{orgError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowOrgModal(false)}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Batal
-            </button>
-            <button
-              onClick={saveOrg}
-              disabled={savingOrg}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Save size={14} /> {savingOrg ? 'Menyimpan...' : 'Simpan'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ─── Period Modal ─── */}
-      <Modal
-        open={showPeriodModal}
-        onClose={() => setShowPeriodModal(false)}
-        title={editingPeriod ? 'Edit Periode' : 'Tambah Periode'}
-      >
-        <div className="space-y-4">
-          <FormField label="Nama Periode" required>
-            <input
-              type="text"
-              value={periodForm.nama}
-              onChange={(e) => setPeriodForm((p) => ({ ...p, nama: e.target.value }))}
-              placeholder="Contoh: 2026/2027"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </FormField>
-          <FormField label="Status">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={periodForm.isActive}
-                onChange={(e) => setPeriodForm((p) => ({ ...p, isActive: e.target.checked }))}
-                className="rounded border-gray-300 dark:border-gray-600"
-              />
-              <span className="text-gray-700 dark:text-gray-300">Aktif</span>
-            </label>
-          </FormField>
-          {periodError && <p className="text-sm text-red-600 dark:text-red-400">{periodError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowPeriodModal(false)}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Batal
-            </button>
-            <button
-              onClick={savePeriod}
-              disabled={savingPeriod}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Save size={14} />{' '}
-              {savingPeriod ? 'Menyimpan...' : editingPeriod ? 'Simpan' : 'Tambah'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ─── Upload Stempel Modal ─── */}
-      <Modal
-        open={showStampModal}
-        onClose={() => setShowStampModal(false)}
-        title="Upload Stempel Distrik"
-      >
-        <div className="space-y-4">
-          <FormField label="Nama Stempel">
-            <input
-              type="text"
-              value={stampForm.nama}
-              onChange={(e) => setStampForm((p) => ({ ...p, nama: e.target.value }))}
-              placeholder="Contoh: Stempel Distrik Larantuka"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-            />
-          </FormField>
-          <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
-            <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/30 transition">
-              {stampForm.file ? (
-                <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                  {stampForm.file.name}
-                </span>
-              ) : (
-                <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                  <ImagePlus size={18} />
-                  Klik untuk memilih file stempel
-                </span>
-              )}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="hidden"
-                onChange={(e) =>
-                  setStampForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
-                }
-              />
-            </label>
-          </FormField>
-          {stampForm.file && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <img
-                src={URL.createObjectURL(stampForm.file)}
-                alt="Preview"
-                className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
-              />
-              <span className="text-xs text-gray-500 dark:text-gray-400">Preview stempel</span>
+            {periodError && <p className="text-sm text-red-600 dark:text-red-400">{periodError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowPeriodModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={savePeriod}
+                disabled={savingPeriod}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Save size={14} />{' '}
+                {savingPeriod ? 'Menyimpan...' : editingPeriod ? 'Simpan' : 'Tambah'}
+              </button>
             </div>
-          )}
-          {stampError && <p className="text-sm text-red-600 dark:text-red-400">{stampError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowStampModal(false)}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Batal
-            </button>
-            <button
-              onClick={saveStamp}
-              disabled={savingStamp}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              <Upload size={14} /> {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
-            </button>
           </div>
-        </div>
-      </Modal>
+        </Modal>
 
-      {/* ─── Upload Tanda Tangan Modal ─── */}
-      <Modal
-        open={showSignatureModal}
-        onClose={() => setShowSignatureModal(false)}
-        title="Upload Tanda Tangan"
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Nama Penandatangan">
+        {/* ─── Upload Stempel Modal ─── */}
+        <Modal
+          open={showStampModal}
+          onClose={() => setShowStampModal(false)}
+          title="Upload Stempel Distrik"
+        >
+          <div className="space-y-4">
+            <FormField label="Nama Stempel">
               <input
                 type="text"
-                value={signatureForm.nama}
-                onChange={(e) => setSignatureForm((p) => ({ ...p, nama: e.target.value }))}
-                placeholder="Contoh: Yoseph Pehan Betan"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={stampForm.nama}
+                onChange={(e) => setStampForm((p) => ({ ...p, nama: e.target.value }))}
+                placeholder="Contoh: Stempel Distrik Larantuka"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
               />
             </FormField>
-            <FormField label="Jabatan">
-              <JabatanSelect value={signatureForm.jabatan} onChange={(v) => setSignatureForm((p) => ({ ...p, jabatan: v }))} />
+            <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
+              <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/30 transition">
+                {stampForm.file ? (
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    {stampForm.file.name}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <ImagePlus size={18} />
+                    Klik untuk memilih file stempel
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) =>
+                    setStampForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
+                  }
+                />
+              </label>
             </FormField>
-          </div>
-          <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
-            <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition">
-              {signatureForm.file ? (
-                <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  {signatureForm.file.name}
-                </span>
-              ) : (
-                <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                  <ImagePlus size={18} />
-                  Klik untuk memilih file tanda tangan
-                </span>
-              )}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="hidden"
-                onChange={(e) =>
-                  setSignatureForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
-                }
-              />
-            </label>
-          </FormField>
-          {signatureForm.file && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <img
-                src={URL.createObjectURL(signatureForm.file)}
-                alt="Preview"
-                className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
-              />
-              <span className="text-xs text-gray-500 dark:text-gray-400">Preview tanda tangan</span>
+            {stampForm.file && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <img
+                  src={URL.createObjectURL(stampForm.file)}
+                  alt="Preview"
+                  className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">Preview stempel</span>
+              </div>
+            )}
+            {stampError && <p className="text-sm text-red-600 dark:text-red-400">{stampError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowStampModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveStamp}
+                disabled={savingStamp}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                <Upload size={14} /> {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
+              </button>
             </div>
-          )}
-          {signatureError && <p className="text-sm text-red-600 dark:text-red-400">{signatureError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowSignatureModal(false)}
-              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              Batal
-            </button>
-            <button
-              onClick={saveSignature}
-              disabled={savingSignature}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Upload size={14} /> {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
-            </button>
           </div>
-        </div>
-      </Modal>
-      {confirmModal}
-    </div>
+        </Modal>
+
+        {/* ─── Upload Tanda Tangan Modal ─── */}
+        <Modal
+          open={showSignatureModal}
+          onClose={() => setShowSignatureModal(false)}
+          title="Upload Tanda Tangan"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Nama Penandatangan">
+                <input
+                  type="text"
+                  value={signatureForm.nama}
+                  onChange={(e) => setSignatureForm((p) => ({ ...p, nama: e.target.value }))}
+                  placeholder="Contoh: Yoseph Pehan Betan"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </FormField>
+              <FormField label="Jabatan">
+                <JabatanSelect
+                  value={signatureForm.jabatan}
+                  onChange={(v) => setSignatureForm((p) => ({ ...p, jabatan: v }))}
+                />
+              </FormField>
+            </div>
+            <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
+              <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition">
+                {signatureForm.file ? (
+                  <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    {signatureForm.file.name}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <ImagePlus size={18} />
+                    Klik untuk memilih file tanda tangan
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) =>
+                    setSignatureForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
+                  }
+                />
+              </label>
+            </FormField>
+            {signatureForm.file && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <img
+                  src={URL.createObjectURL(signatureForm.file)}
+                  alt="Preview"
+                  className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Preview tanda tangan
+                </span>
+              </div>
+            )}
+            {signatureError && (
+              <p className="text-sm text-red-600 dark:text-red-400">{signatureError}</p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowSignatureModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveSignature}
+                disabled={savingSignature}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Upload size={14} /> {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+        {confirmModal}
+      </div>
     </PermissionGuard>
   );
 }

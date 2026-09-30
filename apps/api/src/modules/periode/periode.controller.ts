@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PeriodeService, PeriodeLevel } from './periode.service';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
@@ -29,7 +38,10 @@ export class PeriodeController {
 
   @Patch(':id')
   @CrudAuth('superadmin', { summary: 'Update periode' })
-  update(@Param('id') id: string, @Body() body: { nama?: string; tglMulai?: string; tglSelesai?: string; isActive?: boolean }) {
+  update(
+    @Param('id') id: string,
+    @Body() body: { nama?: string; tglMulai?: string; tglSelesai?: string; isActive?: boolean },
+  ) {
     return this.service.update(id, body);
   }
 
@@ -41,10 +53,7 @@ export class PeriodeController {
 
   @Post(':id/activate-unit')
   @CrudAuth('superadmin', { summary: 'Tetapkan periode aktif untuk unit spesifik' })
-  activateUnit(
-    @Param('id') id: string,
-    @Body() body: { level: PeriodeLevel; unitId: string },
-  ) {
+  activateUnit(@Param('id') id: string, @Body() body: { level: PeriodeLevel; unitId: string }) {
     if (!body.level) {
       throw new BadRequestException('level wajib diisi');
     }

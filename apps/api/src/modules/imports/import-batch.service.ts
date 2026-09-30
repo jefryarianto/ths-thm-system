@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  IJobQueue,
-  JobPayload,
-  JobResult,
-} from '../../common/queue/queue.interface';
+import { IJobQueue, JobPayload, JobResult } from '../../common/queue/queue.interface';
 import { InProcessQueueAdapter } from '../../common/queue/in-process-queue.adapter';
 import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
 import { resolveRedisConnection } from '../../common/queue/redis-connection';
@@ -95,7 +91,11 @@ export class ImportBatchService implements OnModuleDestroy {
 
           const processor = this.processors.get(module);
           if (!processor) {
-            return { jobId: payload.jobId, success: false, error: `Modul "${module}" tidak terdaftar` };
+            return {
+              jobId: payload.jobId,
+              success: false,
+              error: `Modul "${module}" tidak terdaftar`,
+            };
           }
 
           const batch = await this.prisma.importBatch.findUnique({ where: { id: batchId } });
@@ -348,7 +348,11 @@ export class ImportBatchService implements OnModuleDestroy {
 
   // ── Penanganan selesai/gagal per baris ──────────────────
 
-  private async handleItemComplete(batchId: string, itemId: string, result: JobResult): Promise<void> {
+  private async handleItemComplete(
+    batchId: string,
+    itemId: string,
+    result: JobResult,
+  ): Promise<void> {
     const skip = (result.data as Record<string, unknown> | undefined)?.skip === true;
 
     await this.prisma.importBatchItem.update({
@@ -372,7 +376,11 @@ export class ImportBatchService implements OnModuleDestroy {
     this.eventsGateway?.broadcast('import:updated', { timestamp: Date.now() });
   }
 
-  private async handleItemFailed(batchId: string, itemId: string, result: JobResult): Promise<void> {
+  private async handleItemFailed(
+    batchId: string,
+    itemId: string,
+    result: JobResult,
+  ): Promise<void> {
     await this.prisma.importBatchItem.update({
       where: { id: itemId },
       data: { status: 'error', error: result.error || 'Gagal diproses' },
@@ -387,7 +395,12 @@ export class ImportBatchService implements OnModuleDestroy {
     this.eventsGateway?.broadcast('import:updated', { timestamp: Date.now() });
   }
 
-  private async finalizeIfComplete(batch: { id: string; totalRows: number; processed: number; errors: number }): Promise<void> {
+  private async finalizeIfComplete(batch: {
+    id: string;
+    totalRows: number;
+    processed: number;
+    errors: number;
+  }): Promise<void> {
     if (batch.processed + batch.errors < batch.totalRows) return;
 
     const status = batch.errors > 0 ? 'completed_with_errors' : 'completed';
@@ -439,7 +452,14 @@ export class ImportBatchService implements OnModuleDestroy {
             ? `Import ${batch.module} selesai — ${success} baris berhasil.`
             : `Import ${batch.module} selesai — ${success} berhasil, ${failed} gagal dari ${batch.totalRows} total.`,
           tipe: 'umum' as never,
-          data: { batchId, module: batch.module, success, failed, totalRows: batch.totalRows, status } as never,
+          data: {
+            batchId,
+            module: batch.module,
+            success,
+            failed,
+            totalRows: batch.totalRows,
+            status,
+          } as never,
         },
       });
       const unread = await this.prisma.notifikasi.count({

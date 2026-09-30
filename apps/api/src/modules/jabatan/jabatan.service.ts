@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { resolveWriteDistrikId } from '../../common/utils/distrik-scope';
@@ -21,9 +26,7 @@ export class JabatanService {
   async findAll(scope?: { role?: string; distrikId?: string | null }) {
     const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.jabatan.findMany({
-      where: isScoped
-        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
-        : undefined,
+      where: isScoped ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] } : undefined,
       orderBy: [{ urutan: 'asc' }, { nama: 'asc' }],
       include: {
         _count: { select: { pengurus: true } },
@@ -90,7 +93,8 @@ export class JabatanService {
       const duplicate = await this.prisma.jabatan.findFirst({
         where: { kode: data.kode, distrikId: jabatan.distrikId ?? null, id: { not: id } },
       });
-      if (duplicate) throw new ConflictException(`Kode "${data.kode}" sudah dipakai pada scope ini`);
+      if (duplicate)
+        throw new ConflictException(`Kode "${data.kode}" sudah dipakai pada scope ini`);
     }
     return this.prisma.jabatan.update({ where: { id }, data });
   }

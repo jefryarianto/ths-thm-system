@@ -112,7 +112,7 @@ export default function BuktiPreviewModal({
         setTimeout(() => setSlideDir(null), 200);
       });
     },
-    [currentIndex, allImages.length]
+    [currentIndex, allImages.length],
   );
 
   const goPrev = useCallback(() => goTo(currentIndex - 1), [goTo, currentIndex]);
@@ -185,7 +185,7 @@ export default function BuktiPreviewModal({
 
   const getDistance = (
     t1: { clientX: number; clientY: number },
-    t2: { clientX: number; clientY: number }
+    t2: { clientX: number; clientY: number },
   ) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
 
   const handleTouchStart = useCallback(
@@ -220,7 +220,7 @@ export default function BuktiPreviewModal({
         }
       }
     },
-    [zoom, pan, hasMultiple]
+    [zoom, pan, hasMultiple],
   );
 
   const handleTouchMove = useCallback(
@@ -248,7 +248,7 @@ export default function BuktiPreviewModal({
         }
       }
     },
-    [zoom]
+    [zoom],
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -573,7 +573,10 @@ export default function BuktiPreviewModal({
 
         {/* File Path */}
         {currentImage && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate" title={currentImage.path}>
+          <p
+            className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate"
+            title={currentImage.path}
+          >
             {currentImage.path}
           </p>
         )}

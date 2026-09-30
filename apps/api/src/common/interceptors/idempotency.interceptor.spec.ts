@@ -1,4 +1,9 @@
-import { ExecutionContext, CallHandler, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  CallHandler,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { of, throwError } from 'rxjs';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
@@ -29,7 +34,10 @@ describe('IdempotencyInterceptor', () => {
     user?: { id: string },
     method = 'POST',
     path = '/api/v1/dues',
-  ): { context: ExecutionContext; res: { setHeader: jest.Mock; status: jest.Mock; statusCode: number } } => {
+  ): {
+    context: ExecutionContext;
+    res: { setHeader: jest.Mock; status: jest.Mock; statusCode: number };
+  } => {
     const res = {
       setHeader: jest.fn(),
       status: jest.fn(),
@@ -56,7 +64,9 @@ describe('IdempotencyInterceptor', () => {
     return { context, res };
   };
 
-  const createMockHandler = (returnValue: unknown = { id: 'due-1', amount: 50000 }): CallHandler => ({
+  const createMockHandler = (
+    returnValue: unknown = { id: 'due-1', amount: 50000 },
+  ): CallHandler => ({
     handle: () => of(returnValue),
   });
 
@@ -90,7 +100,10 @@ describe('IdempotencyInterceptor', () => {
   });
 
   it('should return cached response with X-Idempotency-Hit header when already completed', (done) => {
-    const { context, res } = createMockContext({ 'x-idempotency-key': 'req-key-1' }, { id: 'user-1' });
+    const { context, res } = createMockContext(
+      { 'x-idempotency-key': 'req-key-1' },
+      { id: 'user-1' },
+    );
     const handler = createMockHandler({ id: 'new-due' });
     reflector.getAllAndOverride.mockReturnValue({ ttl: 60000 });
     cache.get.mockReturnValue({

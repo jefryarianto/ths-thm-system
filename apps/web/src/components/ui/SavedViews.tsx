@@ -16,7 +16,11 @@ interface SavedViewsProps {
   onReset?: () => void;
 }
 
-export default function SavedViews({ storageKey = 'membersSavedViews', onApply, onReset }: SavedViewsProps) {
+export default function SavedViews({
+  storageKey = 'membersSavedViews',
+  onApply,
+  onReset,
+}: SavedViewsProps) {
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -50,16 +54,22 @@ export default function SavedViews({ storageKey = 'membersSavedViews', onApply, 
     setIsCreating(false);
   }, [savedViews, storageKey, viewName]);
 
-  const deleteView = useCallback((id: string) => {
-    const updated = savedViews.filter(v => v.id !== id);
-    setSavedViews(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-  }, [savedViews, storageKey]);
+  const deleteView = useCallback(
+    (id: string) => {
+      const updated = savedViews.filter((v) => v.id !== id);
+      setSavedViews(updated);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    },
+    [savedViews, storageKey],
+  );
 
-  const applyView = useCallback((view: SavedView) => {
-    onApply(view);
-    setIsOpen(false);
-  }, [onApply]);
+  const applyView = useCallback(
+    (view: SavedView) => {
+      onApply(view);
+      setIsOpen(false);
+    },
+    [onApply],
+  );
 
   return (
     <div className="relative">
@@ -130,8 +140,11 @@ export default function SavedViews({ storageKey = 'membersSavedViews', onApply, 
               <p className="text-xs text-muted text-center py-4">No saved views</p>
             ) : (
               <div className="space-y-1.5">
-                {savedViews.map(view => (
-                  <div key={view.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-surface-variant rounded-md group">
+                {savedViews.map((view) => (
+                  <div
+                    key={view.id}
+                    className="flex items-center justify-between px-2 py-1.5 hover:bg-surface-variant rounded-md group"
+                  >
                     <button
                       onClick={() => applyView(view)}
                       className="flex-1 text-left text-xs text-text hover:underline"

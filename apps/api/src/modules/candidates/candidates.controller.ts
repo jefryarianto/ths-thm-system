@@ -15,13 +15,17 @@ export class CandidatesController {
   constructor(private readonly candidatesService: CandidatesService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil semua kandidat',
+  })
   findAll(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest) {
     return this.candidatesService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil detail kandidat',
+  })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.candidatesService.findOne(id, req.scope);
   }
@@ -35,44 +39,65 @@ export class CandidatesController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui kandidat',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateCandidateDto, @Req() req: ScopedRequest) {
     return this.candidatesService.update(id, dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Hapus kandidat',
+  })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.candidatesService.remove(id, req.scope);
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor data kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Impor data kandidat',
+  })
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
     return this.candidatesService.importCsv(data, req.scope);
   }
 
   @Post(':id/validate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Validasi kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Validasi kandidat',
+  })
   validate(@Param('id') id: string) {
     return this.candidatesService.validate(id);
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Setujui kandidat (lulus pendadaran)' })
-  approve(@Param('id') id: string, @Body() dto: { tempatDadar?: string; tahunDadar?: string; tingkat?: string }) {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Setujui kandidat (lulus pendadaran)',
+  })
+  approve(
+    @Param('id') id: string,
+    @Body() dto: { tempatDadar?: string; tahunDadar?: string; tingkat?: string },
+  ) {
     return this.candidatesService.approve(id, dto);
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tolak kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tolak kandidat',
+  })
   reject(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.candidatesService.reject(id, body.reason);
   }
 
   @Get('export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Download data kandidat sebagai CSV' })
-  async exportCsv(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest, @Res() res: Response) {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Download data kandidat sebagai CSV',
+  })
+  async exportCsv(
+    @Query() filter: CandidateFilterDto,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+  ) {
     const csv = await this.candidatesService.exportCsv(filter, req.scope);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="calon-anggota.csv"');

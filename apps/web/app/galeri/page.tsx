@@ -111,7 +111,8 @@ export default function GaleriPage() {
           </div>
           <h1 className="text-3xl sm:text-4xl font-serif font-bold">{t.galeri.title}</h1>
           <p className="text-white/70 text-sm sm:text-base mt-2 max-w-xl">
-            Dokumentasi momen, kejuaraan, pendadaran, dan kegiatan rohani THS-THM di seluruh wilayah.
+            Dokumentasi momen, kejuaraan, pendadaran, dan kegiatan rohani THS-THM di seluruh
+            wilayah.
           </p>
           <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
@@ -157,7 +158,10 @@ export default function GaleriPage() {
 
             {/* Search Input */}
             <div className="relative w-full md:w-72 shrink-0">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -279,9 +283,7 @@ export default function GaleriPage() {
           >
             {/* Counter Header */}
             <div className="px-6 py-3 bg-navy-900 border-b border-white/10 flex items-center justify-between text-xs text-white/70">
-              <span className="font-semibold text-gold-400">
-                {currentLightboxPhoto.kategori}
-              </span>
+              <span className="font-semibold text-gold-400">{currentLightboxPhoto.kategori}</span>
               <span>
                 {t.galeri.photoCount || 'Foto'} {lightboxIndex + 1} {t.galeri.of || 'dari'}{' '}
                 {filteredData.length}

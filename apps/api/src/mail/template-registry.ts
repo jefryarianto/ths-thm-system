@@ -66,7 +66,9 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   registrationApprovedEmail: {
     name: 'registrationApprovedEmail',
     label: 'Pendaftaran Disetujui',
-    variables: [{ name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap calon anggota' }],
+    variables: [
+      { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap calon anggota' },
+    ],
     renderDefault: (o) => registrationApprovedEmail(o?.nama ?? 'Budi Santoso'),
   },
   registrationRejectedEmail: {
@@ -94,7 +96,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
     label: 'Reset Kata Sandi',
     variables: [
       { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap pengguna' },
-      { name: 'resetUrl', sample: 'https://app.ths-thm.org/reset-password?token=abc123', description: 'Tautan reset kata sandi' },
+      {
+        name: 'resetUrl',
+        sample: 'https://app.ths-thm.org/reset-password?token=abc123',
+        description: 'Tautan reset kata sandi',
+      },
     ],
     renderDefault: (o) =>
       resetPasswordEmail(
@@ -111,7 +117,12 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'periode', sample: 'Januari 2026', description: 'Periode iuran' },
     ],
     renderDefault: (o) =>
-      paymentConfirmationEmail(o?.nama ?? 'Budi Santoso', 50000, o?.periode ?? 'Januari 2026', true),
+      paymentConfirmationEmail(
+        o?.nama ?? 'Budi Santoso',
+        50000,
+        o?.periode ?? 'Januari 2026',
+        true,
+      ),
   },
   activityInvitationEmail: {
     name: 'activityInvitationEmail',
@@ -156,7 +167,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'hadir', sample: 'HADIR', description: 'Status kehadiran (HADIR/TIDAK HADIR)' },
     ],
     renderDefault: (o) =>
-      attendanceConfirmationEmail(o?.nama ?? 'Budi Santoso', o?.jenisMateri ?? 'Teknik Dasar Tangan', true),
+      attendanceConfirmationEmail(
+        o?.nama ?? 'Budi Santoso',
+        o?.jenisMateri ?? 'Teknik Dasar Tangan',
+        true,
+      ),
   },
   documentReadyEmail: {
     name: 'documentReadyEmail',
@@ -182,7 +197,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'reason', sample: 'Berkas lengkap', description: 'Alasan (opsional)' },
     ],
     renderDefault: (o) =>
-      claimStatusEmail(o?.nama ?? 'Budi Santoso', o?.status ?? 'disetujui', o?.reason ?? 'Berkas lengkap'),
+      claimStatusEmail(
+        o?.nama ?? 'Budi Santoso',
+        o?.status ?? 'disetujui',
+        o?.reason ?? 'Berkas lengkap',
+      ),
   },
   graduationResultEmail: {
     name: 'graduationResultEmail',
@@ -231,7 +250,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
     variables: [
       { name: 'nama', sample: 'Surya Wijaya', description: 'Nama lengkap penguji' },
       { name: 'email', sample: 'penguji@example.com', description: 'Email penguji' },
-      { name: 'setPasswordUrl', sample: 'https://app.ths-thm.org/set-password?token=abc123', description: 'Tautan set password' },
+      {
+        name: 'setPasswordUrl',
+        sample: 'https://app.ths-thm.org/set-password?token=abc123',
+        description: 'Tautan set password',
+      },
     ],
     renderDefault: (o) =>
       examinerWelcomeEmail(
@@ -281,7 +304,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap pengguna' },
       { name: 'email', sample: 'anggota@example.com', description: 'Email pengguna' },
       { name: 'role', sample: 'Admin Ranting', description: 'Peran pengguna' },
-      { name: 'setPasswordUrl', sample: 'https://app.ths-thm.org/set-password?token=abc123', description: 'Tautan set password' },
+      {
+        name: 'setPasswordUrl',
+        sample: 'https://app.ths-thm.org/set-password?token=abc123',
+        description: 'Tautan set password',
+      },
     ],
     renderDefault: (o) =>
       userWelcomeEmail(
@@ -299,7 +326,12 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'badge', sample: 'Aktif Berlatih', description: 'Nama lencana' },
     ],
     renderDefault: (o) =>
-      badgeEarnedEmail(o?.nama ?? 'Budi Santoso', o?.badge ?? 'Aktif Berlatih', '🏅', 'Lencana untuk latihan rutin.'),
+      badgeEarnedEmail(
+        o?.nama ?? 'Budi Santoso',
+        o?.badge ?? 'Aktif Berlatih',
+        '🏅',
+        'Lencana untuk latihan rutin.',
+      ),
   },
   levelUpEmail: {
     name: 'levelUpEmail',
@@ -338,7 +370,11 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
     label: 'Data Belum Lengkap',
     variables: [
       { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap anggota' },
-      { name: 'missingFields', sample: 'alamat,no_hp', description: 'Daftar field yang kurang (pisah koma)' },
+      {
+        name: 'missingFields',
+        sample: 'alamat,no_hp',
+        description: 'Daftar field yang kurang (pisah koma)',
+      },
     ],
     renderDefault: (o) =>
       dataIncompleteEmail(

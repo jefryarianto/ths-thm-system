@@ -84,7 +84,12 @@ test.describe('Kartu Anggota — geometri pratinjau (spec kanonik)', () => {
           success: true,
           data: {
             dokumen: { id: 'd1', nomorDokumen: 'KTA-001', status: 'valid' },
-            qr: { isValid: true, scanCount: 0, scannedAt: null, createdAt: new Date().toISOString() },
+            qr: {
+              isValid: true,
+              scanCount: 0,
+              scannedAt: null,
+              createdAt: new Date().toISOString(),
+            },
             scanLimit: 10,
             scanLeft: 10,
             scanLog: [],
@@ -94,7 +99,11 @@ test.describe('Kartu Anggota — geometri pratinjau (spec kanonik)', () => {
     });
 
     await page.route('**/api/members/member-1/digital-card/issuances', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      });
     });
 
     await page.goto('/members/member-1?tab=card');
@@ -119,15 +128,33 @@ test.describe('Kartu Anggota — geometri pratinjau (spec kanonik)', () => {
 
       // Blok info = ancestor .absolute dari nilai No. Anggota (strong)
       const strongValue = byText('THS-00001');
-      const ib = (strongValue?.closest('.absolute') as HTMLElement | undefined)?.getBoundingClientRect();
+      const ib = (
+        strongValue?.closest('.absolute') as HTMLElement | undefined
+      )?.getBoundingClientRect();
       const jk = byText('JK')?.getBoundingClientRect();
       const jv = byText('L', (el) => el.classList.contains('font-ocr'))?.getBoundingClientRect();
       const nl = byText('Nama')?.getBoundingClientRect();
-      const bl = (byText('Berlaku sampai')?.closest('.absolute') as HTMLElement | undefined)?.getBoundingClientRect();
+      const bl = (
+        byText('Berlaku sampai')?.closest('.absolute') as HTMLElement | undefined
+      )?.getBoundingClientRect();
 
       const rel = (r?: DOMRect) =>
-        r ? { left: r.left - c.left, top: r.top - c.top, bottom: r.bottom - c.top, right: r.right - c.left } : null;
-      return { s, info: rel(ib), jkLabel: rel(jk), jkValue: rel(jv), namaLabel: rel(nl), berlaku: rel(bl) };
+        r
+          ? {
+              left: r.left - c.left,
+              top: r.top - c.top,
+              bottom: r.bottom - c.top,
+              right: r.right - c.left,
+            }
+          : null;
+      return {
+        s,
+        info: rel(ib),
+        jkLabel: rel(jk),
+        jkValue: rel(jv),
+        namaLabel: rel(nl),
+        berlaku: rel(bl),
+      };
     });
 
     expect(geo.error).toBeUndefined();

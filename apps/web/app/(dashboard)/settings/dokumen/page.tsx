@@ -5,7 +5,17 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Save, RefreshCw, RotateCcw, IdCard, FileText, Award, FileCheck2, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  Save,
+  RefreshCw,
+  RotateCcw,
+  IdCard,
+  FileText,
+  Award,
+  FileCheck2,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import FormField from '@/components/ui/form-field';
@@ -36,9 +46,22 @@ const FIELD_GROUPS: TemplateGroup[] = [
     icon: FileText,
     description: 'Nama organisasi & teks kaki yang tampil di seluruh dokumen yang digenerate.',
     fields: [
-      { key: 'docTemplate.orgNama', label: 'Nama Organisasi', placeholder: 'THS-THM System Manajemen' },
-      { key: 'docTemplate.orgAlamat', label: 'Alamat / Keterangan Organisasi', placeholder: 'Kosongkan untuk tidak ditampilkan' },
-      { key: 'docTemplate.footer', label: 'Teks Kaki (footer)', placeholder: 'Dokumen ini valid dan terverifikasi?', textarea: true },
+      {
+        key: 'docTemplate.orgNama',
+        label: 'Nama Organisasi',
+        placeholder: 'THS-THM System Manajemen',
+      },
+      {
+        key: 'docTemplate.orgAlamat',
+        label: 'Alamat / Keterangan Organisasi',
+        placeholder: 'Kosongkan untuk tidak ditampilkan',
+      },
+      {
+        key: 'docTemplate.footer',
+        label: 'Teks Kaki (footer)',
+        placeholder: 'Dokumen ini valid dan terverifikasi?',
+        textarea: true,
+      },
     ],
   },
   {
@@ -46,7 +69,9 @@ const FIELD_GROUPS: TemplateGroup[] = [
     title: 'Kartu Anggota (KTA)',
     icon: IdCard,
     description: 'Judul dokumen kartu tanda anggota.',
-    fields: [{ key: 'docTemplate.kartu_anggota.judul', label: 'Judul', placeholder: 'KARTU ANGGOTA' }],
+    fields: [
+      { key: 'docTemplate.kartu_anggota.judul', label: 'Judul', placeholder: 'KARTU ANGGOTA' },
+    ],
   },
   {
     key: 'sertifikat_pendadaran',
@@ -55,7 +80,11 @@ const FIELD_GROUPS: TemplateGroup[] = [
     description: 'Judul & sub-judul pada sertifikat kelulusan pendadaran.',
     fields: [
       { key: 'docTemplate.sertifikat_pendadaran.judul', label: 'Judul', placeholder: 'SERTIFIKAT' },
-      { key: 'docTemplate.sertifikat_pendadaran.subJudul', label: 'Sub Judul', placeholder: 'PENDADARAN' },
+      {
+        key: 'docTemplate.sertifikat_pendadaran.subJudul',
+        label: 'Sub Judul',
+        placeholder: 'PENDADARAN',
+      },
     ],
   },
   {
@@ -63,14 +92,22 @@ const FIELD_GROUPS: TemplateGroup[] = [
     title: 'Sertifikat Pelatihan',
     icon: FileCheck2,
     description: 'Judul sertifikat keikutsertaan pelatihan.',
-    fields: [{ key: 'docTemplate.sertifikat_pelatihan.judul', label: 'Judul', placeholder: 'SERTIFIKAT PELATIHAN' }],
+    fields: [
+      {
+        key: 'docTemplate.sertifikat_pelatihan.judul',
+        label: 'Judul',
+        placeholder: 'SERTIFIKAT PELATIHAN',
+      },
+    ],
   },
   {
     key: 'piagam_prestasi',
     title: 'Piagam Prestasi / Penghargaan',
     icon: Award,
     description: 'Judul piagam penghargaan prestasi.',
-    fields: [{ key: 'docTemplate.piagam_prestasi.judul', label: 'Judul', placeholder: 'PIAGAM PRESTASI' }],
+    fields: [
+      { key: 'docTemplate.piagam_prestasi.judul', label: 'Judul', placeholder: 'PIAGAM PRESTASI' },
+    ],
   },
 ];
 
@@ -189,8 +226,12 @@ export default function DocTemplateSettingsPage() {
                       <Icon size={18} className="text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">{group.title}</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{group.description}</p>
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                        {group.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {group.description}
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -199,7 +240,9 @@ export default function DocTemplateSettingsPage() {
                         {field.textarea ? (
                           <textarea
                             value={values[field.key] ?? ''}
-                            onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                            onChange={(e) =>
+                              setValues((prev) => ({ ...prev, [field.key]: e.target.value }))
+                            }
                             rows={2}
                             placeholder={field.placeholder}
                             className={inputClass}
@@ -208,7 +251,9 @@ export default function DocTemplateSettingsPage() {
                           <input
                             type="text"
                             value={values[field.key] ?? ''}
-                            onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                            onChange={(e) =>
+                              setValues((prev) => ({ ...prev, [field.key]: e.target.value }))
+                            }
                             placeholder={field.placeholder}
                             className={inputClass}
                           />
@@ -224,8 +269,8 @@ export default function DocTemplateSettingsPage() {
             <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-400 lg:col-span-2">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <p>
-                Kosongkan kolom untuk memakai teks bawaan template. Nama penandatangan diatur terpisah di halaman{' '}
-                <b>Penandatangan</b>.
+                Kosongkan kolom untuk memakai teks bawaan template. Nama penandatangan diatur
+                terpisah di halaman <b>Penandatangan</b>.
               </p>
             </div>
           </div>

@@ -10,13 +10,12 @@ let socket: Socket | null = null;
 // `process` is replaced with the actual value - no runtime typeof guard needed.
 const ENABLED = process.env.NEXT_PUBLIC_ENABLE_REALTIME === 'true';
 
-const IS_DEV = typeof window !== 'undefined' &&
-    window.location.port !== '' &&
-    window.location.port !== '443' &&
-    window.location.port !== '80';
-const API_URL = IS_DEV
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
-  : '';
+const IS_DEV =
+  typeof window !== 'undefined' &&
+  window.location.port !== '' &&
+  window.location.port !== '443' &&
+  window.location.port !== '80';
+const API_URL = IS_DEV ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001' : '';
 
 // ── Mock socket for when realtime is disabled ──
 // Returns a socket-like object that accepts .on()/.off()/.emit() calls

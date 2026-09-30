@@ -37,9 +37,7 @@ describe('ExportService', () => {
   });
 
   it('should export csv with BOM and rowCount', async () => {
-    prisma.anggota.findMany.mockResolvedValue([
-      { namaLengkap: 'Andi', nomorAnggota: 'THS-001' },
-    ]);
+    prisma.anggota.findMany.mockResolvedValue([{ namaLengkap: 'Andi', nomorAnggota: 'THS-001' }]);
     const result = await service.exportData('members', 'csv');
     expect(result.content).toContain('\uFEFF');
     expect(result.rowCount).toBe(1);
@@ -51,7 +49,15 @@ describe('ExportService', () => {
 
   it('should support audit_logs export type', async () => {
     prisma.auditLog.findMany.mockResolvedValue([
-      { createdAt: new Date(), action: 'LOGIN_SUCCESS', entity: 'User', entityId: 'u1', userId: 'u1', ipAddress: '1.2.3.4', details: null },
+      {
+        createdAt: new Date(),
+        action: 'LOGIN_SUCCESS',
+        entity: 'User',
+        entityId: 'u1',
+        userId: 'u1',
+        ipAddress: '1.2.3.4',
+        details: null,
+      },
     ]);
     const result = await service.exportData('audit_logs', 'csv');
     expect(result.content).toContain('LOGIN_SUCCESS');

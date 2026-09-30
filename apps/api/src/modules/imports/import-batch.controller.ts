@@ -22,7 +22,8 @@ export class ImportBatchController {
   @RequireScope('branch')
   @ApiOperation({
     summary: 'Mulai impor massal asinkron (members/candidates)',
-    description: 'Menyimpan baris dan memprosesnya di antrian. Status per baris terpantau via GET /import-batch/:id.',
+    description:
+      'Menyimpan baris dan memprosesnya di antrian. Status per baris terpantau via GET /import-batch/:id.',
   })
   start(@Body() dto: StartImportDto, @Req() req: ScopedRequest) {
     return this.importBatchService.createBatch(
@@ -49,11 +50,7 @@ export class ImportBatchController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Progress batch + hasil per baris' })
-  progress(
-    @Param('id') id: string,
-    @Query('page') page: string,
-    @Query('limit') limit: string,
-  ) {
+  progress(@Param('id') id: string, @Query('page') page: string, @Query('limit') limit: string) {
     return this.importBatchService.getBatchProgress(
       id,
       parseInt(page || '1', 10) || 1,

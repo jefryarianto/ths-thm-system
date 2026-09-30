@@ -10,7 +10,13 @@ import { ApprovalModule } from '../approvals/approval.module';
 import { ImportsModule } from '../imports/imports.module';
 
 @Module({
-  imports: [PenandatanganModule, TingkatanModule, NotificationsModule, ApprovalModule, ImportsModule],
+  imports: [
+    PenandatanganModule,
+    TingkatanModule,
+    NotificationsModule,
+    ApprovalModule,
+    ImportsModule,
+  ],
   controllers: [MembersController],
   providers: [MembersService, MembersDigitalCardService, MembersWorkflowService],
   exports: [MembersService],

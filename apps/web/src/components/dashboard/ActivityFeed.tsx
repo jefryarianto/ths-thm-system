@@ -32,8 +32,14 @@ const TIPE_STYLES: Record<string, { icon: typeof Bell; accent: string }> = {
   forum_reply: { icon: MessageSquare, accent: 'text-primary bg-primary-50 dark:bg-primary-950' },
   forum_solution: { icon: MessageSquare, accent: 'text-success bg-success-50 dark:bg-success-950' },
   kartu_dipindai: { icon: QrCode, accent: 'text-secondary bg-secondary-50 dark:bg-secondary-950' },
-  anggota_disetujui: { icon: ShieldCheck, accent: 'text-success bg-success-50 dark:bg-success-950' },
-  pembayaran_terverifikasi: { icon: Wallet, accent: 'text-success bg-success-50 dark:bg-success-950' },
+  anggota_disetujui: {
+    icon: ShieldCheck,
+    accent: 'text-success bg-success-50 dark:bg-success-950',
+  },
+  pembayaran_terverifikasi: {
+    icon: Wallet,
+    accent: 'text-success bg-success-50 dark:bg-success-950',
+  },
   umum: { icon: Bell, accent: 'text-muted bg-surface-variant' },
 };
 

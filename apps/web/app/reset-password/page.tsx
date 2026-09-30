@@ -39,7 +39,8 @@ function ResetPasswordForm() {
                 Link Tidak Valid
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Token reset password tidak ditemukan. Link mungkin sudah kadaluarsa atau tidak valid.
+                Token reset password tidak ditemukan. Link mungkin sudah kadaluarsa atau tidak
+                valid.
               </p>
               <Link
                 href="/login"
@@ -109,9 +110,7 @@ function ResetPasswordForm() {
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Key size={22} className="text-blue-600 dark:text-blue-400" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Reset Password
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reset Password</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Buat password baru untuk akun Anda
               </p>
@@ -136,9 +135,7 @@ function ResetPasswordForm() {
                     <p className="text-sm font-medium text-green-800 dark:text-green-300">
                       Password Berhasil Direset!
                     </p>
-                    <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                      {success}
-                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-400 mt-1">{success}</p>
                     <p className="text-xs text-green-600 dark:text-green-500 mt-2">
                       Mengalihkan ke halaman login...
                     </p>
@@ -224,17 +221,41 @@ function ResetPasswordForm() {
                   </p>
                   <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-0.5">
                     <li className="flex items-center gap-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword.length >= 6 ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      >
                         {newPassword.length >= 6 && (
-                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
                       </span>
                       Minimal 6 karakter
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword && newPassword === confirmPassword ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${newPassword && newPassword === confirmPassword ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      >
                         {newPassword && newPassword === confirmPassword && (
-                          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         )}
                       </span>
                       Password cocok

@@ -17,7 +17,6 @@ import FilterSelect from '@/components/ui/filter-select';
 import { STATUS_OPTIONS, StatusBadge } from '@/components/registrations/constants';
 import { useToast } from '@/components/ui/toast';
 
-
 interface RegistrationRow {
   id: string;
   namaLengkap: string;
@@ -76,123 +75,129 @@ export default function RegistrationsPage() {
 
   return (
     <PermissionGuard module="registrations" action="view">
-    <PageContainer>
-      <PageHeader title="Pendaftaran Baru">
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-          <Download size={14} /> Export
-        </button>
-        <button
-          onClick={() => router.push('/daftar')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-        >
-          <Plus size={14} /> Tambah
-        </button>
-      </PageHeader>
-
-      <SummaryBar icon={Users} label="Total Pendaftar" total={meta.total} onRefresh={refetch} />
-
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari nama, email, no. HP..."
-        debounceMs={300}
-      >
-        <FilterSelect
-          value={filters.status}
-          onChange={(v) => setFilter('status', v)}
-          options={STATUS_OPTIONS}
-          placeholder="Semua Status"
-        />
-      </SearchBar>
-
-      <DataTable
-        columns={[
-          { label: 'Nama' },
-          { label: 'JK', hidden: 'hidden sm:table-cell' },
-          { label: 'Kontak', hidden: 'hidden md:table-cell' },
-          { label: 'Sumber Info', hidden: 'hidden lg:table-cell' },
-          { label: 'Status' },
-          { label: 'Tanggal', hidden: 'hidden xl:table-cell' },
-          { label: 'Aksi', align: 'right' },
-        ]}
-        data={data}
-        loading={loading}
-        empty={{
-          icon: Users,
-          ...buildEmptyMessage('pendaftar', hasActiveFilters, resetFilters),
-        }}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={handlePageChange}
-        colSpan={7}
-        renderRow={(row: RegistrationRow) => (
-          <tr
-            key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      <PageContainer>
+        <PageHeader title="Pendaftaran Baru">
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+            <Download size={14} /> Export
+          </button>
+          <button
+            onClick={() => router.push('/daftar')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
           >
-            <td className="px-4 py-3">
-              <span className="font-medium text-gray-900 dark:text-white">{row.namaLengkap}</span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
-              {row.jenisKelamin || '-'}
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
-              {row.noHp || row.email || '-'}
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
-              {row.sumberInfo || '-'}
-            </td>
-            <td className="px-4 py-3">
-              <StatusBadge status={row.status} />
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden xl:table-cell">
-              {row.createdAt ? new Date(row.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
-            </td>
-            <td className="px-4 py-3 text-right">
-              <div className="flex items-center justify-end gap-1">
-                {row.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleAction(row.id, 'verify')}
-                      disabled={actionLoading === `${row.id}-verify`}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                      title="Verifikasi"
-                    >
-                      <FileText size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleAction(row.id, 'approve')}
-                      disabled={actionLoading === `${row.id}-approve`}
-                      className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                      title="Setujui"
-                    >
-                      <CheckCircle size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleAction(row.id, 'reject')}
-                      disabled={actionLoading === `${row.id}-reject`}
-                      className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                      title="Tolak"
-                    >
-                      <XCircle size={15} />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => router.push(`/registrations/${row.id}`)}
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  title="Detail"
-                >
-                  <Eye size={15} />
-                </button>
-              </div>
-            </td>
-          </tr>
-        )}
-      />
-    </PageContainer>
+            <Plus size={14} /> Tambah
+          </button>
+        </PageHeader>
+
+        <SummaryBar icon={Users} label="Total Pendaftar" total={meta.total} onRefresh={refetch} />
+
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder="Cari nama, email, no. HP..."
+          debounceMs={300}
+        >
+          <FilterSelect
+            value={filters.status}
+            onChange={(v) => setFilter('status', v)}
+            options={STATUS_OPTIONS}
+            placeholder="Semua Status"
+          />
+        </SearchBar>
+
+        <DataTable
+          columns={[
+            { label: 'Nama' },
+            { label: 'JK', hidden: 'hidden sm:table-cell' },
+            { label: 'Kontak', hidden: 'hidden md:table-cell' },
+            { label: 'Sumber Info', hidden: 'hidden lg:table-cell' },
+            { label: 'Status' },
+            { label: 'Tanggal', hidden: 'hidden xl:table-cell' },
+            { label: 'Aksi', align: 'right' },
+          ]}
+          data={data}
+          loading={loading}
+          empty={{
+            icon: Users,
+            ...buildEmptyMessage('pendaftar', hasActiveFilters, resetFilters),
+          }}
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={handlePageChange}
+          colSpan={7}
+          renderRow={(row: RegistrationRow) => (
+            <tr
+              key={row.id}
+              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <td className="px-4 py-3">
+                <span className="font-medium text-gray-900 dark:text-white">{row.namaLengkap}</span>
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+                {row.jenisKelamin || '-'}
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                {row.noHp || row.email || '-'}
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                {row.sumberInfo || '-'}
+              </td>
+              <td className="px-4 py-3">
+                <StatusBadge status={row.status} />
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden xl:table-cell">
+                {row.createdAt
+                  ? new Date(row.createdAt).toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : '-'}
+              </td>
+              <td className="px-4 py-3 text-right">
+                <div className="flex items-center justify-end gap-1">
+                  {row.status === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => handleAction(row.id, 'verify')}
+                        disabled={actionLoading === `${row.id}-verify`}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                        title="Verifikasi"
+                      >
+                        <FileText size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleAction(row.id, 'approve')}
+                        disabled={actionLoading === `${row.id}-approve`}
+                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                        title="Setujui"
+                      >
+                        <CheckCircle size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleAction(row.id, 'reject')}
+                        disabled={actionLoading === `${row.id}-reject`}
+                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Tolak"
+                      >
+                        <XCircle size={15} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => router.push(`/registrations/${row.id}`)}
+                    className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    title="Detail"
+                  >
+                    <Eye size={15} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </PageContainer>
     </PermissionGuard>
   );
 }

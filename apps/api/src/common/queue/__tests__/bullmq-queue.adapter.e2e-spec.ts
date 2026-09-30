@@ -50,7 +50,8 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
     }>,
     opts?: Partial<{ concurrency: number; maxRetries: number; queueName: string }>,
   ): BullMQQueueAdapter {
-    const processFn = callbacks?.onProcess ?? (async (p) => ({ jobId: p.jobId, success: true, data: {} }));
+    const processFn =
+      callbacks?.onProcess ?? (async (p) => ({ jobId: p.jobId, success: true, data: {} }));
     return new BullMQQueueAdapter(
       {
         onProcess: processFn,
@@ -136,8 +137,14 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
 
   it('should add and process a single job', async () => {
     if (!skipIfUnsupported()) return;
-    const processFn = jest.fn(async (p: JobPayload) => ({ jobId: p.jobId, success: true, data: {} }));
-    const completeFn = jest.fn(async (r: JobResult) => { completedResults.push(r); });
+    const processFn = jest.fn(async (p: JobPayload) => ({
+      jobId: p.jobId,
+      success: true,
+      data: {},
+    }));
+    const completeFn = jest.fn(async (r: JobResult) => {
+      completedResults.push(r);
+    });
     adapter = createAdapter({ onProcess: processFn, onComplete: completeFn });
 
     await adapter.add({ jobId: 'job-1', type: 'kartu_anggota', data: { memberId: 'm-1' } });
@@ -156,7 +163,11 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
 
   it('should add and process multiple jobs in bulk', async () => {
     if (!skipIfUnsupported()) return;
-    const processFn = jest.fn(async (p: JobPayload) => ({ jobId: p.jobId, success: true, data: {} }));
+    const processFn = jest.fn(async (p: JobPayload) => ({
+      jobId: p.jobId,
+      success: true,
+      data: {},
+    }));
     adapter = createAdapter({ onProcess: processFn });
 
     const payloads: JobPayload[] = [
@@ -176,7 +187,12 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
   it('should respect concurrency limit', async () => {
     if (!skipIfUnsupported()) return;
     adapter = createAdapter(
-      { onProcess: async (p) => { await new Promise((r) => setTimeout(r, 100)); return { jobId: p.jobId, success: true, data: {} }; } },
+      {
+        onProcess: async (p) => {
+          await new Promise((r) => setTimeout(r, 100));
+          return { jobId: p.jobId, success: true, data: {} };
+        },
+      },
       { concurrency: 2, maxRetries: 1, queueName: `${queueName()}-concurrency` },
     );
 
@@ -207,8 +223,13 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
     let attempts = 0;
     adapter = createAdapter(
       {
-        onProcess: async (p) => { attempts++; return { jobId: p.jobId, success: false, error: `fail #${attempts}` }; },
-        onFailed: async (r) => { failedResults.push(r); },
+        onProcess: async (p) => {
+          attempts++;
+          return { jobId: p.jobId, success: false, error: `fail #${attempts}` };
+        },
+        onFailed: async (r) => {
+          failedResults.push(r);
+        },
       },
       { concurrency: 1, maxRetries: 2, queueName: `${queueName()}-retry` },
     );
@@ -245,8 +266,15 @@ describeOrSkip('BullMQQueueAdapter (real Redis)', () => {
 
   it('should pause and resume job processing', async () => {
     if (!skipIfUnsupported()) return;
-    const processFn = jest.fn(async (p: JobPayload) => ({ jobId: p.jobId, success: true, data: {} }));
-    adapter = createAdapter({ onProcess: processFn }, { concurrency: 1, queueName: `${queueName()}-pause` });
+    const processFn = jest.fn(async (p: JobPayload) => ({
+      jobId: p.jobId,
+      success: true,
+      data: {},
+    }));
+    adapter = createAdapter(
+      { onProcess: processFn },
+      { concurrency: 1, queueName: `${queueName()}-pause` },
+    );
 
     await adapter.pause();
 

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type PeriodeLevel = 'nasional' | 'distrik' | 'wilayah' | 'ranting';
@@ -11,7 +16,10 @@ export class PeriodeService {
    * Periode aktif untuk sebuah unit (nasional/distrik/wilayah/ranting).
    * Mengutamakan relasi PeriodeAktif (per-unit), fallback ke periode isActive global.
    */
-  async getActivePeriodeIdForUnit(level: PeriodeLevel, unitId?: string | null): Promise<string | null> {
+  async getActivePeriodeIdForUnit(
+    level: PeriodeLevel,
+    unitId?: string | null,
+  ): Promise<string | null> {
     // Level nasional memakai unitId nasional; bila tidak ada unitId, pakai nasional pertama.
     let targetUnitId = unitId;
     if (level === 'nasional' && !targetUnitId) {
@@ -57,7 +65,10 @@ export class PeriodeService {
   async create(data: { nama: string; tglMulai: string; tglSelesai: string; isActive?: boolean }) {
     // If setting as active, deactivate others
     if (data.isActive) {
-      await this.prisma.periode.updateMany({ where: { isActive: true }, data: { isActive: false } });
+      await this.prisma.periode.updateMany({
+        where: { isActive: true },
+        data: { isActive: false },
+      });
     }
     return this.prisma.periode.create({
       data: {
@@ -69,11 +80,17 @@ export class PeriodeService {
     });
   }
 
-  async update(id: string, data: { nama?: string; tglMulai?: string; tglSelesai?: string; isActive?: boolean }) {
+  async update(
+    id: string,
+    data: { nama?: string; tglMulai?: string; tglSelesai?: string; isActive?: boolean },
+  ) {
     await this.findOne(id);
     // If setting as active, deactivate others
     if (data.isActive) {
-      await this.prisma.periode.updateMany({ where: { isActive: true, id: { not: id } }, data: { isActive: false } });
+      await this.prisma.periode.updateMany({
+        where: { isActive: true, id: { not: id } },
+        data: { isActive: false },
+      });
     }
     const updateData: Record<string, unknown> = {};
     if (data.nama !== undefined) updateData.nama = data.nama;
@@ -86,7 +103,9 @@ export class PeriodeService {
   async remove(id: string) {
     const periode = await this.findOne(id);
     if (periode._count.pengurus > 0) {
-      throw new ConflictException(`Periode "${periode.nama}" masih digunakan oleh ${periode._count.pengurus} pengurus`);
+      throw new ConflictException(
+        `Periode "${periode.nama}" masih digunakan oleh ${periode._count.pengurus} pengurus`,
+      );
     }
     return this.prisma.periode.delete({ where: { id } });
   }

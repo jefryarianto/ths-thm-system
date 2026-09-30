@@ -99,13 +99,7 @@ function OAuthCallbackHandler() {
 }
 
 /** Feature list item for left branding panel */
-function BrandFeatureItem({
-  icon: Icon,
-  text,
-}: {
-  icon: React.ElementType;
-  text: string;
-}) {
+function BrandFeatureItem({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
   return (
     <div className="flex items-center gap-3.5">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm ring-1 ring-white/20">
@@ -166,7 +160,15 @@ export default function LoginPage() {
     if (isSessionInvalid || sessionExpiredNotice) return;
     // Prefer the validated return-to (AUTH-010), else the role home.
     router.replace(resolvedNext ?? getHomePathForRole(user?.role));
-  }, [mounted, isAuthenticated, isSessionInvalid, sessionExpiredNotice, resolvedNext, user?.role, router]);
+  }, [
+    mounted,
+    isAuthenticated,
+    isSessionInvalid,
+    sessionExpiredNotice,
+    resolvedNext,
+    user?.role,
+    router,
+  ]);
 
   useEffect(() => {
     setMounted(true);
@@ -222,7 +224,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await apiClient.post('/auth/login', { identifier: identifier.trim(), password });
+      const { data } = await apiClient.post('/auth/login', {
+        identifier: identifier.trim(),
+        password,
+      });
 
       if (data.success) {
         // Reset state session manager agar tidak ada flag expired yang tertinggal
@@ -266,7 +271,8 @@ export default function LoginPage() {
 
   // Mount-gated agar render pertama (hydration) identik dengan HTML server —
   // pembacaan window saat render menyebabkan hydration mismatch di /login.
-  const isDev = mounted && typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const isDev =
+    mounted && typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   // AUTH-005: an authenticated user is being redirected to their home — render
   // a neutral loading state instead of the login form so the form never flashes
@@ -320,9 +326,7 @@ export default function LoginPage() {
               className="h-full w-full object-contain drop-shadow-md"
             />
           </div>
-          <h1 className="mt-2 text-lg font-bold tracking-tight text-white">
-            THS-THM System
-          </h1>
+          <h1 className="mt-2 text-lg font-bold tracking-tight text-white">THS-THM System</h1>
           <p className="mt-0.5 text-xs font-semibold text-primary-100 sm:text-sm">
             Satu Data THS-THM Indonesia
           </p>
@@ -374,28 +378,16 @@ export default function LoginPage() {
             Satu Data THS-THM Indonesia
           </p>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-white/90">
-            Platform terpadu untuk pengelolaan data anggota, pelatihan, kegiatan, iuran, dan
-            dokumen organisasi THS-THM di seluruh Indonesia.
+            Platform terpadu untuk pengelolaan data anggota, pelatihan, kegiatan, iuran, dan dokumen
+            organisasi THS-THM di seluruh Indonesia.
           </p>
 
           {/* Feature Highlights (maks 4) */}
           <div className="mt-9 space-y-4 xl:mt-11 xl:space-y-5">
-            <BrandFeatureItem
-              icon={Users}
-              text="Manajemen anggota & calon anggota"
-            />
-            <BrandFeatureItem
-              icon={CreditCard}
-              text="Administrasi & pembayaran iuran"
-            />
-            <BrandFeatureItem
-              icon={BarChart3}
-              text="Data, laporan & evaluasi organisasi"
-            />
-            <BrandFeatureItem
-              icon={Smartphone}
-              text="Akses mobile & notifikasi real-time"
-            />
+            <BrandFeatureItem icon={Users} text="Manajemen anggota & calon anggota" />
+            <BrandFeatureItem icon={CreditCard} text="Administrasi & pembayaran iuran" />
+            <BrandFeatureItem icon={BarChart3} text="Data, laporan & evaluasi organisasi" />
+            <BrandFeatureItem icon={Smartphone} text="Akses mobile & notifikasi real-time" />
           </div>
         </div>
 
@@ -631,7 +623,9 @@ export default function LoginPage() {
 
           {/* Membership Actions: Klaim & Daftar */}
           <div className="mt-4 sm:mt-5">
-            <p className="mb-2 text-center text-xs font-semibold text-surface-600">Belum punya akun?</p>
+            <p className="mb-2 text-center text-xs font-semibold text-surface-600">
+              Belum punya akun?
+            </p>
 
             <div className="space-y-2">
               {/* Klaim Keanggotaan */}

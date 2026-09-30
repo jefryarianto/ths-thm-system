@@ -9,9 +9,13 @@ test.describe('Assessments — /assessments', () => {
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1').first()).toContainText('Aspek & Item Penilaian', { timeout: 8000 });
+    await expect(page.locator('h1').first()).toContainText('Aspek & Item Penilaian', {
+      timeout: 8000,
+    });
     // Aspek tab is default — should see "Tambah Aspek" button
-    await expect(page.locator('button:has-text("Tambah Aspek")').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('button:has-text("Tambah Aspek")').first()).toBeVisible({
+      timeout: 8000,
+    });
   });
 
   test('renders SummaryBar with aspect count', async ({ page }) => {

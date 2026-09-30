@@ -160,27 +160,28 @@ export class QueueStatsController {
     };
   }> {
     try {
-      const [pending, processing, completed, failed, recent1h, recent24h, recentJobs] = await Promise.all([
-        this.prisma.documentJob.count({ where: { status: 'pending' } }),
-        this.prisma.documentJob.count({ where: { status: 'processing' } }),
-        this.prisma.documentJob.count({ where: { status: 'completed' } }),
-        this.prisma.documentJob.count({ where: { status: 'failed' } }),
-        // Jobs completed in the last hour
-        this.prisma.documentJob.count({
-          where: {
-            status: 'completed',
-            completedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
-          },
-        }),
-        // Jobs completed in the last 24 hours
-        this.prisma.documentJob.count({
-          where: {
-            status: 'completed',
-            completedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-          },
-        }),
-        this.fetchRecentJobs(),
-      ]);
+      const [pending, processing, completed, failed, recent1h, recent24h, recentJobs] =
+        await Promise.all([
+          this.prisma.documentJob.count({ where: { status: 'pending' } }),
+          this.prisma.documentJob.count({ where: { status: 'processing' } }),
+          this.prisma.documentJob.count({ where: { status: 'completed' } }),
+          this.prisma.documentJob.count({ where: { status: 'failed' } }),
+          // Jobs completed in the last hour
+          this.prisma.documentJob.count({
+            where: {
+              status: 'completed',
+              completedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+            },
+          }),
+          // Jobs completed in the last 24 hours
+          this.prisma.documentJob.count({
+            where: {
+              status: 'completed',
+              completedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            },
+          }),
+          this.fetchRecentJobs(),
+        ]);
 
       // Find the oldest pending/processing job to estimate backlog age
       const oldestJob = await this.prisma.documentJob.findFirst({
@@ -189,9 +190,7 @@ export class QueueStatsController {
         select: { createdAt: true },
       });
 
-      const oldestJobAge = oldestJob
-        ? Date.now() - oldestJob.createdAt.getTime()
-        : undefined;
+      const oldestJobAge = oldestJob ? Date.now() - oldestJob.createdAt.getTime() : undefined;
 
       return {
         success: true,

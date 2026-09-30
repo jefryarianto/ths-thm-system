@@ -122,18 +122,34 @@ describe('DuesService', () => {
         code: 'P2002',
         clientVersion: 'test',
       });
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        rantingId: 'r1',
+        email: null,
+        namaLengkap: 'Budi',
+      });
       mockPrisma.iuran.create.mockRejectedValue(dupError);
       await expect(
-        service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-02' }, { rantingId: 'r1' }),
+        service.create(
+          { anggotaId: 'a1', jumlah: 100000, periode: '2026-02' },
+          { rantingId: 'r1' },
+        ),
       ).rejects.toThrow(ConflictException);
     });
 
     it('should rethrow non-P2002 errors on create', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        rantingId: 'r1',
+        email: null,
+        namaLengkap: 'Budi',
+      });
       mockPrisma.iuran.create.mockRejectedValue(new Error('DB down'));
       await expect(
-        service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-02' }, { rantingId: 'r1' }),
+        service.create(
+          { anggotaId: 'a1', jumlah: 100000, periode: '2026-02' },
+          { rantingId: 'r1' },
+        ),
       ).rejects.toThrow('DB down');
     });
   });
@@ -161,7 +177,11 @@ describe('DuesService', () => {
         code: 'P2002',
         clientVersion: 'test',
       });
-      mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'd1', anggotaId: 'a1', periode: '2026-01' });
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: 'd1',
+        anggotaId: 'a1',
+        periode: '2026-01',
+      });
       mockPrisma.iuran.update.mockRejectedValue(dupError);
       await expect(service.update('d1', { periode: '2026-02' })).rejects.toThrow(ConflictException);
     });
@@ -247,9 +267,7 @@ describe('DuesService', () => {
         code: 'P2002',
         clientVersion: 'test',
       });
-      mockPrisma.iuran.create
-        .mockResolvedValueOnce({ id: 'd1' })
-        .mockRejectedValueOnce(dupError);
+      mockPrisma.iuran.create.mockResolvedValueOnce({ id: 'd1' }).mockRejectedValueOnce(dupError);
       const result = await service.batchPayment({
         memberIds: ['a1', 'a2'],
         periode: '2026-03',
@@ -265,16 +283,27 @@ describe('DuesService', () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a-out', rantingId: 'r-other' });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
-        service.create({ anggotaId: 'a-out', jumlah: 100000, periode: '2026-01' }, { rantingId: 'r1' }),
+        service.create(
+          { anggotaId: 'a-out', jumlah: 100000, periode: '2026-01' },
+          { rantingId: 'r1' },
+        ),
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.iuran.create).not.toHaveBeenCalled();
     });
 
     it('should allow create for a member inside the admin scope', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        rantingId: 'r1',
+        email: null,
+        namaLengkap: 'Budi',
+      });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1' });
-      await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' }, { rantingId: 'r1' });
+      await service.create(
+        { anggotaId: 'a1', jumlah: 100000, periode: '2026-01' },
+        { rantingId: 'r1' },
+      );
       expect(mockPrisma.iuran.create).toHaveBeenCalled();
     });
 
@@ -282,7 +311,10 @@ describe('DuesService', () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a-out', rantingId: 'r-other' });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
-        service.batchPayment({ memberIds: ['a-out'], periode: '2026-01', jumlah: 100000 }, { distrikId: 'd1' }),
+        service.batchPayment(
+          { memberIds: ['a-out'], periode: '2026-01', jumlah: 100000 },
+          { distrikId: 'd1' },
+        ),
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.iuran.create).not.toHaveBeenCalled();
     });

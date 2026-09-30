@@ -192,7 +192,12 @@ describe('ActivitiesService', () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
         service.create(
-          { nama: 'Kegiatan Lain', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r-other' } as any,
+          {
+            nama: 'Kegiatan Lain',
+            tanggalMulai: '2026-09-20',
+            scopeType: 'ranting',
+            scopeId: 'r-other',
+          } as any,
           { distrikId: 'd1' },
         ),
       ).rejects.toThrow(ForbiddenException);
@@ -203,7 +208,12 @@ describe('ActivitiesService', () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
       mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k1' });
       const result = await service.create(
-        { nama: 'Kegiatan Distrik', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r1' } as any,
+        {
+          nama: 'Kegiatan Distrik',
+          tanggalMulai: '2026-09-20',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+        } as any,
         { distrikId: 'd1' },
       );
       expect(result.data).toBeDefined();
@@ -213,7 +223,12 @@ describe('ActivitiesService', () => {
       mockPrisma.wilayah.findUnique.mockResolvedValue({ distrikId: 'd-other' });
       await expect(
         service.create(
-          { nama: 'Kegiatan Wilayah Lain', tanggalMulai: '2026-09-20', scopeType: 'wilayah', scopeId: 'w-other' } as any,
+          {
+            nama: 'Kegiatan Wilayah Lain',
+            tanggalMulai: '2026-09-20',
+            scopeType: 'wilayah',
+            scopeId: 'w-other',
+          } as any,
           { distrikId: 'd1' },
         ),
       ).rejects.toThrow(ForbiddenException);
@@ -222,9 +237,12 @@ describe('ActivitiesService', () => {
 
     it('should allow superadmin (no scope) to create with any scope', async () => {
       mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k2' });
-      const result = await service.create(
-        { nama: 'Kegiatan Nasional', tanggalMulai: '2026-09-20', scopeType: 'wilayah', scopeId: 'w-anything' } as any,
-      );
+      const result = await service.create({
+        nama: 'Kegiatan Nasional',
+        tanggalMulai: '2026-09-20',
+        scopeType: 'wilayah',
+        scopeId: 'w-anything',
+      } as any);
       expect(result.data).toBeDefined();
     });
 
@@ -244,10 +262,9 @@ describe('ActivitiesService', () => {
 
     it('should fall back to wilayah scope for an admin_wilayah account without rantingId', async () => {
       mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k4' });
-      await service.create(
-        { nama: 'Kegiatan Wilayah', tanggalMulai: '2026-09-20' } as any,
-        { wilayahId: 'w1' },
-      );
+      await service.create({ nama: 'Kegiatan Wilayah', tanggalMulai: '2026-09-20' } as any, {
+        wilayahId: 'w1',
+      });
       expect(mockPrisma.kegiatan.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ scopeType: 'wilayah', scopeId: 'w1' }),

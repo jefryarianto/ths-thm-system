@@ -19,7 +19,7 @@ export default function MultiFormatExport({
     }
 
     const url = `/api/export?${params}`;
-    
+
     if (format === 'pdf') {
       window.open(url, '_blank');
     } else {

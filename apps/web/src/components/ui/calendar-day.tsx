@@ -66,43 +66,55 @@ export interface CalendarDayProps {
 const DEFAULT_EVENT_STYLES: Record<string, { dot: string; badge: string; text: string }> = {
   training: {
     dot: 'bg-success-500',
-    badge: 'bg-success-100 dark:bg-success-900/60 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800',
+    badge:
+      'bg-success-100 dark:bg-success-900/60 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800',
     text: 'text-success-700 dark:text-success-300',
   },
   pendadaran: {
     dot: 'bg-violet-500',
-    badge: 'bg-violet-100 dark:bg-violet-900/60 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-800',
+    badge:
+      'bg-violet-100 dark:bg-violet-900/60 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-800',
     text: 'text-violet-700 dark:text-violet-300',
   },
   latihan: {
     dot: 'bg-warning-500',
-    badge: 'bg-warning-100 dark:bg-warning-900/60 text-warning-800 dark:text-warning-200 border-warning-200 dark:border-warning-800',
+    badge:
+      'bg-warning-100 dark:bg-warning-900/60 text-warning-800 dark:text-warning-200 border-warning-200 dark:border-warning-800',
     text: 'text-warning-700 dark:text-warning-300',
   },
   ujian_tingkat: {
     dot: 'bg-rose-500',
-    badge: 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800',
+    badge:
+      'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800',
     text: 'text-rose-700 dark:text-rose-300',
   },
   rapat: {
     dot: 'bg-sky-500',
-    badge: 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200 border-sky-200 dark:border-sky-800',
+    badge:
+      'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200 border-sky-200 dark:border-sky-800',
     text: 'text-sky-700 dark:text-sky-300',
   },
   holiday: {
     dot: 'bg-error-500',
-    badge: 'bg-error-100 dark:bg-error-900/60 text-error-800 dark:text-error-200 border-error-200 dark:border-error-800',
+    badge:
+      'bg-error-100 dark:bg-error-900/60 text-error-800 dark:text-error-200 border-error-200 dark:border-error-800',
     text: 'text-error-700 dark:text-error-300',
   },
 };
 
-function getEventStyle(type: string, customStyles?: Record<string, { dot: string; badge: string; text: string }>) {
+function getEventStyle(
+  type: string,
+  customStyles?: Record<string, { dot: string; badge: string; text: string }>,
+) {
   const styles = customStyles || DEFAULT_EVENT_STYLES;
-  return styles[type] || {
-    dot: 'bg-primary',
-    badge: 'bg-primary-100 dark:bg-primary-900/60 text-primary-800 dark:text-primary-300 border-primary-200 dark:border-primary-800',
-    text: 'text-primary-700 dark:text-primary-300',
-  };
+  return (
+    styles[type] || {
+      dot: 'bg-primary',
+      badge:
+        'bg-primary-100 dark:bg-primary-900/60 text-primary-800 dark:text-primary-300 border-primary-200 dark:border-primary-800',
+      text: 'text-primary-700 dark:text-primary-300',
+    }
+  );
 }
 
 function toDateKey(year: number, month: number, day: number): string {
@@ -111,23 +123,26 @@ function toDateKey(year: number, month: number, day: number): string {
 
 // ─── Size Maps ─────────────────────────────────────────────────
 
-const SIZE_MAP: Record<CalendarDayVariant, {
-  cell: string;
-  numSize: string;
-  numWrapper: string;
-  badgeSize: string;
-  dotSize: string;
-  eventBadge: string;
-  eventText: string;
-  holidayText: string;
-}> = {
+const SIZE_MAP: Record<
+  CalendarDayVariant,
+  {
+    cell: string;
+    numSize: string;
+    numWrapper: string;
+    badgeSize: string;
+    dotSize: string;
+    eventBadge: string;
+    eventText: string;
+    holidayText: string;
+  }
+> = {
   sm: {
     cell: 'min-h-[32px] p-0.5',
     numSize: 'text-[11px]',
     numWrapper: 'w-5 h-5',
     badgeSize: 'w-3.5 h-3.5 text-[7px]',
     dotSize: 'w-1 h-1',
-    eventBadge: 'hidden',     // no event text on sm
+    eventBadge: 'hidden', // no event text on sm
     eventText: 'hidden',
     holidayText: 'hidden',
   },
@@ -172,7 +187,6 @@ export default function CalendarDay({
   isOutsideMonth = false,
   children,
 }: CalendarDayProps) {
-
   const isSunday = dayOfWeek === 0;
   const isSaturday = dayOfWeek === 6;
   const isRedDay = isSunday || !!holidayName;
@@ -217,15 +231,28 @@ export default function CalendarDay({
       onClick={handleClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(day); } } : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(day);
+              }
+            }
+          : undefined
+      }
     >
       {/* Date number row */}
       <div className="flex items-start justify-between mb-0.5 sm:mb-1">
-        <span className={`inline-flex items-center justify-center rounded-full ${style.numWrapper} ${style.numSize} ${numClass}`}>
+        <span
+          className={`inline-flex items-center justify-center rounded-full ${style.numWrapper} ${style.numSize} ${numClass}`}
+        >
           {day}
         </span>
         {events.length > 0 && variant !== 'sm' && (
-          <span className={`inline-flex items-center justify-center rounded-full font-bold text-white bg-primary ${style.badgeSize}`}>
+          <span
+            className={`inline-flex items-center justify-center rounded-full font-bold text-white bg-primary ${style.badgeSize}`}
+          >
             {events.length}
           </span>
         )}
@@ -233,7 +260,9 @@ export default function CalendarDay({
 
       {/* Holiday name */}
       {holidayName && (
-        <div className={`${style.holidayText} leading-tight text-error-600 dark:text-error-400 font-medium truncate mb-0.5 px-0.5`}>
+        <div
+          className={`${style.holidayText} leading-tight text-error-600 dark:text-error-400 font-medium truncate mb-0.5 px-0.5`}
+        >
           {holidayName}
         </div>
       )}
@@ -248,7 +277,9 @@ export default function CalendarDay({
               className={`${style.eventBadge} items-center gap-1 px-1 py-0.5 rounded truncate ${getEventStyle(ev.type, customEventStyles).badge}`}
               title={ev.title}
             >
-              <span className={`${style.dotSize} rounded-full shrink-0 ${getEventStyle(ev.type, customEventStyles).dot}`} />
+              <span
+                className={`${style.dotSize} rounded-full shrink-0 ${getEventStyle(ev.type, customEventStyles).dot}`}
+              />
               <span className="truncate">{ev.title}</span>
               {variant === 'lg' && ev.time && (
                 <span className="text-[10px] opacity-75 shrink-0 ml-auto">{ev.time}</span>
@@ -258,7 +289,9 @@ export default function CalendarDay({
 
           {/* Overflow indicator */}
           {overflowCount > 0 && (
-            <div className={`${style.eventText} text-muted pl-1 ${variant === 'sm' ? 'hidden' : ''}`}>
+            <div
+              className={`${style.eventText} text-muted pl-1 ${variant === 'sm' ? 'hidden' : ''}`}
+            >
               +{overflowCount} lainnya
             </div>
           )}
@@ -289,8 +322,18 @@ export default function CalendarDay({
  * Common constants shared by calendar consumers.
  */
 export const MONTHS_FULL = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
 export const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];

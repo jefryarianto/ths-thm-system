@@ -125,7 +125,13 @@ export default function StrukturOrganisasiContent() {
   // Load periodes
   useEffect(() => {
     const unitId =
-      level === 'ranting' ? rantingId : level === 'wilayah' ? wilayahId : level === 'distrik' ? distrikId : undefined;
+      level === 'ranting'
+        ? rantingId
+        : level === 'wilayah'
+          ? wilayahId
+          : level === 'distrik'
+            ? distrikId
+            : undefined;
 
     if (level === 'nasional' || unitId) {
       apiClient
@@ -141,7 +147,13 @@ export default function StrukturOrganisasiContent() {
 
   const loadStruktur = useCallback(async () => {
     const unitId =
-      level === 'ranting' ? rantingId : level === 'wilayah' ? wilayahId : level === 'distrik' ? distrikId : undefined;
+      level === 'ranting'
+        ? rantingId
+        : level === 'wilayah'
+          ? wilayahId
+          : level === 'distrik'
+            ? distrikId
+            : undefined;
 
     if (level !== 'nasional' && !unitId) return;
 
@@ -257,7 +269,7 @@ export default function StrukturOrganisasiContent() {
   };
 
   const unitName = strukturData?.unitInfo
-    ? (strukturData.unitInfo as Record<string, unknown>).nama as string
+    ? ((strukturData.unitInfo as Record<string, unknown>).nama as string)
     : null;
 
   return (
@@ -266,7 +278,9 @@ export default function StrukturOrganisasiContent() {
       <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
-            <a href="/" className="hover:text-white transition-colors">Beranda</a>
+            <a href="/" className="hover:text-white transition-colors">
+              Beranda
+            </a>
             <ChevronRight size={14} />
             <span className="text-gold-400">Struktur Organisasi</span>
             {unitName && (
@@ -276,7 +290,9 @@ export default function StrukturOrganisasiContent() {
               </>
             )}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">Struktur Organisasi</h1>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white">
+            Struktur Organisasi
+          </h1>
           <p className="text-white/70 mt-2">
             Lihat susunan kepengurusan THS-THM berdasarkan Distrik, Wilayah, Ranting, dan Periode.
           </p>
@@ -295,10 +311,16 @@ export default function StrukturOrganisasiContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Level */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Level</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Level
+              </label>
               <select
                 value={level}
-                onChange={(e) => { setLevel(e.target.value as Level); setWilayahId(''); setRantingId(''); }}
+                onChange={(e) => {
+                  setLevel(e.target.value as Level);
+                  setWilayahId('');
+                  setRantingId('');
+                }}
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
               >
                 <option value="nasional">Nasional</option>
@@ -310,28 +332,47 @@ export default function StrukturOrganisasiContent() {
 
             {/* Distrik */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Distrik</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Distrik
+              </label>
               <select
                 value={distrikId}
-                onChange={(e) => { setDistrikId(e.target.value); setWilayahId(''); setRantingId(''); }}
+                onChange={(e) => {
+                  setDistrikId(e.target.value);
+                  setWilayahId('');
+                  setRantingId('');
+                }}
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
               >
                 <option value="">Semua Distrik</option>
-                {distriks.map((d) => <option key={d.id} value={d.id}>{d.nama}</option>)}
+                {distriks.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Wilayah */}
             {(level === 'wilayah' || level === 'ranting') && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Wilayah</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Wilayah
+                </label>
                 <select
                   value={wilayahId}
-                  onChange={(e) => { setWilayahId(e.target.value); setRantingId(''); }}
+                  onChange={(e) => {
+                    setWilayahId(e.target.value);
+                    setRantingId('');
+                  }}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
                 >
                   <option value="">Semua Wilayah</option>
-                  {wilayahs.map((w) => <option key={w.id} value={w.id}>{w.nama}</option>)}
+                  {wilayahs.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.nama}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -339,14 +380,20 @@ export default function StrukturOrganisasiContent() {
             {/* Ranting */}
             {level === 'ranting' && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ranting</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Ranting
+                </label>
                 <select
                   value={rantingId}
                   onChange={(e) => setRantingId(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
                 >
                   <option value="">Semua Ranting</option>
-                  {rantings.map((r) => <option key={r.id} value={r.id}>{r.nama}</option>)}
+                  {rantings.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nama}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -354,13 +401,19 @@ export default function StrukturOrganisasiContent() {
             {/* Periode */}
             {periodes.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Periode</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Periode
+                </label>
                 <select
                   value={periodeId}
                   onChange={(e) => setPeriodeId(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
                 >
-                  {periodes.map((p) => <option key={p.id} value={p.id}>{p.nama} {p.isActive ? '(Aktif)' : ''}</option>)}
+                  {periodes.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nama} {p.isActive ? '(Aktif)' : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -388,7 +441,10 @@ export default function StrukturOrganisasiContent() {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center mb-8">
             <p className="text-red-600 dark:text-red-400 mb-3">{error}</p>
-            <button onClick={handleShow} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto">
+            <button
+              onClick={handleShow}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center gap-2 mx-auto"
+            >
               <RefreshCw size={14} /> Coba Lagi
             </button>
           </div>
@@ -410,14 +466,17 @@ export default function StrukturOrganisasiContent() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold text-navy-800 dark:text-white">
-                    KEPENGURUSAN {levelLabels[level]?.toUpperCase()} {unitName?.toUpperCase() || 'NASIONAL THS-THM'}
+                    KEPENGURUSAN {levelLabels[level]?.toUpperCase()}{' '}
+                    {unitName?.toUpperCase() || 'NASIONAL THS-THM'}
                   </h2>
                   {strukturData.periode && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                       <Calendar size={14} />
                       Periode {strukturData.periode.nama}
                       {strukturData.periode.isActive && (
-                        <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">Aktif</span>
+                        <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+                          Aktif
+                        </span>
                       )}
                     </p>
                   )}
@@ -437,25 +496,42 @@ export default function StrukturOrganisasiContent() {
                       <div className="text-xs text-gray-500">Anggota</div>
                     </div>
                   )}
-                  <button onClick={handleCopyLink} className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="Salin Link">
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    title="Salin Link"
+                  >
                     <Link2 size={16} className={copied ? 'text-green-500' : 'text-gray-400'} />
                   </button>
-                  {copied && <span className="text-xs text-green-600 dark:text-green-400">Link berhasil disalin!</span>}
+                  {copied && (
+                    <span className="text-xs text-green-600 dark:text-green-400">
+                      Link berhasil disalin!
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Org Chart */}
             <div className="mb-8">
-              <OrgChart members={strukturData.pengurus} onMemberClick={(m) => setSelectedMember(m as any)} />
+              <OrgChart
+                members={strukturData.pengurus}
+                onMemberClick={(m) => setSelectedMember(m as any)}
+              />
             </div>
 
             {/* Child Units */}
             {childUnits && childUnits.items.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-navy-800 dark:text-white mb-4">
-                  {childUnits.level === 'distrik' ? 'Distrik' : childUnits.level === 'wilayah' ? 'Wilayah' : 'Ranting'}{' '}
-                  {childUnits.level === 'distrik' ? 'dalam Organisasi' : `dalam ${unitName || 'unit ini'}`}
+                  {childUnits.level === 'distrik'
+                    ? 'Distrik'
+                    : childUnits.level === 'wilayah'
+                      ? 'Wilayah'
+                      : 'Ranting'}{' '}
+                  {childUnits.level === 'distrik'
+                    ? 'dalam Organisasi'
+                    : `dalam ${unitName || 'unit ini'}`}
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {childUnits.items.map((child) => (
@@ -478,13 +554,16 @@ export default function StrukturOrganisasiContent() {
           <div className="text-center py-16">
             <Building2 size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
             <p className="text-gray-400 dark:text-gray-500 text-lg">
-              Pilih level dan unit organisasi, lalu klik &ldquo;Tampilkan&rdquo; untuk melihat struktur kepengurusan.
+              Pilih level dan unit organisasi, lalu klik &ldquo;Tampilkan&rdquo; untuk melihat
+              struktur kepengurusan.
             </p>
           </div>
         )}
       </section>
 
-      {selectedMember && <PengurusModal member={selectedMember as any} onClose={() => setSelectedMember(null)} />}
+      {selectedMember && (
+        <PengurusModal member={selectedMember as any} onClose={() => setSelectedMember(null)} />
+      )}
     </PublicLayout>
   );
 }

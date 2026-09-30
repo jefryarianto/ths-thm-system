@@ -18,7 +18,13 @@ async function baseLandscape() {
     create: { width: 4032, height: 3024, channels: 3, background: { r: 230, g: 230, b: 230 } },
   })
     .composite([
-      { input: Buffer.from('<svg width="900" height="900"><rect width="900" height="900" fill="#7c4a2e"/></svg>'), left: 1200, top: 700 },
+      {
+        input: Buffer.from(
+          '<svg width="900" height="900"><rect width="900" height="900" fill="#7c4a2e"/></svg>',
+        ),
+        left: 1200,
+        top: 700,
+      },
     ])
     .jpeg()
     .toBuffer();
@@ -30,7 +36,13 @@ async function basePortraitPixels() {
     create: { width: 3024, height: 4032, channels: 3, background: { r: 230, g: 230, b: 230 } },
   })
     .composite([
-      { input: Buffer.from('<svg width="900" height="900"><rect width="900" height="900" fill="#7c4a2e"/></svg>'), left: 1050, top: 900 },
+      {
+        input: Buffer.from(
+          '<svg width="900" height="900"><rect width="900" height="900" fill="#7c4a2e"/></svg>',
+        ),
+        left: 1050,
+        top: 900,
+      },
     ])
     .jpeg()
     .toBuffer();
@@ -38,7 +50,10 @@ async function basePortraitPixels() {
 
 /** Count opaque pixels (alpha>128) in the top `pct`% band of output. */
 async function opaqueInTopPct(buffer: Buffer, pct: number): Promise<number> {
-  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   let count = 0;
   const limitY = Math.floor((info.height * pct) / 100);
   for (let y = 0; y < limitY; y++) {

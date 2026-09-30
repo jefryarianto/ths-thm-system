@@ -100,7 +100,10 @@ export default function BankInfoPage() {
       }
       await fetchBanks();
       resetForm();
-      toast('success', editingId ? 'Rekening berhasil diperbarui' : 'Rekening berhasil ditambahkan');
+      toast(
+        'success',
+        editingId ? 'Rekening berhasil diperbarui' : 'Rekening berhasil ditambahkan',
+      );
     } catch (err: any) {
       toast('error', err?.response?.data?.message || 'Gagal menyimpan');
     }
@@ -131,10 +134,7 @@ export default function BankInfoPage() {
   return (
     <PermissionGuard module="payments" action="admin">
       <PageContainer>
-        <PageHeader
-          title="Kelola Rekening Bank"
-          onRefresh={fetchBanks}
-        >
+        <PageHeader title="Kelola Rekening Bank" onRefresh={fetchBanks}>
           <Link
             href="/payments"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
@@ -143,7 +143,10 @@ export default function BankInfoPage() {
           </Link>
           {!showForm && (
             <button
-              onClick={() => { resetForm(); setShowForm(true); }}
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Plus size={16} /> Tambah Rekening
@@ -163,7 +166,9 @@ export default function BankInfoPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Bank</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nama Bank
+                </label>
                 <input
                   value={form.bankName}
                   onChange={(e) => setForm({ ...form, bankName: e.target.value })}
@@ -172,7 +177,9 @@ export default function BankInfoPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor Rekening</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nomor Rekening
+                </label>
                 <input
                   value={form.accountNumber}
                   onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
@@ -181,7 +188,9 @@ export default function BankInfoPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Atas Nama</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Atas Nama
+                </label>
                 <input
                   value={form.accountName}
                   onChange={(e) => setForm({ ...form, accountName: e.target.value })}
@@ -190,7 +199,9 @@ export default function BankInfoPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL QRIS (opsional)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  URL QRIS (opsional)
+                </label>
                 <input
                   value={form.qrisImageUrl}
                   onChange={(e) => setForm({ ...form, qrisImageUrl: e.target.value })}

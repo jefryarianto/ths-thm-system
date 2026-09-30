@@ -26,17 +26,53 @@ interface BatchGenerateModalProps {
 type Step = 'form' | 'confirm' | 'progress';
 
 const DOCUMENT_TYPES = [
-  { value: 'kta', label: 'Kartu Tanda Anggota (KTA)', description: 'Generate KTA untuk anggota terpilih', icon: '🪪' },
-  { value: 'sertifikat_pendadaran', label: 'Sertifikat Pendadaran', description: 'Sertifikat kelulusan pendadaran', icon: '📜' },
-  { value: 'sertifikat_pelatihan', label: 'Sertifikat Pelatihan', description: 'Sertifikat keikutsertaan pelatihan', icon: '📋' },
-  { value: 'piagam_prestasi', label: 'Piagam Prestasi', description: 'Piagam penghargaan prestasi', icon: '🏆' },
+  {
+    value: 'kta',
+    label: 'Kartu Tanda Anggota (KTA)',
+    description: 'Generate KTA untuk anggota terpilih',
+    icon: '🪪',
+  },
+  {
+    value: 'sertifikat_pendadaran',
+    label: 'Sertifikat Pendadaran',
+    description: 'Sertifikat kelulusan pendadaran',
+    icon: '📜',
+  },
+  {
+    value: 'sertifikat_pelatihan',
+    label: 'Sertifikat Pelatihan',
+    description: 'Sertifikat keikutsertaan pelatihan',
+    icon: '📋',
+  },
+  {
+    value: 'piagam_prestasi',
+    label: 'Piagam Prestasi',
+    description: 'Piagam penghargaan prestasi',
+    icon: '🏆',
+  },
 ];
 
 const MEMBER_RANGE_OPTIONS = [
-  { value: 'all_active', label: 'Semua Anggota Aktif', description: 'Semua anggota dengan status aktif' },
-  { value: 'by_ranting', label: 'Per Ranting', description: 'Pilih anggota berdasarkan ranting tertentu' },
-  { value: 'by_ids', label: 'Daftar ID Anggota', description: 'Masukkan daftar ID anggota secara manual' },
-  { value: 'graduated_only', label: 'Lulus Pendadaran', description: 'Anggota yang baru lulus pendadaran' },
+  {
+    value: 'all_active',
+    label: 'Semua Anggota Aktif',
+    description: 'Semua anggota dengan status aktif',
+  },
+  {
+    value: 'by_ranting',
+    label: 'Per Ranting',
+    description: 'Pilih anggota berdasarkan ranting tertentu',
+  },
+  {
+    value: 'by_ids',
+    label: 'Daftar ID Anggota',
+    description: 'Masukkan daftar ID anggota secara manual',
+  },
+  {
+    value: 'graduated_only',
+    label: 'Lulus Pendadaran',
+    description: 'Anggota yang baru lulus pendadaran',
+  },
 ];
 
 // ─── Component ───
@@ -229,9 +265,7 @@ export default function BatchGenerateModal({
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                           {mr.label}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {mr.description}
-                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{mr.description}</p>
                       </div>
                     </button>
                   ))}
@@ -289,7 +323,8 @@ export default function BatchGenerateModal({
                     Rentang Anggota
                   </p>
                   <p className="text-sm font-bold text-green-800 dark:text-green-300">
-                    {MEMBER_RANGE_OPTIONS.find((mr) => mr.value === memberRange)?.label || memberRange}
+                    {MEMBER_RANGE_OPTIONS.find((mr) => mr.value === memberRange)?.label ||
+                      memberRange}
                   </p>
                 </div>
               </div>
@@ -325,8 +360,8 @@ export default function BatchGenerateModal({
               <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-sm text-yellow-700 dark:text-yellow-400">
                 <p className="font-medium mb-1">⏳ Proses akan berjalan di background</p>
                 <p className="text-xs">
-                  Anda bisa menutup modal ini setelah generate dimulai. Progress akan tetap
-                  berjalan dan Anda bisa memantaunya dari tab Riwayat Batch.
+                  Anda bisa menutup modal ini setelah generate dimulai. Progress akan tetap berjalan
+                  dan Anda bisa memantaunya dari tab Riwayat Batch.
                 </p>
               </div>
             </div>
@@ -344,14 +379,17 @@ export default function BatchGenerateModal({
               />
 
               <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-start gap-3">
-                <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                <CheckCircle2
+                  size={18}
+                  className="text-green-600 dark:text-green-400 shrink-0 mt-0.5"
+                />
                 <div>
                   <p className="text-sm font-medium text-green-700 dark:text-green-400">
                     Batch generate dimulai
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-500 mt-1">
-                    Proses berjalan di background. Pantau progress di atas atau buka tab Riwayat Batch
-                    untuk melihat semua batch.
+                    Proses berjalan di background. Pantau progress di atas atau buka tab Riwayat
+                    Batch untuk melihat semua batch.
                   </p>
                 </div>
               </div>

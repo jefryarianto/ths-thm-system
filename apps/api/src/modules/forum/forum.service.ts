@@ -65,7 +65,11 @@ export class ForumService {
    * Authorisation guard: admins may always act; members only on their own content.
    * Admins without an Anggota record are still allowed to moderate.
    */
-  private isAllowedToModify(authorId: string | null, contentAuthorId: string, role?: string): boolean {
+  private isAllowedToModify(
+    authorId: string | null,
+    contentAuthorId: string,
+    role?: string,
+  ): boolean {
     if (this.isAdmin(role)) return true;
     return !!authorId && authorId === contentAuthorId;
   }
@@ -153,7 +157,9 @@ export class ForumService {
 
     const authorId = await this.resolveAnggotaId(user.id);
     if (!authorId) {
-      throw new ForbiddenException('Data keanggotaan Anda tidak ditemukan. Tidak dapat membuat thread.');
+      throw new ForbiddenException(
+        'Data keanggotaan Anda tidak ditemukan. Tidak dapat membuat thread.',
+      );
     }
 
     const thread = await this.prisma.forumThread.create({
@@ -234,7 +240,8 @@ export class ForumService {
   async createPost(threadId: string, dto: CreatePostDto, user: { id: string; role?: string }) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id: threadId } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
-    if (thread.isLocked) throw new ForbiddenException('Thread ini dikunci. Tidak dapat menambah balasan.');
+    if (thread.isLocked)
+      throw new ForbiddenException('Thread ini dikunci. Tidak dapat menambah balasan.');
 
     const authorId = await this.resolveAnggotaId(user.id);
     if (!authorId) {
@@ -290,7 +297,8 @@ export class ForumService {
   async markAsSolution(postId: string, threadId: string, user: { id: string; role?: string }) {
     const post = await this.prisma.forumPost.findUnique({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
-    if (post.threadId !== threadId) throw new ForbiddenException('Post tidak termasuk dalam thread ini');
+    if (post.threadId !== threadId)
+      throw new ForbiddenException('Post tidak termasuk dalam thread ini');
 
     const thread = await this.prisma.forumThread.findUnique({ where: { id: threadId } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');

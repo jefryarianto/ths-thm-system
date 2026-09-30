@@ -67,7 +67,9 @@ describe('EmailBlastService', () => {
 
     // In-process tidak menolak duplikat, tapi bentuk jobId harus stabil &
     // dapat diprediksi (di BullMQ, jobId sama = tidak dibuat ulang).
-    expect(loggerDebug).toHaveBeenCalledWith(expect.stringContaining('email-blast:reminder_latihan:2026-09-30:u1:0'));
+    expect(loggerDebug).toHaveBeenCalledWith(
+      expect.stringContaining('email-blast:reminder_latihan:2026-09-30:u1:0'),
+    );
   });
 
   it('fallback ke notifikasi in-app bila NotificationsService gagal', async () => {

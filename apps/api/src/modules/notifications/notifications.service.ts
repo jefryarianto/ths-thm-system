@@ -67,7 +67,10 @@ export class NotificationsService {
 
   async broadcast(dto: BroadcastNotificationDto) {
     const users = await this.prisma.user.findMany({ where: { isActive: true } });
-    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), 'umum');
+    const allowedIds = await this.batchCheckPreference(
+      users.map((u) => u.id),
+      'umum',
+    );
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
     if (allowedUsers.length > 0) {
@@ -115,7 +118,10 @@ export class NotificationsService {
     });
 
     const tipe = dto.tipe || 'umum';
-    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), tipe);
+    const allowedIds = await this.batchCheckPreference(
+      users.map((u) => u.id),
+      tipe,
+    );
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
     if (allowedUsers.length > 0) {
@@ -294,20 +300,72 @@ export class NotificationsService {
   // ─── Notification Preferences ───
 
   static readonly NOTIFICATION_TYPES = [
-    { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
-    { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
-    { key: 'reminder_latihan', label: 'Pengingat Latihan', description: 'Pengingat jadwal latihan rutin' },
-    { key: 'reminder_pendadaran', label: 'Pengingat Pendadaran', description: 'Pengingat jadwal ujian pendadaran' },
+    {
+      key: 'welcome',
+      label: 'Selamat Datang',
+      description: 'Notifikasi saat pertama kali mendaftar',
+    },
+    {
+      key: 'data_incomplete',
+      label: 'Data Tidak Lengkap',
+      description: 'Pengingat untuk melengkapi data diri',
+    },
+    {
+      key: 'reminder_latihan',
+      label: 'Pengingat Latihan',
+      description: 'Pengingat jadwal latihan rutin',
+    },
+    {
+      key: 'reminder_pendadaran',
+      label: 'Pengingat Pendadaran',
+      description: 'Pengingat jadwal ujian pendadaran',
+    },
     { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
-    { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
-    { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
-    { key: 'kartu_dipindai', label: 'Kartu Dipindai', description: 'Notifikasi saat kartu keanggotaan Anda dipindai' },
-    { key: 'anggota_disetujui', label: 'Keanggotaan Disetujui', description: 'Notifikasi saat data keanggotaan Anda disetujui' },
-    { key: 'pembayaran_terverifikasi', label: 'Pembayaran Terverifikasi', description: 'Notifikasi saat pembayaran iuran Anda terverifikasi' },
-    { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
-    { key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' },
-    { key: 'forum_reply', label: 'Balasan Forum', description: 'Notifikasi saat ada balasan baru di thread forum' },
-    { key: 'forum_solution', label: 'Solusi Forum', description: 'Notifikasi saat balasan ditandai sebagai solusi' },
+    {
+      key: 'status_klaim',
+      label: 'Status Klaim',
+      description: 'Update status pengajuan klaim dokumen',
+    },
+    {
+      key: 'dokumen_ready',
+      label: 'Dokumen Siap',
+      description: 'Notifikasi dokumen telah selesai diproses',
+    },
+    {
+      key: 'kartu_dipindai',
+      label: 'Kartu Dipindai',
+      description: 'Notifikasi saat kartu keanggotaan Anda dipindai',
+    },
+    {
+      key: 'anggota_disetujui',
+      label: 'Keanggotaan Disetujui',
+      description: 'Notifikasi saat data keanggotaan Anda disetujui',
+    },
+    {
+      key: 'pembayaran_terverifikasi',
+      label: 'Pembayaran Terverifikasi',
+      description: 'Notifikasi saat pembayaran iuran Anda terverifikasi',
+    },
+    {
+      key: 'badge_earned',
+      label: 'Badge Gamifikasi',
+      description: 'Notifikasi saat mendapat badge baru',
+    },
+    {
+      key: 'approval_request',
+      label: 'Persetujuan',
+      description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui',
+    },
+    {
+      key: 'forum_reply',
+      label: 'Balasan Forum',
+      description: 'Notifikasi saat ada balasan baru di thread forum',
+    },
+    {
+      key: 'forum_solution',
+      label: 'Solusi Forum',
+      description: 'Notifikasi saat balasan ditandai sebagai solusi',
+    },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 
@@ -472,10 +530,7 @@ export class NotificationsService {
     return allowed;
   }
 
-  private async batchCheckPushPreference(
-    userIds: string[],
-    tipe?: string,
-  ): Promise<Set<string>> {
+  private async batchCheckPushPreference(userIds: string[], tipe?: string): Promise<Set<string>> {
     const keys = userIds.map((id) => this.prefKey(id));
     const settings = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
     const prefMap = new Map<string, Record<string, unknown>>();
@@ -501,9 +556,7 @@ export class NotificationsService {
     return allowed;
   }
 
-  private normalizeSavedPrefs(
-    saved: Record<string, unknown>,
-  ): Record<string, unknown> {
+  private normalizeSavedPrefs(saved: Record<string, unknown>): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const key of Object.keys(saved)) {
       if (key === 'global' || key === 'quietHours') {
@@ -539,7 +592,11 @@ export class NotificationsService {
         await this.mailService.sendMail({
           to: member.email,
           ...tpl,
-          metadata: { module: 'notifications', template: 'dataIncompleteEmail', memberId: member.id },
+          metadata: {
+            module: 'notifications',
+            template: 'dataIncompleteEmail',
+            memberId: member.id,
+          },
         });
       }),
     );
@@ -547,7 +604,9 @@ export class NotificationsService {
     const sent = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
     if (failed > 0) {
-      this.logger.warn(`sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`);
+      this.logger.warn(
+        `sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`,
+      );
     }
 
     return { sent, noEmail, failed, total: members.length };
@@ -564,7 +623,6 @@ export class NotificationsService {
       where: { id: userId },
       data: { fcmToken: token },
     });
-
   }
 
   async unregisterDeviceToken(tokenId: string) {
@@ -573,7 +631,6 @@ export class NotificationsService {
       data: { isActive: false },
     });
   }
-
 
   /**
    * One-time cleanup: delete stale data_incomplete notifications.
@@ -592,7 +649,15 @@ export class NotificationsService {
 
     const members = await this.prisma.anggota.findMany({
       where: { id: { in: anggotaIds } },
-      select: { id: true, namaLengkap: true, tempatLahir: true, tanggalLahir: true, alamat: true, noHp: true, email: true },
+      select: {
+        id: true,
+        namaLengkap: true,
+        tempatLahir: true,
+        tanggalLahir: true,
+        alamat: true,
+        noHp: true,
+        email: true,
+      },
     });
 
     const completeAnggotaIds = new Set<string>();
@@ -616,12 +681,18 @@ export class NotificationsService {
       this.cache?.invalidatePrefix(this.CACHE_PREFIX + aid);
     }
 
-    this.logger.log(`cleanupStaleIncompleteNotifications: deleted ${toDelete.length}, kept ${toKeep.length}`);
+    this.logger.log(
+      `cleanupStaleIncompleteNotifications: deleted ${toDelete.length}, kept ${toKeep.length}`,
+    );
     return { deleted: toDelete.length, kept: toKeep.length };
   }
 
-
-  private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {
+  private async sendEmailNotification(
+    userId: string,
+    judul: string,
+    isi: string,
+    tipe?: string,
+  ): Promise<void> {
     try {
       if (tipe) {
         const emailEnabled = await this.isEmailPreferenceEnabled(userId, tipe);
@@ -647,22 +718,25 @@ export class NotificationsService {
         to: user.email,
         subject: tpl.subject,
         html: tpl.html,
-        metadata: { module: 'notifications', template: 'generalNotificationEmail', userId, notifType: tipe },
+        metadata: {
+          module: 'notifications',
+          template: 'generalNotificationEmail',
+          userId,
+          notifType: tipe,
+        },
       });
     } catch (error) {
-      this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
+      this.logger.error(
+        `sendEmailNotification failed for user ${userId}: ${(error as Error).message}`,
+      );
     }
   }
 
-/**
+  /**
    * Send a test push notification to a specific user (or all users).
    * Returns delivery results with success/failure counts.
    */
-  async sendTestPush(dto: {
-    title: string;
-    body: string;
-    userId?: string;
-  }): Promise<{
+  async sendTestPush(dto: { title: string; body: string; userId?: string }): Promise<{
     totalTokens: number;
     successCount: number;
     failureCount: number;
@@ -884,7 +958,10 @@ export class NotificationsService {
         if (response.failureCount > 0) {
           response.responses.forEach(
             (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
-              if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
+              if (
+                !resp.success &&
+                resp.error?.code === 'messaging/registration-token-not-registered'
+              ) {
                 this.prisma.deviceToken
                   .updateMany({ where: { token: batch[idx].token }, data: { isActive: false } })
                   .catch(() => {});
@@ -971,7 +1048,11 @@ export class NotificationsService {
    * Kirim push satu-per-satu ke token Expo lewat API HTTP Expo.
    * Returns jumlah berhasil + menghapus token yang sudah invalid/unregistered.
    */
-  private async pushExpo(title: string, body: string, tokens: { id: string; token: string }[]): Promise<void> {
+  private async pushExpo(
+    title: string,
+    body: string,
+    tokens: { id: string; token: string }[],
+  ): Promise<void> {
     if (tokens.length === 0) return;
 
     const messages = tokens.map((t) => ({
@@ -1010,7 +1091,9 @@ export class NotificationsService {
       });
 
       if (res.ok) {
-        this.logger.log(`Expo push: ${results.filter((r) => r?.status === 'ok').length} success, ${results.filter((r) => r?.status === 'error').length} failures`);
+        this.logger.log(
+          `Expo push: ${results.filter((r) => r?.status === 'ok').length} success, ${results.filter((r) => r?.status === 'error').length} failures`,
+        );
       } else {
         this.logger.warn(`Expo push HTTP ${res.status}: ${JSON.stringify(payload).slice(0, 200)}`);
       }
@@ -1033,7 +1116,7 @@ export class NotificationsService {
 
       if (tokens.length === 0) return;
 
-// Pisahkan token Expo vs. token FCM asli (ditangani oleh service yang berbeda).
+      // Pisahkan token Expo vs. token FCM asli (ditangani oleh service yang berbeda).
       const expoTokens = tokens.filter((t) => this.isExpoToken(t.token));
       const fcmTokens = tokens.filter((t) => !this.isExpoToken(t.token));
 
@@ -1072,7 +1155,10 @@ export class NotificationsService {
         if (response.failureCount > 0) {
           response.responses.forEach(
             (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
-              if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
+              if (
+                !resp.success &&
+                resp.error?.code === 'messaging/registration-token-not-registered'
+              ) {
                 this.prisma.deviceToken
                   .updateMany({ where: { token: batch[idx].token }, data: { isActive: false } })
                   .catch(() => {});
@@ -1082,7 +1168,10 @@ export class NotificationsService {
         }
       }
     } catch (error) {
-      this.logger.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
+      this.logger.warn(
+        'FCM push failed (firebase-admin not configured):',
+        (error as Error).message,
+      );
     }
   }
 }

@@ -16,8 +16,14 @@ export async function registerTrainingsMocks(page: Page) {
       lokasi: `Lokasi ${(i % 5) + 1}`,
       pelatih: { namaLengkap: `Pelatih ${(i % 8) + 1}` },
       materi: [
-        { id: `materi-a-${i + 1}`, kategori: ['pencak_silat', 'organisasi', 'mental_spiritual', 'rekreasi'][i % 4], detail: `Detail materi ${i + 1}` },
-        ...(i % 3 === 0 ? [{ id: `materi-b-${i + 1}`, kategori: 'rekreasi', detail: `Rekreasi detail ${i + 1}` }] : []),
+        {
+          id: `materi-a-${i + 1}`,
+          kategori: ['pencak_silat', 'organisasi', 'mental_spiritual', 'rekreasi'][i % 4],
+          detail: `Detail materi ${i + 1}`,
+        },
+        ...(i % 3 === 0
+          ? [{ id: `materi-b-${i + 1}`, kategori: 'rekreasi', detail: `Rekreasi detail ${i + 1}` }]
+          : []),
       ],
     }));
     const start = (pageParam - 1) * limit;

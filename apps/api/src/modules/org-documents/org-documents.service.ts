@@ -16,7 +16,10 @@ import {
 } from './dto/org-document.dto';
 
 @Injectable()
-export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, UpdateOrgDocumentDto> {
+export class OrgDocumentsService extends BaseCrudService<
+  CreateOrgDocumentDto,
+  UpdateOrgDocumentDto
+> {
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly scopeHelper: ScopeHelper,
@@ -24,19 +27,22 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
     private readonly mailService: MailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'dokumenOrganisasi',
-      prefix: 'org-documents:',
-      notFound: 'Dokumen tidak ditemukan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'dokumenOrganisasi',
+        prefix: 'org-documents:',
+        notFound: 'Dokumen tidak ditemukan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hook: notify admins after create ─────────────────
 
-  protected async afterCreate(
-    result: any,
-    dto: CreateOrgDocumentDto,
-  ): Promise<void> {
+  protected async afterCreate(result: any, dto: CreateOrgDocumentDto): Promise<void> {
     this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');
   }
 

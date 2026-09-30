@@ -10,13 +10,7 @@ interface SkeletonProps {
   lines?: number;
 }
 
-export function Skeleton({
-  variant = 'text',
-  className,
-  width,
-  height,
-  lines = 1,
-}: SkeletonProps) {
+export function Skeleton({ variant = 'text', className, width, height, lines = 1 }: SkeletonProps) {
   const baseClasses = 'animate-pulse bg-surface-variant rounded';
 
   const variantClasses = {
@@ -37,25 +31,13 @@ export function Skeleton({
     return (
       <div className={cn(baseClasses, variantClasses[variant], className)} style={styles}>
         {Array.from({ length: lines }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              'h-4 w-full',
-              i === lines - 1 && 'w-3/4',
-              i > 0 && 'mt-2'
-            )}
-          />
+          <div key={i} className={cn('h-4 w-full', i === lines - 1 && 'w-3/4', i > 0 && 'mt-2')} />
         ))}
       </div>
     );
   }
 
-  return (
-    <div
-      className={cn(baseClasses, variantClasses[variant], className)}
-      style={styles}
-    />
-  );
+  return <div className={cn(baseClasses, variantClasses[variant], className)} style={styles} />;
 }
 
 export function TextSkeleton({ lines = 3, className, ...props }: Omit<SkeletonProps, 'variant'>) {
@@ -66,7 +48,11 @@ export function CardSkeleton({ className, ...props }: Omit<SkeletonProps, 'varia
   return <Skeleton variant="card" className={className} {...props} />;
 }
 
-export function AvatarSkeleton({ size = 40, className, ...props }: Omit<SkeletonProps, 'variant' | 'width' | 'height'> & { size?: number }) {
+export function AvatarSkeleton({
+  size = 40,
+  className,
+  ...props
+}: Omit<SkeletonProps, 'variant' | 'width' | 'height'> & { size?: number }) {
   return <Skeleton variant="avatar" width={size} height={size} className={className} {...props} />;
 }
 
@@ -78,9 +64,18 @@ export function InputSkeleton({ className, ...props }: Omit<SkeletonProps, 'vari
   return <Skeleton variant="input" className={className} {...props} />;
 }
 
-export function ChartSkeleton({ height = 280, className, ...props }: { height?: number; className?: string } & Omit<SkeletonProps, 'variant' | 'height'>) {
+export function ChartSkeleton({
+  height = 280,
+  className,
+  ...props
+}: { height?: number; className?: string } & Omit<SkeletonProps, 'variant' | 'height'>) {
   return (
-    <div className={cn('bg-surface rounded-xl border border-border shadow-sm p-6 animate-pulse', className)}>
+    <div
+      className={cn(
+        'bg-surface rounded-xl border border-border shadow-sm p-6 animate-pulse',
+        className,
+      )}
+    >
       <div className="h-4 bg-surface-variant rounded w-48 mb-2" />
       <div className="h-3 bg-surface-variant rounded w-64 mb-6" />
       <div

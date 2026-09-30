@@ -136,10 +136,10 @@ docs/             # SEMUA dokumentasi & panduan
 
 Kontrak API disimpan sebagai dua artefak yang **di-commit ke repo**:
 
-| Artefak                       | Dihasilkan dari   | Isi                                                       |
-| ----------------------------- | ----------------- | --------------------------------------------------------- |
-| `apps/api/swagger.json`       | Dekorator NestJS  | OpenAPI spec seluruh endpoint API                          |
-| `apps/web/src/types/api.d.ts` | `swagger.json`    | Tipe TypeScript untuk konsumsi web                         |
+| Artefak                       | Dihasilkan dari  | Isi                                |
+| ----------------------------- | ---------------- | ---------------------------------- |
+| `apps/api/swagger.json`       | Dekorator NestJS | OpenAPI spec seluruh endpoint API  |
+| `apps/web/src/types/api.d.ts` | `swagger.json`   | Tipe TypeScript untuk konsumsi web |
 
 CI menjalankan job **`contract`** (`.github/workflows/ci.yml`): kedua artefak di-regenerate dari kode lalu dibandingkan dengan yang di-commit (`git diff --exit-code`). **PR yang mengubah endpoint tanpa memperbarui kontrak akan gagal di job ini.**
 

@@ -96,7 +96,10 @@ describe('DuesController', () => {
 
     it('should delegate submitPaymentConfirmation to service', async () => {
       const dto = { catatan: 'Bukti transfer via BCA' };
-      mockDuesService.submitPaymentConfirmation.mockResolvedValue({ id: 'due-1', status: 'menunggu_verifikasi' });
+      mockDuesService.submitPaymentConfirmation.mockResolvedValue({
+        id: 'due-1',
+        status: 'menunggu_verifikasi',
+      });
 
       const result = await controller.submitPaymentConfirmation('due-1', dto);
       expect(service.submitPaymentConfirmation).toHaveBeenCalledWith('due-1', dto);

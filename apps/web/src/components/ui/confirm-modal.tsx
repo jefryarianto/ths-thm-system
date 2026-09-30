@@ -114,7 +114,13 @@ export default function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+      aria-describedby="confirm-message"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -137,8 +143,12 @@ export default function ConfirmModal({
             <AlertTriangle size={22} />
           </div>
           <div className="flex-1">
-            <h3 id="confirm-title" className="text-lg font-semibold text-text">{title}</h3>
-            <p id="confirm-message" className="mt-2 text-sm text-muted">{message}</p>
+            <h3 id="confirm-title" className="text-lg font-semibold text-text">
+              {title}
+            </h3>
+            <p id="confirm-message" className="mt-2 text-sm text-muted">
+              {message}
+            </p>
           </div>
         </div>
 

@@ -57,7 +57,7 @@ interface AuthState {
 
 function createAuthState(user: User | null): AuthState {
   const role: Role | null = user?.role ?? null;
-  const roleLevel = role ? ROLE_HIERARCHY[role] ?? 0 : 0;
+  const roleLevel = role ? (ROLE_HIERARCHY[role] ?? 0) : 0;
 
   return {
     user,

@@ -59,9 +59,7 @@ describe('DocumentsService', () => {
     setting: {
       findMany: jest.fn().mockResolvedValue([]),
     },
-    $transaction: jest.fn((arg: any) =>
-      Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma),
-    ),
+    $transaction: jest.fn((arg: any) => (Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma))),
   };
 
   const mockScopeHelper = {
@@ -93,13 +91,29 @@ describe('DocumentsService', () => {
   };
 
   const mockPenandatanganService = {
-    findActive: jest.fn().mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' }),
-    resolveActive: jest.fn().mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }),
-    resolveSigners: jest.fn().mockResolvedValue([
-      { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik', signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' },
-    ]),
+    findActive: jest
+      .fn()
+      .mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' }),
+    resolveActive: jest
+      .fn()
+      .mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }),
+    resolveSigners: jest
+      .fn()
+      .mockResolvedValue([
+        {
+          signerName: 'Yoseph Pehan Betan',
+          signerTitle: 'Koordinator Distrik',
+          signatureUrl: 'signatures/distrik-ttd.png',
+          stampUrl: 'stamps/distrik-stamp.png',
+        },
+      ]),
     hasDocSigners: jest.fn().mockResolvedValue(true),
-    resolveAssets: jest.fn().mockResolvedValue({ signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' }),
+    resolveAssets: jest
+      .fn()
+      .mockResolvedValue({
+        signatureUrl: 'signatures/distrik-ttd.png',
+        stampUrl: 'stamps/distrik-stamp.png',
+      }),
   };
 
   beforeEach(async () => {
@@ -119,13 +133,27 @@ describe('DocumentsService', () => {
     jest.clearAllMocks();
     mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({});
     mockPrisma.setting.findMany.mockResolvedValue([]);
-    mockPenandatanganService.findActive.mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' });
-    mockPenandatanganService.resolveActive.mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' });
+    mockPenandatanganService.findActive.mockResolvedValue({
+      nama: 'Yoseph Pehan Betan',
+      jabatan: 'Koordinator Distrik',
+    });
+    mockPenandatanganService.resolveActive.mockResolvedValue({
+      signerName: 'Yoseph Pehan Betan',
+      signerTitle: 'Koordinator Distrik',
+    });
     mockPenandatanganService.resolveSigners.mockResolvedValue([
-      { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik', signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' },
+      {
+        signerName: 'Yoseph Pehan Betan',
+        signerTitle: 'Koordinator Distrik',
+        signatureUrl: 'signatures/distrik-ttd.png',
+        stampUrl: 'stamps/distrik-stamp.png',
+      },
     ]);
     mockPenandatanganService.hasDocSigners.mockResolvedValue(true);
-    mockPenandatanganService.resolveAssets.mockResolvedValue({ signatureUrl: 'signatures/distrik-ttd.png', stampUrl: 'stamps/distrik-stamp.png' });
+    mockPenandatanganService.resolveAssets.mockResolvedValue({
+      signatureUrl: 'signatures/distrik-ttd.png',
+      stampUrl: 'stamps/distrik-stamp.png',
+    });
   });
 
   it('should be defined', () => {
@@ -263,7 +291,11 @@ describe('DocumentsService', () => {
       // setiap verifikasi tercatat ke riwayat pemindaian (scan log)
       expect(mockPrisma.qrScan.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ qrValidationId: 'qr1', ipAddress: null, userAgent: null }),
+          data: expect.objectContaining({
+            qrValidationId: 'qr1',
+            ipAddress: null,
+            userAgent: null,
+          }),
         }),
       );
       expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
@@ -274,7 +306,10 @@ describe('DocumentsService', () => {
     });
 
     it('should log scan metadata (IP & user-agent) when present', async () => {
-      mockPrisma.qRValidation.findUnique.mockResolvedValue({ ...ktaQr(), scannedAt: new Date('2026-02-01T00:00:00Z') });
+      mockPrisma.qRValidation.findUnique.mockResolvedValue({
+        ...ktaQr(),
+        scannedAt: new Date('2026-02-01T00:00:00Z'),
+      });
       const result = await service.verifyByToken('t1', {
         ip: '203.0.113.9',
         userAgent: 'Mozilla/5.0 (KTA-Scanner)',
@@ -393,7 +428,10 @@ describe('DocumentsService', () => {
 
       const result = await service.generateCertificate(dto);
       expect(result.id).toBe('doc-cert-1');
-      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith('sertifikat_pendadaran', 'distrik-1');
+      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith(
+        'sertifikat_pendadaran',
+        'distrik-1',
+      );
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalled();
     });
   });

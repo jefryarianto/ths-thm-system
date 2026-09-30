@@ -25,23 +25,24 @@ notifikasi superadmin spam tiap siklus, tabel `email_logs` tidak berguna.
 
 ## 2. Fakta Pendukung (bukti)
 
-| Fakta | Nilai |
-|---|---|
-| Total baris `email_logs` | 132.869 (131.729 `failed`, 1.140 `sent`) |
-| Baris loop (to=`seusenda@gmail.com`, subject=`Kredensial Login THS-THM`) | 132.571 |
-| Asal | module `members`, template `credentialEmail` |
-| Error semua baris gagal | `All email providers failed (Resend + SMTP)` |
-| Ritme normal loop | 48/hari = tepat cron 30 menit |
-| Puncak | 19 Sep: 125.073 percobaan gagal dalam sehari |
-| Log API | `[Auto-Retry] Found 131729 failed emails, starting retry...` **tanpa pernah "Complete"** |
-| Crash | `FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory` |
-| Container | `RestartCount=19`, mem limit 1 GB, OOMKilled=false (crash di level Node) |
+| Fakta                                                                    | Nilai                                                                                    |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Total baris `email_logs`                                                 | 132.869 (131.729 `failed`, 1.140 `sent`)                                                 |
+| Baris loop (to=`seusenda@gmail.com`, subject=`Kredensial Login THS-THM`) | 132.571                                                                                  |
+| Asal                                                                     | module `members`, template `credentialEmail`                                             |
+| Error semua baris gagal                                                  | `All email providers failed (Resend + SMTP)`                                             |
+| Ritme normal loop                                                        | 48/hari = tepat cron 30 menit                                                            |
+| Puncak                                                                   | 19 Sep: 125.073 percobaan gagal dalam sehari                                             |
+| Log API                                                                  | `[Auto-Retry] Found 131729 failed emails, starting retry...` **tanpa pernah "Complete"** |
+| Crash                                                                    | `FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory`      |
+| Container                                                                | `RestartCount=19`, mem limit 1 GB, OOMKilled=false (crash di level Node)                 |
 
 Kode terkait:
+
 - `apps/api/src/mail/mail.service.ts` → `retryFailedEmails()`: `findMany` tanpa `take`,
   tidak `update` status asli, tiap percobaan `create` baris log baru.
 - `apps/api/src/mail/mail-cron.service.ts` → `handleAutoRetry()`: `count({ status: 'failed',
-  content: { not: null } })` tanpa batas usia/percobaan, lalu retry semuanya.
+content: { not: null } })` tanpa batas usia/percobaan, lalu retry semuanya.
 - `apps/api/prisma/schema.prisma` → `EmailLog` tidak punya kolom jumlah percobaan/waktu
   retry terakhir.
 
@@ -95,9 +96,9 @@ siklus crash + satu siklus spam notifikasi superadmin.
   - Retry manual via `ids` (tombol UI): **melewati** filter usia & backoff (admin eksplisit),
     tetap di-`take` dan tetap update status.
   - Sukses → `update(id, { status:'sent', provider, error:null, retryCount:{increment:1},
-    lastRetryAt: now, metadata:{...lama, resendId, retriedAt} })`.
+lastRetryAt: now, metadata:{...lama, resendId, retriedAt} })`.
   - Gagal → `update(id, { status:'failed', error: reason, retryCount:{increment:1},
-    lastRetryAt: now })`; jika `retryCount >= MAX` → `status:'abandoned'` (keluar dari antrean
+lastRetryAt: now })`; jika `retryCount >= MAX` → `status:'abandoned'` (keluar dari antrean
     retry permanen).
   - **Tidak ada `create` baris baru** untuk percobaan retry (riwayat percobaan hidup di kolom
     `retryCount`/`lastRetryAt`).
@@ -213,10 +214,10 @@ menangani via usia/`abandoned`.
 
 ## 10. Risiko & Mitigasi
 
-| Risiko | Mitigasi |
-|---|---|
-| DELETE massal salah sasaran | Backup dulu, WHERE sempit (1 email), transaksi, hasil dihitung |
-| Perilaku retry berubah mengecewakan admin | Retry manual via UI tetap ada dan tidak dibatasi usia |
-| Migration di tabel besar | `ADD COLUMN ... DEFAULT` bersifat metadata-only di PG 16 (instan) |
-| Status `abandoned` tak dikenal UI | Update UI disertakan di Fase 2§5.4 |
-| Fix belum deploy saat cleanup | Cron hanya diam (count kecil) — tidak buruk; fix menyusul |
+| Risiko                                    | Mitigasi                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| DELETE massal salah sasaran               | Backup dulu, WHERE sempit (1 email), transaksi, hasil dihitung    |
+| Perilaku retry berubah mengecewakan admin | Retry manual via UI tetap ada dan tidak dibatasi usia             |
+| Migration di tabel besar                  | `ADD COLUMN ... DEFAULT` bersifat metadata-only di PG 16 (instan) |
+| Status `abandoned` tak dikenal UI         | Update UI disertakan di Fase 2§5.4                                |
+| Fix belum deploy saat cleanup             | Cron hanya diam (count kecil) — tidak buruk; fix menyusul         |

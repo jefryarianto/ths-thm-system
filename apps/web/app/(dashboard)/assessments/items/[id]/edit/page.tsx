@@ -62,9 +62,18 @@ export default function EditItemPenilaianPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.namaItem.trim()) { setError('Nama item harus diisi'); return; }
-    if (form.skorMaksimal <= 0) { setError('Skor maksimal harus lebih dari 0'); return; }
-    if (form.bobot <= 0) { setError('Bobot harus lebih dari 0'); return; }
+    if (!form.namaItem.trim()) {
+      setError('Nama item harus diisi');
+      return;
+    }
+    if (form.skorMaksimal <= 0) {
+      setError('Skor maksimal harus lebih dari 0');
+      return;
+    }
+    if (form.bobot <= 0) {
+      setError('Bobot harus lebih dari 0');
+      return;
+    }
 
     setSaving(true);
     setError('');
@@ -85,86 +94,97 @@ export default function EditItemPenilaianPage() {
   };
 
   if (loading) return <DetailSkeleton />;
-  if (fetchError) return <ErrorPage message={fetchError} backHref="/assessments" backLabel="Kembali ke Penilaian" />;
+  if (fetchError)
+    return (
+      <ErrorPage message={fetchError} backHref="/assessments" backLabel="Kembali ke Penilaian" />
+    );
 
   return (
-      <PermissionGuard module="assessments" action="edit">
-        <FormLayout
-              backHref="/assessments"
-              title="Edit Item Penilaian"
-              subtitle={itemTitle}
-              error={error}
-              saving={saving}
-              onCancel={() => router.push('/assessments')}
-              onSubmit={handleSubmit}
-              submitLabel="Simpan Perubahan"
+    <PermissionGuard module="assessments" action="edit">
+      <FormLayout
+        backHref="/assessments"
+        title="Edit Item Penilaian"
+        subtitle={itemTitle}
+        error={error}
+        saving={saving}
+        onCancel={() => router.push('/assessments')}
+        onSubmit={handleSubmit}
+        submitLabel="Simpan Perubahan"
+      >
+        <FormField label="Nama Item" required>
+          <input
+            type="text"
+            value={form.namaItem}
+            onChange={(e) => setForm((prev) => ({ ...prev, namaItem: e.target.value }))}
+            required
+            placeholder="Nama item penilaian"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </FormField>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Skor Maksimal" required>
+            <input
+              type="number"
+              value={form.skorMaksimal}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, skorMaksimal: parseFloat(e.target.value) || 0 }))
+              }
+              min="0"
+              max="1000"
+              step="0.5"
+              required
+              placeholder="Contoh: 100"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </FormField>
+
+          <FormField label="Bobot" required>
+            <input
+              type="number"
+              value={form.bobot}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, bobot: parseFloat(e.target.value) || 0 }))
+              }
+              min="0"
+              max="100"
+              step="0.01"
+              required
+              placeholder="Contoh: 0.25"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Urutan">
+            <input
+              type="number"
+              value={form.urutan}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, urutan: parseInt(e.target.value) || 0 }))
+              }
+              min="1"
+              step="1"
+              placeholder="Otomatis jika kosong"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </FormField>
+
+          <FormField label="Status">
+            <select
+              value={form.isActive ? 'true' : 'false'}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, isActive: e.target.value === 'true' }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
             >
-              <FormField label="Nama Item" required>
-                <input
-                  type="text"
-                  value={form.namaItem}
-                  onChange={(e) => setForm((prev) => ({ ...prev, namaItem: e.target.value }))}
-                  required
-                  placeholder="Nama item penilaian"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </FormField>
-        
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Skor Maksimal" required>
-                  <input
-                    type="number"
-                    value={form.skorMaksimal}
-                    onChange={(e) => setForm((prev) => ({ ...prev, skorMaksimal: parseFloat(e.target.value) || 0 }))}
-                    min="0"
-                    max="1000"
-                    step="0.5"
-                    required
-                    placeholder="Contoh: 100"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </FormField>
-        
-                <FormField label="Bobot" required>
-                  <input
-                    type="number"
-                    value={form.bobot}
-                    onChange={(e) => setForm((prev) => ({ ...prev, bobot: parseFloat(e.target.value) || 0 }))}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    required
-                    placeholder="Contoh: 0.25"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </FormField>
-              </div>
-        
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Urutan">
-                  <input
-                    type="number"
-                    value={form.urutan}
-                    onChange={(e) => setForm((prev) => ({ ...prev, urutan: parseInt(e.target.value) || 0 }))}
-                    min="1"
-                    step="1"
-                    placeholder="Otomatis jika kosong"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </FormField>
-        
-                <FormField label="Status">
-                  <select
-                    value={form.isActive ? 'true' : 'false'}
-                    onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.value === 'true' }))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  >
-                    <option value="true">Aktif</option>
-                    <option value="false">Nonaktif</option>
-                  </select>
-                </FormField>
-              </div>
-            </FormLayout>
-      </PermissionGuard>
-    );
+              <option value="true">Aktif</option>
+              <option value="false">Nonaktif</option>
+            </select>
+          </FormField>
+        </div>
+      </FormLayout>
+    </PermissionGuard>
+  );
 }

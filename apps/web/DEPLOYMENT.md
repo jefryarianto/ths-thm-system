@@ -3,21 +3,24 @@
 ## Pre-Deployment Checklist
 
 ### Code Quality
+
 - [x] TypeScript compilation passes (`npm run typecheck`)
 - [x] ESLint passes (`npm run lint`)
 - [x] Unit tests passing (`npm run test`)
 - [x] E2E tests passing (`npm run test:e2e:members`)
 
 ### Backend API Requirements
+
 Ensure backend supports:
 
-| Endpoint | Method | Params | Notes |
-|----------|--------|--------|-------|
-| `/members` | GET | `sort`, `order`, `dadarFrom`, `dadarTo` | Add query params |
-| `/members/batch-action` | POST | `{ memberIds: [], action: 'approve' }` | Required |
-| `/api/export` | GET | `type`, `exportType`, `ids` | Required |
+| Endpoint                | Method | Params                                  | Notes            |
+| ----------------------- | ------ | --------------------------------------- | ---------------- |
+| `/members`              | GET    | `sort`, `order`, `dadarFrom`, `dadarTo` | Add query params |
+| `/members/batch-action` | POST   | `{ memberIds: [], action: 'approve' }`  | Required         |
+| `/api/export`           | GET    | `type`, `exportType`, `ids`             | Required         |
 
 ### Database Indexes
+
 Run these if not existing:
 
 ```sql
@@ -30,6 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_members_dadar_year ON members(dadar_year);
 ## Deployment Steps
 
 ### 1. Build & Test
+
 ```bash
 # Navigate to web directory
 cd apps/web
@@ -42,6 +46,7 @@ npm run test:e2e:members
 ```
 
 ### 2. Deploy to Staging
+
 ```bash
 # Build production
 npm run build
@@ -51,7 +56,9 @@ npm run deploy -- --target staging
 ```
 
 ### 3. QA Testing
+
 **Checklist:**
+
 - [ ] Mobile view (< 768px) shows cards
 - [ ] Desktop view shows table
 - [ ] Sorting works
@@ -63,6 +70,7 @@ npm run deploy -- --target staging
 - [ ] Keyboard navigation works
 
 ### 4. Deploy to Production
+
 ```bash
 npm run deploy -- --target production
 ```
@@ -87,12 +95,12 @@ localStorage.removeItem('membersSavedViews')
 
 Watch for these metrics post-deployment:
 
-| Metric | Target | Alert If |
-|--------|--------|----------|
-| Export API latency | <2s | >5s |
-| Batch action latency | <3s | >10s |
-| Page load time | <2s | >5s |
-| Error rate | <1% | >5% |
+| Metric               | Target | Alert If |
+| -------------------- | ------ | -------- |
+| Export API latency   | <2s    | >5s      |
+| Batch action latency | <3s    | >10s     |
+| Page load time       | <2s    | >5s      |
+| Error rate           | <1%    | >5%      |
 
 ## User Communication
 
@@ -122,13 +130,17 @@ Questions? Contact support@thsthm.id
 ## Troubleshooting
 
 ### Issue: Export doesn't work
+
 **Solution:** Check `/api/export` endpoint exists in backend
 
 ### Issue: Sorting doesn't persist
+
 **Solution:** Backend must support `sort` and `order` query params
 
 ### Issue: Column visibility resets
+
 **Solution:** Check localStorage is enabled in browser settings
 
 ### Issue: Keyboard navigation not working
+
 **Solution:** Clear browser cache and reload (Ctrl+Shift+R)

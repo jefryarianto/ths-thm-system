@@ -3,7 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, ChevronDown, Lock, LogOut, Loader2, Menu, User as UserIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bell,
+  ChevronDown,
+  Lock,
+  LogOut,
+  Loader2,
+  Menu,
+  User as UserIcon,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserAvatar } from '@/components/ui/user-avatar';

@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreatePenandatanganDto, UpdatePenandatanganDto, DistrikScopeInfo } from './dto/penandatangan.dto';
+import {
+  CreatePenandatanganDto,
+  UpdatePenandatanganDto,
+  DistrikScopeInfo,
+} from './dto/penandatangan.dto';
 
 /** Tipe dokumen yang mendukung penandatangan ganda (1-3 orang). */
 export const DOKUMEN_SIGNER_TYPES = [
@@ -25,7 +34,9 @@ export class PenandatanganService {
       where: where as never,
       orderBy: [{ dokumenType: 'asc' }, { urutan: 'asc' }],
       include: {
-        penandatangan: { select: { id: true, nama: true, jabatan: true, isActive: true, distrikId: true } },
+        penandatangan: {
+          select: { id: true, nama: true, jabatan: true, isActive: true, distrikId: true },
+        },
       },
     });
   }
@@ -87,8 +98,15 @@ export class PenandatanganService {
   async resolveSigners(
     dokumenType: string,
     distrikId?: string,
-  ): Promise<{ signerName: string; signerTitle: string; signatureUrl?: string; stampUrl?: string }[]> {
-    let signers: { signerName: string; signerTitle: string; signatureUrl?: string; stampUrl?: string }[] = [];
+  ): Promise<
+    { signerName: string; signerTitle: string; signatureUrl?: string; stampUrl?: string }[]
+  > {
+    let signers: {
+      signerName: string;
+      signerTitle: string;
+      signatureUrl?: string;
+      stampUrl?: string;
+    }[] = [];
     try {
       if (distrikId) {
         const distrikSet = await this.getDocSignerRows(dokumenType, distrikId);
@@ -197,9 +215,7 @@ export class PenandatanganService {
   async findAll(scope?: { role?: string; distrikId?: string | null }) {
     const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.penandatangan.findMany({
-      where: isScoped
-        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
-        : undefined,
+      where: isScoped ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] } : undefined,
       orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
       include: { distrik: { select: { id: true, nama: true } } },
     });
@@ -267,7 +283,10 @@ export class PenandatanganService {
     if (!existing) throw new NotFoundException('Penandatangan tidak ditemukan');
 
     // admin_distrik hanya boleh mengubah penandatangan distriknya sendiri
-    if (scope?.role === 'admin_distrik' && (existing.distrikId ?? null) !== (scope.distrikId ?? null)) {
+    if (
+      scope?.role === 'admin_distrik' &&
+      (existing.distrikId ?? null) !== (scope.distrikId ?? null)
+    ) {
       throw new ForbiddenException('Anda hanya dapat mengubah penandatangan distrik Anda sendiri');
     }
 

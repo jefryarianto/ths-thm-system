@@ -71,7 +71,12 @@ describe('PenandatanganService (scope distrik)', () => {
   describe('create/update (multi-active per scope)', () => {
     it('create creates penandatangan without deactivating others', async () => {
       m.create.mockImplementation(async (args: any) => ({ id: 'p1', ...args.data }));
-      await service.create({ nama: 'Baru Distrik', jabatan: 'Koor', isActive: true, distrikId: 'd-lrt' });
+      await service.create({
+        nama: 'Baru Distrik',
+        jabatan: 'Koor',
+        isActive: true,
+        distrikId: 'd-lrt',
+      });
       expect(m.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ nama: 'Baru Distrik' }) }),
       );
@@ -87,7 +92,11 @@ describe('PenandatanganService (scope distrik)', () => {
     it('admin_distrik boleh mengubah penandatangan distriknya sendiri', async () => {
       m.findUnique.mockResolvedValue({ id: 'p-l', distrikId: 'd-lrt' });
       m.update.mockResolvedValue({ id: 'p-l', nama: 'X' });
-      const result = await service.update('p-l', { nama: 'X' }, { role: 'admin_distrik', distrikId: 'd-lrt' });
+      const result = await service.update(
+        'p-l',
+        { nama: 'X' },
+        { role: 'admin_distrik', distrikId: 'd-lrt' },
+      );
       expect(result.id).toBe('p-l');
     });
   });

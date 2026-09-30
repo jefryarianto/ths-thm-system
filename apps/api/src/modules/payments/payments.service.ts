@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
@@ -42,7 +48,12 @@ export class PaymentsService {
     @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
 
-  private audit(action: string, entity: string, entityId: string, details?: Record<string, unknown> | null) {
+  private audit(
+    action: string,
+    entity: string,
+    entityId: string,
+    details?: Record<string, unknown> | null,
+  ) {
     void this.persistentAudit?.log({
       action,
       entity,
@@ -173,7 +184,15 @@ export class PaymentsService {
     const iuran = await this.prisma.iuran.findUnique({
       where: { id },
       include: {
-        anggota: { select: { id: true, namaLengkap: true, nomorAnggota: true, rantingId: true, ranting: { select: { id: true, nama: true } } } },
+        anggota: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            nomorAnggota: true,
+            rantingId: true,
+            ranting: { select: { id: true, nama: true } },
+          },
+        },
         verifikator: { select: { id: true, namaLengkap: true, email: true } },
       },
     });

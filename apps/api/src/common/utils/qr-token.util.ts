@@ -9,9 +9,7 @@ export const QR_TOKEN_ALGORITHM = 'HS256';
  */
 export function qrTokenSecret(): string {
   return (
-    process.env.QR_SIGNING_SECRET ||
-    process.env.JWT_SECRET ||
-    'ths-thm-qr-insecure-dev-secret'
+    process.env.QR_SIGNING_SECRET || process.env.JWT_SECRET || 'ths-thm-qr-insecure-dev-secret'
   );
 }
 
@@ -38,9 +36,7 @@ export function signQrToken(claims: QrTokenClaims, ttlSeconds: number = 63072000
  * Verifikasi signature JWT token QR. Kembalikan `null` bila bukan JWT
  * valid (mis. token UUID legacy) — caller lalu memakai token langsung.
  */
-export function resolveQrToken(
-  token: string,
-): { ref: string; typ: string; src: string } | null {
+export function resolveQrToken(token: string): { ref: string; typ: string; src: string } | null {
   try {
     const decoded = verify(token, qrTokenSecret(), {
       issuer: QR_TOKEN_ISSUER,

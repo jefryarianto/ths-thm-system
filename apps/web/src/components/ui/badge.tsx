@@ -29,4 +29,3 @@ const Badge = ({ variant = 'default', label }: BadgeProps) => (
 );
 
 export default Badge;
-

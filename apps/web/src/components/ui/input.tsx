@@ -11,11 +11,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className = '', ...props }, ref) => (
     <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-text mb-1">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-text mb-1">{label}</label>}
       <input
         ref={ref}
         aria-invalid={!!error}

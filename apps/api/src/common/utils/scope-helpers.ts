@@ -67,8 +67,18 @@ export class ScopeHelper {
    */
   async verifyKegiatanScope(
     prisma: {
-      wilayah: { findUnique: (args: { where: { id: string }; select?: { distrikId?: boolean } }) => Promise<{ distrikId: string | null } | null> };
-      ranting: { findUnique: (args: { where: { id: string }; include?: { wilayah?: boolean } }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null> };
+      wilayah: {
+        findUnique: (args: {
+          where: { id: string };
+          select?: { distrikId?: boolean };
+        }) => Promise<{ distrikId: string | null } | null>;
+      };
+      ranting: {
+        findUnique: (args: {
+          where: { id: string };
+          include?: { wilayah?: boolean };
+        }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null>;
+      };
     },
     scope: UserScope | undefined,
     scopeType?: string,

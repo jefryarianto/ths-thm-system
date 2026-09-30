@@ -101,11 +101,7 @@ export class CacheService implements OnModuleDestroy {
   /**
    * Get a value (cache-aside pattern), computing + caching on a miss.
    */
-  async getOrSet<T>(
-    key: string,
-    factory: () => Promise<T>,
-    ttlMs: number = 60_000,
-  ): Promise<T> {
+  async getOrSet<T>(key: string, factory: () => Promise<T>, ttlMs: number = 60_000): Promise<T> {
     const cached = this.get<T>(key);
     if (cached !== undefined) return cached;
 
@@ -117,11 +113,7 @@ export class CacheService implements OnModuleDestroy {
   /**
    * Alias for getOrSet - cache-aside pattern.
    */
-  async getOrFetch<T>(
-    key: string,
-    factory: () => Promise<T>,
-    ttlMs: number = 60_000,
-  ): Promise<T> {
+  async getOrFetch<T>(key: string, factory: () => Promise<T>, ttlMs: number = 60_000): Promise<T> {
     return this.getOrSet(key, factory, ttlMs);
   }
 
@@ -219,19 +211,17 @@ export class CacheService implements OnModuleDestroy {
   }
 
   private setInRedis(key: string, value: unknown, ttlMs: number): void {
-    this.redisClient!
-      .set(this.prefixedKey(key), JSON.stringify(value), 'PX', ttlMs)
-      .catch((err: Error) => {
+    this.redisClient!.set(this.prefixedKey(key), JSON.stringify(value), 'PX', ttlMs).catch(
+      (err: Error) => {
         this.logger.warn(`Valkey set error: ${err.message}`);
-      });
+      },
+    );
   }
 
   private delInRedis(key: string): void {
-    this.redisClient!
-      .del(this.prefixedKey(key))
-      .catch((err: Error) => {
-        this.logger.warn(`Valkey del error: ${err.message}`);
-      });
+    this.redisClient!.del(this.prefixedKey(key)).catch((err: Error) => {
+      this.logger.warn(`Valkey del error: ${err.message}`);
+    });
   }
 
   private invalidatePrefixInRedis(prefix: string): void {

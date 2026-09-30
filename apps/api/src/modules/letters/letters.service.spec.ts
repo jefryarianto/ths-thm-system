@@ -45,7 +45,10 @@ describe('LettersService', () => {
         LettersService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
       ],
     }).compile();
 

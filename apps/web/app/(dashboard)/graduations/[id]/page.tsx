@@ -9,7 +9,6 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   ArrowLeft,
   Calendar,
   MapPin,
@@ -36,7 +35,8 @@ import {
   ChevronRight,
   Send,
   Mail,
-} from 'lucide-react';import Modal from '@/components/ui/modal';
+} from 'lucide-react';
+import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { Copy } from 'lucide-react';
 import MemberSearchPicker from '@/components/members/MemberSearchPicker';
@@ -45,10 +45,14 @@ import InvitationTab from './components/InvitationTab';
 // ─── Constants (inline - no external file dependency) ──
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
-  published: 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-  closed: 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800',
-  cancelled: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700',
+  draft:
+    'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+  published:
+    'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+  closed:
+    'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800',
+  cancelled:
+    'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-700',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -74,13 +78,18 @@ const UJIAN_STATUS_LABELS: Record<string, string> = {
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('id-ID', {
-    weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit',
   });
 }
 
 function formatShort(d: string) {
   return new Date(d).toLocaleDateString('id-ID', {
-    year: 'numeric', month: 'long', day: '2-digit',
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit',
   });
 }
 
@@ -140,7 +149,17 @@ interface UjianPraktek {
   status: string;
   createdAt: string;
   penilais: Array<{ id: string; pengujiUser: { id: string; namaLengkap: string; email: string } }>;
-  items: Array<{ id: string; itemPenilaian: { id: string; namaItem: string; skorMaksimal: number; bobot: number; aspek: { namaAspek: string } }; urutan: number }>;
+  items: Array<{
+    id: string;
+    itemPenilaian: {
+      id: string;
+      namaItem: string;
+      skorMaksimal: number;
+      bobot: number;
+      aspek: { namaAspek: string };
+    };
+    urutan: number;
+  }>;
   _count: { penilaians: number };
 }
 
@@ -241,20 +260,31 @@ export default function GraduationDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Sub-tab state
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'examiners' | 'undangan' | 'validasi'>('info');
+  const [activeSubTab, setActiveSubTab] = useState<
+    'info' | 'participants' | 'ujian-praktek' | 'examiners' | 'undangan' | 'validasi'
+  >('info');
 
   // Graduate modal
   const [showGraduateModal, setShowGraduateModal] = useState(false);
-  const [graduateResults, setGraduateResults] = useState<Record<string, { lulus: boolean; totalSkor?: number }>>({});
+  const [graduateResults, setGraduateResults] = useState<
+    Record<string, { lulus: boolean; totalSkor?: number }>
+  >({});
 
   // Ujian Praktek state
   const [ujianList, setUjianList] = useState<UjianPraktek[]>([]);
   const [ujianLoading, setUjianLoading] = useState(false);
   const [showCreateUjian, setShowCreateUjian] = useState(false);
-  const [createUjianForm, setCreateUjianForm] = useState({ nama: '', deskripsi: '', tanggal: '', durasiMenit: '' });
+  const [createUjianForm, setCreateUjianForm] = useState({
+    nama: '',
+    deskripsi: '',
+    tanggal: '',
+    durasiMenit: '',
+  });
   const [expandedUjian, setExpandedUjian] = useState<string | null>(null);
   const [availableItems, setAvailableItems] = useState<AvailableItem[]>([]);
-  const [availableExaminers, setAvailableExaminers] = useState<Array<{ id: string; namaLengkap: string; email: string }>>([]);
+  const [availableExaminers, setAvailableExaminers] = useState<
+    Array<{ id: string; namaLengkap: string; email: string }>
+  >([]);
 
   // Scoring state
   const [scores, setScores] = useState<NilaiRecord[]>([]);
@@ -265,7 +295,13 @@ export default function GraduationDetailPage() {
     totalExpectedScores: number;
     totalEntered: number;
     percentage: number;
-    perPenguji: Array<{ id: string; nama: string; entered: number; expected: number; percentage: number }>;
+    perPenguji: Array<{
+      id: string;
+      nama: string;
+      entered: number;
+      expected: number;
+      percentage: number;
+    }>;
   } | null>(null);
   const [scoreInput, setScoreInput] = useState<Record<string, Record<string, number>>>({});
   const [savingScores, setSavingScores] = useState(false);
@@ -273,17 +309,29 @@ export default function GraduationDetailPage() {
   // Validation state
   const [results, setResults] = useState<HasilRecord[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
-  const [validateModal, setValidateModal] = useState<{ candidateId: string; approved: boolean; nama: string } | null>(null);
+  const [validateModal, setValidateModal] = useState<{
+    candidateId: string;
+    approved: boolean;
+    nama: string;
+  } | null>(null);
   const [validateCatatan, setValidateCatatan] = useState('');
   const [validating, setValidating] = useState(false);
   const [genDocsLoading, setGenDocsLoading] = useState(false);
-  const [genDocsResult, setGenDocsResult] = useState<{ generated: number; total: number; errors: string[] } | null>(null);
+  const [genDocsResult, setGenDocsResult] = useState<{
+    generated: number;
+    total: number;
+    errors: string[];
+  } | null>(null);
 
   // Workflow state (pengajuan penguji, persetujuan nilai, pengajuan ke distrik)
   const { role } = useAuth();
   const isDistrikLevel = role === 'superadmin' || role === 'admin_distrik';
   const isAdminKegiatanLevel =
-    role === 'superadmin' || role === 'admin_distrik' || role === 'admin_wilayah' || role === 'admin_ranting' || role === 'admin_kegiatan';
+    role === 'superadmin' ||
+    role === 'admin_distrik' ||
+    role === 'admin_wilayah' ||
+    role === 'admin_ranting' ||
+    role === 'admin_kegiatan';
   const [examiners, setExaminers] = useState<ExaminerAssignment[]>([]);
   const [examinersLoading, setExaminersLoading] = useState(false);
   const [examinerOptions, setExaminerOptions] = useState<ExaminerOption[]>([]);
@@ -298,7 +346,8 @@ export default function GraduationDetailPage() {
   const [proposeForm, setProposeForm] = useState({ pengujiUserId: '', catatan: '' });
   const [proposing, setProposing] = useState(false);
   const [approveScoresLoading, setApproveScoresLoading] = useState(false);
-  const [submitResultsLoading, setSubmitResultsLoading] = useState(false);  const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [submitResultsLoading, setSubmitResultsLoading] = useState(false);
+  const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Aksi cepat ubah status (Publish/Tutup/Batalkan) langsung dari header detail.
   const [statusModal, setStatusModal] = useState<string | null>(null);
@@ -315,9 +364,15 @@ export default function GraduationDetailPage() {
       if (r.skipped) {
         toast('info', `Pendadaran sudah memiliki ${r.total} aspek penilaian sendiri`);
       } else if (r.clonedAspects === 0) {
-        toast('warning', 'Template aspek penilaian global masih kosong — tambahkan dulu di menu Penilaian');
+        toast(
+          'warning',
+          'Template aspek penilaian global masih kosong — tambahkan dulu di menu Penilaian',
+        );
       } else {
-        toast('success', `${r.clonedAspects} aspek & ${r.clonedItems} item penilaian berhasil disalin`);
+        toast(
+          'success',
+          `${r.clonedAspects} aspek & ${r.clonedItems} item penilaian berhasil disalin`,
+        );
       }
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -332,7 +387,10 @@ export default function GraduationDetailPage() {
     setStatusSaving(true);
     try {
       await apiClient.patch(`/graduations/${id}`, { status: statusModal });
-      toast('success', `Status pendadaran diubah menjadi "${STATUS_LABELS[statusModal] || statusModal}"`);
+      toast(
+        'success',
+        `Status pendadaran diubah menjadi "${STATUS_LABELS[statusModal] || statusModal}"`,
+      );
       setStatusModal(null);
       await fetchData();
     } catch (err: unknown) {
@@ -358,12 +416,19 @@ export default function GraduationDetailPage() {
   // ─── Participants: 3 jalur (manual / tarik dari daftar / import CSV-Excel) ───
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [addParticipantForm, setAddParticipantForm] = useState<{
-    namaLengkap: string; rantingId: string; jenisKelamin: string; noHp: string; email: string; alamat: string;
+    namaLengkap: string;
+    rantingId: string;
+    jenisKelamin: string;
+    noHp: string;
+    email: string;
+    alamat: string;
   }>({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' });
   const [addParticipantSaving, setAddParticipantSaving] = useState(false);
 
   const [showEligiblePicker, setShowEligiblePicker] = useState(false);
-  const [eligibleCandidates, setEligibleCandidates] = useState<Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>>([]);
+  const [eligibleCandidates, setEligibleCandidates] = useState<
+    Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>
+  >([]);
   const [eligibleLoading, setEligibleLoading] = useState(false);
   const [selectedEligible, setSelectedEligible] = useState<Set<string>>(new Set());
   const [eligibleSaving, setEligibleSaving] = useState(false);
@@ -372,7 +437,12 @@ export default function GraduationDetailPage() {
   const [importPreview, setImportPreview] = useState<Array<Record<string, unknown>>>([]);
   const [importFileName, setImportFileName] = useState('');
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ imported: number; linked: number; created: number; errors: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    linked: number;
+    created: number;
+    errors: string[];
+  } | null>(null);
 
   // Ranting options for manual form
   const [rantingOptions, setRantingOptions] = useState<Array<{ id: string; nama: string }>>([]);
@@ -385,7 +455,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/qr`);
       setQrDataUrl(res.data?.data?.qrDataUrl || null);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setQrLoading(false);
   }, [id]);
 
@@ -400,7 +472,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/examiners`);
       setExaminers(res.data.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setExaminersLoading(false);
   }, [id]);
 
@@ -409,10 +483,12 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/examiner-candidates`);
       const data = res.data?.data || {};
-      const manajemen: ExaminerOption[] = (data.manajemenPenguji || []).map((m: ExaminerOption) => ({
-        ...m,
-        sumber: 'manajemen_penguji',
-      }));
+      const manajemen: ExaminerOption[] = (data.manajemenPenguji || []).map(
+        (m: ExaminerOption) => ({
+          ...m,
+          sumber: 'manajemen_penguji',
+        }),
+      );
       const hadir: ExaminerOption[] = (data.daftarHadir || []).map((m: ExaminerOption) => ({
         ...m,
         sumber: 'daftar_hadir',
@@ -422,7 +498,9 @@ export default function GraduationDetailPage() {
         sumber: 'anggota_kegiatan',
       }));
       setExaminerOptions([...manajemen, ...hadir, ...peserta]);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [id]);
 
   const fetchCompleteness = useCallback(async () => {
@@ -437,12 +515,9 @@ export default function GraduationDetailPage() {
         // global) — jadi checklist langsung hijau begitu aspek terpasang.
         apiClient.get(`/graduations/${id}/aspek-count`),
       ]);
-      const participants =
-        pRes.status === 'fulfilled' ? (pRes.value.data.data || []) : [];
-      const ex =
-        eRes.status === 'fulfilled' ? (eRes.value.data.data || []) : [];
-      const evalData =
-        aRes.status === 'fulfilled' ? aRes.value.data : { scores: [], summary: {} };
+      const participants = pRes.status === 'fulfilled' ? pRes.value.data.data || [] : [];
+      const ex = eRes.status === 'fulfilled' ? eRes.value.data.data || [] : [];
+      const evalData = aRes.status === 'fulfilled' ? aRes.value.data : { scores: [], summary: {} };
       const scoreRows = evalData?.scores || [];
       const aspekSet = new Set<string>();
       for (const s of scoreRows) {
@@ -452,19 +527,25 @@ export default function GraduationDetailPage() {
         kRes.status === 'fulfilled' ? Number(kRes.value.data?.data?.total ?? 0) : aspekSet.size;
       // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
       // otomatis saat validasi disetujui - idempoten, satu per calon lulus).
-      const hasilRows = rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : [];
+      const hasilRows = rRes.status === 'fulfilled' ? rRes.value.data.data || [] : [];
       const sertifikatCount = hasilRows.filter(
-        (h: HasilRecord) =>
-          h.statusKelulusan === 'lulus' && h.statusValidasi === 'approved',
+        (h: HasilRecord) => h.statusKelulusan === 'lulus' && h.statusValidasi === 'approved',
       ).length;
       setCompleteness({
-        calonAnggota: participants.filter((p: { status: string }) => p.status === 'mengikuti_pendadaran').length,
+        calonAnggota: participants.filter(
+          (p: { status: string }) => p.status === 'mengikuti_pendadaran',
+        ).length,
         adminKegiatan: !!graduation?.adminKegiatanId,
-        penguji: { total: ex.length, approved: ex.filter((x: ExaminerAssignment) => x.status === 'approved').length },
+        penguji: {
+          total: ex.length,
+          approved: ex.filter((x: ExaminerAssignment) => x.status === 'approved').length,
+        },
         aspek: aspekTotal,
         sertifikat: sertifikatCount,
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [id, graduation?.adminKegiatanId]);
 
   const fetchAdminKegiatanOptions = useCallback(async () => {
@@ -479,7 +560,9 @@ export default function GraduationDetailPage() {
       if (adminKegiatanSearch.trim().length >= 2) params.search = adminKegiatanSearch.trim();
       const res = await apiClient.get('/graduations/admin-kegiatan-options', { params });
       setAdminKegiatanOptions(res.data?.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [graduation, adminKegiatanSearch]);
 
   // ── Participants: fetch eligible, ranting options, handle add/select/import ──
@@ -490,7 +573,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/participants/eligible`);
       setEligibleCandidates(res.data?.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setEligibleLoading(false);
   }, [id]);
 
@@ -502,9 +587,13 @@ export default function GraduationDetailPage() {
         params.scopeType = 'ranting';
         params.scopeId = g.scopeId;
       }
-      const res = await apiClient.get('/org-structure/ranting', { params: params as Record<string, never> });
+      const res = await apiClient.get('/org-structure/ranting', {
+        params: params as Record<string, never>,
+      });
       setRantingOptions(res.data?.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [graduation]);
 
   const handleAddParticipant = async (e: React.FormEvent) => {
@@ -515,7 +604,14 @@ export default function GraduationDetailPage() {
     try {
       await apiClient.post(`/graduations/${id}/participants`, addParticipantForm);
       setShowAddParticipant(false);
-      setAddParticipantForm({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' });
+      setAddParticipantForm({
+        namaLengkap: '',
+        rantingId: '',
+        jenisKelamin: '',
+        noHp: '',
+        email: '',
+        alamat: '',
+      });
       setWorkflowMsg({ ok: true, text: 'Peserta berhasil ditambahkan' });
       await fetchData();
       await fetchCompleteness();
@@ -537,7 +633,8 @@ export default function GraduationDetailPage() {
         await apiClient.post(`/graduations/${id}/register`, { candidateId });
         success++;
       } catch (err: unknown) {
-        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message;
         errors.push(msg || `Gagal daftarkan ${candidateId}`);
       }
     }
@@ -560,7 +657,10 @@ export default function GraduationDetailPage() {
     if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
       const text = await file.text();
       const Papa = (await import('papaparse')).default;
-      const result = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true });
+      const result = Papa.parse<Record<string, unknown>>(text, {
+        header: true,
+        skipEmptyLines: true,
+      });
       rows = result.data;
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
       const XLSX = await import('xlsx');
@@ -578,7 +678,9 @@ export default function GraduationDetailPage() {
     setImporting(true);
     setImportResult(null);
     try {
-      const res = await apiClient.post(`/graduations/${id}/participants/import`, { data: importPreview });
+      const res = await apiClient.post(`/graduations/${id}/participants/import`, {
+        data: importPreview,
+      });
       setImportResult(res.data?.data || { imported: 0, linked: 0, created: 0, errors: [] });
       await fetchData();
       await fetchCompleteness();
@@ -625,7 +727,8 @@ export default function GraduationDetailPage() {
       setWorkflowMsg({ ok: false, text: msg || 'Gagal memperbarui admin kegiatan' });
     }
     setSavingAdminKegiatan(false);
-  };  const fetchData = useCallback(async () => {
+  };
+  const fetchData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -650,7 +753,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/score-progress`);
       setScoreProgress(res.data?.data || null);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [id]);
 
   const fetchUjianList = useCallback(async () => {
@@ -659,7 +764,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek`);
       setUjianList(res.data.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setUjianLoading(false);
   }, [id]);
 
@@ -668,7 +775,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-items`);
       setAvailableItems(res.data.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [id]);
 
   const fetchAvailableExaminers = useCallback(async () => {
@@ -676,7 +785,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-examiners`);
       setAvailableExaminers(res.data.data?.allPenguji || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [id]);
 
   const fetchResults = useCallback(async () => {
@@ -685,7 +796,9 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/results`);
       setResults(res.data.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setResultsLoading(false);
   }, [id]);
 
@@ -708,7 +821,14 @@ export default function GraduationDetailPage() {
     if (activeSubTab === 'validasi') {
       fetchResults();
     }
-  }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers, fetchResults, fetchScoreProgress]);
+  }, [
+    activeSubTab,
+    fetchUjianList,
+    fetchAvailableItems,
+    fetchAvailableExaminers,
+    fetchResults,
+    fetchScoreProgress,
+  ]);
 
   const handleProposeExaminer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -732,7 +852,10 @@ export default function GraduationDetailPage() {
       setShowProposeExaminer(false);
       setProposeForm({ pengujiUserId: '', catatan: '' });
       setProposeMember(null);
-      setWorkflowMsg({ ok: true, text: 'Penguji berhasil diajukan dan menunggu persetujuan admin distrik' });
+      setWorkflowMsg({
+        ok: true,
+        text: 'Penguji berhasil diajukan dan menunggu persetujuan admin distrik',
+      });
       await fetchExaminers();
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -764,7 +887,10 @@ export default function GraduationDetailPage() {
       setShowManualAddExaminer(false);
       setManualAddForm({ pengujiUserId: '', catatan: '' });
       setManualMember(null);
-      setWorkflowMsg({ ok: true, text: 'Penguji berhasil ditambahkan secara manual (langsung disetujui & masuk semua sesi ujian)' });
+      setWorkflowMsg({
+        ok: true,
+        text: 'Penguji berhasil ditambahkan secara manual (langsung disetujui & masuk semua sesi ujian)',
+      });
       await fetchExaminers();
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -779,7 +905,10 @@ export default function GraduationDetailPage() {
     setWorkflowMsg(null);
     try {
       await apiClient.post(`/graduations/${id}/examiners/${penugasanId}/review`, { approved });
-      setWorkflowMsg({ ok: true, text: approved ? 'Penguji disetujui' : 'Pengajuan penguji ditolak' });
+      setWorkflowMsg({
+        ok: true,
+        text: approved ? 'Penguji disetujui' : 'Pengajuan penguji ditolak',
+      });
       await fetchExaminers();
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -809,7 +938,10 @@ export default function GraduationDetailPage() {
     setWorkflowMsg(null);
     try {
       await apiClient.post(`/graduations/${id}/submit-results`);
-      setWorkflowMsg({ ok: true, text: 'Nilai diajukan ke admin distrik untuk review & persetujuan' });
+      setWorkflowMsg({
+        ok: true,
+        text: 'Nilai diajukan ke admin distrik untuk review & persetujuan',
+      });
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -835,8 +967,8 @@ export default function GraduationDetailPage() {
       setShowGraduateModal(false);
       setGraduateResults({});
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal melakukan kelulusan');
     }
   };
@@ -856,8 +988,8 @@ export default function GraduationDetailPage() {
       await fetchResults();
       await fetchData();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal memvalidasi hasil');
     }
     setValidating(false);
@@ -873,8 +1005,8 @@ export default function GraduationDetailPage() {
       await fetchResults();
       await fetchData();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal membuat dokumen');
     }
     setGenDocsLoading(false);
@@ -894,19 +1026,21 @@ export default function GraduationDetailPage() {
       setCreateUjianForm({ nama: '', deskripsi: '', tanggal: '', durasiMenit: '' });
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal membuat sesi ujian');
     }
   };
 
   const handleAssignExaminer = async (ujianId: string, pengujiUserId: string) => {
     try {
-      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/examiners`, { pengujiUserId });
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/examiners`, {
+        pengujiUserId,
+      });
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menambahkan penguji');
     }
   };
@@ -918,30 +1052,34 @@ export default function GraduationDetailPage() {
       });
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menghapus penguji');
     }
   };
 
   const handleAssignItem = async (ujianId: string, itemPenilaianId: string) => {
     try {
-      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/items`, { itemPenilaianId });
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/items`, {
+        itemPenilaianId,
+      });
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menambahkan item penilaian');
     }
   };
 
   const handleRemoveItem = async (ujianId: string, itemPenilaianId: string) => {
     try {
-      await apiClient.delete(`/graduations/${id}/ujian-praktek/${ujianId}/items/${itemPenilaianId}`);
+      await apiClient.delete(
+        `/graduations/${id}/ujian-praktek/${ujianId}/items/${itemPenilaianId}`,
+      );
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menghapus item penilaian');
     }
   };
@@ -951,8 +1089,8 @@ export default function GraduationDetailPage() {
       await apiClient.patch(`/graduations/${id}/ujian-praktek/${ujianId}`, { status });
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal memperbarui status ujian');
     }
   };
@@ -962,8 +1100,8 @@ export default function GraduationDetailPage() {
       await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/auto-sync`);
       await fetchUjianList();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal melakukan sinkronisasi otomatis');
     }
   };
@@ -987,18 +1125,24 @@ export default function GraduationDetailPage() {
         input[s.calonAnggotaId][s.itemPenilaian.id] = Number(s.skor);
       }
       setScoreInput(input);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSaveScores = async (ujianId: string) => {
     const ujian = ujianList.find((u) => u.id === ujianId);
     if (!ujian) return;
 
-    const scoresPayload: Array<{ calonAnggotaId: string; items: Array<{ itemPenilaianId: string; skor: number }> }> = [];
+    const scoresPayload: Array<{
+      calonAnggotaId: string;
+      items: Array<{ itemPenilaianId: string; skor: number }>;
+    }> = [];
 
     for (const [calonAnggotaId, itemScores] of Object.entries(scoreInput)) {
       // Only include candidates who are participants
-      if (!participants.some((p) => p.id === calonAnggotaId && p.status === 'mengikuti_pendadaran')) continue;
+      if (!participants.some((p) => p.id === calonAnggotaId && p.status === 'mengikuti_pendadaran'))
+        continue;
 
       const items = ujian.items
         .filter((item) => itemScores[item.itemPenilaian.id] !== undefined)
@@ -1016,11 +1160,13 @@ export default function GraduationDetailPage() {
 
     setSavingScores(true);
     try {
-      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/score`, { scores: scoresPayload });
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/score`, {
+        scores: scoresPayload,
+      });
       await expandUjian(ujianId); // reload
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menyimpan skor');
     }
     setSavingScores(false);
@@ -1037,7 +1183,9 @@ export default function GraduationDetailPage() {
           <button
             onClick={() => router.push('/graduations')}
             className="mt-3 text-sm text-blue-600 hover:underline"
-          >← Kembali</button>
+          >
+            ← Kembali
+          </button>
         </div>
       </div>
     );
@@ -1071,7 +1219,11 @@ export default function GraduationDetailPage() {
   const SUB_TABS = [
     { key: 'info' as const, label: 'Detail', icon: GraduationCap },
     { key: 'participants' as const, label: `Peserta (${participants.length})`, icon: Users },
-    { key: 'ujian-praktek' as const, label: `Ujian Praktek (${ujianList.length})`, icon: ClipboardList },
+    {
+      key: 'ujian-praktek' as const,
+      label: `Ujian Praktek (${ujianList.length})`,
+      icon: ClipboardList,
+    },
     { key: 'examiners' as const, label: `Penguji (${pendingExaminers})`, icon: UserCheck },
     { key: 'undangan' as const, label: 'Undangan', icon: Mail },
     { key: 'validasi' as const, label: `Validasi (${pendingValidasiCount})`, icon: Award },
@@ -1114,9 +1266,11 @@ export default function GraduationDetailPage() {
     <PermissionGuard module="graduations" action="view">
       <Breadcrumbs suffix={{ href: '#', label: graduation?.nama || 'Detail' }} />
       <div className="space-y-6">
-
         {/* Back */}
-        <Link href="/graduations" className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group">
+        <Link
+          href="/graduations"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+        >
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           Kembali ke Pendadaran
         </Link>
@@ -1130,26 +1284,37 @@ export default function GraduationDetailPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">{graduation.nama}</h1>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[graduation.status] || ''}`}>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {graduation.nama}
+                  </h1>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[graduation.status] || ''}`}
+                  >
                     {STATUS_LABELS[graduation.status] || graduation.status}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dateRange}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{graduation.lokasi || 'Lokasi belum ditentukan'}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  {graduation.lokasi || 'Lokasi belum ditentukan'}
+                </p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                    graduation.adminKegiatan
-                      ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                      : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                      graduation.adminKegiatan
+                        ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                    }`}
+                  >
                     {graduation.adminKegiatan
                       ? `Admin Kegiatan: ${graduation.adminKegiatan.namaLengkap}`
                       : 'Admin Kegiatan belum ditunjuk'}
                   </span>
                   {isDistrikLevel && (
                     <button
-                      onClick={() => { setShowAdminKegiatanPicker(true); setAdminKegiatanSearch(''); }}
+                      onClick={() => {
+                        setShowAdminKegiatanPicker(true);
+                        setAdminKegiatanSearch('');
+                      }}
                       className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
                     >
                       {graduation.adminKegiatan ? 'Ganti' : 'Tunjuk'}
@@ -1188,7 +1353,11 @@ export default function GraduationDetailPage() {
                   Edit
                 </Link>
               )}
-              <button onClick={fetchData} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Refresh">
+              <button
+                onClick={fetchData}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400"
+                title="Refresh"
+              >
                 <RefreshCw size={16} />
               </button>
             </div>
@@ -1198,16 +1367,52 @@ export default function GraduationDetailPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950"><Users size={18} className="text-blue-600" /></div><div><p className="text-xs text-gray-500">Peserta Aktif</p><p className="text-lg font-bold text-gray-900 dark:text-white">{participatingCount}</p></div></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
+                <Users size={18} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Peserta Aktif</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {participatingCount}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-green-50 dark:bg-green-950"><Award size={18} className="text-green-600" /></div><div><p className="text-xs text-gray-500">Lulus</p><p className="text-lg font-bold text-green-600">{lulusCount}</p></div></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
+                <Award size={18} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Lulus</p>
+                <p className="text-lg font-bold text-green-600">{lulusCount}</p>
+              </div>
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-red-50 dark:bg-red-950"><XCircle size={18} className="text-red-600" /></div><div><p className="text-xs text-gray-500">Gagal</p><p className="text-lg font-bold text-red-600">{gagalCount}</p></div></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950">
+                <XCircle size={18} className="text-red-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Gagal</p>
+                <p className="text-lg font-bold text-red-600">{gagalCount}</p>
+              </div>
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-            <div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950"><Calendar size={18} className="text-purple-600" /></div><div><p className="text-xs text-gray-500">Total Calon</p><p className="text-lg font-bold text-gray-900 dark:text-white">{participants.length}</p></div></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
+                <Calendar size={18} className="text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Total Calon</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {participants.length}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1250,7 +1455,10 @@ export default function GraduationDetailPage() {
                   { icon: Award, label: 'Tipe', value: graduation.tipe },
                   { icon: Clock, label: 'Dibuat', value: formatDate(graduation.createdAt) },
                 ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl"
+                  >
                     <Icon size={16} className="text-gray-400 shrink-0" />
                     <div>
                       <p className="text-xs text-gray-500 uppercase">{label}</p>
@@ -1265,13 +1473,18 @@ export default function GraduationDetailPage() {
                       <Mail size={14} /> QR Absensi Pendadaran
                     </p>
                     <p className="text-xs text-gray-400 mb-3">
-                      Tampilkan QR ini - anggota memindainya lewat menu Scan QR (mode Check-in) untuk absen hadir.
+                      Tampilkan QR ini - anggota memindainya lewat menu Scan QR (mode Check-in)
+                      untuk absen hadir.
                     </p>
                     <div className="flex items-center gap-3">
                       {qrLoading ? (
                         <RefreshCw size={28} className="animate-spin text-gray-400" />
                       ) : qrDataUrl ? (
-                        <img src={qrDataUrl} alt="QR Absensi Pendadaran" className="w-36 h-36 rounded-lg border border-gray-200 dark:border-gray-700 bg-white p-2" />
+                        <img
+                          src={qrDataUrl}
+                          alt="QR Absensi Pendadaran"
+                          className="w-36 h-36 rounded-lg border border-gray-200 dark:border-gray-700 bg-white p-2"
+                        />
                       ) : (
                         <button
                           onClick={fetchQr}
@@ -1292,16 +1505,26 @@ export default function GraduationDetailPage() {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Ujian Praktek</span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">{ujianList.length}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Ujian Praktek
+                  </span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {ujianList.length}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Peserta Mendaftar</span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">{participatingCount}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Peserta Mendaftar
+                  </span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {participatingCount}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Sudah Dinilai</span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">{lulusCount + gagalCount}</span>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {lulusCount + gagalCount}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1327,7 +1550,10 @@ export default function GraduationDetailPage() {
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       {item.ok ? (
-                        <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <CheckCircle2
+                          size={16}
+                          className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                        />
                       ) : (
                         <AlertCircle size={16} className="text-amber-500 shrink-0" />
                       )}
@@ -1335,21 +1561,25 @@ export default function GraduationDetailPage() {
                         {item.label}
                       </span>
                     </div>
-                    <span className={`text-xs font-medium shrink-0 ${item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    <span
+                      className={`text-xs font-medium shrink-0 ${item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}
+                    >
                       {item.detail}
                     </span>
                   </div>
                 ))}
                 {completenessItems.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">Memuat status kelengkapan...</p>
+                  <p className="text-sm text-gray-400 text-center py-4">
+                    Memuat status kelengkapan...
+                  </p>
                 )}
               </div>
 
               {completeness && completeness.aspek === 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    Pendadaran ini belum memiliki aspek &amp; item penilaian. Salin dari template global,
-                    atau kelola manual di menu Penilaian.
+                    Pendadaran ini belum memiliki aspek &amp; item penilaian. Salin dari template
+                    global, atau kelola manual di menu Penilaian.
                   </p>
                   <button
                     onClick={handleCloneAspek}
@@ -1376,23 +1606,49 @@ export default function GraduationDetailPage() {
                     <Users size={18} className="text-emerald-500" />
                     Daftar Peserta ({participants.length})
                   </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Tambah peserta manual, tarik dari daftar calon, atau impor file</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Tambah peserta manual, tarik dari daftar calon, atau impor file
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => { setShowAddParticipant(true); setAddParticipantForm({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' }); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">
+                  <button
+                    onClick={() => {
+                      setShowAddParticipant(true);
+                      setAddParticipantForm({
+                        namaLengkap: '',
+                        rantingId: '',
+                        jenisKelamin: '',
+                        noHp: '',
+                        email: '',
+                        alamat: '',
+                      });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
+                  >
                     <Plus size={14} /> Tambah Manual
                   </button>
-                  <button onClick={() => setShowEligiblePicker(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                  <button
+                    onClick={() => setShowEligiblePicker(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                  >
                     <UserCheck size={14} /> Tarik dari Daftar
                   </button>
-                  <button onClick={() => { setShowImportParticipants(true); setImportPreview([]); setImportResult(null); setImportFileName(''); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                  <button
+                    onClick={() => {
+                      setShowImportParticipants(true);
+                      setImportPreview([]);
+                      setImportResult(null);
+                      setImportFileName('');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  >
                     <FileEdit size={14} /> Import CSV/Excel
                   </button>
                   {graduation.status === 'published' && (
-                    <button onClick={() => setShowGraduateModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition">
+                    <button
+                      onClick={() => setShowGraduateModal(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition"
+                    >
                       <Award size={14} /> Input Hasil
                     </button>
                   )}
@@ -1405,41 +1661,81 @@ export default function GraduationDetailPage() {
               {participants.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {participants.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                          p.status === 'lulus' ? 'bg-emerald-500' : p.status === 'gagal' ? 'bg-red-500' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-500' : 'bg-gray-400'
-                        }`}>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                            p.status === 'lulus'
+                              ? 'bg-emerald-500'
+                              : p.status === 'gagal'
+                                ? 'bg-red-500'
+                                : p.status === 'mengikuti_pendadaran'
+                                  ? 'bg-blue-500'
+                                  : 'bg-gray-400'
+                          }`}
+                        >
                           {p.namaLengkap.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.namaLengkap}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {p.namaLengkap}
+                          </p>
                           <p className="text-xs text-gray-400">{p.ranting?.nama || '-'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {p.sumberPeserta && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                            {p.sumberPeserta === 'manual' ? 'Manual' : p.sumberPeserta === 'import' ? 'Impor' : p.sumberPeserta === 'daftar_calon' ? 'Daftar Calon' : p.sumberPeserta}
+                            {p.sumberPeserta === 'manual'
+                              ? 'Manual'
+                              : p.sumberPeserta === 'import'
+                                ? 'Impor'
+                                : p.sumberPeserta === 'daftar_calon'
+                                  ? 'Daftar Calon'
+                                  : p.sumberPeserta}
                           </span>
                         )}
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          p.status === 'lulus' ? 'bg-emerald-100 text-emerald-700' : p.status === 'gagal' ? 'bg-red-100 text-red-700' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {p.status === 'mengikuti_pendadaran' ? 'Peserta' : p.status === 'lulus' ? 'Lulus' : p.status === 'gagal' ? 'Gagal' : p.status}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            p.status === 'lulus'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : p.status === 'gagal'
+                                ? 'bg-red-100 text-red-700'
+                                : p.status === 'mengikuti_pendadaran'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {p.status === 'mengikuti_pendadaran'
+                            ? 'Peserta'
+                            : p.status === 'lulus'
+                              ? 'Lulus'
+                              : p.status === 'gagal'
+                                ? 'Gagal'
+                                : p.status}
                         </span>
-                        <button onClick={async () => {
-                          if (!confirm('Batalkan pendaftaran peserta ini?')) return;
-try {
-                              await apiClient.post(`/graduations/${id}/unregister`, { candidateId: p.id });
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Batalkan pendaftaran peserta ini?')) return;
+                            try {
+                              await apiClient.post(`/graduations/${id}/unregister`, {
+                                candidateId: p.id,
+                              });
                               await fetchData();
                               await fetchCompleteness();
                             } catch (err) {
-                              const apiError =
-                                (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                              const apiError = (
+                                err as { response?: { data?: { message?: string } } }
+                              )?.response?.data?.message;
                               toast('error', apiError || 'Gagal membatalkan pendaftaran');
                             }
-                        }} className="p-1 text-red-400 hover:text-red-600 transition" title="Batalkan pendaftaran">
+                          }}
+                          className="p-1 text-red-400 hover:text-red-600 transition"
+                          title="Batalkan pendaftaran"
+                        >
                           <XCircle size={14} />
                         </button>
                       </div>
@@ -1447,7 +1743,10 @@ try {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8"><Users size={32} className="mx-auto text-gray-300 mb-2" /><p className="text-sm text-gray-400">Belum ada peserta</p></div>
+                <div className="text-center py-8">
+                  <Users size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-400">Belum ada peserta</p>
+                </div>
               )}
             </div>
           </div>
@@ -1472,26 +1771,45 @@ try {
                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 mb-3">
                   <div
                     className={`h-3 rounded-full transition-all duration-500 ${
-                      scoreProgress.percentage === 100 ? 'bg-emerald-500' : scoreProgress.percentage >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                      scoreProgress.percentage === 100
+                        ? 'bg-emerald-500'
+                        : scoreProgress.percentage >= 50
+                          ? 'bg-blue-500'
+                          : 'bg-amber-500'
                     }`}
                     style={{ width: `${Math.min(scoreProgress.percentage, 100)}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  <span>{scoreProgress.totalParticipants} peserta × {scoreProgress.totalItems} item</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{scoreProgress.percentage}%</span>
+                  <span>
+                    {scoreProgress.totalParticipants} peserta × {scoreProgress.totalItems} item
+                  </span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {scoreProgress.percentage}%
+                  </span>
                 </div>
                 {/* Per-penguji breakdown */}
                 {scoreProgress.perPenguji.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Per Penguji:</p>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Per Penguji:
+                    </p>
                     {scoreProgress.perPenguji.map((p) => (
                       <div key={p.id} className="flex items-center gap-3">
-                        <div className="w-24 text-xs text-gray-700 dark:text-gray-300 truncate" title={p.nama}>{p.nama}</div>
+                        <div
+                          className="w-24 text-xs text-gray-700 dark:text-gray-300 truncate"
+                          title={p.nama}
+                        >
+                          {p.nama}
+                        </div>
                         <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-500 ${
-                              p.percentage === 100 ? 'bg-emerald-500' : p.percentage >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                              p.percentage === 100
+                                ? 'bg-emerald-500'
+                                : p.percentage >= 50
+                                  ? 'bg-blue-500'
+                                  : 'bg-amber-500'
                             }`}
                             style={{ width: `${Math.min(p.percentage, 100)}%` }}
                           />
@@ -1510,7 +1828,10 @@ try {
             <div className="flex items-start gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-xl text-xs text-blue-800 dark:text-blue-300">
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               <p>
-                Aturan penilaian pendadaran ini: <strong>semua penguji menguji semua aspek</strong> — tidak ada pembagian aspek per penguji. Setiap ujian otomatis berisi seluruh item penilaian aktif &amp; seluruh penguji approved. Bila ada item/penguji baru setelah ujian dibuat, gunakan tombol <strong>Sinkronkan</strong> pada ujian terkait.
+                Aturan penilaian pendadaran ini: <strong>semua penguji menguji semua aspek</strong>{' '}
+                — tidak ada pembagian aspek per penguji. Setiap ujian otomatis berisi seluruh item
+                penilaian aktif &amp; seluruh penguji approved. Bila ada item/penguji baru setelah
+                ujian dibuat, gunakan tombol <strong>Sinkronkan</strong> pada ujian terkait.
               </p>
             </div>
 
@@ -1520,85 +1841,167 @@ try {
                 <ClipboardList size={18} className="text-emerald-500" />
                 Sesi Ujian Praktek
               </h3>
-              <button onClick={() => setShowCreateUjian(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">
+              <button
+                onClick={() => setShowCreateUjian(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
+              >
                 <Plus size={14} /> Buat Sesi
               </button>
             </div>
 
             {/* Create Ujian modal */}
-            <Modal open={showCreateUjian} onClose={() => setShowCreateUjian(false)} title="Buat Sesi Ujian Praktek" size="md">
+            <Modal
+              open={showCreateUjian}
+              onClose={() => setShowCreateUjian(false)}
+              title="Buat Sesi Ujian Praktek"
+              size="md"
+            >
               <form onSubmit={handleCreateUjian} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Sesi *</label>
-                  <input type="text" value={createUjianForm.nama} onChange={(e) => setCreateUjianForm({ ...createUjianForm, nama: e.target.value })} required
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nama Sesi *
+                  </label>
+                  <input
+                    type="text"
+                    value={createUjianForm.nama}
+                    onChange={(e) =>
+                      setCreateUjianForm({ ...createUjianForm, nama: e.target.value })
+                    }
+                    required
                     placeholder="Contoh: Ujian Praktek Ses-1"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
-                  <textarea value={createUjianForm.deskripsi} onChange={(e) => setCreateUjianForm({ ...createUjianForm, deskripsi: e.target.value })} rows={2}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Deskripsi
+                  </label>
+                  <textarea
+                    value={createUjianForm.deskripsi}
+                    onChange={(e) =>
+                      setCreateUjianForm({ ...createUjianForm, deskripsi: e.target.value })
+                    }
+                    rows={2}
                     placeholder="Deskripsi sesi ujian praktek"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
-                    <input type="date" value={createUjianForm.tanggal} onChange={(e) => setCreateUjianForm({ ...createUjianForm, tanggal: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Tanggal
+                    </label>
+                    <input
+                      type="date"
+                      value={createUjianForm.tanggal}
+                      onChange={(e) =>
+                        setCreateUjianForm({ ...createUjianForm, tanggal: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Durasi (menit)</label>
-                    <input type="number" value={createUjianForm.durasiMenit} onChange={(e) => setCreateUjianForm({ ...createUjianForm, durasiMenit: e.target.value })}
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Durasi (menit)
+                    </label>
+                    <input
+                      type="number"
+                      value={createUjianForm.durasiMenit}
+                      onChange={(e) =>
+                        setCreateUjianForm({ ...createUjianForm, durasiMenit: e.target.value })
+                      }
                       placeholder="60"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <button type="button" onClick={() => setShowCreateUjian(false)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-                  <button type="submit"
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Simpan</button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateUjian(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+                  >
+                    Simpan
+                  </button>
                 </div>
               </form>
             </Modal>
 
             {/* Ujian List */}
             {ujianLoading ? (
-              <div className="text-center py-8 text-sm text-gray-400">Memuat data ujian praktek...</div>
+              <div className="text-center py-8 text-sm text-gray-400">
+                Memuat data ujian praktek...
+              </div>
             ) : ujianList.length === 0 ? (
               <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <ClipboardList size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada sesi ujian praktek</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Buat sesi ujian praktek untuk memulai penilaian interview</p>
-                <button onClick={() => setShowCreateUjian(true)} className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
+                <ClipboardList
+                  size={40}
+                  className="mx-auto text-gray-300 dark:text-gray-600 mb-3"
+                />
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Belum ada sesi ujian praktek
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  Buat sesi ujian praktek untuk memulai penilaian interview
+                </p>
+                <button
+                  onClick={() => setShowCreateUjian(true)}
+                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+                >
                   <Plus size={14} /> Buat Sesi Pertama
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 {ujianList.map((ujian) => (
-                  <div key={ujian.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                  <div
+                    key={ujian.id}
+                    className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
+                  >
                     {/* Session Header */}
-                    <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
-                      onClick={() => expandUjian(ujian.id)}>
+                    <div
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                      onClick={() => expandUjian(ujian.id)}
+                    >
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          ujian.status === 'selesai' ? 'bg-blue-50 dark:bg-blue-950' :
-                          ujian.status === 'berlangsung' ? 'bg-emerald-50 dark:bg-emerald-950' :
-                          ujian.status === 'dibatalkan' ? 'bg-red-50 dark:bg-red-950' :
-                          'bg-gray-50 dark:bg-gray-800'
-                        }`}>
-                          <FileEdit size={18} className={
-                            ujian.status === 'selesai' ? 'text-blue-600' :
-                            ujian.status === 'berlangsung' ? 'text-emerald-600' :
-                            ujian.status === 'dibatalkan' ? 'text-red-600' :
-                            'text-gray-400'
-                          } />
+                        <div
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            ujian.status === 'selesai'
+                              ? 'bg-blue-50 dark:bg-blue-950'
+                              : ujian.status === 'berlangsung'
+                                ? 'bg-emerald-50 dark:bg-emerald-950'
+                                : ujian.status === 'dibatalkan'
+                                  ? 'bg-red-50 dark:bg-red-950'
+                                  : 'bg-gray-50 dark:bg-gray-800'
+                          }`}
+                        >
+                          <FileEdit
+                            size={18}
+                            className={
+                              ujian.status === 'selesai'
+                                ? 'text-blue-600'
+                                : ujian.status === 'berlangsung'
+                                  ? 'text-emerald-600'
+                                  : ujian.status === 'dibatalkan'
+                                    ? 'text-red-600'
+                                    : 'text-gray-400'
+                            }
+                          />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{ujian.nama}</h4>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${UJIAN_STATUS_STYLES[ujian.status] || ''}`}>
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {ujian.nama}
+                            </h4>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${UJIAN_STATUS_STYLES[ujian.status] || ''}`}
+                            >
                               {UJIAN_STATUS_LABELS[ujian.status] || ujian.status}
                             </span>
                           </div>
@@ -1607,56 +2010,79 @@ try {
                             {ujian.durasiMenit ? ` · ${ujian.durasiMenit} menit` : ''}
                             {ujian.penilais.length > 0 ? ` · ${ujian.penilais.length} penguji` : ''}
                             {ujian.items.length > 0 ? ` · ${ujian.items.length} item` : ''}
-                            {ujian._count.penilaians > 0 ? ` · ${ujian._count.penilaians} nilai` : ''}
+                            {ujian._count.penilaians > 0
+                              ? ` · ${ujian._count.penilaians} nilai`
+                              : ''}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {ujian.status === 'draft' && (
                           <>
-                            <button onClick={(e) => { e.stopPropagation(); handleUpdateUjianStatus(ujian.id, 'berlangsung'); }}
-                              className="px-2 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 transition">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateUjianStatus(ujian.id, 'berlangsung');
+                              }}
+                              className="px-2 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 transition"
+                            >
                               Mulai
                             </button>
                           </>
                         )}
                         {ujian.status === 'berlangsung' && (
-                          <button onClick={(e) => { e.stopPropagation(); handleUpdateUjianStatus(ujian.id, 'selesai'); }}
-                            className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateUjianStatus(ujian.id, 'selesai');
+                            }}
+                            className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition"
+                          >
                             Selesai
                           </button>
                         )}
-                        {expandedUjian === ujian.id ? <ChevronDown size={18} className="text-gray-400" /> : <ChevronRight size={18} className="text-gray-400" />}
+                        {expandedUjian === ujian.id ? (
+                          <ChevronDown size={18} className="text-gray-400" />
+                        ) : (
+                          <ChevronRight size={18} className="text-gray-400" />
+                        )}
                       </div>
                     </div>
 
                     {/* Expanded Content */}
                     {expandedUjian === ujian.id && (
                       <div className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-6">
-
                         {/* --- Status Actions --- */}
                         <div className="flex items-center gap-2 flex-wrap">
                           {ujian.status === 'draft' && (
                             <>
-                              <button onClick={() => handleUpdateUjianStatus(ujian.id, 'berlangsung')}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">
+                              <button
+                                onClick={() => handleUpdateUjianStatus(ujian.id, 'berlangsung')}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
+                              >
                                 <Eye size={12} /> Mulai Ujian
                               </button>
-                              <button onClick={() => handleUpdateUjianStatus(ujian.id, 'dibatalkan')}
-                                className="flex items-center gap-1 px-3 py-1.5 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition">
+                              <button
+                                onClick={() => handleUpdateUjianStatus(ujian.id, 'dibatalkan')}
+                                className="flex items-center gap-1 px-3 py-1.5 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition"
+                              >
                                 <EyeOff size={12} /> Batalkan
                               </button>
                             </>
                           )}
                           {ujian.status === 'berlangsung' && (
-                            <button onClick={() => handleUpdateUjianStatus(ujian.id, 'selesai')}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                            <button
+                              onClick={() => handleUpdateUjianStatus(ujian.id, 'selesai')}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                            >
                               <CheckCircle2 size={12} /> Akhiri Ujian
                             </button>
                           )}
-                          <button onClick={() => handleAutoSyncUjian(ujian.id)}
+                          <button
+                            onClick={() => handleAutoSyncUjian(ujian.id)}
                             title="Pastikan semua item penilaian aktif & semua penguji approved masuk ke ujian ini"
-                            className="flex items-center gap-1 px-3 py-1.5 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition">
+                            className="flex items-center gap-1 px-3 py-1.5 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                          >
                             <RefreshCw size={12} /> Sinkronkan
                           </button>
                         </div>
@@ -1668,14 +2094,21 @@ try {
                           </h5>
                           <div className="space-y-1.5">
                             {ujian.penilais.map((p) => (
-                              <div key={p.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                              <div
+                                key={p.id}
+                                className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                              >
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900 dark:text-white">{p.pengujiUser.namaLengkap}</p>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {p.pengujiUser.namaLengkap}
+                                  </p>
                                   <p className="text-xs text-gray-400">{p.pengujiUser.email}</p>
                                 </div>
                                 {ujian.status === 'draft' && (
-                                  <button onClick={() => handleRemoveExaminer(ujian.id, p.pengujiUser.id)}
-                                    className="p-1 text-gray-400 hover:text-red-500 transition">
+                                  <button
+                                    onClick={() => handleRemoveExaminer(ujian.id, p.pengujiUser.id)}
+                                    className="p-1 text-gray-400 hover:text-red-500 transition"
+                                  >
                                     <Trash2 size={14} />
                                   </button>
                                 )}
@@ -1684,12 +2117,17 @@ try {
                           </div>
                           {ujian.status === 'draft' && getUnassignedExaminers(ujian).length > 0 && (
                             <select
-                              onChange={(e) => { if (e.target.value) handleAssignExaminer(ujian.id, e.target.value); }}
+                              onChange={(e) => {
+                                if (e.target.value) handleAssignExaminer(ujian.id, e.target.value);
+                              }}
                               value=""
-                              className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                              className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
                               <option value="">+ Tambah Penguji...</option>
                               {getUnassignedExaminers(ujian).map((e) => (
-                                <option key={e.id} value={e.id}>{e.namaLengkap} ({e.email})</option>
+                                <option key={e.id} value={e.id}>
+                                  {e.namaLengkap} ({e.email})
+                                </option>
                               ))}
                             </select>
                           )}
@@ -1702,36 +2140,57 @@ try {
                           </h5>
                           {ujian.items.length > 0 ? (
                             <div className="space-y-1">
-                              {ujian.items.sort((a, b) => a.urutan - b.urutan).map((item) => (
-                                <div key={item.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-400 w-4">{item.urutan + 1}.</span>
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.itemPenilaian.namaItem}</p>
-                                      <p className="text-xs text-gray-400">{item.itemPenilaian.aspek.namaAspek} · Max {Number(item.itemPenilaian.skorMaksimal)}</p>
+                              {ujian.items
+                                .sort((a, b) => a.urutan - b.urutan)
+                                .map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-gray-400 w-4">
+                                        {item.urutan + 1}.
+                                      </span>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                          {item.itemPenilaian.namaItem}
+                                        </p>
+                                        <p className="text-xs text-gray-400">
+                                          {item.itemPenilaian.aspek.namaAspek} · Max{' '}
+                                          {Number(item.itemPenilaian.skorMaksimal)}
+                                        </p>
+                                      </div>
                                     </div>
+                                    {ujian.status === 'draft' && (
+                                      <button
+                                        onClick={() =>
+                                          handleRemoveItem(ujian.id, item.itemPenilaian.id)
+                                        }
+                                        className="p-1 text-gray-400 hover:text-red-500 transition"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
                                   </div>
-                                  {ujian.status === 'draft' && (
-                                    <button onClick={() => handleRemoveItem(ujian.id, item.itemPenilaian.id)}
-                                      className="p-1 text-gray-400 hover:text-red-500 transition">
-                                      <Trash2 size={14} />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
+                                ))}
                             </div>
                           ) : (
                             <p className="text-sm text-gray-400 italic">Belum ada item penilaian</p>
                           )}
                           {ujian.status === 'draft' && getUnassignedItems(ujian).length > 0 && (
                             <select
-                              onChange={(e) => { if (e.target.value) handleAssignItem(ujian.id, e.target.value); }}
+                              onChange={(e) => {
+                                if (e.target.value) handleAssignItem(ujian.id, e.target.value);
+                              }}
                               value=""
-                              className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                              className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
                               <option value="">+ Tambah Item...</option>
                               {getUnassignedItems(ujian).map((item) => (
                                 <optgroup key={item.aspek.id} label={item.aspek.namaAspek}>
-                                  <option value={item.id}>{item.namaItem} (Max: {Number(item.skorMaksimal)})</option>
+                                  <option value={item.id}>
+                                    {item.namaItem} (Max: {Number(item.skorMaksimal)})
+                                  </option>
                                 </optgroup>
                               ))}
                             </select>
@@ -1746,10 +2205,13 @@ try {
                                 <CheckCircle2 size={14} /> Penilaian Interview
                               </h5>
                               {ujian.status === 'berlangsung' && (
-                                <button onClick={() => handleSaveScores(ujian.id)}
+                                <button
+                                  onClick={() => handleSaveScores(ujian.id)}
                                   disabled={savingScores}
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50">
-                                  <Save size={12} /> {savingScores ? 'Menyimpan...' : 'Simpan Nilai'}
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                                >
+                                  <Save size={12} />{' '}
+                                  {savingScores ? 'Menyimpan...' : 'Simpan Nilai'}
                                 </button>
                               )}
                             </div>
@@ -1760,52 +2222,73 @@ try {
                                 <table className="w-full text-sm border-collapse">
                                   <thead>
                                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                                      <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Peserta</th>
-                                      {ujian.items.sort((a, b) => a.urutan - b.urutan).map((item) => (
-                                        <th key={item.id} className="text-center px-2 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap min-w-[80px]">
-                                          <div>{item.itemPenilaian.namaItem}</div>
-                                          <div className="text-[10px] text-gray-400">/ {Number(item.itemPenilaian.skorMaksimal)}</div>
-                                        </th>
-                                      ))}
+                                      <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        Peserta
+                                      </th>
+                                      {ujian.items
+                                        .sort((a, b) => a.urutan - b.urutan)
+                                        .map((item) => (
+                                          <th
+                                            key={item.id}
+                                            className="text-center px-2 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap min-w-[80px]"
+                                          >
+                                            <div>{item.itemPenilaian.namaItem}</div>
+                                            <div className="text-[10px] text-gray-400">
+                                              / {Number(item.itemPenilaian.skorMaksimal)}
+                                            </div>
+                                          </th>
+                                        ))}
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                                     {activeParticipants.map((p) => (
-                                      <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
+                                      <tr
+                                        key={p.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                                      >
                                         <td className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                                           {p.namaLengkap}
                                         </td>
-                                        {ujian.items.sort((a, b) => a.urutan - b.urutan).map((item) => (
-                                          <td key={item.id} className="px-2 py-2 text-center">
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              max={Number(item.itemPenilaian.skorMaksimal)}
-                                              step={1}
-                                              value={scoreInput[p.id]?.[item.itemPenilaian.id] ?? ''}
-                                              onChange={(e) => {
-                                                const val = e.target.value;
-                                                setScoreInput((prev) => ({
-                                                  ...prev,
-                                                  [p.id]: {
-                                                    ...(prev[p.id] || {}),
-                                                    [item.itemPenilaian.id]: val === '' ? 0 : Math.min(
-                                                      Number(val),
-                                                      Number(item.itemPenilaian.skorMaksimal)
-                                                    ),
-                                                  },
-                                                }));
-                                              }}
-                                              disabled={ujian.status === 'selesai'}
-                                              className={`w-16 px-2 py-1 text-center text-sm border rounded-lg ${
-                                                ujian.status === 'selesai'
-                                                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                                                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500'
-                                              }`}
-                                              placeholder="0"
-                                            />
-                                          </td>
-                                        ))}
+                                        {ujian.items
+                                          .sort((a, b) => a.urutan - b.urutan)
+                                          .map((item) => (
+                                            <td key={item.id} className="px-2 py-2 text-center">
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                max={Number(item.itemPenilaian.skorMaksimal)}
+                                                step={1}
+                                                value={
+                                                  scoreInput[p.id]?.[item.itemPenilaian.id] ?? ''
+                                                }
+                                                onChange={(e) => {
+                                                  const val = e.target.value;
+                                                  setScoreInput((prev) => ({
+                                                    ...prev,
+                                                    [p.id]: {
+                                                      ...(prev[p.id] || {}),
+                                                      [item.itemPenilaian.id]:
+                                                        val === ''
+                                                          ? 0
+                                                          : Math.min(
+                                                              Number(val),
+                                                              Number(
+                                                                item.itemPenilaian.skorMaksimal,
+                                                              ),
+                                                            ),
+                                                    },
+                                                  }));
+                                                }}
+                                                disabled={ujian.status === 'selesai'}
+                                                className={`w-16 px-2 py-1 text-center text-sm border rounded-lg ${
+                                                  ujian.status === 'selesai'
+                                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                                                    : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500'
+                                                }`}
+                                                placeholder="0"
+                                              />
+                                            </td>
+                                          ))}
                                       </tr>
                                     ))}
                                   </tbody>
@@ -1840,13 +2323,17 @@ try {
                   Penguji Pendadaran
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">
-                  Admin kegiatan mengajukan penguji, lalu admin distrik menyetujuinya · Superadmin/admin distrik juga dapat menambah penguji secara manual
+                  Admin kegiatan mengajukan penguji, lalu admin distrik menyetujuinya ·
+                  Superadmin/admin distrik juga dapat menambah penguji secara manual
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {isAdminKegiatanLevel && (
                   <button
-                    onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
+                    onClick={() => {
+                      setShowProposeExaminer(true);
+                      fetchExaminerOptions();
+                    }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
                   >
                     <Plus size={14} /> Ajukan Penguji
@@ -1854,7 +2341,10 @@ try {
                 )}
                 {isDistrikLevel && (
                   <button
-                    onClick={() => { setShowManualAddExaminer(true); fetchExaminerOptions(); }}
+                    onClick={() => {
+                      setShowManualAddExaminer(true);
+                      fetchExaminerOptions();
+                    }}
                     className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
                   >
                     <UserCheck size={14} /> Tambah Manual
@@ -1865,11 +2355,13 @@ try {
 
             {/* Workflow message */}
             {workflowMsg && (
-              <div className={`px-4 py-3 rounded-xl border text-sm ${
-                workflowMsg.ok
-                  ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-              }`}>
+              <div
+                className={`px-4 py-3 rounded-xl border text-sm ${
+                  workflowMsg.ok
+                    ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                }`}
+              >
                 {workflowMsg.text}
               </div>
             )}
@@ -1878,15 +2370,21 @@ try {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                 <p className="text-xs text-gray-400 uppercase font-medium mb-1">1. Pengajuan</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">Admin kegiatan mengajukan penguji</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Admin kegiatan mengajukan penguji
+                </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                 <p className="text-xs text-gray-400 uppercase font-medium mb-1">2. Persetujuan</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">Admin distrik menyetujui / menolak</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Admin distrik menyetujui / menolak
+                </p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
                 <p className="text-xs text-gray-400 uppercase font-medium mb-1">3. Penilaian</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">Penguji disetujui dapat menguji di sesi ujian praktek</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Penguji disetujui dapat menguji di sesi ujian praktek
+                </p>
               </div>
             </div>
 
@@ -1896,10 +2394,15 @@ try {
             ) : examiners.length === 0 ? (
               <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
                 <UserCheck size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada penguji</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Belum ada penguji
+                </p>
                 {isAdminKegiatanLevel && (
                   <button
-                    onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
+                    onClick={() => {
+                      setShowProposeExaminer(true);
+                      fetchExaminerOptions();
+                    }}
                     className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
                   >
                     <Plus size={14} /> Ajukan Penguji Pertama
@@ -1907,7 +2410,10 @@ try {
                 )}
                 {isDistrikLevel && (
                   <button
-                    onClick={() => { setShowManualAddExaminer(true); fetchExaminerOptions(); }}
+                    onClick={() => {
+                      setShowManualAddExaminer(true);
+                      fetchExaminerOptions();
+                    }}
                     className="mt-4 ml-2 inline-flex items-center gap-1.5 px-4 py-2 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
                   >
                     <UserCheck size={14} /> Tambah Manual
@@ -1929,17 +2435,27 @@ try {
                           </p>
                           <p className="text-xs text-gray-400 truncate">{ex.pengujiUser.email}</p>
                           {ex.catatan && (
-                            <p className="text-xs text-gray-400 italic mt-0.5">Catatan: {ex.catatan}</p>
+                            <p className="text-xs text-gray-400 italic mt-0.5">
+                              Catatan: {ex.catatan}
+                            </p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          ex.status === 'approved' ? 'bg-emerald-100 text-emerald-700'
-                          : ex.status === 'rejected' ? 'bg-red-100 text-red-700'
-                          : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {ex.status === 'approved' ? 'Disetujui' : ex.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            ex.status === 'approved'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : ex.status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {ex.status === 'approved'
+                            ? 'Disetujui'
+                            : ex.status === 'rejected'
+                              ? 'Ditolak'
+                              : 'Menunggu'}
                         </span>
                         {ex.status === 'pending' && isDistrikLevel && (
                           <>
@@ -1972,7 +2488,8 @@ try {
                   Alur Penilaian
                 </h4>
                 <p className="text-xs text-gray-400 mb-4">
-                  Setelah seluruh penguji selesai menilai: admin distrik menyetujui nilai. Sistem akan otomatis menghitung peringkat dan menentukan kelulusan.
+                  Setelah seluruh penguji selesai menilai: admin distrik menyetujui nilai. Sistem
+                  akan otomatis menghitung peringkat dan menentukan kelulusan.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -2009,83 +2526,117 @@ try {
             )}
 
             {/* Manual Add Examiner Modal (superadmin/admin_distrik — langsung approved) */}
-            <Modal open={showManualAddExaminer} onClose={() => { setShowManualAddExaminer(false); setManualPickMode('kandidat'); setManualMember(null); }} title="Tambah Penguji Manual" size="sm">
+            <Modal
+              open={showManualAddExaminer}
+              onClose={() => {
+                setShowManualAddExaminer(false);
+                setManualPickMode('kandidat');
+                setManualMember(null);
+              }}
+              title="Tambah Penguji Manual"
+              size="sm"
+            >
               <form onSubmit={handleManualAddExaminer} className="space-y-4">
                 <p className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg px-3 py-2">
-                  Penguji yang dipilih langsung berstatus <strong>Disetujui</strong> tanpa alur pengajuan, dan otomatis masuk ke semua sesi ujian praktek pendadaran ini.
+                  Penguji yang dipilih langsung berstatus <strong>Disetujui</strong> tanpa alur
+                  pengajuan, dan otomatis masuk ke semua sesi ujian praktek pendadaran ini.
                 </p>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setManualPickMode('kandidat')}
-                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setManualPickMode('kandidat')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                  >
                     Dari Kandidat Tersedia
                   </button>
-                  <button type="button" onClick={() => setManualPickMode('anggota')}
-                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setManualPickMode('anggota')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                  >
                     Cari Semua Anggota
                   </button>
                 </div>
                 {manualPickMode === 'kandidat' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih dari Anggota Terdaftar *</label>
-                  <select
-                    value={manualAddForm.pengujiUserId}
-                    onChange={(e) => setManualAddForm({ ...manualAddForm, pengujiUserId: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="">Pilih penguji...</option>
-                    {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
-                      <optgroup label="Manajemen Penguji (aktif)">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'manajemen_penguji')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
-                      <optgroup label="Daftar Hadir Pendadaran">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'daftar_hadir')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.namaLengkap} ({o.nomorAnggota || o.email})
-                            </option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.some((o) => o.sumber === 'anggota_kegiatan') && (
-                      <optgroup label="Anggota Terdaftar Kegiatan">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'anggota_kegiatan')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.namaLengkap} ({o.nomorAnggota || o.email})
-                            </option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.length === 0 && (
-                      <option value="" disabled>Belum ada kandidat penguji. Tambahkan di menu Manajemen Penguji, catat kehadiran, atau daftarkan anggota sebagai peserta kegiatan ini.</option>
-                    )}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Pilih dari Anggota Terdaftar *
+                    </label>
+                    <select
+                      value={manualAddForm.pengujiUserId}
+                      onChange={(e) =>
+                        setManualAddForm({ ...manualAddForm, pengujiUserId: e.target.value })
+                      }
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Pilih penguji...</option>
+                      {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
+                        <optgroup label="Manajemen Penguji (aktif)">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'manajemen_penguji')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
+                        <optgroup label="Daftar Hadir Pendadaran">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'daftar_hadir')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.nomorAnggota || o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.some((o) => o.sumber === 'anggota_kegiatan') && (
+                        <optgroup label="Anggota Terdaftar Kegiatan">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'anggota_kegiatan')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.nomorAnggota || o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.length === 0 && (
+                        <option value="" disabled>
+                          Belum ada kandidat penguji. Tambahkan di menu Manajemen Penguji, catat
+                          kehadiran, atau daftarkan anggota sebagai peserta kegiatan ini.
+                        </option>
+                      )}
+                    </select>
+                  </div>
                 ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari Anggota Terdaftar *</label>
-                  <MemberSearchPicker
-                    value={manualMember?.id}
-                    onChange={(m) => setManualMember(m)}
-                    placeholder="Cari anggota berdasarkan nama / no anggota..."
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu langsung ditugaskan di pendadaran ini.</p>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cari Anggota Terdaftar *
+                    </label>
+                    <MemberSearchPicker
+                      value={manualMember?.id}
+                      onChange={(m) => setManualMember(m)}
+                      placeholder="Cari anggota berdasarkan nama / no anggota..."
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu
+                      langsung ditugaskan di pendadaran ini.
+                    </p>
+                  </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Catatan
+                  </label>
                   <textarea
                     value={manualAddForm.catatan}
-                    onChange={(e) => setManualAddForm({ ...manualAddForm, catatan: e.target.value })}
+                    onChange={(e) =>
+                      setManualAddForm({ ...manualAddForm, catatan: e.target.value })
+                    }
                     rows={2}
                     placeholder="Contoh: ditunjuk langsung oleh admin distrik"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
@@ -2111,77 +2662,108 @@ try {
             </Modal>
 
             {/* Propose Examiner Modal */}
-            <Modal open={showProposeExaminer} onClose={() => { setShowProposeExaminer(false); setProposePickMode('kandidat'); setProposeMember(null); }} title="Ajukan Penguji" size="sm">
+            <Modal
+              open={showProposeExaminer}
+              onClose={() => {
+                setShowProposeExaminer(false);
+                setProposePickMode('kandidat');
+                setProposeMember(null);
+              }}
+              title="Ajukan Penguji"
+              size="sm"
+            >
               <form onSubmit={handleProposeExaminer} className="space-y-4">
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setProposePickMode('kandidat')}
-                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setProposePickMode('kandidat')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                  >
                     Dari Kandidat Tersedia
                   </button>
-                  <button type="button" onClick={() => setProposePickMode('anggota')}
-                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setProposePickMode('anggota')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+                  >
                     Cari Semua Anggota
                   </button>
                 </div>
                 {proposePickMode === 'kandidat' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Penguji *</label>
-                  <select
-                    value={proposeForm.pengujiUserId}
-                    onChange={(e) => setProposeForm({ ...proposeForm, pengujiUserId: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="">Pilih penguji...</option>
-                    {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
-                      <optgroup label="Manajemen Penguji (aktif)">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'manajemen_penguji')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
-                      <optgroup label="Daftar Hadir Pendadaran">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'daftar_hadir')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.namaLengkap} ({o.nomorAnggota || o.email})
-                            </option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.some((o) => o.sumber === 'anggota_kegiatan') && (
-                      <optgroup label="Anggota Terdaftar Kegiatan">
-                        {examinerOptions
-                          .filter((o) => o.sumber === 'anggota_kegiatan')
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.namaLengkap} ({o.nomorAnggota || o.email})
-                            </option>
-                          ))}
-                      </optgroup>
-                    )}
-                    {examinerOptions.length === 0 && (
-                      <option value="" disabled>Belum ada kandidat penguji. Tambahkan di menu Manajemen Penguji, catat kehadiran, atau daftarkan anggota sebagai peserta kegiatan ini.</option>
-                    )}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Pilih Penguji *
+                    </label>
+                    <select
+                      value={proposeForm.pengujiUserId}
+                      onChange={(e) =>
+                        setProposeForm({ ...proposeForm, pengujiUserId: e.target.value })
+                      }
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Pilih penguji...</option>
+                      {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
+                        <optgroup label="Manajemen Penguji (aktif)">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'manajemen_penguji')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
+                        <optgroup label="Daftar Hadir Pendadaran">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'daftar_hadir')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.nomorAnggota || o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.some((o) => o.sumber === 'anggota_kegiatan') && (
+                        <optgroup label="Anggota Terdaftar Kegiatan">
+                          {examinerOptions
+                            .filter((o) => o.sumber === 'anggota_kegiatan')
+                            .map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.namaLengkap} ({o.nomorAnggota || o.email})
+                              </option>
+                            ))}
+                        </optgroup>
+                      )}
+                      {examinerOptions.length === 0 && (
+                        <option value="" disabled>
+                          Belum ada kandidat penguji. Tambahkan di menu Manajemen Penguji, catat
+                          kehadiran, atau daftarkan anggota sebagai peserta kegiatan ini.
+                        </option>
+                      )}
+                    </select>
+                  </div>
                 ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari Anggota Terdaftar *</label>
-                  <MemberSearchPicker
-                    value={proposeMember?.id}
-                    onChange={(m) => setProposeMember(m)}
-                    placeholder="Cari anggota berdasarkan nama / no anggota..."
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu pengajuan dibuat menunggu persetujuan admin distrik.</p>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cari Anggota Terdaftar *
+                    </label>
+                    <MemberSearchPicker
+                      value={proposeMember?.id}
+                      onChange={(m) => setProposeMember(m)}
+                      placeholder="Cari anggota berdasarkan nama / no anggota..."
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu
+                      pengajuan dibuat menunggu persetujuan admin distrik.
+                    </p>
+                  </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Catatan
+                  </label>
                   <textarea
                     value={proposeForm.catatan}
                     onChange={(e) => setProposeForm({ ...proposeForm, catatan: e.target.value })}
@@ -2213,10 +2795,16 @@ try {
 
         {/* ─── MODAL: Tunjuk/Ganti Admin Kegiatan ───────────────── */}
         {showAdminKegiatanPicker && (
-          <Modal open={showAdminKegiatanPicker} onClose={() => setShowAdminKegiatanPicker(false)} title="Tunjuk Admin Kegiatan" size="md">
+          <Modal
+            open={showAdminKegiatanPicker}
+            onClose={() => setShowAdminKegiatanPicker(false)}
+            title="Tunjuk Admin Kegiatan"
+            size="md"
+          >
             <div className="space-y-4">
               <p className="text-xs text-gray-400">
-                Pilih anggota aktif di distrik pendadaran ini. Akun login admin kegiatan dibuat/diaktifkan otomatis.
+                Pilih anggota aktif di distrik pendadaran ini. Akun login admin kegiatan
+                dibuat/diaktifkan otomatis.
               </p>
               <input
                 type="text"
@@ -2235,7 +2823,9 @@ try {
                       onClick={() => handleAssignAdminKegiatan(o.anggotaId)}
                       className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{o.namaLengkap}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {o.namaLengkap}
+                      </p>
                       <p className="text-xs text-gray-400">
                         {o.nomorAnggota || 'tanpa NRA'} · {o.ranting || 'tanpa ranting'}
                         {o.userId
@@ -2250,12 +2840,17 @@ try {
                   );
                 })}
                 {adminKegiatanOptions.length === 0 && (
-                  <p className="text-center text-sm text-gray-400 py-6">Tidak ada anggota ditemukan</p>
+                  <p className="text-center text-sm text-gray-400 py-6">
+                    Tidak ada anggota ditemukan
+                  </p>
                 )}
               </div>
               <div className="flex items-center justify-between gap-3 pt-2">
                 <button
-                  onClick={() => { setShowAdminKegiatanPicker(false); setAdminKegiatanSearch(''); }}
+                  onClick={() => {
+                    setShowAdminKegiatanPicker(false);
+                    setAdminKegiatanSearch('');
+                  }}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   Batal
@@ -2288,10 +2883,15 @@ try {
                   <UserCheck size={18} className="text-emerald-500" />
                   Validasi Hasil ({results.length})
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">Setujui hasil lulus untuk membuat anggota & sertifikat secara otomatis</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Setujui hasil lulus untuk membuat anggota & sertifikat secara otomatis
+                </p>
               </div>
-              <button onClick={handleGenerateDocs} disabled={genDocsLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50 shrink-0">
+              <button
+                onClick={handleGenerateDocs}
+                disabled={genDocsLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50 shrink-0"
+              >
                 <FileEdit size={14} /> {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
               </button>
             </div>
@@ -2303,7 +2903,8 @@ try {
                 </p>
                 {genDocsResult.errors.length > 0 && (
                   <p className="text-xs text-red-500 mt-1">
-                    {genDocsResult.errors.length} error: {genDocsResult.errors.slice(0, 3).join('; ')}
+                    {genDocsResult.errors.length} error:{' '}
+                    {genDocsResult.errors.slice(0, 3).join('; ')}
                   </p>
                 )}
               </div>
@@ -2314,37 +2915,73 @@ try {
             ) : results.length === 0 ? (
               <div className="text-center py-12">
                 <Award size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm text-gray-400">Belum ada hasil. Gunakan "Input Hasil" di tab Peserta terlebih dahulu.</p>
+                <p className="text-sm text-gray-400">
+                  Belum ada hasil. Gunakan "Input Hasil" di tab Peserta terlebih dahulu.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
                 {results.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+                  >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.calonAnggota?.namaLengkap || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {r.calonAnggota?.namaLengkap || '-'}
+                      </p>
                       <p className="text-xs text-gray-400">
-                        {r.calonAnggota?.ranting?.nama || '-'} · Skor {Number(r.totalSkor)} · Rank {r.ranking ?? '-'}
+                        {r.calonAnggota?.ranting?.nama || '-'} · Skor {Number(r.totalSkor)} · Rank{' '}
+                        {r.ranking ?? '-'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${r.statusKelulusan === 'lulus' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${r.statusKelulusan === 'lulus' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+                      >
                         {r.statusKelulusan === 'lulus' ? 'Lulus' : 'Gagal'}
                       </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        r.statusValidasi === 'approved' ? 'bg-emerald-100 text-emerald-700'
-                        : r.statusValidasi === 'rejected' ? 'bg-red-100 text-red-700'
-                        : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {r.statusValidasi === 'approved' ? 'Disetujui' : r.statusValidasi === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          r.statusValidasi === 'approved'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : r.statusValidasi === 'rejected'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {r.statusValidasi === 'approved'
+                          ? 'Disetujui'
+                          : r.statusValidasi === 'rejected'
+                            ? 'Ditolak'
+                            : 'Menunggu'}
                       </span>
                       {r.statusValidasi === 'pending' && (
                         <>
-                          <button onClick={() => { setValidateModal({ candidateId: r.calonAnggotaId, approved: true, nama: r.calonAnggota?.namaLengkap || '' }); setValidateCatatan(''); }}
-                            className="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">
+                          <button
+                            onClick={() => {
+                              setValidateModal({
+                                candidateId: r.calonAnggotaId,
+                                approved: true,
+                                nama: r.calonAnggota?.namaLengkap || '',
+                              });
+                              setValidateCatatan('');
+                            }}
+                            className="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                          >
                             Setujui
                           </button>
-                          <button onClick={() => { setValidateModal({ candidateId: r.calonAnggotaId, approved: false, nama: r.calonAnggota?.namaLengkap || '' }); setValidateCatatan(''); }}
-                            className="px-3 py-1 rounded-lg text-xs font-medium border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition">
+                          <button
+                            onClick={() => {
+                              setValidateModal({
+                                candidateId: r.calonAnggotaId,
+                                approved: false,
+                                nama: r.calonAnggota?.namaLengkap || '',
+                              });
+                              setValidateCatatan('');
+                            }}
+                            className="px-3 py-1 rounded-lg text-xs font-medium border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
+                          >
                             Tolak
                           </button>
                         </>
@@ -2358,63 +2995,133 @@ try {
         )}
 
         {/* Graduate Modal */}
-        <Modal open={showGraduateModal} onClose={() => setShowGraduateModal(false)} title="Input Hasil Pendadaran" size="lg">
+        <Modal
+          open={showGraduateModal}
+          onClose={() => setShowGraduateModal(false)}
+          title="Input Hasil Pendadaran"
+          size="lg"
+        >
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Tentukan kelulusan untuk setiap peserta pendadaran</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Tentukan kelulusan untuk setiap peserta pendadaran
+            </p>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {activeParticipants.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+                >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{p.namaLengkap}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {p.namaLengkap}
+                    </p>
                     <p className="text-xs text-gray-400">{p.ranting?.nama || '-'}</p>
                   </div>
-                  <input type="number" placeholder="Skor" value={graduateResults[p.id]?.totalSkor || ''}
-                    onChange={(e) => setGraduateResults((prev) => ({ ...prev, [p.id]: { ...prev[p.id], totalSkor: Number(e.target.value) || 0 } }))}
-                    className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                  <input
+                    type="number"
+                    placeholder="Skor"
+                    value={graduateResults[p.id]?.totalSkor || ''}
+                    onChange={(e) =>
+                      setGraduateResults((prev) => ({
+                        ...prev,
+                        [p.id]: { ...prev[p.id], totalSkor: Number(e.target.value) || 0 },
+                      }))
+                    }
+                    className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
                   <div className="flex gap-1">
-                    <button onClick={() => setGraduateResults((prev) => ({ ...prev, [p.id]: { ...prev[p.id], lulus: true } }))}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${graduateResults[p.id]?.lulus === true ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-emerald-100'}`}>
+                    <button
+                      onClick={() =>
+                        setGraduateResults((prev) => ({
+                          ...prev,
+                          [p.id]: { ...prev[p.id], lulus: true },
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${graduateResults[p.id]?.lulus === true ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-emerald-100'}`}
+                    >
                       Lulus
                     </button>
-                    <button onClick={() => setGraduateResults((prev) => ({ ...prev, [p.id]: { ...prev[p.id], lulus: false } }))}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${graduateResults[p.id]?.lulus === false ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-100'}`}>
+                    <button
+                      onClick={() =>
+                        setGraduateResults((prev) => ({
+                          ...prev,
+                          [p.id]: { ...prev[p.id], lulus: false },
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${graduateResults[p.id]?.lulus === false ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-100'}`}
+                    >
                       Gagal
                     </button>
                   </div>
                 </div>
               ))}
               {activeParticipants.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">Tidak ada peserta aktif yang bisa dinilai</p>
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Tidak ada peserta aktif yang bisa dinilai
+                </p>
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <button onClick={() => setShowGraduateModal(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-              <button onClick={handleGraduate}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Simpan Hasil</button>
+              <button
+                onClick={() => setShowGraduateModal(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleGraduate}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+              >
+                Simpan Hasil
+              </button>
             </div>
           </div>
         </Modal>
 
         {/* Validate Confirm Modal */}
-        <Modal open={!!validateModal} onClose={() => setValidateModal(null)} title={validateModal?.approved ? 'Setujui Hasil' : 'Tolak Hasil'} size="sm">
+        <Modal
+          open={!!validateModal}
+          onClose={() => setValidateModal(null)}
+          title={validateModal?.approved ? 'Setujui Hasil' : 'Tolak Hasil'}
+          size="sm"
+        >
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {validateModal?.approved
-                ? <>Setujui hasil <b>{validateModal?.nama}</b>? Anggota & sertifikat akan dibuat otomatis.</>
-                : <>Tolak hasil <b>{validateModal?.nama}</b>? Anggota tidak akan dibuat.</>}
+              {validateModal?.approved ? (
+                <>
+                  Setujui hasil <b>{validateModal?.nama}</b>? Anggota & sertifikat akan dibuat
+                  otomatis.
+                </>
+              ) : (
+                <>
+                  Tolak hasil <b>{validateModal?.nama}</b>? Anggota tidak akan dibuat.
+                </>
+              )}
             </p>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
-              <textarea value={validateCatatan} onChange={(e) => setValidateCatatan(e.target.value)} rows={2}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Catatan (opsional)
+              </label>
+              <textarea
+                value={validateCatatan}
+                onChange={(e) => setValidateCatatan(e.target.value)}
+                rows={2}
                 placeholder="Catatan validasi"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setValidateModal(null)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-              <button onClick={handleValidate} disabled={validating}
-                className={`px-4 py-2 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 ${validateModal?.approved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
+              <button
+                onClick={() => setValidateModal(null)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleValidate}
+                disabled={validating}
+                className={`px-4 py-2 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 ${validateModal?.approved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}
+              >
                 {validating ? 'Menyimpan...' : 'Konfirmasi'}
               </button>
             </div>
@@ -2422,53 +3129,120 @@ try {
         </Modal>
 
         {/* ─── Modal: Tambah Manual ─── */}
-        <Modal open={showAddParticipant} onClose={() => setShowAddParticipant(false)} title="Tambah Peserta Manual" size="md">
+        <Modal
+          open={showAddParticipant}
+          onClose={() => setShowAddParticipant(false)}
+          title="Tambah Peserta Manual"
+          size="md"
+        >
           <form onSubmit={handleAddParticipant} className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Buat calon anggota baru langsung dari pendadaran ini</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Buat calon anggota baru langsung dari pendadaran ini
+            </p>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap *</label>
-              <input type="text" value={addParticipantForm.namaLengkap} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, namaLengkap: e.target.value })} required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nama Lengkap *
+              </label>
+              <input
+                type="text"
+                value={addParticipantForm.namaLengkap}
+                onChange={(e) =>
+                  setAddParticipantForm({ ...addParticipantForm, namaLengkap: e.target.value })
+                }
+                required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting *</label>
-              <select value={addParticipantForm.rantingId} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, rantingId: e.target.value })} required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Ranting *
+              </label>
+              <select
+                value={addParticipantForm.rantingId}
+                onChange={(e) =>
+                  setAddParticipantForm({ ...addParticipantForm, rantingId: e.target.value })
+                }
+                required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              >
                 <option value="">Pilih ranting...</option>
-                {rantingOptions.map((r) => <option key={r.id} value={r.id}>{r.nama}</option>)}
+                {rantingOptions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nama}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
-                <select value={addParticipantForm.jenisKelamin} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, jenisKelamin: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Jenis Kelamin
+                </label>
+                <select
+                  value={addParticipantForm.jenisKelamin}
+                  onChange={(e) =>
+                    setAddParticipantForm({ ...addParticipantForm, jenisKelamin: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                >
                   <option value="">Pilih...</option>
                   <option value="L">Laki-laki</option>
                   <option value="P">Perempuan</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
-                <input type="text" value={addParticipantForm.noHp} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, noHp: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  No. HP
+                </label>
+                <input
+                  type="text"
+                  value={addParticipantForm.noHp}
+                  onChange={(e) =>
+                    setAddParticipantForm({ ...addParticipantForm, noHp: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input type="email" value={addParticipantForm.email} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={addParticipantForm.email}
+                onChange={(e) =>
+                  setAddParticipantForm({ ...addParticipantForm, email: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
-              <textarea value={addParticipantForm.alamat} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, alamat: e.target.value })} rows={2}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Alamat
+              </label>
+              <textarea
+                value={addParticipantForm.alamat}
+                onChange={(e) =>
+                  setAddParticipantForm({ ...addParticipantForm, alamat: e.target.value })
+                }
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <button type="button" onClick={() => setShowAddParticipant(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-              <button type="submit" disabled={addParticipantSaving}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => setShowAddParticipant(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={addParticipantSaving}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+              >
                 {addParticipantSaving ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
@@ -2476,26 +3250,46 @@ try {
         </Modal>
 
         {/* ─── Modal: Tarik dari Daftar Calon ─── */}
-        <Modal open={showEligiblePicker} onClose={() => setShowEligiblePicker(false)} title="Tarik dari Daftar Calon" size="lg">
+        <Modal
+          open={showEligiblePicker}
+          onClose={() => setShowEligiblePicker(false)}
+          title="Tarik dari Daftar Calon"
+          size="lg"
+        >
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Pilih calon anggota yang sudah terdaftar di sistem untuk ditarik ke pendadaran ini</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Pilih calon anggota yang sudah terdaftar di sistem untuk ditarik ke pendadaran ini
+            </p>
             {eligibleLoading ? (
               <div className="text-center py-8 text-sm text-gray-400">Memuat daftar calon...</div>
             ) : eligibleCandidates.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-400">Tidak ada calon eligible tersedia</div>
+              <div className="text-center py-8 text-sm text-gray-400">
+                Tidak ada calon eligible tersedia
+              </div>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {eligibleCandidates.map((c) => (
-                  <label key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer">
-                    <input type="checkbox" checked={selectedEligible.has(c.id)} onChange={(e) => {
-                      setSelectedEligible((prev) => {
-                        const next = new Set(prev);
-                        if (e.target.checked) next.add(c.id); else next.delete(c.id);
-                        return next;
-                      });
-                    }} className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEligible.has(c.id)}
+                      onChange={(e) => {
+                        setSelectedEligible((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(c.id);
+                          else next.delete(c.id);
+                          return next;
+                        });
+                      }}
+                      className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{c.namaLengkap}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {c.namaLengkap}
+                      </p>
                       <p className="text-xs text-gray-400">{c.ranting?.nama || '-'}</p>
                     </div>
                   </label>
@@ -2505,10 +3299,17 @@ try {
             <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
               <span className="text-xs text-gray-400">{selectedEligible.size} dipilih</span>
               <div className="flex gap-2">
-                <button onClick={() => setShowEligiblePicker(false)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-                <button onClick={handleSelectEligible} disabled={eligibleSaving || selectedEligible.size === 0}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
+                <button
+                  onClick={() => setShowEligiblePicker(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSelectEligible}
+                  disabled={eligibleSaving || selectedEligible.size === 0}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                >
                   {eligibleSaving ? 'Menyimpan...' : `Tarik ${selectedEligible.size} Peserta`}
                 </button>
               </div>
@@ -2517,25 +3318,55 @@ try {
         </Modal>
 
         {/* ─── Modal: Import CSV/Excel ─── */}
-        <Modal open={showImportParticipants} onClose={() => setShowImportParticipants(false)} title="Import Peserta dari File" size="lg">
+        <Modal
+          open={showImportParticipants}
+          onClose={() => setShowImportParticipants(false)}
+          title="Import Peserta dari File"
+          size="lg"
+        >
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Unggah file CSV atau Excel. Kolom: <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">nama_lengkap</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">ranting_id</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">jenis_kelamin</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">no_hp</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">email</code>. Atau kolom <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">candidateId</code> untuk tarik calon existing.
+              Unggah file CSV atau Excel. Kolom:{' '}
+              <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">
+                nama_lengkap
+              </code>
+              ,{' '}
+              <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">ranting_id</code>,{' '}
+              <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">
+                jenis_kelamin
+              </code>
+              , <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">no_hp</code>,{' '}
+              <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">email</code>. Atau
+              kolom{' '}
+              <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">candidateId</code>{' '}
+              untuk tarik calon existing.
             </p>
             {!importResult && (
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center">
-                <input type="file" accept=".csv,.xlsx,.xls,.txt" id="import-file" className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) parseImportFile(f); }} />
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls,.txt"
+                  id="import-file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) parseImportFile(f);
+                  }}
+                />
                 <label htmlFor="import-file" className="cursor-pointer">
                   <FileEdit size={32} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{importFileName || 'Klik untuk pilih file'}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    {importFileName || 'Klik untuk pilih file'}
+                  </p>
                   <p className="text-xs text-gray-400 mt-1">Format: CSV, Excel (.xlsx), atau TXT</p>
                 </label>
               </div>
             )}
             {importPreview.length > 0 && !importResult && (
               <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Preview ({importPreview.length} baris):</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Preview ({importPreview.length} baris):
+                </p>
                 <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                   <table className="w-full text-xs">
                     <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
@@ -2548,8 +3379,12 @@ try {
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                       {importPreview.slice(0, 20).map((row, i) => (
                         <tr key={i} className="text-gray-700 dark:text-gray-300">
-                          <td className="px-2 py-1">{String(row.nama_lengkap || row.nama || row.name || '')}</td>
-                          <td className="px-2 py-1">{String(row.ranting_id || row.rantingId || '')}</td>
+                          <td className="px-2 py-1">
+                            {String(row.nama_lengkap || row.nama || row.name || '')}
+                          </td>
+                          <td className="px-2 py-1">
+                            {String(row.ranting_id || row.rantingId || '')}
+                          </td>
                           <td className="px-2 py-1">{String(row.jenis_kelamin || '')}</td>
                         </tr>
                       ))}
@@ -2561,12 +3396,17 @@ try {
             {importResult && (
               <div className="space-y-2">
                 <div className="px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">
-                  Berhasil: {importResult.imported} peserta ({importResult.linked} ditautkan, {importResult.created} dibuat)
+                  Berhasil: {importResult.imported} peserta ({importResult.linked} ditautkan,{' '}
+                  {importResult.created} dibuat)
                 </div>
                 {importResult.errors.length > 0 && (
                   <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300 max-h-32 overflow-y-auto">
                     <p className="font-medium">Errors ({importResult.errors.length}):</p>
-                    {importResult.errors.slice(0, 10).map((err, i) => <p key={i} className="text-xs mt-0.5">{err}</p>)}
+                    {importResult.errors.slice(0, 10).map((err, i) => (
+                      <p key={i} className="text-xs mt-0.5">
+                        {err}
+                      </p>
+                    ))}
                   </div>
                 )}
               </div>
@@ -2574,23 +3414,48 @@ try {
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
               {!importResult ? (
                 <>
-                  <button onClick={() => { setShowImportParticipants(false); setImportPreview([]); setImportFileName(''); }}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
-                  <button onClick={handleImportParticipants} disabled={importing || importPreview.length === 0}
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50">
+                  <button
+                    onClick={() => {
+                      setShowImportParticipants(false);
+                      setImportPreview([]);
+                      setImportFileName('');
+                    }}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleImportParticipants}
+                    disabled={importing || importPreview.length === 0}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                  >
                     {importing ? 'Mengimpor...' : `Impor ${importPreview.length} Baris`}
                   </button>
                 </>
               ) : (
-                <button onClick={() => { setShowImportParticipants(false); setImportPreview([]); setImportResult(null); setImportFileName(''); }}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Selesai</button>
+                <button
+                  onClick={() => {
+                    setShowImportParticipants(false);
+                    setImportPreview([]);
+                    setImportResult(null);
+                    setImportFileName('');
+                  }}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+                >
+                  Selesai
+                </button>
               )}
             </div>
           </div>
         </Modal>
 
         {/* ─── Modal konfirmasi ubah status cepat ─── */}
-        <Modal open={!!statusModal} onClose={() => !statusSaving && setStatusModal(null)} title="Ubah Status Pendadaran" size="sm">
+        <Modal
+          open={!!statusModal}
+          onClose={() => !statusSaving && setStatusModal(null)}
+          title="Ubah Status Pendadaran"
+          size="sm"
+        >
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Ubah status pendadaran <strong>{graduation?.nama}</strong> menjadi{' '}
@@ -2603,8 +3468,9 @@ try {
             )}
             {statusModal === 'closed' && (
               <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-                Pendadaran yang ditutup tidak dapat menerima pendaftaran peserta baru. Admin kegiatan yang tidak lagi
-                menangani kegiatan terbuka lain akan otomatis diturunkan rolenya.
+                Pendadaran yang ditutup tidak dapat menerima pendaftaran peserta baru. Admin
+                kegiatan yang tidak lagi menangani kegiatan terbuka lain akan otomatis diturunkan
+                rolenya.
               </p>
             )}
             <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">

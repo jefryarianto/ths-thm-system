@@ -12,7 +12,10 @@ function signWebhook(svixId: string, secret: string, body: Buffer) {
     ? Buffer.from(secret.slice(6), 'base64')
     : Buffer.from(secret, 'utf-8');
   const signedContent = `${svixId}.${Math.floor(Date.now() / 1000)}.${body.toString('utf-8')}`;
-  const sig = crypto.createHmac('sha256', rawSecret).update(signedContent, 'utf-8').digest('base64');
+  const sig = crypto
+    .createHmac('sha256', rawSecret)
+    .update(signedContent, 'utf-8')
+    .digest('base64');
   return { svixId, signedContent, signature: `v1,${sig}` };
 }
 
@@ -60,7 +63,11 @@ describe('MailController webhook', () => {
     (env as unknown as { resendWebhookSecret: string }).resendWebhookSecret = '';
   });
 
-  const callWebhook = async (payload: Record<string, unknown>, headers: Record<string, string>, rawBody: Buffer) =>
+  const callWebhook = async (
+    payload: Record<string, unknown>,
+    headers: Record<string, string>,
+    rawBody: Buffer,
+  ) =>
     controller.handleWebhook(
       payload,
       headers['svix-id'],
@@ -77,9 +84,9 @@ describe('MailController webhook', () => {
   });
 
   it('should reject missing svix headers', async () => {
-    await expect(
-      callWebhook({ type: 'email.delivered' }, {}, Buffer.from('{}')),
-    ).rejects.toThrow('Webhook signature header tidak lengkap');
+    await expect(callWebhook({ type: 'email.delivered' }, {}, Buffer.from('{}'))).rejects.toThrow(
+      'Webhook signature header tidak lengkap',
+    );
   });
 
   it('should reject invalid signature', async () => {

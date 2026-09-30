@@ -78,7 +78,9 @@ async function main() {
     });
 
     if (!ranting) {
-      console.warn(`  ⚠️  Ranting ${rantingId} tidak ditemukan — ${groupMembers.length} anggota dilewati`);
+      console.warn(
+        `  ⚠️  Ranting ${rantingId} tidak ditemukan — ${groupMembers.length} anggota dilewati`,
+      );
       skipped += groupMembers.length;
       continue;
     }

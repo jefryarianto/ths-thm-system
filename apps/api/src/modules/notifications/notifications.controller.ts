@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, Patch, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Patch,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { EventsGateway } from './events.gateway';
@@ -210,7 +220,6 @@ export class NotificationsController {
     return this.service.sendIncompleteNotifications(dto?.memberIds);
   }
 
-
   @Post('cleanup-stale-incomplete')
   @ApiOperation({ summary: 'Hapus notifikasi data_incomplete stale (one-time cleanup)' })
   @Roles('superadmin')
@@ -220,9 +229,7 @@ export class NotificationsController {
   @Post('test-push')
   @ApiOperation({ summary: 'Kirim push notification test' })
   @Roles('superadmin')
-  sendTestPush(
-    @Body() dto: { title: string; body: string; userId?: string },
-  ) {
+  sendTestPush(@Body() dto: { title: string; body: string; userId?: string }) {
     return this.service.sendTestPush(dto);
   }
 
@@ -241,7 +248,9 @@ export class NotificationsController {
   }
 
   @Post('app-update')
-  @ApiOperation({ summary: 'Terbitkan pembaruan aplikasi: simpan config + push FCM ke semua perangkat' })
+  @ApiOperation({
+    summary: 'Terbitkan pembaruan aplikasi: simpan config + push FCM ke semua perangkat',
+  })
   @Roles('superadmin')
   publishAppUpdate(@Body() dto: PublishAppUpdateDto) {
     return this.service.publishAppUpdate(dto);

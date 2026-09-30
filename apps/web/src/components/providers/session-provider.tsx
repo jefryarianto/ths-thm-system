@@ -42,7 +42,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubscribe();
       if (timeoutId) clearTimeout(timeoutId);
-    }
+    };
   }, []); // stable — uses refs
 
   // Expiring soon listener — stable, runs once
@@ -54,11 +54,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       toastRef.current('warning', 'Sesi Anda akan segera berakhir.', {
         id: warningToastId,
         duration: 0,
-        content: <SessionWarningToast expiresInSeconds={secondsRemaining} toastId={warningToastId} />,
+        content: (
+          <SessionWarningToast expiresInSeconds={secondsRemaining} toastId={warningToastId} />
+        ),
       });
     });
 
-    return () => { unsubscribeExpiring(); };
+    return () => {
+      unsubscribeExpiring();
+    };
   }, []); // stable — uses refs
 
   // One-time setup: expired flag check + initial warning schedule

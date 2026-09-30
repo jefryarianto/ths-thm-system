@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -7,17 +13,20 @@ import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { userWelcomeEmail } from '../../mail/email-templates';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserFilterDto,
-} from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto, UserFilterDto } from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import bcrypt from 'bcryptjs';
 
 /** Role yang boleh ditetapkan oleh admin per-level (superadmin bebas). */
 const ASSIGNABLE_BY_LEVEL: Record<string, string[]> = {
-  district: ['admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
+  district: [
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  ],
   region: ['admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
   branch: ['admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
 };
@@ -31,12 +40,18 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     private readonly mailService: MailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'user',
-      prefix: 'users:',
-      notFound: 'User tidak ditemukan',
-      scopeStrategy: 'ranting',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'user',
+        prefix: 'users:',
+        notFound: 'User tidak ditemukan',
+        scopeStrategy: 'ranting',
+      },
+      persistentAudit,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -100,7 +115,10 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
    * nasional. Karena itu penempatan ranting dipaksa di sini, bukan hanya di UI.
    * Superadmin dikecualikan (memang nasional, `rantingId` boleh null).
    */
-  private assertRantingForRole(role: string | undefined, rantingId: string | null | undefined): void {
+  private assertRantingForRole(
+    role: string | undefined,
+    rantingId: string | null | undefined,
+  ): void {
     // `role ?? 'anggota'` menyamai default kolom `role` di schema Prisma.
     const effectiveRole = role ?? 'anggota';
     if (effectiveRole !== 'superadmin' && !rantingId) {
@@ -140,10 +158,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
    * After create: send welcome email with password setup link.
    * Fails silently — just logs a warning.
    */
-  protected async afterCreate(
-    result: any,
-    _dto: CreateUserDto,
-  ): Promise<void> {
+  protected async afterCreate(result: any, _dto: CreateUserDto): Promise<void> {
     const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
     this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, setPasswordUrl);
   }
@@ -152,10 +167,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
    * Before update: sparse field mapping with bcrypt for password changes.
    * Only includes fields that are explicitly provided.
    */
-  protected async beforeUpdate(
-    _id: string,
-    dto: UpdateUserDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeUpdate(_id: string, dto: UpdateUserDto): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
     if (dto.email !== undefined) data.email = dto.email;
     if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
@@ -262,8 +274,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
       throw new NotFoundException('User tidak ditemukan');
     }
     const effectiveRole = dto.role ?? existing.role;
-    const effectiveRantingId =
-      dto.rantingId !== undefined ? dto.rantingId : existing.rantingId;
+    const effectiveRantingId = dto.rantingId !== undefined ? dto.rantingId : existing.rantingId;
     this.assertRantingForRole(effectiveRole, effectiveRantingId);
 
     return this.baseUpdate(id, dto, effectiveScope, 'User berhasil diperbarui');

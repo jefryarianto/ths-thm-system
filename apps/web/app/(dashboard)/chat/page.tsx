@@ -76,11 +76,11 @@ export default function ChatPage() {
 
         {loading ? (
           <div className="text-center py-16 text-gray-500">Memuat ruang chat...</div>
-      ) : rooms.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <MessageSquare size={48} className="mx-auto mb-4 opacity-30" />
-          <p>Belum ada Ruang Chat</p>
-        </div>
+        ) : rooms.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <MessageSquare size={48} className="mx-auto mb-4 opacity-30" />
+            <p>Belum ada Ruang Chat</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rooms.map((room) => (
@@ -98,18 +98,16 @@ export default function ChatPage() {
                       {room.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadge(room.type)}`}>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadge(room.type)}`}
+                      >
                         {typeLabel(room.type)}
                       </span>
                     </div>
                     {(room.memberCount !== undefined || room.messageCount !== undefined) && (
                       <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                        {room.memberCount !== undefined && (
-                          <span>{room.memberCount} anggota</span>
-                        )}
-                        {room.messageCount !== undefined && (
-                          <span>{room.messageCount} pesan</span>
-                        )}
+                        {room.memberCount !== undefined && <span>{room.memberCount} anggota</span>}
+                        {room.messageCount !== undefined && <span>{room.messageCount} pesan</span>}
                       </div>
                     )}
                   </div>

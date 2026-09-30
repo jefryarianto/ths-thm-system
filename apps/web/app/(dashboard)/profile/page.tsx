@@ -45,7 +45,14 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
 
   // Edit profile form
-  const [form, setForm] = useState({ namaLengkap: '', noHp: '', alamat: '', tempatLahir: '', tanggalLahir: '', email: '' });
+  const [form, setForm] = useState({
+    namaLengkap: '',
+    noHp: '',
+    alamat: '',
+    tempatLahir: '',
+    tanggalLahir: '',
+    email: '',
+  });
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -91,7 +98,10 @@ export default function ProfilePage() {
       if (form.noHp !== (profile?.noHp || '')) payload.noHp = form.noHp;
       if (form.alamat !== (profile?.alamat || '')) payload.alamat = form.alamat;
       if (form.tempatLahir !== (profile?.tempatLahir || '')) payload.tempatLahir = form.tempatLahir;
-      if (form.tanggalLahir !== (profile?.tanggalLahir ? String(profile.tanggalLahir).slice(0, 10) : '')) {
+      if (
+        form.tanggalLahir !==
+        (profile?.tanggalLahir ? String(profile.tanggalLahir).slice(0, 10) : '')
+      ) {
         payload.tanggalLahir = form.tanggalLahir;
       }
 
@@ -177,8 +187,12 @@ export default function ProfilePage() {
         <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center mx-auto mb-4">
           <AlertCircle size={32} className="text-red-400" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Profil Tidak Dimuat</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error || 'Data profil tidak tersedia'}</p>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Profil Tidak Dimuat
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          {error || 'Data profil tidak tersedia'}
+        </p>
         <button
           onClick={fetchProfile}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
@@ -198,7 +212,11 @@ export default function ProfilePage() {
 
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Pengaturan Profil</h1>
-        <button onClick={fetchProfile} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Muat ulang">
+        <button
+          onClick={fetchProfile}
+          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400"
+          title="Muat ulang"
+        >
           <RefreshCw size={14} />
         </button>
       </div>
@@ -208,12 +226,19 @@ export default function ProfilePage() {
         <div className="relative group shrink-0">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
             {profile.fotoPath ? (
-              <img src={`/api/uploads/${profile.fotoPath}`} alt="" className="w-full h-full object-cover" />
+              <img
+                src={`/api/uploads/${profile.fotoPath}`}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             ) : (
               profile.namaLengkap?.charAt(0)?.toUpperCase() || 'U'
             )}
           </div>
-          <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition" title="Ganti foto profil">
+          <label
+            className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition"
+            title="Ganti foto profil"
+          >
             <Upload size={16} className="text-white" />
             <input
               type="file"
@@ -227,7 +252,9 @@ export default function ProfilePage() {
           </label>
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">{profile.namaLengkap}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+            {profile.namaLengkap}
+          </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{profile.email}</p>
           <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400">
             {ROLE_LABEL[profile.role] || profile.role}
@@ -256,37 +283,70 @@ export default function ProfilePage() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
-            <input className={fieldCls} value={form.namaLengkap} onChange={(e) => setForm({ ...form, namaLengkap: e.target.value })} />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nama Lengkap
+            </label>
+            <input
+              className={fieldCls}
+              value={form.namaLengkap}
+              onChange={(e) => setForm({ ...form, namaLengkap: e.target.value })}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               <Mail size={12} className="inline mr-1 text-gray-400" />
               Email
             </label>
-            <input type="email" className={`${fieldCls} opacity-60`} value={form.email} disabled title="Email digunakan untuk login" />
+            <input
+              type="email"
+              className={`${fieldCls} opacity-60`}
+              value={form.email}
+              disabled
+              title="Email digunakan untuk login"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               <Phone size={12} className="inline mr-1 text-gray-400" />
               No. HP
             </label>
-            <input className={fieldCls} value={form.noHp} onChange={(e) => setForm({ ...form, noHp: e.target.value })} />
+            <input
+              className={fieldCls}
+              value={form.noHp}
+              onChange={(e) => setForm({ ...form, noHp: e.target.value })}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
-            <input className={fieldCls} value={form.tempatLahir} onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })} />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tempat Lahir
+            </label>
+            <input
+              className={fieldCls}
+              value={form.tempatLahir}
+              onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
-            <input type="date" className={fieldCls} value={form.tanggalLahir} onChange={(e) => setForm({ ...form, tanggalLahir: e.target.value })} />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tanggal Lahir
+            </label>
+            <input
+              type="date"
+              className={fieldCls}
+              value={form.tanggalLahir}
+              onChange={(e) => setForm({ ...form, tanggalLahir: e.target.value })}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               <MapPin size={12} className="inline mr-1 text-gray-400" />
               Alamat
             </label>
-            <textarea className={`${fieldCls} min-h-[70px]`} value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} />
+            <textarea
+              className={`${fieldCls} min-h-[70px]`}
+              value={form.alamat}
+              onChange={(e) => setForm({ ...form, alamat: e.target.value })}
+            />
           </div>
         </div>
         <div className="flex justify-end pt-4">
@@ -302,7 +362,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Change password */}
-      <div id="change-password" className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+      <div
+        id="change-password"
+        className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6"
+      >
         <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
           <KeyRound size={18} className="text-blue-500" />
           Ubah Password
@@ -339,7 +402,9 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password Baru</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Password Baru
+            </label>
             <input
               type="password"
               className={fieldCls}
@@ -349,7 +414,9 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Konfirmasi Password Baru</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Konfirmasi Password Baru
+            </label>
             <input
               type="password"
               className={fieldCls}

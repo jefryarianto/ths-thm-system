@@ -12,10 +12,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  assertSelfMember,
-  SelfScopeUser,
-} from '../../common/utils/self-scope.helper';
+import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 
 export interface Reward {
   id: string;
@@ -68,18 +65,22 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
     private readonly notificationsService: NotificationsService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'gamificationReward',
-      prefix: 'rewards:',
-      notFound: 'Reward tidak ditemukan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'gamificationReward',
+        prefix: 'rewards:',
+        notFound: 'Reward tidak ditemukan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hook: transform DTO before create ──────────────
 
-  protected async beforeCreate(
-    dto: CreateRewardInput,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeCreate(dto: CreateRewardInput): Promise<Record<string, unknown>> {
     return {
       name: dto.name,
       description: dto.description ?? null,
@@ -129,7 +130,11 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   // ── Domain: Redeem reward with points ──────────────
 
-  async redeemReward(anggotaId: string, rewardId: string, user?: SelfScopeUser): Promise<Redemption> {
+  async redeemReward(
+    anggotaId: string,
+    rewardId: string,
+    user?: SelfScopeUser,
+  ): Promise<Redemption> {
     // Anggota hanya boleh redeem untuk dirinya sendiri
     await assertSelfMember(this.prisma, user, anggotaId);
 
@@ -300,7 +305,8 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
       pointCost: reward.pointCost,
       stock: reward.stock,
       isActive: reward.isActive,
-      createdAt: reward.createdAt instanceof Date ? reward.createdAt.toISOString() : reward.createdAt,
+      createdAt:
+        reward.createdAt instanceof Date ? reward.createdAt.toISOString() : reward.createdAt,
     };
   }
 

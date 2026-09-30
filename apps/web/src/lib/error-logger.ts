@@ -20,11 +20,7 @@ export type ErrorCategory =
   | 'Server'
   | 'Unknown';
 
-export type AuthErrorCategory =
-  | 'Auth_expired'
-  | 'Auth_invalid'
-  | 'Auth_refresh_failed'
-  | 'Auth';
+export type AuthErrorCategory = 'Auth_expired' | 'Auth_invalid' | 'Auth_refresh_failed' | 'Auth';
 
 export type ErrorOperation =
   | 'Login'
@@ -81,17 +77,9 @@ export function classifyError(error: unknown): {
   }
 
   // Axios-like network error (has code but no response)
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    !(error as any).response
-  ) {
+  if (typeof error === 'object' && error !== null && 'code' in error && !(error as any).response) {
     const code = (error as any).code as string | undefined;
-    const message =
-      typeof (error as any).message === 'string'
-        ? (error as any).message
-        : '';
+    const message = typeof (error as any).message === 'string' ? (error as any).message : '';
 
     // Network-level timeout (ECONNABORTED)
     if (code === 'ECONNABORTED' || message.toLowerCase().includes('timeout')) {
@@ -144,8 +132,7 @@ export function classifyError(error: unknown): {
 
   // Plain Error or string: check message for known patterns
   if (error instanceof Error || typeof error === 'string') {
-    const msg =
-      error instanceof Error ? error.message : (error as string).toLowerCase();
+    const msg = error instanceof Error ? error.message : (error as string).toLowerCase();
 
     if (
       msg.includes('Session expired') ||
@@ -171,18 +158,29 @@ export function classifyError(error: unknown): {
  * Handles JWTs, Bearer tokens, and common sensitive query parameters.
  */
 function redactSensitive(text: string): string {
-  return text
-    // Standalone JWT (three base64url segments)
-    .replace(/\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, '[JWTTokenRedacted]')
-    // Bearer <token>
-    .replace(/Bearer\s+[A-Za-z0-9\-_.=]+/g, '[BearerTokenRedacted]')
-    // Sensitive query params (with or without leading ? or &)
-    .replace(/(access_token|refresh_token|id_token|token|apikey|api_key|secret)=[^&\s]+/g, '$1=[Redacted]')
-    // Generic query params known to carry identity/session context
-    .replace(/([?&](?:code|state|session_id|tab_id|user_id|request_id|refresh_token|access_token)=)[^&\s]+/g, '$1[Redacted]')
-    // Authorization / Cookie header values
-    .replace(/(Authorization|authorization):\s*[^\r\n]+/g, '$1: [Redacted]')
-    .replace(/(Cookie|Set-Cookie|cookie|set-cookie):\s*[^\r\n]+/g, '$1: [Redacted]');
+  return (
+    text
+      // Standalone JWT (three base64url segments)
+      .replace(
+        /\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g,
+        '[JWTTokenRedacted]',
+      )
+      // Bearer <token>
+      .replace(/Bearer\s+[A-Za-z0-9\-_.=]+/g, '[BearerTokenRedacted]')
+      // Sensitive query params (with or without leading ? or &)
+      .replace(
+        /(access_token|refresh_token|id_token|token|apikey|api_key|secret)=[^&\s]+/g,
+        '$1=[Redacted]',
+      )
+      // Generic query params known to carry identity/session context
+      .replace(
+        /([?&](?:code|state|session_id|tab_id|user_id|request_id|refresh_token|access_token)=)[^&\s]+/g,
+        '$1[Redacted]',
+      )
+      // Authorization / Cookie header values
+      .replace(/(Authorization|authorization):\s*[^\r\n]+/g, '$1: [Redacted]')
+      .replace(/(Cookie|Set-Cookie|cookie|set-cookie):\s*[^\r\n]+/g, '$1: [Redacted]')
+  );
 }
 
 /**
@@ -247,10 +245,7 @@ function formatError(error: unknown, context?: ErrorContext): Record<string, unk
  * Silently ignores SESSION_EXPIRED errors (handled by session provider).
  * Logging failures are isolated and never alter application behavior.
  */
-export function logError(
-  error: unknown,
-  context?: ErrorContext,
-): void {
+export function logError(error: unknown, context?: ErrorContext): void {
   // Silently ignore session expired errors (preserve existing behavior)
   if (isSessionExpiredError(error)) {
     return;
@@ -291,10 +286,7 @@ export function logError(
 /**
  * Warning logging function.
  */
-export function logWarning(
-  message: string,
-  context?: ErrorContext,
-): void {
+export function logWarning(message: string, context?: ErrorContext): void {
   try {
     const entry: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
@@ -316,10 +308,7 @@ export function logWarning(
 /**
  * Info logging function.
  */
-export function logInfo(
-  message: string,
-  context?: ErrorContext,
-): void {
+export function logInfo(message: string, context?: ErrorContext): void {
   if (process.env.NODE_ENV !== 'production') {
     try {
       const entry: Record<string, unknown> = {
@@ -342,12 +331,9 @@ export function logInfo(
  */
 export function createModuleLogger(moduleName: string) {
   return {
-    error: (error: unknown, action?: string) =>
-      logError(error, { module: moduleName, action }),
-    warn: (message: string, action?: string) =>
-      logWarning(message, { module: moduleName, action }),
-    info: (message: string, action?: string) =>
-      logInfo(message, { module: moduleName, action }),
+    error: (error: unknown, action?: string) => logError(error, { module: moduleName, action }),
+    warn: (message: string, action?: string) => logWarning(message, { module: moduleName, action }),
+    info: (message: string, action?: string) => logInfo(message, { module: moduleName, action }),
   };
 }
 

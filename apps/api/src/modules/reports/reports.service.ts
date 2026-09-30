@@ -14,6 +14,32 @@ export class ReportsService {
     private readonly cache: CacheService,
   ) {}
 
+  async getMembersOverTime() {
+    // Return daily count of members created over last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const raw = await this.prisma.anggota.groupBy({
+      by: ['createdAt'],
+      where: {
+        createdAt: { gte: thirtyDaysAgo },
+        deletedAt: null,
+      },
+      _count: true,
+      orderBy: { createdAt: 'asc' },
+    });
+    // Aggregate by day (YYYY-MM-DD)
+    const map = new Map();
+    for (const r of raw) {
+      const day = r.createdAt.toISOString().split('T')[0];
+      const count = r._count ?? 0;
+      map.set(day, (map.get(day) ?? 0) + count);
+    }
+    const result = Array.from(map.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    return result;
+  }
+
   async membersReport(scope?: UserScope) {
     // Scope filtering for members report
     const anggotaWhere: Record<string, unknown> = { deletedAt: null };

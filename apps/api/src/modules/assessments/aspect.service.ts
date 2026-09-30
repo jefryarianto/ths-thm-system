@@ -4,11 +4,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
-import {
-  CreateAspectDto,
-  UpdateAspectDto,
-  AssessmentFilterDto,
-} from './dto/assessment.dto';
+import { CreateAspectDto, UpdateAspectDto, AssessmentFilterDto } from './dto/assessment.dto';
 
 @Injectable()
 export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspectDto> {
@@ -18,14 +14,20 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
     cache: CacheService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'aspekPenilaian',
-      prefix: 'aspects:',
-      notFound: 'Aspek tidak ditemukan',
-      // NOTE: original deleteAspect set isActive:false instead of hard-delete
-      // softDelete: true would set deletedAt which doesn't exist on this model
-      scopeStrategy: 'ranting',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'aspekPenilaian',
+        prefix: 'aspects:',
+        notFound: 'Aspek tidak ditemukan',
+        // NOTE: original deleteAspect set isActive:false instead of hard-delete
+        // softDelete: true would set deletedAt which doesn't exist on this model
+        scopeStrategy: 'ranting',
+      },
+      persistentAudit,
+    );
   }
 
   /** Include item child relations by default (hanya item aktif), deterministik per urutan. */

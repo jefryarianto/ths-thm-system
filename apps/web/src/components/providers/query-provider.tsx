@@ -7,9 +7,5 @@ import { getQueryClient } from '@/lib/query-client';
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState<QueryClient>(() => getQueryClient());
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

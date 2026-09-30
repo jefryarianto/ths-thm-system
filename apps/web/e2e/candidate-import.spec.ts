@@ -66,9 +66,7 @@ test.describe('Candidate CSV Import Flow', () => {
     await fileInput.setInputFiles({
       name: 'calon.csv',
       mimeType: 'text/csv',
-      buffer: Buffer.from(
-        `nama_lengkap,email,no_hp\nTest User,test@email.com,08123456789`,
-      ),
+      buffer: Buffer.from(`nama_lengkap,email,no_hp\nTest User,test@email.com,08123456789`),
     });
 
     // After upload - column mapping should show matched fields with header names

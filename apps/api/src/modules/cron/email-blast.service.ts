@@ -14,11 +14,7 @@ import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
 import { resolveRedisConnection } from '../../common/queue/redis-connection';
 
 /** Kategori blast yang dikenal sistem (menjadi `tipe` notifikasi). */
-export type EmailBlastKategori =
-  | 'reminder_iuran'
-  | 'reminder_latihan'
-  | 'data_incomplete'
-  | 'umum';
+export type EmailBlastKategori = 'reminder_iuran' | 'reminder_latihan' | 'data_incomplete' | 'umum';
 
 /**
  * Satu item blast per penerima.
@@ -97,7 +93,9 @@ export class EmailBlastService implements OnApplicationShutdown {
         connection: conn,
         queueName: 'email-blast',
       });
-      this.logger.log(`Email blast queue "email-blast" initialized (Redis ${conn.host}:${conn.port})`);
+      this.logger.log(
+        `Email blast queue "email-blast" initialized (Redis ${conn.host}:${conn.port})`,
+      );
     } else {
       this.queue = new InProcessQueueAdapter(callbacks, opts);
       this.logger.log('In-process email blast queue initialized (concurrency: 3)');

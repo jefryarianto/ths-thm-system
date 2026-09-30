@@ -8,21 +8,21 @@
 
 ## 1. Environment
 
-| Komponen | Endpoint | Status |
-| --- | --- | --- |
-| PostgreSQL | `:5433` | ✅ Sehat |
-| Redis | `:6379` | ✅ Sehat |
-| API (NestJS) | `:3001` (`/api/auth/session/verify`) | ✅ Sehat |
-| Web (Next.js) | `:3002` | ✅ Sehat |
+| Komponen      | Endpoint                             | Status   |
+| ------------- | ------------------------------------ | -------- |
+| PostgreSQL    | `:5433`                              | ✅ Sehat |
+| Redis         | `:6379`                              | ✅ Sehat |
+| API (NestJS)  | `:3001` (`/api/auth/session/verify`) | ✅ Sehat |
+| Web (Next.js) | `:3002`                              | ✅ Sehat |
 
 ---
 
 ## 2. E2E Auth — Hasil
 
-| Spec | Status | Detail |
-| --- | --- | --- |
-| `login.spec.ts` | ✅ GREEN | login sukses/gagal/validasi |
-| `oauth-login.spec.ts` | ✅ GREEN | alur Google OAuth termock |
+| Spec                      | Status   | Detail                        |
+| ------------------------- | -------- | ----------------------------- |
+| `login.spec.ts`           | ✅ GREEN | login sukses/gagal/validasi   |
+| `oauth-login.spec.ts`     | ✅ GREEN | alur Google OAuth termock     |
 | `session-refresh.spec.ts` | ✅ GREEN | rotasi token & session verify |
 
 **11 passed · 0 failed** (3 spec auth).
@@ -46,40 +46,40 @@ Ditambahkan `await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' })` **sebel
 
 ## 3. Klasifikasi Kegagalan Unit Test Web & Perbaikan
 
-| Test | Masalah | Perbaikan | Hasil |
-| --- | --- | --- | --- |
-| `navigation.test.ts` | ekspektasi `getPageTitle('/gamification/scoreboard')` = "Dasbor Gamifikasi" | → **"Scoreboard"** | ✅ |
-| `MemberActions.test.tsx` (10) | tombol header memakai `aria-label` | query → `getByLabelText('Setujui anggota' / 'Detail')`; item dropdown tetap `getByTitle` | ✅ |
-| `shared-components.test.tsx` (4) | Pagination berubah ke **`Showing {start}-{end} of {total}`** (pageSize default 15); test lama masih berharap `'{total} total'` | teks asersi diperbarui + matcher fungsi `textContent` | ✅ |
+| Test                             | Masalah                                                                                                                        | Perbaikan                                                                                | Hasil |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----- |
+| `navigation.test.ts`             | ekspektasi `getPageTitle('/gamification/scoreboard')` = "Dasbor Gamifikasi"                                                    | → **"Scoreboard"**                                                                       | ✅    |
+| `MemberActions.test.tsx` (10)    | tombol header memakai `aria-label`                                                                                             | query → `getByLabelText('Setujui anggota' / 'Detail')`; item dropdown tetap `getByTitle` | ✅    |
+| `shared-components.test.tsx` (4) | Pagination berubah ke **`Showing {start}-{end} of {total}`** (pageSize default 15); test lama masih berharap `'{total} total'` | teks asersi diperbarui + matcher fungsi `textContent`                                    | ✅    |
 
 ### Detail 4 asersi Pagination/DataTable
 
 Teks `Showing … of …` di-render memakai elemen `<strong>` sehingga **terpecah menjadi beberapa node**. `getByText` dengan string/regex tidak cocok → dipakai **fungsi matcher**:
 
 ```ts
-screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-15 of 25')
+screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-15 of 25');
 ```
 
-| Lokasi | Konfigurasi | Ekspektasi baru |
-| --- | --- | --- |
+| Lokasi                                       | Konfigurasi      | Ekspektasi baru      |
+| -------------------------------------------- | ---------------- | -------------------- |
 | `shared-components.test.tsx:18` (Pagination) | page 1, total 25 | `Showing 1-15 of 25` |
-| `:786` (DataTable pagination) | page 1, total 10 | `Showing 1-10 of 10` |
-| `:1009` (DataTable default onPageChange) | page 1, total 10 | `Showing 1-10 of 10` |
-| `:1145` (DataTable lifecycle controls) | page 1, total 25 | `Showing 1-15 of 25` |
+| `:786` (DataTable pagination)                | page 1, total 10 | `Showing 1-10 of 10` |
+| `:1009` (DataTable default onPageChange)     | page 1, total 10 | `Showing 1-10 of 10` |
+| `:1145` (DataTable lifecycle controls)       | page 1, total 25 | `Showing 1-15 of 25` |
 
 ---
 
 ## 4. Hasil Verifikasi Penuh
 
-| Check | Perintah | Hasil |
-| --- | --- | --- |
-| Unit Web | `npx vitest run` (di `apps/web`) | ✅ **32 files · 408 passed · 0 failed** |
-| Typecheck Web | `tsc --noEmit` | ✅ 0 error |
-| Build/Typecheck API | `nest build` | ✅ 0 error |
-| Lint Web | `eslint app/ src/` | ✅ 0 error (hanya warning pre-existing) |
-| Lint API | `eslint src/**/*.ts` | ✅ 0 error (hanya warning pre-existing) |
-| API `auth.controller.spec.ts` | `jest` | ✅ **7 passed** |
-| API `metrics.service.spec.ts` | `jest` | ✅ **9 passed** |
+| Check                         | Perintah                         | Hasil                                   |
+| ----------------------------- | -------------------------------- | --------------------------------------- |
+| Unit Web                      | `npx vitest run` (di `apps/web`) | ✅ **32 files · 408 passed · 0 failed** |
+| Typecheck Web                 | `tsc --noEmit`                   | ✅ 0 error                              |
+| Build/Typecheck API           | `nest build`                     | ✅ 0 error                              |
+| Lint Web                      | `eslint app/ src/`               | ✅ 0 error (hanya warning pre-existing) |
+| Lint API                      | `eslint src/**/*.ts`             | ✅ 0 error (hanya warning pre-existing) |
+| API `auth.controller.spec.ts` | `jest`                           | ✅ **7 passed**                         |
+| API `metrics.service.spec.ts` | `jest`                           | ✅ **9 passed**                         |
 
 > Catatan: `pnpm typecheck` gagal hanya karena hook `prepare` di root workspace otomatis menjalankan `pnpm install`. Bukan dari perubahan kode. Menjalankan `tsc --noEmit` / `nest build` secara langsung bersih.
 
@@ -116,12 +116,14 @@ Berikut fitur auth inti diverifikasi tetap berfungsi (tidak diregresi oleh pembe
 ## 8. File yang Diubah (FASE 29U-F.1)
 
 E2E:
+
 - `apps/web/e2e/login.spec.ts`
 - `apps/web/e2e/oauth-login.spec.ts`
 - `apps/web/e2e/session-refresh.spec.ts`
 - `apps/web/e2e/helpers/auth.ts`
 
 Unit Test & Konfigurasi:
+
 - `apps/web/package.json` (script `test`: `jest` → `vitest`)
 - `apps/web/src/components/layout/__tests__/navigation.test.ts`
 - `apps/web/src/components/members/__tests__/MemberActions.test.tsx`

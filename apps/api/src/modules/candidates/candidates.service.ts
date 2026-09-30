@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException, Optional, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+  Optional,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
@@ -6,7 +13,11 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { RevisionService } from '../../common/services/revision.service';
-import { approvedMemberEmail, candidateRejectedEmail, credentialEmail } from '../../mail/email-templates';
+import {
+  approvedMemberEmail,
+  candidateRejectedEmail,
+  credentialEmail,
+} from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { CsvImportService } from '../../common/services/csv-import.service';
@@ -23,7 +34,10 @@ const CRUD_CONFIG: CrudConfig = {
 };
 
 @Injectable()
-export class CandidatesService extends BaseCrudService<CreateCandidateDto, UpdateCandidateDto> implements OnModuleInit {
+export class CandidatesService
+  extends BaseCrudService<CreateCandidateDto, UpdateCandidateDto>
+  implements OnModuleInit
+{
   constructor(
     prisma: PrismaService,
     scopeHelper: ScopeHelper,
@@ -39,9 +53,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
   }
 
   onModuleInit(): void {
-    this.importBatchService?.registerProcessor('candidates', (row) =>
-      this.importCandidateRow(row),
-    );
+    this.importBatchService?.registerProcessor('candidates', (row) => this.importCandidateRow(row));
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -66,7 +78,9 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     if (dto.rantingId && scope) {
       const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, dto.rantingId);
       if (!ok) {
-        throw new ForbiddenException('Anda hanya dapat mengusulkan calon anggota dalam cakupan Anda');
+        throw new ForbiddenException(
+          'Anda hanya dapat mengusulkan calon anggota dalam cakupan Anda',
+        );
       }
     }
 
@@ -75,7 +89,10 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
       jenisKelamin: dto.jenisKelamin,
       tempatLahir: dto.tempatLahir ?? null,
       tanggalLahir: dto.tanggalLahir
-        ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })()
+        ? (() => {
+            const d = new Date(dto.tanggalLahir);
+            return isNaN(d.getTime()) ? undefined : d;
+          })()
         : undefined,
       alamat: dto.alamat ?? null,
       noHp: dto.noHp ?? null,
@@ -157,7 +174,10 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     return {
       ...dto,
       tanggalLahir: dto.tanggalLahir
-        ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })()
+        ? (() => {
+            const d = new Date(dto.tanggalLahir);
+            return isNaN(d.getTime()) ? undefined : d;
+          })()
         : undefined,
     };
   }
@@ -249,57 +269,63 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
    * maupun impor massal asinkron (ImportBatchService).
    */
   async importCandidateRow(row: any, scope?: UserScope) {
-        // Server-side field validation
-        const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
-        if (!nameValue) {
-          return { success: false, error: 'Nama lengkap tidak boleh kosong' };
-        }
-
-        const jenisKelamin = row.jenis_kelamin || '';
-        if (jenisKelamin && !['L', 'P'].includes(jenisKelamin.toUpperCase())) {
-          return { success: false, error: `Jenis kelamin "${jenisKelamin}" tidak valid. Harus "L" atau "P".` };
-        }
-
-        const emailVal = (row.email || '').trim();
-        if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
-          return { success: false, error: `Format email "${emailVal}" tidak valid` };
-        }
-
-        const hpVal = (row.no_hp || row.phone || '').replace(/[\s\-().]/g, '');
-        if (hpVal && !/^(\+?62|0)\d{8,13}$/.test(hpVal)) {
-          return { success: false, error: `Format nomor HP "${row.no_hp || row.phone}" tidak valid (mulai 0/+62, 9-14 digit)` };
-        }
-
-        // Tenant safety: ranting dari CSV harus dalam cakupan admin
-        // (pola sama dengan members.importMemberRow).
-        const rowRantingId = row.rantingId || row.ranting_id;
-        if (rowRantingId && scope) {
-          const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rowRantingId);
-          if (!ok) {
-            return { success: false, error: 'Akses ditolak: ranting diluar cakupan wilayah Anda.' };
-          }
-        }
-
-        await this.prisma.calonAnggota.create({
-          data: {
-            namaLengkap: row.nama_lengkap || row.nama || row.name,
-            jenisKelamin: row.jenis_kelamin || 'L',
-            tempatLahir: row.tempat_lahir || null,
-            tanggalLahir: this.csvImportService.parseDateField(row.tanggal_lahir),
-            alamat: row.alamat || row.address,
-            noHp: row.no_hp || row.phone,
-            email: row.email,
-            tingkat: row.tingkat || null,
-            status: 'diusulkan',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            usulOlehId: row.usulOlehId || row.usul_oleh_id || 'seed',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            rantingId: row.rantingId || row.ranting_id || 'seed',
-          } as never,
-        });
-
-        return { success: true };
+    // Server-side field validation
+    const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
+    if (!nameValue) {
+      return { success: false, error: 'Nama lengkap tidak boleh kosong' };
     }
+
+    const jenisKelamin = row.jenis_kelamin || '';
+    if (jenisKelamin && !['L', 'P'].includes(jenisKelamin.toUpperCase())) {
+      return {
+        success: false,
+        error: `Jenis kelamin "${jenisKelamin}" tidak valid. Harus "L" atau "P".`,
+      };
+    }
+
+    const emailVal = (row.email || '').trim();
+    if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      return { success: false, error: `Format email "${emailVal}" tidak valid` };
+    }
+
+    const hpVal = (row.no_hp || row.phone || '').replace(/[\s\-().]/g, '');
+    if (hpVal && !/^(\+?62|0)\d{8,13}$/.test(hpVal)) {
+      return {
+        success: false,
+        error: `Format nomor HP "${row.no_hp || row.phone}" tidak valid (mulai 0/+62, 9-14 digit)`,
+      };
+    }
+
+    // Tenant safety: ranting dari CSV harus dalam cakupan admin
+    // (pola sama dengan members.importMemberRow).
+    const rowRantingId = row.rantingId || row.ranting_id;
+    if (rowRantingId && scope) {
+      const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rowRantingId);
+      if (!ok) {
+        return { success: false, error: 'Akses ditolak: ranting diluar cakupan wilayah Anda.' };
+      }
+    }
+
+    await this.prisma.calonAnggota.create({
+      data: {
+        namaLengkap: row.nama_lengkap || row.nama || row.name,
+        jenisKelamin: row.jenis_kelamin || 'L',
+        tempatLahir: row.tempat_lahir || null,
+        tanggalLahir: this.csvImportService.parseDateField(row.tanggal_lahir),
+        alamat: row.alamat || row.address,
+        noHp: row.no_hp || row.phone,
+        email: row.email,
+        tingkat: row.tingkat || null,
+        status: 'diusulkan',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        usulOlehId: row.usulOlehId || row.usul_oleh_id || 'seed',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        rantingId: row.rantingId || row.ranting_id || 'seed',
+      } as never,
+    });
+
+    return { success: true };
+  }
 
   async validate(id: string) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });

@@ -39,9 +39,7 @@ test.describe('Members Page - Enhanced Features', () => {
     const checkbox = page.locator('.space-y-2 input[type="checkbox"]').first();
     await checkbox.click();
 
-    const stored = await page.evaluate(() =>
-      localStorage.getItem('membersTableColumns')
-    );
+    const stored = await page.evaluate(() => localStorage.getItem('membersTableColumns'));
     expect(stored).toBeTruthy();
   });
 
@@ -111,7 +109,9 @@ test.describe('Members Page - Enhanced Features', () => {
   // --- Pagination Info ---
   test('should show pagination info', async ({ page }) => {
     // Wait for data to load, then check for pagination summary text
-    await expect(page.locator('text=/Showing \\d+-\\d+ of \\d+/').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=/Showing \\d+-\\d+ of \\d+/').first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   // --- Keyboard Navigation ---
@@ -123,6 +123,8 @@ test.describe('Members Page - Enhanced Features', () => {
     await tbody.focus();
     await page.keyboard.press('ArrowDown');
 
-    await expect(page.locator('tr[data-row-index]')).toHaveClass(/bg-primary-50/, { timeout: 3000 }).catch(() => {});
+    await expect(page.locator('tr[data-row-index]'))
+      .toHaveClass(/bg-primary-50/, { timeout: 3000 })
+      .catch(() => {});
   });
 });

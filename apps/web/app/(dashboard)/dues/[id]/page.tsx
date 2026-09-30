@@ -188,9 +188,7 @@ export default function DuesDetailPage() {
                     {FLAT_STATUS_LABELS[dues.status] || dues.status}
                   </span>
                 </div>
-                <p className="text-sm text-emerald-50 mt-1">
-                  {formatRupiah(Number(dues.jumlah))}
-                </p>
+                <p className="text-sm text-emerald-50 mt-1">{formatRupiah(Number(dues.jumlah))}</p>
               </div>
             </div>
           </div>

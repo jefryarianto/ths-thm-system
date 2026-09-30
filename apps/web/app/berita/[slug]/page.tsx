@@ -98,11 +98,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function BeritaDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BeritaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const berita = await fetchBerita(slug);
 
@@ -154,9 +150,7 @@ export default async function BeritaDetailPage({
               Berita
             </Link>
             <ChevronRight size={12} />
-            <span className="text-gold-400 truncate max-w-[200px] sm:max-w-xs">
-              {berita.judul}
-            </span>
+            <span className="text-gold-400 truncate max-w-[200px] sm:max-w-xs">{berita.judul}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-xs text-gold-300 mb-3">
@@ -176,9 +170,7 @@ export default async function BeritaDetailPage({
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-serif font-bold leading-snug">
-            {berita.judul}
-          </h1>
+          <h1 className="text-2xl sm:text-4xl font-serif font-bold leading-snug">{berita.judul}</h1>
         </div>
       </div>
 

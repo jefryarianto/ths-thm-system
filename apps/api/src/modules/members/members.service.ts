@@ -1,8 +1,21 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Optional, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Optional,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
-import { welcomeMemberEmail, credentialEmail, dataIncompleteEmail, escapeHtml } from '../../mail/email-templates';
+import {
+  welcomeMemberEmail,
+  credentialEmail,
+  dataIncompleteEmail,
+  escapeHtml,
+} from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -33,8 +46,10 @@ const DEFAULT_PASSWORD =
   (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
 
 @Injectable()
-export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> implements OnModuleInit {
-
+export class MembersService
+  extends BaseCrudService<CreateMemberDto, UpdateMemberDto>
+  implements OnModuleInit
+{
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly scopeHelper: ScopeHelper,
@@ -48,13 +63,20 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     @Optional() protected readonly revisions?: RevisionService,
     @Optional() private readonly importBatchService?: ImportBatchService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'anggota',
-      prefix: 'members:',
-      notFound: 'Anggota tidak ditemukan',
-      softDelete: true,
-      scopeStrategy: 'ranting',
-    }, persistentAudit, revisions);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'anggota',
+        prefix: 'members:',
+        notFound: 'Anggota tidak ditemukan',
+        softDelete: true,
+        scopeStrategy: 'ranting',
+      },
+      persistentAudit,
+      revisions,
+    );
   }
 
   onModuleInit(): void {
@@ -83,9 +105,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       ...dto,
       rantingId,
       noHpNormalized: dto.noHp ? normalizePhone(dto.noHp) : null,
-      tanggalLahir: dto.tanggalLahir
-        ? parseDateSafe(dto.tanggalLahir)
-        : undefined,
+      tanggalLahir: dto.tanggalLahir ? parseDateSafe(dto.tanggalLahir) : undefined,
       nomorAnggota: await this.nraService.generateMemberNumber(
         rantingId || '',
         dto.tahunDadar || undefined,
@@ -192,17 +212,26 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         } else if (scope?.distrikId) {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.wilayahId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayahId: filter.wilayahId,
+            };
             where.ranting = rantingFilter;
           }
         } else {
           // Tanpa scope (nasional/superadmin): filter klien berlaku penuh.
           if (filter.distrikId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayah: { distrikId: filter.distrikId },
+            };
             where.ranting = rantingFilter;
           }
           if (filter.wilayahId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayahId: filter.wilayahId,
+            };
             where.ranting = rantingFilter;
           }
         }
@@ -261,7 +290,13 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // After update, recalculate missing fields and trigger approval if data changed.
 
   async update(id: string, dto: UpdateMemberDto, scope?: UserScope, userId?: string) {
-    const result = await this.baseUpdate(id, dto, scope, 'Data anggota berhasil diperbarui', userId);
+    const result = await this.baseUpdate(
+      id,
+      dto,
+      scope,
+      'Data anggota berhasil diperbarui',
+      userId,
+    );
 
     // Recalculate missing fields and trigger approval workflow
     await this.handlePostUpdate(id, scope);
@@ -299,181 +334,208 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
    * impor massal asinkron (ImportBatchService).
    */
   async importMemberRow(row: any, scope?: UserScope) {
-        const missingFields = this.validateCsvRow(row);
+    const missingFields = this.validateCsvRow(row);
 
-        // Normalize ranting: accept ranting_id from CSV
-        let rantingId = row.ranting_id || row.rantingId || '';
-        if (!rantingId && scope?.rantingId) {
-          rantingId = scope.rantingId;
-        }
+    // Normalize ranting: accept ranting_id from CSV
+    let rantingId = row.ranting_id || row.rantingId || '';
+    if (!rantingId && scope?.rantingId) {
+      rantingId = scope.rantingId;
+    }
 
-        // ── PRAKONDISI: struktur organisasi (distrik → wilayah → ranting) wajib ada ──
-        if (!rantingId) {
-          return {
-            success: false,
-            error:
-              'ranting_id wajib diisi. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.',
-          };
-        }
+    // ── PRAKONDISI: struktur organisasi (distrik → wilayah → ranting) wajib ada ──
+    if (!rantingId) {
+      return {
+        success: false,
+        error:
+          'ranting_id wajib diisi. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.',
+      };
+    }
 
-        const rantingRow = await this.prisma.ranting.findUnique({
-          where: { id: rantingId },
+    const rantingRow = await this.prisma.ranting.findUnique({
+      where: { id: rantingId },
+      select: {
+        id: true,
+        nama: true,
+        kodeRanting: true,
+        wilayah: {
           select: {
             id: true,
-            nama: true,
-            kodeRanting: true,
-            wilayah: {
-              select: { id: true, kodeWilayah: true, distrik: { select: { id: true, kodeDistrik: true, nama: true } } },
-            },
+            kodeWilayah: true,
+            distrik: { select: { id: true, kodeDistrik: true, nama: true } },
           },
-        });
+        },
+      },
+    });
 
-        if (!rantingRow) {
-          return {
-            success: false,
-            error: `Ranting "${rantingId}" tidak ditemukan. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.`,
-          };
-        }
-
-        // Verify scope: user must have access to this ranting
-        if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rantingId))) {
-          return {
-            success: false,
-            error: `Akses ditolak: ranting "${rantingRow.nama}" diluar cakupan wilayah Anda.`,
-          };
-        }
-
-        const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '';
-        const kodeWilayah = (rantingRow?.wilayah?.kodeWilayah?.split('-').pop() || '').padStart(2, '0');
-        const kodeRanting = (rantingRow?.kodeRanting?.split('-').pop() || '').padStart(2, '0');
-
-        if (!kodeDistrik || !kodeWilayah || !kodeRanting) {
-          return {
-            success: false,
-            error: `Struktur organisasi ranting "${rantingRow.nama}" belum lengkap (kode distrik/wilayah/ranting kosong). Lengkapi data organisasi terlebih dahulu.`,
-          };
-        }
-
-        // Support legacy import: accept existing member number from CSV.
-        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota || row.nia;
-        let nomorAnggota: string;
-
-        // Smart Parsing for historical/legacy formats (TTL and Dadar)
-        // 1. Parse TTL (Tempat, Tanggal Lahir) - e.g., "Larantuka, 23 Desember 2026"
-        const rawTtl = row.ttl || row.tempat_tanggal_lahir;
-        let parsedTempatLahir = row.tempat_lahir || row.tempatLahir;
-        let parsedTanggalLahir = row.tanggal_lahir || row.tanggalLahir;
-
-        if (rawTtl && !parsedTempatLahir && !parsedTanggalLahir) {
-          const ttlParts = String(rawTtl).split(',');
-          if (ttlParts.length >= 2) {
-            parsedTempatLahir = ttlParts[0].trim();
-            parsedTanggalLahir = ttlParts[1].trim();
-          }
-        }
-
-        // 2. Parse Tempat & Tahun Dadar - e.g., "Larantuka - 2021"
-        const rawDadar = row.tempat_dan_tahun_dadar || row.dadar;
-        let parsedTempatDadar = row.tempat_dadar || row.tempatDadar;
-        let parsedTahunDadar = row.tahun_dadar || row.tahunDadar;
-
-        if (rawDadar && !parsedTempatDadar && !parsedTahunDadar) {
-          const dadarParts = String(rawDadar).split('-');
-          if (dadarParts.length >= 2) {
-            parsedTempatDadar = dadarParts[0].trim();
-            parsedTahunDadar = dadarParts[1].trim();
-          } else {
-            // Fallback: search for 4-digit year
-            const yearMatch = String(rawDadar).match(/\d{4}/);
-            if (yearMatch) {
-              parsedTahunDadar = yearMatch[0];
-              parsedTempatDadar = String(rawDadar).replace(yearMatch[0], '').trim().replace(/^-|-$/g, '');
-            }
-          }
-        }
-
-        if (existingNumber) {
-          const legacyParts = String(existingNumber).trim().split('-');
-          const urut = legacyParts[legacyParts.length - 2] || '';
-          const tahun = legacyParts[legacyParts.length - 1] || '';
-          nomorAnggota =
-            kodeDistrik && kodeWilayah && kodeRanting && urut && tahun
-              ? `${kodeDistrik}-${kodeWilayah}${kodeRanting}-${urut}-${tahun}`
-              : String(existingNumber).trim();
-        } else {
-          nomorAnggota = await this.nraService.generateMemberNumber(
-            rantingId,
-            row.tahun_dadar || row.tahunDadar || undefined,
-          );
-        }
-
-        const member = await this.prisma.anggota.create({
-          data: {
-            nomorAnggota,
-            namaLengkap: row.nama_lengkap || row.nama || row.name,
-            jenisKelamin: row.jenis_kelamin || row.jenisKelamin || 'L',
-            tempatLahir: parsedTempatLahir || null,
-            tanggalLahir: this.csvImportService.parseDateField(parsedTanggalLahir),
-            tempatDadar: parsedTempatDadar || null,
-            tahunDadar: parsedTahunDadar || null,
-            fotoPath: row.foto || row.fotoPath || row.foto_path || null,
-            noHp: row.no_hp || row.phone || null,
-            noHpNormalized: normalizePhone(row.no_hp || row.phone),
-            email: row.email || null,
-            alamat: row.alamat || row.address || null,
-            rantingId,
-            tingkat: row.tingkat || row.tingkatan || null,
-            statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
-            statusValidasi: 'pending',
-            missingFields: missingFields.length > 0 ? missingFields : undefined,
-            isImported: true,
-            importSource: row.import_source || row.importSource || 'csv_import',
-            importedAt: new Date(),
-          },
-        });
-
-        // Peringatan non-blocking: nomor HP sudah terdaftar untuk anggota lain
-        const normalizedPhone = normalizePhone(row.no_hp || row.phone);
-        const existingWithPhone = normalizedPhone
-          ? await this.prisma.anggota.findFirst({
-              where: { noHpNormalized: normalizedPhone, deletedAt: null },
-              select: { id: true, nomorAnggota: true },
-            })
-          : null;
-        const dupPhoneWarning =
-          existingWithPhone && existingWithPhone.id !== member.id
-            ? `Nomor HP ${row.no_hp || row.phone} sudah terdaftar untuk anggota ${existingWithPhone.nomorAnggota || existingWithPhone.id}.`
-            : undefined;
-
-        // Auto-create User account for the imported member
-        if (member.email) {
-          await this.autoCreateUser(member.email, member.namaLengkap, member.rantingId, member.noHp, member.id);
-        } else if (member.noHp) {
-          // Anggota tanpa email tapi punya noHP: buat akun dengan email sintetis
-          // supaya User model tetap valid (email NOT NULL). Login via No. HP.
-          const syntheticEmail = `${member.noHp}@noemail.ths-thm.org`;
-          await this.autoCreateUser(syntheticEmail, member.namaLengkap, member.rantingId, member.noHp, member.id);
-        }
-
-        // Send notifications for incomplete data
-        if (missingFields.length > 0) {
-          await this.sendIncompleteDataNotification(member.id, member.email, member.namaLengkap, missingFields);
-
-          return { success: true, skip: true, missingFields, warning: dupPhoneWarning };
-        }
-
-        // Send welcome email for complete data
-        if (member.email) {
-          this.memberMailService.sendToMember(
-            member.id,
-            (nama: string) => welcomeMemberEmail(nama),
-            { template: 'welcomeMemberEmail', email: member.email },
-            'members',
-          );
-        }
-
-        return { success: true, warning: dupPhoneWarning };
+    if (!rantingRow) {
+      return {
+        success: false,
+        error: `Ranting "${rantingId}" tidak ditemukan. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.`,
+      };
     }
+
+    // Verify scope: user must have access to this ranting
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rantingId))
+    ) {
+      return {
+        success: false,
+        error: `Akses ditolak: ranting "${rantingRow.nama}" diluar cakupan wilayah Anda.`,
+      };
+    }
+
+    const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '';
+    const kodeWilayah = (rantingRow?.wilayah?.kodeWilayah?.split('-').pop() || '').padStart(2, '0');
+    const kodeRanting = (rantingRow?.kodeRanting?.split('-').pop() || '').padStart(2, '0');
+
+    if (!kodeDistrik || !kodeWilayah || !kodeRanting) {
+      return {
+        success: false,
+        error: `Struktur organisasi ranting "${rantingRow.nama}" belum lengkap (kode distrik/wilayah/ranting kosong). Lengkapi data organisasi terlebih dahulu.`,
+      };
+    }
+
+    // Support legacy import: accept existing member number from CSV.
+    const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota || row.nia;
+    let nomorAnggota: string;
+
+    // Smart Parsing for historical/legacy formats (TTL and Dadar)
+    // 1. Parse TTL (Tempat, Tanggal Lahir) - e.g., "Larantuka, 23 Desember 2026"
+    const rawTtl = row.ttl || row.tempat_tanggal_lahir;
+    let parsedTempatLahir = row.tempat_lahir || row.tempatLahir;
+    let parsedTanggalLahir = row.tanggal_lahir || row.tanggalLahir;
+
+    if (rawTtl && !parsedTempatLahir && !parsedTanggalLahir) {
+      const ttlParts = String(rawTtl).split(',');
+      if (ttlParts.length >= 2) {
+        parsedTempatLahir = ttlParts[0].trim();
+        parsedTanggalLahir = ttlParts[1].trim();
+      }
+    }
+
+    // 2. Parse Tempat & Tahun Dadar - e.g., "Larantuka - 2021"
+    const rawDadar = row.tempat_dan_tahun_dadar || row.dadar;
+    let parsedTempatDadar = row.tempat_dadar || row.tempatDadar;
+    let parsedTahunDadar = row.tahun_dadar || row.tahunDadar;
+
+    if (rawDadar && !parsedTempatDadar && !parsedTahunDadar) {
+      const dadarParts = String(rawDadar).split('-');
+      if (dadarParts.length >= 2) {
+        parsedTempatDadar = dadarParts[0].trim();
+        parsedTahunDadar = dadarParts[1].trim();
+      } else {
+        // Fallback: search for 4-digit year
+        const yearMatch = String(rawDadar).match(/\d{4}/);
+        if (yearMatch) {
+          parsedTahunDadar = yearMatch[0];
+          parsedTempatDadar = String(rawDadar)
+            .replace(yearMatch[0], '')
+            .trim()
+            .replace(/^-|-$/g, '');
+        }
+      }
+    }
+
+    if (existingNumber) {
+      const legacyParts = String(existingNumber).trim().split('-');
+      const urut = legacyParts[legacyParts.length - 2] || '';
+      const tahun = legacyParts[legacyParts.length - 1] || '';
+      nomorAnggota =
+        kodeDistrik && kodeWilayah && kodeRanting && urut && tahun
+          ? `${kodeDistrik}-${kodeWilayah}${kodeRanting}-${urut}-${tahun}`
+          : String(existingNumber).trim();
+    } else {
+      nomorAnggota = await this.nraService.generateMemberNumber(
+        rantingId,
+        row.tahun_dadar || row.tahunDadar || undefined,
+      );
+    }
+
+    const member = await this.prisma.anggota.create({
+      data: {
+        nomorAnggota,
+        namaLengkap: row.nama_lengkap || row.nama || row.name,
+        jenisKelamin: row.jenis_kelamin || row.jenisKelamin || 'L',
+        tempatLahir: parsedTempatLahir || null,
+        tanggalLahir: this.csvImportService.parseDateField(parsedTanggalLahir),
+        tempatDadar: parsedTempatDadar || null,
+        tahunDadar: parsedTahunDadar || null,
+        fotoPath: row.foto || row.fotoPath || row.foto_path || null,
+        noHp: row.no_hp || row.phone || null,
+        noHpNormalized: normalizePhone(row.no_hp || row.phone),
+        email: row.email || null,
+        alamat: row.alamat || row.address || null,
+        rantingId,
+        tingkat: row.tingkat || row.tingkatan || null,
+        statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
+        statusValidasi: 'pending',
+        missingFields: missingFields.length > 0 ? missingFields : undefined,
+        isImported: true,
+        importSource: row.import_source || row.importSource || 'csv_import',
+        importedAt: new Date(),
+      },
+    });
+
+    // Peringatan non-blocking: nomor HP sudah terdaftar untuk anggota lain
+    const normalizedPhone = normalizePhone(row.no_hp || row.phone);
+    const existingWithPhone = normalizedPhone
+      ? await this.prisma.anggota.findFirst({
+          where: { noHpNormalized: normalizedPhone, deletedAt: null },
+          select: { id: true, nomorAnggota: true },
+        })
+      : null;
+    const dupPhoneWarning =
+      existingWithPhone && existingWithPhone.id !== member.id
+        ? `Nomor HP ${row.no_hp || row.phone} sudah terdaftar untuk anggota ${existingWithPhone.nomorAnggota || existingWithPhone.id}.`
+        : undefined;
+
+    // Auto-create User account for the imported member
+    if (member.email) {
+      await this.autoCreateUser(
+        member.email,
+        member.namaLengkap,
+        member.rantingId,
+        member.noHp,
+        member.id,
+      );
+    } else if (member.noHp) {
+      // Anggota tanpa email tapi punya noHP: buat akun dengan email sintetis
+      // supaya User model tetap valid (email NOT NULL). Login via No. HP.
+      const syntheticEmail = `${member.noHp}@noemail.ths-thm.org`;
+      await this.autoCreateUser(
+        syntheticEmail,
+        member.namaLengkap,
+        member.rantingId,
+        member.noHp,
+        member.id,
+      );
+    }
+
+    // Send notifications for incomplete data
+    if (missingFields.length > 0) {
+      await this.sendIncompleteDataNotification(
+        member.id,
+        member.email,
+        member.namaLengkap,
+        missingFields,
+      );
+
+      return { success: true, skip: true, missingFields, warning: dupPhoneWarning };
+    }
+
+    // Send welcome email for complete data
+    if (member.email) {
+      this.memberMailService.sendToMember(
+        member.id,
+        (nama: string) => welcomeMemberEmail(nama),
+        { template: 'welcomeMemberEmail', email: member.email },
+        'members',
+      );
+    }
+
+    return { success: true, warning: dupPhoneWarning };
+  }
 
   // ── Domain: export CSV ───────────────────────────────────
 
@@ -664,7 +726,11 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       cacheKey,
       async () => {
         const scopeFilter = this.buildScopeFilter(scope);
-        const where: Prisma.AnggotaWhereInput = { deletedAt: null, statusData: 'incomplete', ...scopeFilter };
+        const where: Prisma.AnggotaWhereInput = {
+          deletedAt: null,
+          statusData: 'incomplete',
+          ...scopeFilter,
+        };
 
         // Tenant safety: sama dengan findAll — scope mengikat batas atas,
         // filter hierarkis klien hanya boleh mempersempit di dalamnya.
@@ -675,17 +741,26 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         } else if (scope?.distrikId) {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.wilayahId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayahId: filter.wilayahId,
+            };
             where.ranting = rantingFilter;
           }
         } else {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.distrikId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayah: { distrikId: filter.distrikId },
+            };
             where.ranting = rantingFilter;
           }
           if (filter.wilayahId) {
-            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = {
+              ...(where.ranting ?? {}),
+              wilayahId: filter.wilayahId,
+            };
             where.ranting = rantingFilter;
           }
         }
@@ -708,12 +783,15 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     const scopeFilter = this.buildScopeFilter(scope);
     const baseWhere: Prisma.AnggotaWhereInput = { deletedAt: null, ...scopeFilter };
 
-    const [totalMembers, incompleteMembers, importedMembers, importedIncomplete] = await Promise.all([
-      this.prisma.anggota.count({ where: baseWhere }),
-      this.prisma.anggota.count({ where: { ...baseWhere, statusData: 'incomplete' } }),
-      this.prisma.anggota.count({ where: { ...baseWhere, isImported: true } }),
-      this.prisma.anggota.count({ where: { ...baseWhere, isImported: true, statusData: 'incomplete' } }),
-    ]);
+    const [totalMembers, incompleteMembers, importedMembers, importedIncomplete] =
+      await Promise.all([
+        this.prisma.anggota.count({ where: baseWhere }),
+        this.prisma.anggota.count({ where: { ...baseWhere, statusData: 'incomplete' } }),
+        this.prisma.anggota.count({ where: { ...baseWhere, isImported: true } }),
+        this.prisma.anggota.count({
+          where: { ...baseWhere, isImported: true, statusData: 'incomplete' },
+        }),
+      ]);
 
     // Get breakdown by ranting (for admin scope)
     const rantingBreakdown = await this.prisma.anggota.groupBy({
@@ -725,7 +803,13 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     const rantingIds = rantingBreakdown.map((r: any) => r.rantingId);
     const rantings = await this.prisma.ranting.findMany({
       where: { id: { in: rantingIds } },
-      select: { id: true, nama: true, wilayah: { select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } } } },
+      select: {
+        id: true,
+        nama: true,
+        wilayah: {
+          select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } },
+        },
+      },
     });
 
     const rantingMap = new Map(rantings.map((r) => [r.id, r]));
@@ -758,7 +842,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       totalMembers,
       incompleteMembers,
       completeMembers: totalMembers - incompleteMembers,
-      completenessRate: totalMembers > 0 ? ((totalMembers - incompleteMembers) / totalMembers * 100).toFixed(1) : '0',
+      completenessRate:
+        totalMembers > 0
+          ? (((totalMembers - incompleteMembers) / totalMembers) * 100).toFixed(1)
+          : '0',
       importedMembers,
       importedIncomplete,
       breakdownByRanting,
@@ -769,7 +856,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // ── Public: recalculate missing fields for a member ──────────
   // Used after profile update to determine if data is complete.
 
-  async recalculateMissingFields(anggotaId: string): Promise<{ statusData: string; missingFields: string[] }> {
+  async recalculateMissingFields(
+    anggotaId: string,
+  ): Promise<{ statusData: string; missingFields: string[] }> {
     const member = await this.prisma.anggota.findUnique({
       where: { id: anggotaId },
       select: {
@@ -831,11 +920,18 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         });
 
         if (member) {
-          await this.sendIncompleteDataNotification(anggotaId, member.email, member.namaLengkap, missingFields);
+          await this.sendIncompleteDataNotification(
+            anggotaId,
+            member.email,
+            member.namaLengkap,
+            missingFields,
+          );
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to handle post-update for member ${anggotaId}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to handle post-update for member ${anggotaId}: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -919,16 +1015,20 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       if (email) {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (user) {
-          this.notificationsService.send(user.id, {
-            judul: '📋 Data Anggota Belum Lengkap',
-            isi: `Halo ${escapeHtml(namaLengkap)}, silakan lengkapi data berikut: ${missingFields.map((f) => f.replace(/_/g, ' ')).join(', ')}`,
-            tipe: 'data_incomplete',
-            data: {
-              screen: 'profile/edit',
-              anggotaId,
-              missingFields,
-            },
-          }).catch((err) => this.logger.error(`Failed to send incomplete data notification: ${err.message}`));
+          this.notificationsService
+            .send(user.id, {
+              judul: '📋 Data Anggota Belum Lengkap',
+              isi: `Halo ${escapeHtml(namaLengkap)}, silakan lengkapi data berikut: ${missingFields.map((f) => f.replace(/_/g, ' ')).join(', ')}`,
+              tipe: 'data_incomplete',
+              data: {
+                screen: 'profile/edit',
+                anggotaId,
+                missingFields,
+              },
+            })
+            .catch((err) =>
+              this.logger.error(`Failed to send incomplete data notification: ${err.message}`),
+            );
         }
       }
     }

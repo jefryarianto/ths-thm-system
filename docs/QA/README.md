@@ -23,6 +23,7 @@ QA follows a phased audit approach. Current audit phases are documented below:
 - **FASE 30E** — Current Product Domain Audit (completed)
 
 Upcoming phases:
+
 - **FASE 31E** — Wave 4 Implementation Preparation
 
 For detailed audit reports, refer to the documentation directory.

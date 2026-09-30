@@ -33,9 +33,11 @@ describe('createOverlapGuard', () => {
 
   it('melepas lock walau fn melempar error', async () => {
     const guard = createOverlapGuard({ warn: jest.fn() });
-    await expect(guard('gagal', async () => {
-      throw new Error('boom');
-    })).rejects.toThrow('boom');
+    await expect(
+      guard('gagal', async () => {
+        throw new Error('boom');
+      }),
+    ).rejects.toThrow('boom');
 
     // Lock harus sudah lepas — eksekusi berikutnya jalan normal
     await expect(guard('gagal', async () => 'pulih')).resolves.toBe('pulih');

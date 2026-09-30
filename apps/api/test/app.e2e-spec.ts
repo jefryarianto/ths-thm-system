@@ -154,10 +154,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('POST /api/auth/refresh — should reject when neither body nor cookie provided', () => {
-      return request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .send({})
-        .expect(401);
+      return request(app.getHttpServer()).post('/api/auth/refresh').send({}).expect(401);
     });
   });
 

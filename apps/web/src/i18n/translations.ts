@@ -27,7 +27,8 @@ export const translations = {
       motto: 'Fortiter in Re, Suaviter in Modo',
       mottoMeaning: 'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya',
       statsTitle: 'Jangkauan & Pengabdian Organisasi',
-      statsSub: 'Melayani Gereja dan Bangsa melalui pembinaan rohani dan olah tubuh di berbagai wilayah Indonesia.',
+      statsSub:
+        'Melayani Gereja dan Bangsa melalui pembinaan rohani dan olah tubuh di berbagai wilayah Indonesia.',
       stats: {
         distrik: 'Distrik',
         anggota: 'Anggota',
@@ -35,16 +36,21 @@ export const translations = {
         calonAnggota: 'Calon Anggota',
       },
       pilarsTitle: '1 Landasan 3 Pilar Pembinaan THS-THM',
-      pilarsSub: 'Seluruh pembinaan berlandaskan Iman Katolik dalam Kasih Yesus Kristus, dijabarkan melalui tiga pilar pengembangan karakter: Spiritual, Beladiri, serta Organisasi & Persaudaraan.',
+      pilarsSub:
+        'Seluruh pembinaan berlandaskan Iman Katolik dalam Kasih Yesus Kristus, dijabarkan melalui tiga pilar pengembangan karakter: Spiritual, Beladiri, serta Organisasi & Persaudaraan.',
       landasanTitle: 'Landasan — Iman Katolik',
-      landasanDesc: 'Iman Katolik yang berlandaskan Kasih Yesus Kristus menjadi pusat dan sumber inspirasi utama dalam seluruh kegiatan THS-THM, seturut yang tertuang dalam Konstitusi THS-THM.',
+      landasanDesc:
+        'Iman Katolik yang berlandaskan Kasih Yesus Kristus menjadi pusat dan sumber inspirasi utama dalam seluruh kegiatan THS-THM, seturut yang tertuang dalam Konstitusi THS-THM.',
       pilars: {
         rohaniTitle: 'Segi Spiritual',
-        rohaniDesc: 'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan beriman dan pembinaan karakter yang berakar pada Kasih Kristus.',
+        rohaniDesc:
+          'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan beriman dan pembinaan karakter yang berakar pada Kasih Kristus.',
         beladiriTitle: 'Segi Beladiri & Fisik',
-        beladiriDesc: 'Pelatihan fisik dan teknik pencak silat khas THS-THM yang menanamkan ketangkasan, kedisiplinan, dan keberanian (Sanitas).',
+        beladiriDesc:
+          'Pelatihan fisik dan teknik pencak silat khas THS-THM yang menanamkan ketangkasan, kedisiplinan, dan keberanian (Sanitas).',
         organisasiTitle: 'Segi Organisasi & Persaudaraan',
-        organisasiDesc: 'Membentuk kepemimpinan, disiplin, tanggung jawab, serta menjalin ikatan persaudaraan sejati dalam semangat kasih Kristus.',
+        organisasiDesc:
+          'Membentuk kepemimpinan, disiplin, tanggung jawab, serta menjalin ikatan persaudaraan sejati dalam semangat kasih Kristus.',
       },
     },
     // Sejarah
@@ -164,7 +170,8 @@ export const translations = {
     // Donasi
     donasi: {
       title: 'Donasi & Dukungan',
-      subtitle: 'Dukung kegiatan THS-THM dengan donasi Anda. Setiap kontribusi sangat berarti untuk kelangsungan program pembinaan generasi muda.',
+      subtitle:
+        'Dukung kegiatan THS-THM dengan donasi Anda. Setiap kontribusi sangat berarti untuk kelangsungan program pembinaan generasi muda.',
       rekeningTitle: 'Rekening Donasi Resmi',
       programTitle: 'Program Donasi Aktif',
       terkumpul: 'Terkumpul',
@@ -175,7 +182,8 @@ export const translations = {
       emptyRekening: 'Informasi rekening belum tersedia',
       emptyProgram: 'Saat ini belum ada program donasi yang sedang dibuka.',
       noActiveNoticeTitle: 'Penerimaan Donasi Sedang Ditutup',
-      noActiveNoticeDesc: 'Terima kasih atas kebaikan dan niat mulia Anda. Saat ini THS-THM belum membuka program donasi aktif. Informasi nomor rekening disembunyikan sampai kegiatan donasi berikutnya dibuka.',
+      noActiveNoticeDesc:
+        'Terima kasih atas kebaikan dan niat mulia Anda. Saat ini THS-THM belum membuka program donasi aktif. Informasi nomor rekening disembunyikan sampai kegiatan donasi berikutnya dibuka.',
       copyAccount: 'Salin Nomor Rekening',
       accountCopied: 'Nomor rekening berhasil disalin!',
       confirmTitle: 'Konfirmasi & Petunjuk Donasi',
@@ -218,7 +226,8 @@ export const translations = {
       motto: 'Fortiter in Re, Suaviter in Modo',
       mottoMeaning: 'Strong in principle, gentle and flexible in the way of achieving it',
       statsTitle: 'Organization Reach & Service',
-      statsSub: 'Serving Church and Nation through spiritual and physical guidance across Indonesia.',
+      statsSub:
+        'Serving Church and Nation through spiritual and physical guidance across Indonesia.',
       stats: {
         distrik: 'District',
         anggota: 'Members',
@@ -226,16 +235,21 @@ export const translations = {
         calonAnggota: 'Prospective Members',
       },
       pilarsTitle: '1 Foundation 3 Pillars of THS-THM Guidance',
-      pilarsSub: 'All guidance is founded on Catholic Faith in the Love of Jesus Christ, developed through three character pillars: Spiritual, Martial Arts, and Organization & Brotherhood.',
+      pilarsSub:
+        'All guidance is founded on Catholic Faith in the Love of Jesus Christ, developed through three character pillars: Spiritual, Martial Arts, and Organization & Brotherhood.',
       landasanTitle: 'Foundation — Catholic Faith',
-      landasanDesc: 'Catholic faith rooted in the Love of Jesus Christ is the center and primary source of inspiration in all THS-THM activities, as stated in the THS-THM Constitution.',
+      landasanDesc:
+        'Catholic faith rooted in the Love of Jesus Christ is the center and primary source of inspiration in all THS-THM activities, as stated in the THS-THM Constitution.',
       pilars: {
         rohaniTitle: 'Spiritual Aspect',
-        rohaniDesc: 'Deepening Catholic faith, sacraments, and prayer as the foundation of a faithful life and character building rooted in Christ’s love.',
+        rohaniDesc:
+          'Deepening Catholic faith, sacraments, and prayer as the foundation of a faithful life and character building rooted in Christ’s love.',
         beladiriTitle: 'Martial Arts & Physical',
-        beladiriDesc: 'Physical training and signature THS-THM martial arts techniques that instill agility, discipline, and courage (Sanitas).',
+        beladiriDesc:
+          'Physical training and signature THS-THM martial arts techniques that instill agility, discipline, and courage (Sanitas).',
         organisasiTitle: 'Organization & Brotherhood',
-        organisasiDesc: 'Building leadership, discipline, responsibility, and genuine brotherhood in the spirit of Christ’s love.',
+        organisasiDesc:
+          'Building leadership, discipline, responsibility, and genuine brotherhood in the spirit of Christ’s love.',
       },
     },
     // Sejarah
@@ -355,7 +369,8 @@ export const translations = {
     // Donasi
     donasi: {
       title: 'Donations & Support',
-      subtitle: 'Support THS-THM activities with your donation. Every contribution is deeply valued for youth development programs.',
+      subtitle:
+        'Support THS-THM activities with your donation. Every contribution is deeply valued for youth development programs.',
       rekeningTitle: 'Official Donation Accounts',
       programTitle: 'Active Donation Programs',
       terkumpul: 'Raised',
@@ -366,7 +381,8 @@ export const translations = {
       emptyRekening: 'Account information not yet available',
       emptyProgram: 'There are currently no active donation programs.',
       noActiveNoticeTitle: 'Donations Currently Closed',
-      noActiveNoticeDesc: 'Thank you for your generosity. THS-THM currently has no active donation campaign open. Account details are hidden until the next donation program.',
+      noActiveNoticeDesc:
+        'Thank you for your generosity. THS-THM currently has no active donation campaign open. Account details are hidden until the next donation program.',
       copyAccount: 'Copy Account Number',
       accountCopied: 'Account number copied!',
       confirmTitle: 'Donation Instructions',

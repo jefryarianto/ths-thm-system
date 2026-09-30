@@ -24,11 +24,7 @@ export default function QuickActions() {
   if (!hasAny) {
     return (
       <div className="p-6 text-center text-sm text-muted">
-        <MousePointerClick
-          size={22}
-          className="mx-auto mb-2 opacity-50"
-          aria-hidden="true"
-        />
+        <MousePointerClick size={22} className="mx-auto mb-2 opacity-50" aria-hidden="true" />
         <p className="font-medium text-text/80">Tidak ada aksi tersedia</p>
         <p className="text-xs mt-1">Aksi akan muncul sesuai peran Anda.</p>
       </div>

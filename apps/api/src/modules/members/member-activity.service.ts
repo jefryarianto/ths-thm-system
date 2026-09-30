@@ -59,7 +59,10 @@ export class MemberActivityService {
       // Assessment scores
       this.prisma.nilaiPendadaran.findMany({
         where: { anggotaId: memberId },
-        include: { itemPenilaian: { select: { namaItem: true } }, kegiatan: { select: { nama: true } } },
+        include: {
+          itemPenilaian: { select: { namaItem: true } },
+          kegiatan: { select: { nama: true } },
+        },
         orderBy: { createdAt: 'desc' },
         take: 50,
       }),

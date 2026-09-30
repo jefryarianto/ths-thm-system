@@ -31,10 +31,12 @@ describe('resolveRedisConnection', () => {
   });
 
   it('memprioritaskan host eksplisit dari pemanggil', () => {
-    expect(resolveRedisConnection({ connection: { host: 'caller-host', port: 7000 } }, {})).toEqual({
-      host: 'caller-host',
-      port: 7000,
-    });
+    expect(resolveRedisConnection({ connection: { host: 'caller-host', port: 7000 } }, {})).toEqual(
+      {
+        host: 'caller-host',
+        port: 7000,
+      },
+    );
   });
 
   it('memakai REDIS_URL bila tidak ada detail eksplisit (format compose produksi)', () => {

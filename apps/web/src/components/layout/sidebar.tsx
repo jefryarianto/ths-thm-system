@@ -231,8 +231,20 @@ function SidebarBody({
           className={`shrink-0 rounded-lg text-secondary-200 hover:text-white hover:bg-white/10 transition-colors ${
             collapsed ? 'p-1' : 'p-1.5'
           }`}
-          title={collapseIcon === 'close' ? 'Tutup navigasi' : collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-          aria-label={collapseIcon === 'close' ? 'Tutup navigasi' : collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+          title={
+            collapseIcon === 'close'
+              ? 'Tutup navigasi'
+              : collapsed
+                ? 'Perluas sidebar'
+                : 'Ciutkan sidebar'
+          }
+          aria-label={
+            collapseIcon === 'close'
+              ? 'Tutup navigasi'
+              : collapsed
+                ? 'Perluas sidebar'
+                : 'Ciutkan sidebar'
+          }
         >
           {collapseIcon === 'close' ? (
             <X size={18} />
@@ -331,9 +343,7 @@ function SidebarBody({
                       : 'overflow-hidden transition-[max-height] duration-300 ease-in-out motion-reduce:transition-none'
                   }
                   style={
-                    collapsed
-                      ? undefined
-                      : { maxHeight: isClosed ? 0 : groupHeights[group.label] }
+                    collapsed ? undefined : { maxHeight: isClosed ? 0 : groupHeights[group.label] }
                   }
                 >
                   {group.items.map((item) => (

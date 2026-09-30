@@ -21,7 +21,6 @@ const apiClient = axios.create({
 // ─── Session Expiry ───────────────────────────────────────────────
 const SESSION_EXPIRED_ERROR = new Error('SESSION_EXPIRED');
 
-
 /**
  * Called when the session is known to be expired.
  * Delegates to SessionManager to clear tokens, set the flag, and notify subscribers.
@@ -51,10 +50,7 @@ function onTokenRefreshFailed(error: any) {
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(
-  resolve: (token: string) => void,
-  reject: (error: any) => void
-) {
+function addRefreshSubscriber(resolve: (token: string) => void, reject: (error: any) => void) {
   refreshSubscribers.push({ resolve, reject });
 }
 
@@ -71,9 +67,7 @@ const REFRESH_LOCK_TTL = 10000; // 10 detik
 // ID unik per tab untuk mendeteksi kalau kita "kalah" dalam race claim lock.
 const tabId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-type RefreshMessage =
-  | { type: 'REFRESH_SUCCESS'; token: string }
-  | { type: 'REFRESH_FAILED' };
+type RefreshMessage = { type: 'REFRESH_SUCCESS'; token: string } | { type: 'REFRESH_FAILED' };
 
 const refreshChannel: BroadcastChannel | null =
   isBrowser && typeof BroadcastChannel !== 'undefined'
@@ -144,7 +138,7 @@ function claimRefreshLock(): boolean {
     localStorage.setItem(REFRESH_LOCK_KEY, value);
     // Baca kembali untuk mendeteksi race: bila sudah milik tab lain, kita kalah.
     const written = localStorage.getItem(REFRESH_LOCK_KEY);
-    return written === value || !!written && written.endsWith(`:${tabId}`);
+    return written === value || (!!written && written.endsWith(`:${tabId}`));
   } catch {
     return true; // optimistis bila storage tidak bisa diakses
   }
@@ -217,7 +211,11 @@ async function performTokenRefresh(): Promise<string> {
     let lastRefreshErr: unknown;
     for (let attempt = 0; attempt <= MAX_REFRESH_RETRIES; attempt++) {
       try {
-        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true, timeout: 15000 });
+        const { data } = await axios.post(
+          `/api/auth/refresh`,
+          {},
+          { withCredentials: true, timeout: 15000 },
+        );
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
         // NOTE: accessToken cookie intentionally removed per FASE 29P
@@ -264,9 +262,10 @@ async function performTokenRefresh(): Promise<string> {
  * Normalize an axios error into the flat error shape used across the app.
  */
 function normalizeAxiosError(err: unknown): { status: number; message: string; data: unknown } {
-  const e = err as
-    | { response?: { status?: number; data?: { message?: string } }; message?: string }
-    | null;
+  const e = err as {
+    response?: { status?: number; data?: { message?: string } };
+    message?: string;
+  } | null;
   const status = e?.response?.status ?? 0;
   // HTTP 413 (Payload Too Large): body ditolak (mis. file gambar terlalu besar)
   // sebelum API sempat memberi pesan → berikan pesan yang jelas & ramah.
@@ -358,24 +357,36 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-// --- NETWORK RETRY STRATEGY ---
-     const isNetworkError =
-       error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || !error.response;
+    // --- NETWORK RETRY STRATEGY ---
+    const isNetworkError =
+      error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || !error.response;
 
-     if (isNetworkError && !originalRequest._retryCount && isNetworkRetryableMethod(originalRequest.method)) {
-       originalRequest._retryCount = 1;
-     }
+    if (
+      isNetworkError &&
+      !originalRequest._retryCount &&
+      isNetworkRetryableMethod(originalRequest.method)
+    ) {
+      originalRequest._retryCount = 1;
+    }
 
-     if (isNetworkError && originalRequest._retryCount <= 2 && isNetworkRetryableMethod(originalRequest.method)) {
-       const delay = 500 * originalRequest._retryCount;
-       await new Promise((res) => setTimeout(res, delay));
-       originalRequest._retryCount += 1;
-       return apiClient(originalRequest);
-     }
+    if (
+      isNetworkError &&
+      originalRequest._retryCount <= 2 &&
+      isNetworkRetryableMethod(originalRequest.method)
+    ) {
+      const delay = 500 * originalRequest._retryCount;
+      await new Promise((res) => setTimeout(res, delay));
+      originalRequest._retryCount += 1;
+      return apiClient(originalRequest);
+    }
 
     // --- TOKEN REFRESH HANDLING ---
     // Skip refresh on auth endpoints since there's no valid refresh token yet
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint(originalRequest.url)) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint(originalRequest.url)
+    ) {
       originalRequest._retry = true;
       try {
         const newToken = await performTokenRefresh();
@@ -467,7 +478,8 @@ export interface PaginatedResponse<T> {
 }
 
 // eslint-disable-next-line no-restricted-syntax
-export const unwrap = <T>(response: { data: ApiResponse<T> | ApiResponse<unknown> }): T => response.data.data as T;
+export const unwrap = <T>(response: { data: ApiResponse<T> | ApiResponse<unknown> }): T =>
+  response.data.data as T;
 
 // eslint-disable-next-line no-restricted-syntax
 export const unwrapPaginated = <T>(response: {

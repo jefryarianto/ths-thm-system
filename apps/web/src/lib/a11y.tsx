@@ -10,7 +10,7 @@ export function useFocusTrap(isActive: boolean = true): RefObject<HTMLElement | 
 
     const container = containerRef.current;
     const focusableElements = container.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     const firstElement = focusableElements[0];
@@ -49,7 +49,7 @@ export function useKeyboardNavigation(
   onArrowUp?: () => void,
   onArrowDown?: () => void,
   onArrowLeft?: () => void,
-  onArrowRight?: () => void
+  onArrowRight?: () => void,
 ) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,8 +87,8 @@ export function useKeyboardNavigation(
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
-    )
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])',
+    ),
   ).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0);
 }
 
@@ -131,10 +131,7 @@ export function trapFocus(container: HTMLElement): () => void {
 
 export function ScreenReaderText({ children }: { children: React.ReactNode }) {
   return (
-    <span
-      className="sr-only"
-      aria-hidden="false"
-    >
+    <span className="sr-only" aria-hidden="false">
       {children}
     </span>
   );
@@ -148,12 +145,7 @@ export function LiveRegion({
   politeness?: 'polite' | 'assertive' | 'off';
 }) {
   return (
-    <div
-      role="status"
-      aria-live={politeness}
-      aria-atomic="true"
-      className="sr-only"
-    >
+    <div role="status" aria-live={politeness} aria-atomic="true" className="sr-only">
       {message}
     </div>
   );

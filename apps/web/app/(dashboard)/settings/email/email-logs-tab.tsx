@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import {
-  Mail,
-  RefreshCw,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-  X,
-} from 'lucide-react';
+import { Mail, RefreshCw, FileText, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useMailLogs, useMailStats, useMailModules } from '@/lib/hooks/use-mail';
 import Pagination from '@/components/ui/pagination';
@@ -87,7 +80,15 @@ export default function EmailLogsTab() {
   };
 
   const handleRetry = async () => {
-    if (!(await confirm({ title: 'Kirim Ulang Email', message: 'Kirim ulang semua email yang gagal?', confirmLabel: 'Ya, Kirim Ulang', variant: 'info' }))) return;
+    if (
+      !(await confirm({
+        title: 'Kirim Ulang Email',
+        message: 'Kirim ulang semua email yang gagal?',
+        confirmLabel: 'Ya, Kirim Ulang',
+        variant: 'info',
+      }))
+    )
+      return;
     setRetryLoading(true);
     setRetryResult(null);
     try {
@@ -103,7 +104,15 @@ export default function EmailLogsTab() {
 
   const handleBulkRetry = async () => {
     if (selectedIds.size === 0) return;
-    if (!(await confirm({ title: 'Kirim Ulang Email', message: `Kirim ulang ${selectedIds.size} email yang gagal?`, confirmLabel: 'Ya, Kirim Ulang', variant: 'info' }))) return;
+    if (
+      !(await confirm({
+        title: 'Kirim Ulang Email',
+        message: `Kirim ulang ${selectedIds.size} email yang gagal?`,
+        confirmLabel: 'Ya, Kirim Ulang',
+        variant: 'info',
+      }))
+    )
+      return;
     setRetryLoading(true);
     setRetryResult(null);
     try {

@@ -65,9 +65,7 @@ export default function NotificationDetailModal({
                 {tipeLabel}
               </span>
               {!notification.isRead && (
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                  Baru
-                </span>
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Baru</span>
               )}
             </div>
             <h2 className="text-base font-bold text-gray-900 dark:text-white break-words">

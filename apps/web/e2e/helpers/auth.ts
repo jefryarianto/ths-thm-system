@@ -60,27 +60,27 @@ export async function mockAuth(
   },
 ) {
   // ── 1. Set auth cookies + localStorage (runs before any page JS) ──
-await page.addInitScript(
-     (params: { accessToken: string; refreshToken: string; user: string }) => {
-       localStorage.setItem('accessToken', params.accessToken);
-       localStorage.setItem('refreshToken', params.refreshToken);
-       localStorage.setItem('user', params.user);
-       // NOTE: accessToken cookie intentionally removed per FASE 29P
-       // Only refreshToken cookie is used for session verification
-       //
-       // Cookie refreshToken TIDAK bisa ditulis via document.cookie karena
-       // HttpOnly (verifikasi sesi Next.js membacanya lewat request cookie).
-       // Kita minta server mock menyetelkannya ke cookie jar sungguhan:
-       // request ini dicegat route di bawah dan dibalas dengan header
-       // Set-Cookie — persis seperti yang dilakukan backend pada /auth/login.
-       fetch('/api/auth/set-session-cookie', { method: 'POST' }).catch(() => {});
-     },
-     {
-       accessToken: MOCK_ACCESS_TOKEN,
-       refreshToken: MOCK_REFRESH_TOKEN,
-       user: JSON.stringify(MOCK_USER),
-     },
-   );
+  await page.addInitScript(
+    (params: { accessToken: string; refreshToken: string; user: string }) => {
+      localStorage.setItem('accessToken', params.accessToken);
+      localStorage.setItem('refreshToken', params.refreshToken);
+      localStorage.setItem('user', params.user);
+      // NOTE: accessToken cookie intentionally removed per FASE 29P
+      // Only refreshToken cookie is used for session verification
+      //
+      // Cookie refreshToken TIDAK bisa ditulis via document.cookie karena
+      // HttpOnly (verifikasi sesi Next.js membacanya lewat request cookie).
+      // Kita minta server mock menyetelkannya ke cookie jar sungguhan:
+      // request ini dicegat route di bawah dan dibalas dengan header
+      // Set-Cookie — persis seperti yang dilakukan backend pada /auth/login.
+      fetch('/api/auth/set-session-cookie', { method: 'POST' }).catch(() => {});
+    },
+    {
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      user: JSON.stringify(MOCK_USER),
+    },
+  );
 
   // Set-Cookie refreshToken ke cookie jar context (HttpOnly tersimpan rill).
   // Dipanggil juga sebagai fallback langsung di sini (di luar init script).
@@ -96,12 +96,12 @@ await page.addInitScript(
   });
   await page.request.post(`${E2E_BASE_URL}/api/auth/set-session-cookie`).catch(() => {});
 
-const cookieDomain = new URL(E2E_BASE_URL).hostname;
-   await page.context().addCookies([
-     // NOTE: accessToken cookie intentionally removed per FASE 29P
-     // Only refreshToken cookie is used for session verification
-     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
-   ]);
+  const cookieDomain = new URL(E2E_BASE_URL).hostname;
+  await page.context().addCookies([
+    // NOTE: accessToken cookie intentionally removed per FASE 29P
+    // Only refreshToken cookie is used for session verification
+    { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
+  ]);
 
   // ── 2. Catch-all interceptors (registered FIRST — act as defaults) ──
   // These match broad URL patterns. Specific mocks registered later

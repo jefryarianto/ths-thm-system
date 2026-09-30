@@ -93,9 +93,12 @@ export default function BackupPage() {
   const handleDownload = async (fileName: string) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${window.location.origin}/api/admin/db-backup/download/${fileName}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/admin/db-backup/download/${fileName}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!response.ok) throw new Error('Download failed');
 
@@ -164,7 +167,9 @@ export default function BackupPage() {
               <HardDrive size={20} className="text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatSize(totalSize)}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatSize(totalSize)}
+              </p>
               <p className="text-xs text-gray-500">Total Size</p>
             </div>
           </div>
@@ -172,19 +177,24 @@ export default function BackupPage() {
 
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${
-              latestBackup
-                ? new Date(latestBackup.createdAt).getTime() > Date.now() - 48 * 60 * 60 * 1000
-                  ? 'bg-green-50 dark:bg-green-900/30'
-                  : 'bg-yellow-50 dark:bg-yellow-900/30'
-                : 'bg-red-50 dark:bg-red-900/30'
-            }`}>
+            <div
+              className={`p-2.5 rounded-lg ${
+                latestBackup
+                  ? new Date(latestBackup.createdAt).getTime() > Date.now() - 48 * 60 * 60 * 1000
+                    ? 'bg-green-50 dark:bg-green-900/30'
+                    : 'bg-yellow-50 dark:bg-yellow-900/30'
+                  : 'bg-red-50 dark:bg-red-900/30'
+              }`}
+            >
               {latestBackup ? (
-                <Clock size={20} className={
-                  new Date(latestBackup.createdAt).getTime() > Date.now() - 48 * 60 * 60 * 1000
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-yellow-600 dark:text-yellow-400'
-                } />
+                <Clock
+                  size={20}
+                  className={
+                    new Date(latestBackup.createdAt).getTime() > Date.now() - 48 * 60 * 60 * 1000
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-yellow-600 dark:text-yellow-400'
+                  }
+                />
               ) : (
                 <AlertTriangle size={20} className="text-red-600 dark:text-red-400" />
               )}
@@ -201,23 +211,35 @@ export default function BackupPage() {
 
       {/* Disk Usage Alert */}
       {diskInfo && diskInfo.usagePercent >= 80 && (
-        <div className={`rounded-xl border p-5 mb-6 ${
-          diskInfo.usagePercent >= 90
-            ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
-            : 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
-        }`}>
+        <div
+          className={`rounded-xl border p-5 mb-6 ${
+            diskInfo.usagePercent >= 90
+              ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+              : 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <AlertTriangle size={20} className={
-              diskInfo.usagePercent >= 90 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
-            } />
+            <AlertTriangle
+              size={20}
+              className={
+                diskInfo.usagePercent >= 90
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-yellow-600 dark:text-yellow-400'
+              }
+            />
             <div>
-              <p className={`text-sm font-semibold ${
-                diskInfo.usagePercent >= 90 ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
-              }`}>
+              <p
+                className={`text-sm font-semibold ${
+                  diskInfo.usagePercent >= 90
+                    ? 'text-red-700 dark:text-red-400'
+                    : 'text-yellow-700 dark:text-yellow-400'
+                }`}
+              >
                 {diskInfo.usagePercent >= 90 ? '🔴 Disk Space Critical' : '🟡 Disk Space Warning'}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                Disk usage at {diskInfo.usagePercent}% ({diskInfo.used} used / {diskInfo.total} total — {diskInfo.free} free)
+                Disk usage at {diskInfo.usagePercent}% ({diskInfo.used} used / {diskInfo.total}{' '}
+                total — {diskInfo.free} free)
               </p>
             </div>
           </div>
@@ -234,9 +256,13 @@ export default function BackupPage() {
           <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-4 mb-2">
             <div
               className={`h-4 rounded-full transition-all duration-500 ${
-                diskInfo.usagePercent >= 90 ? 'bg-red-500' :
-                diskInfo.usagePercent >= 80 ? 'bg-yellow-500' :
-                diskInfo.usagePercent >= 60 ? 'bg-blue-500' : 'bg-green-500'
+                diskInfo.usagePercent >= 90
+                  ? 'bg-red-500'
+                  : diskInfo.usagePercent >= 80
+                    ? 'bg-yellow-500'
+                    : diskInfo.usagePercent >= 60
+                      ? 'bg-blue-500'
+                      : 'bg-green-500'
               }`}
               style={{ width: `${diskInfo.usagePercent}%` }}
             />
@@ -244,7 +270,9 @@ export default function BackupPage() {
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>{diskInfo.used} used</span>
             <span>{diskInfo.free} free</span>
-            <span>{diskInfo.usagePercent}% of {diskInfo.total}</span>
+            <span>
+              {diskInfo.usagePercent}% of {diskInfo.total}
+            </span>
           </div>
         </div>
       )}
@@ -264,11 +292,7 @@ export default function BackupPage() {
             disabled={triggering}
             className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition"
           >
-            {triggering ? (
-              <RefreshCw size={16} className="animate-spin" />
-            ) : (
-              <Plus size={16} />
-            )}
+            {triggering ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
             {triggering ? 'Membuat Backup...' : 'Backup Sekarang'}
           </button>
         </div>
@@ -278,7 +302,9 @@ export default function BackupPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
           <Database size={18} className="text-gray-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Daftar Backup</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            Daftar Backup
+          </h3>
         </div>
 
         {loading ? (
@@ -289,19 +315,33 @@ export default function BackupPage() {
           <div className="text-center py-12 text-gray-400">
             <Database size={40} className="mx-auto mb-3 opacity-50" />
             <p className="text-sm font-medium">Belum ada backup</p>
-            <p className="text-xs mt-1">Klik &quot;Backup Sekarang&quot; untuk membuat backup pertama</p>
+            <p className="text-xs mt-1">
+              Klik &quot;Backup Sekarang&quot; untuk membuat backup pertama
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">File</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">Size</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">Created</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">Age</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    File
+                  </th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Size
+                  </th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Created
+                  </th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Age
+                  </th>
+                  <th className="text-center py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -317,25 +357,37 @@ export default function BackupPage() {
                     >
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-2">
-                          {idx === 0 && <CheckCircle size={14} className="text-green-500 shrink-0" />}
-                          <code className="text-xs font-mono text-gray-700 dark:text-gray-300">{backup.name}</code>
+                          {idx === 0 && (
+                            <CheckCircle size={14} className="text-green-500 shrink-0" />
+                          )}
+                          <code className="text-xs font-mono text-gray-700 dark:text-gray-300">
+                            {backup.name}
+                          </code>
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-right text-xs text-gray-600 dark:text-gray-400">
                         {formatSize(backup.sizeBytes)}
                       </td>
                       <td className="py-2.5 px-3 text-right text-xs text-gray-600 dark:text-gray-400">
-                        {new Date(backup.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(backup.createdAt).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </td>
                       <td className="py-2.5 px-3 text-right text-xs text-gray-600 dark:text-gray-400">
                         {formatAge(backup.createdAt)}
                       </td>
                       <td className="py-2.5 px-3 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          isFresh
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isFresh
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                              : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                          }`}
+                        >
                           {isFresh ? '✅ Fresh' : '⚠️ Old'}
                         </span>
                       </td>

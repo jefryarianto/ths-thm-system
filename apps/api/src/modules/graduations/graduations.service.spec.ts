@@ -377,7 +377,12 @@ describe('GraduationsService', () => {
 
       expect(mockPrisma.anggota.create).toHaveBeenCalledTimes(1);
       expect(mockPrisma.anggota.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ email: mockCandidate.email, noHpNormalized: '08123456789' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: mockCandidate.email,
+            noHpNormalized: '08123456789',
+          }),
+        }),
       );
       expect(mockDocumentsService.generateCertificate).toHaveBeenCalledWith(
         expect.objectContaining({ memberId: 'a1', finalScore: 85 }),
@@ -423,7 +428,12 @@ describe('GraduationsService', () => {
 
       const result = await service.validateResult(
         'g1',
-        { results: [{ candidateId: 'c1', approved: true }, { candidateId: 'missing', approved: true }] } as any,
+        {
+          results: [
+            { candidateId: 'c1', approved: true },
+            { candidateId: 'missing', approved: true },
+          ],
+        } as any,
         'user1',
       );
 
@@ -452,7 +462,9 @@ describe('GraduationsService', () => {
       mockPrisma.hasilPendadaran.findMany.mockReset().mockResolvedValue([approvedResult]);
       mockPrisma.calonAnggota.findUnique.mockReset();
       mockPrisma.anggota.findUnique.mockReset().mockResolvedValue(null);
-      mockPrisma.anggota.create.mockReset().mockResolvedValue({ id: 'a1', nomorAnggota: 'NRA-0001' });
+      mockPrisma.anggota.create
+        .mockReset()
+        .mockResolvedValue({ id: 'a1', nomorAnggota: 'NRA-0001' });
       mockPrisma.dokumen.findFirst.mockReset().mockResolvedValue(null);
       mockNraService.generateMemberNumber.mockReset().mockResolvedValue('NRA-0001');
       mockPrisma.nilaiPendadaran.findMany.mockReset().mockResolvedValue([]);
@@ -574,16 +586,19 @@ describe('GraduationsService', () => {
 
     it('should return registered penguji aktif + anggota hadir with sumber', async () => {
       mockPrisma.user.findMany
-        .mockResolvedValueOnce([
-          { id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' },
-        ])
+        .mockResolvedValueOnce([{ id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' }])
         // Batch lookup user via email utk anggota hadir
         .mockResolvedValueOnce([{ id: 'u2', email: 'hadir@test.com' }]);
       mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
         {
           id: 'inv1',
           status: 'hadir',
-          anggota: { id: 'a1', namaLengkap: 'Anggota Hadir', email: 'hadir@test.com', nomorAnggota: 'LRT-0103-001' },
+          anggota: {
+            id: 'a1',
+            namaLengkap: 'Anggota Hadir',
+            email: 'hadir@test.com',
+            nomorAnggota: 'LRT-0103-001',
+          },
         },
       ]);
 
@@ -597,10 +612,25 @@ describe('GraduationsService', () => {
     });
 
     it('should skip anggota hadir tanpa akun User atau yang sudah terdaftar penguji', async () => {
-      mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        { id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' },
+      ]);
       mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
-        { id: 'inv1', status: 'hadir', anggota: { id: 'a1', namaLengkap: 'No Akun', email: 'none@test.com', nomorAnggota: null } },
-        { id: 'inv2', status: 'hadir', anggota: { id: 'a2', namaLengkap: 'Sama Penguji', email: 'p@test.com', nomorAnggota: null } },
+        {
+          id: 'inv1',
+          status: 'hadir',
+          anggota: { id: 'a1', namaLengkap: 'No Akun', email: 'none@test.com', nomorAnggota: null },
+        },
+        {
+          id: 'inv2',
+          status: 'hadir',
+          anggota: {
+            id: 'a2',
+            namaLengkap: 'Sama Penguji',
+            email: 'p@test.com',
+            nomorAnggota: null,
+          },
+        },
       ]);
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
@@ -615,11 +645,32 @@ describe('GraduationsService', () => {
         .mockResolvedValueOnce([{ id: 'u2', email: 'p2@test.com' }]) // resolve email hadir
         .mockResolvedValueOnce([{ id: 'u3', email: 'p3@test.com' }]); // resolve email peserta kegiatan
       mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
-        { anggota: { id: 'a1', namaLengkap: 'Hadir Satu', email: 'p2@test.com', nomorAnggota: '001' } },
+        {
+          anggota: {
+            id: 'a1',
+            namaLengkap: 'Hadir Satu',
+            email: 'p2@test.com',
+            nomorAnggota: '001',
+          },
+        },
       ]);
       mockPrisma.kegiatanPeserta.findMany.mockResolvedValue([
-        { anggota: { id: 'a2', namaLengkap: 'Peserta Satu', email: 'p3@test.com', nomorAnggota: '002' } },
-        { anggota: { id: 'a3', namaLengkap: 'Dup Penguji', email: 'p1@test.com', nomorAnggota: '003' } }, // sudah di manajemen penguji
+        {
+          anggota: {
+            id: 'a2',
+            namaLengkap: 'Peserta Satu',
+            email: 'p3@test.com',
+            nomorAnggota: '002',
+          },
+        },
+        {
+          anggota: {
+            id: 'a3',
+            namaLengkap: 'Dup Penguji',
+            email: 'p1@test.com',
+            nomorAnggota: '003',
+          },
+        }, // sudah di manajemen penguji
       ]);
 
       const result = await service.getExaminerCandidates('g1');
@@ -643,7 +694,11 @@ describe('GraduationsService', () => {
     });
 
     it('BadRequest bila anggota tidak punya email (tanpa membuat akun)', async () => {
-      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1', namaLengkap: 'Tanpa Email', email: null });
+      mockPrisma.anggota.findFirst.mockResolvedValue({
+        id: 'a1',
+        namaLengkap: 'Tanpa Email',
+        email: null,
+      });
 
       await expect(
         service.addExaminerFromMember('g1', { anggotaId: 'a1' }, true, 'admin1'),
@@ -653,18 +708,24 @@ describe('GraduationsService', () => {
 
     it('direct=true: buat/promote akun lalu penugasan langsung approved', async () => {
       mockPrisma.anggota.findFirst.mockResolvedValue({
-        id: 'a1', namaLengkap: 'Anggota Satu', email: 'anggota@test.com',
+        id: 'a1',
+        namaLengkap: 'Anggota Satu',
+        email: 'anggota@test.com',
       });
       mockExaminersService.create.mockResolvedValue({
         data: { id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com' },
         message: 'Akun anggota dipromosikan menjadi penguji',
       });
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com',
+        id: 'u9',
+        role: 'penguji',
+        isActive: true,
+        email: 'anggota@test.com',
       });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
       mockPrisma.penugasanPenguji.create.mockResolvedValue({
-        id: 'pn1', status: 'approved',
+        id: 'pn1',
+        status: 'approved',
         pengujiUser: { id: 'u9', namaLengkap: 'Anggota Satu', email: 'anggota@test.com' },
       });
 
@@ -684,18 +745,24 @@ describe('GraduationsService', () => {
 
     it('direct=false: penugasan pending (alur pengajuan admin kegiatan)', async () => {
       mockPrisma.anggota.findFirst.mockResolvedValue({
-        id: 'a1', namaLengkap: 'Anggota Satu', email: 'anggota@test.com',
+        id: 'a1',
+        namaLengkap: 'Anggota Satu',
+        email: 'anggota@test.com',
       });
       mockExaminersService.create.mockResolvedValue({
         data: { id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com' },
         message: 'Penguji berhasil ditambahkan',
       });
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com',
+        id: 'u9',
+        role: 'penguji',
+        isActive: true,
+        email: 'anggota@test.com',
       });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
       mockPrisma.penugasanPenguji.create.mockResolvedValue({
-        id: 'pn1', status: 'pending',
+        id: 'pn1',
+        status: 'pending',
         pengujiUser: { id: 'u9', namaLengkap: 'Anggota Satu', email: 'anggota@test.com' },
       });
 
@@ -731,7 +798,12 @@ describe('GraduationsService', () => {
     });
 
     it('membuat penugasan langsung approved dan auto-attach ke semua ujian praktek', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'p@test.com',
+      });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
       mockPrisma.penugasanPenguji.create.mockResolvedValue({
         id: 'p1',
@@ -759,8 +831,18 @@ describe('GraduationsService', () => {
     });
 
     it('penugasan pending yang sudah ada langsung di-approve (tanpa duplikat)', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
-      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1', status: 'pending', peran: 'penguji', catatan: null });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'p@test.com',
+      });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({
+        id: 'p1',
+        status: 'pending',
+        peran: 'penguji',
+        catatan: null,
+      });
       mockPrisma.penugasanPenguji.update.mockResolvedValue({
         id: 'p1',
         status: 'approved',
@@ -776,15 +858,30 @@ describe('GraduationsService', () => {
     });
 
     it('BadRequest bila penguji sudah approved', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
-      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1', status: 'approved', peran: 'penguji', catatan: null });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'p@test.com',
+      });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({
+        id: 'p1',
+        status: 'approved',
+        peran: 'penguji',
+        catatan: null,
+      });
       await expect(service.addExaminerManually('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('BadRequest bila kandidat bukan penguji aktif dan tidak hadir', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'a@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'anggota',
+        isActive: true,
+        email: 'a@test.com',
+      });
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
       await expect(service.addExaminerManually('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,
@@ -803,7 +900,12 @@ describe('GraduationsService', () => {
     });
 
     it('should create a pending assignment for a registered penguji', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'p@test.com',
+      });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
       mockPrisma.penugasanPenguji.create.mockResolvedValue({
         id: 'p1',
@@ -822,7 +924,12 @@ describe('GraduationsService', () => {
     });
 
     it('should throw BadRequestException for inactive registered penguji', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: false, email: 'p@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: false,
+        email: 'p@test.com',
+      });
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
       await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,
@@ -830,7 +937,12 @@ describe('GraduationsService', () => {
     });
 
     it('should throw BadRequestException when user is neither penguji aktif nor hadir', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'anggota@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'anggota',
+        isActive: true,
+        email: 'anggota@test.com',
+      });
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
       mockPrisma.undanganPendadaran.findFirst.mockResolvedValue(null);
       await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
@@ -839,7 +951,12 @@ describe('GraduationsService', () => {
     });
 
     it('should allow an anggota that attended (undangan hadir) to be proposed', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'hadir@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'anggota',
+        isActive: true,
+        email: 'hadir@test.com',
+      });
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
       mockPrisma.undanganPendadaran.findFirst.mockResolvedValue({ id: 'inv1', status: 'hadir' });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
@@ -858,7 +975,12 @@ describe('GraduationsService', () => {
     });
 
     it('should throw BadRequestException when already proposed', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'p@test.com',
+      });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1' });
       await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,
@@ -972,7 +1094,15 @@ describe('GraduationsService', () => {
           kegiatanId: 'g1',
           anggotaId: 'a1',
           status: 'dikirim',
-          anggota: { id: 'a1', namaLengkap: 'Jefry', nomorAnggota: 'LRT-0103-001', tingkat: 'Pratama', tahunDadar: '2020', email: 'a1@test.com', noHp: '0812' },
+          anggota: {
+            id: 'a1',
+            namaLengkap: 'Jefry',
+            nomorAnggota: 'LRT-0103-001',
+            tingkat: 'Pratama',
+            tahunDadar: '2020',
+            email: 'a1@test.com',
+            noHp: '0812',
+          },
         },
       ]);
 
@@ -1004,11 +1134,29 @@ describe('GraduationsService', () => {
     it('should invite senior members (>2 tahun dari tahun dadar) and Pratama members', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([
         // Senior: dadar 2020 (6 tahun) → diundang
-        { id: 'a1', namaLengkap: 'Senior', email: 'senior@test.com', tingkat: 'Anggota', tahunDadar: '2020' },
+        {
+          id: 'a1',
+          namaLengkap: 'Senior',
+          email: 'senior@test.com',
+          tingkat: 'Anggota',
+          tahunDadar: '2020',
+        },
         // Pratama → diundang walau dadar baru
-        { id: 'a2', namaLengkap: 'Pratama', email: 'pratama@test.com', tingkat: 'Pratama', tahunDadar: '2025' },
+        {
+          id: 'a2',
+          namaLengkap: 'Pratama',
+          email: 'pratama@test.com',
+          tingkat: 'Pratama',
+          tahunDadar: '2025',
+        },
         // Baru & bukan pratama → tidak memenuhi kriteria
-        { id: 'a3', namaLengkap: 'Baru', email: 'baru@test.com', tingkat: 'Anggota', tahunDadar: '2025' },
+        {
+          id: 'a3',
+          namaLengkap: 'Baru',
+          email: 'baru@test.com',
+          tingkat: 'Anggota',
+          tahunDadar: '2025',
+        },
       ]);
       // anggota.findUnique → member for userId resolution
       mockPrisma.anggota.findUnique.mockImplementation((args: { where: { id: string } }) =>
@@ -1035,7 +1183,13 @@ describe('GraduationsService', () => {
 
     it('should skip duplicates and count them as skipped', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([
-        { id: 'a1', namaLengkap: 'Senior', email: 'senior@test.com', tingkat: 'Anggota', tahunDadar: '2020' },
+        {
+          id: 'a1',
+          namaLengkap: 'Senior',
+          email: 'senior@test.com',
+          tingkat: 'Anggota',
+          tahunDadar: '2020',
+        },
       ]);
       mockPrisma.undanganPendadaran.create.mockRejectedValue(new Error('duplicate'));
 
@@ -1112,9 +1266,9 @@ describe('GraduationsService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'user2', email: 'other@test.com' });
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a999' });
 
-      await expect(service.confirmInvitation('g1', 'inv1', { hadir: true }, 'user2')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.confirmInvitation('g1', 'inv1', { hadir: true }, 'user2'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw NotFoundException for unknown invitation', async () => {
@@ -1186,7 +1340,14 @@ describe('GraduationsService', () => {
         {
           id: 'inv1',
           status: 'dikirim',
-          kegiatan: { id: 'g1', nama: 'Pendadaran 1', lokasi: 'Jakarta', tanggalMulai: new Date('2026-08-16'), tanggalSelesai: new Date('2026-08-16'), status: 'published' },
+          kegiatan: {
+            id: 'g1',
+            nama: 'Pendadaran 1',
+            lokasi: 'Jakarta',
+            tanggalMulai: new Date('2026-08-16'),
+            tanggalSelesai: new Date('2026-08-16'),
+            status: 'published',
+          },
         },
       ]);
 
@@ -1303,7 +1464,9 @@ describe('GraduationsService', () => {
           ranting: { nama: 'Ranting 1' },
         },
       ]);
-      mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1', email: 'a@test.com', role: 'anggota' }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        { id: 'u1', email: 'a@test.com', role: 'anggota' },
+      ]);
 
       const result = await service.getAdminKegiatanOptions(
         {},
@@ -1531,7 +1694,9 @@ describe('GraduationsService', () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'g1', adminKegiatanId: 'u1' });
       mockPrisma.kegiatan.update.mockRejectedValue(new Error('update gagal'));
 
-      await expect(service.update('g1', { status: 'closed' } as any)).rejects.toThrow('update gagal');
+      await expect(service.update('g1', { status: 'closed' } as any)).rejects.toThrow(
+        'update gagal',
+      );
 
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
@@ -1555,7 +1720,10 @@ describe('GraduationsService', () => {
       mockPrisma.aspekPenilaian.count
         .mockResolvedValueOnce(0) // owned
         .mockResolvedValueOnce(4); // total setelah clone
-      mockAssessmentsService.cloneTemplateForKegiatan.mockResolvedValue({ clonedAspects: 4, clonedItems: 18 });
+      mockAssessmentsService.cloneTemplateForKegiatan.mockResolvedValue({
+        clonedAspects: 4,
+        clonedItems: 18,
+      });
 
       const result = await service.cloneAspekTemplate('g1');
 
@@ -1574,7 +1742,12 @@ describe('GraduationsService', () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
         service.beforeCreate(
-          { nama: 'Pendadaran Lain', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r-other' } as any,
+          {
+            nama: 'Pendadaran Lain',
+            tanggalMulai: '2026-09-20',
+            scopeType: 'ranting',
+            scopeId: 'r-other',
+          } as any,
           { distrikId: 'd1' } as any,
           'u0',
         ),
@@ -1585,7 +1758,12 @@ describe('GraduationsService', () => {
     it('mengizinkan pendadaran ranting di dalam distrik admin', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
       const data = await service.beforeCreate(
-        { nama: 'Pendadaran D1', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r1' } as any,
+        {
+          nama: 'Pendadaran D1',
+          tanggalMulai: '2026-09-20',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+        } as any,
         { distrikId: 'd1' } as any,
         'u0',
       );

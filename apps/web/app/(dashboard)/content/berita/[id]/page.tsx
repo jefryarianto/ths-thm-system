@@ -10,8 +10,6 @@ import PageContainer from '@/components/ui/page-container';
 import { Save, ArrowLeft, Upload } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
-
-
 interface Berita {
   id: string;
   judul: string;
@@ -151,7 +149,9 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
             <div>
               <p className="font-medium text-gray-900">Status Tampil</p>
               <p className="text-sm text-gray-500">
-                {isVisible ? 'Berita ditampilkan di halaman public' : 'Berita tersembunyi dari halaman public'}
+                {isVisible
+                  ? 'Berita ditampilkan di halaman public'
+                  : 'Berita tersembunyi dari halaman public'}
               </p>
             </div>
             <button
@@ -230,7 +230,9 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Konten (HTML) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Konten (HTML) *
+              </label>
               <RichTextEditor
                 value={konten}
                 onChange={setKonten}

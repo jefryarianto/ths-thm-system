@@ -125,13 +125,17 @@ export function resetPasswordEmail(nama: string, resetUrl: string, mobileDeepLin
           Reset Password
         </a>
       </div>
-      ${mobileDeepLink ? `
+      ${
+        mobileDeepLink
+          ? `
       <p style="text-align: center; margin: 10px 0;">
         <a href="${escapeHtml(mobileDeepLink)}" style="background-color: #16a34a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">
           Buka di Aplikasi Mobile
         </a>
       </p>
-      ` : ''}
+      `
+          : ''
+      }
       <p>Atau copy link berikut ke browser:</p>
       <p style="color: #6b7280; font-size: 14px;">${escapeHtml(resetUrl)}</p>
       <p style="color: #6b7280; font-size: 12px;">
@@ -540,11 +544,15 @@ export function batchCompletionEmail(
           <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #16a34a;">Berhasil</td>
           <td style="padding: 8px; border: 1px solid #e5e7eb;">${success}</td>
         </tr>
-        ${hasFailure ? `
+        ${
+          hasFailure
+            ? `
         <tr>
           <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #dc2626;">Gagal</td>
           <td style="padding: 8px; border: 1px solid #e5e7eb;">${failed}</td>
-        </tr>` : ''}
+        </tr>`
+            : ''
+        }
       </table>
       <p>Silakan login ke aplikasi untuk melihat detail dan mengunduh dokumen.</p>
     `),

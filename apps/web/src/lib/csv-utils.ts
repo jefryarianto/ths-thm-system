@@ -116,7 +116,13 @@ export function parseCsvContent(
   const nonEmptyLines = allLines.filter((l) => l.trim().length > 0);
 
   if (nonEmptyLines.length < 2) {
-    return { headers: [], data: [], delimiter: ',', rowCount: 0, error: 'File CSV harus memiliki header dan minimal 1 baris data' };
+    return {
+      headers: [],
+      data: [],
+      delimiter: ',',
+      rowCount: 0,
+      error: 'File CSV harus memiliki header dan minimal 1 baris data',
+    };
   }
 
   const headerLine = nonEmptyLines[0];

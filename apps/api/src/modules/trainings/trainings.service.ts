@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { KategoriMateri } from '@prisma/client';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -101,7 +108,8 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     if (dto.lokasi !== undefined) data.lokasi = dto.lokasi;
     if (dto.jenisMateri !== undefined) data.jenisMateri = dto.jenisMateri;
     if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
-    if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
+    if (dto.rekomendasiBerikutnya !== undefined)
+      data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
     if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
 
     // Replaces the full materi list — delete existing children, then create the new set.
@@ -320,11 +328,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     });
   }
 
-  async addMateri(
-    trainingId: string,
-    dto: CreateMateriDto,
-    scope?: UserScope,
-  ) {
+  async addMateri(trainingId: string, dto: CreateMateriDto, scope?: UserScope) {
     await this.verifyScope(trainingId, scope);
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
@@ -368,11 +372,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
 
   // ── Private helpers ──────────────────────────────────────
 
-  private sendAttendanceConfirmation(
-    anggotaId: string,
-    jenisMateri: string,
-    hadir: boolean,
-  ): void {
+  private sendAttendanceConfirmation(anggotaId: string, jenisMateri: string, hadir: boolean): void {
     this.memberMailService.sendToMemberWithArgs(
       anggotaId,
       attendanceConfirmationEmail,

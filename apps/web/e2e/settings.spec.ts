@@ -21,10 +21,14 @@ test.describe('Settings — /settings (Settings Hub)', () => {
 
   test('renders navigation links to sub-settings', async ({ page }) => {
     // Section "Organisasi" — kartu besar (tidak hanya teks sidebar)
-    await expect(page.locator('a[href="/settings/org-structure"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/org-structure"]').first()).toBeVisible({
+      timeout: 8000,
+    });
     // Section "Sistem"
     await expect(page.locator('a[href="/settings/email"]').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({
+      timeout: 8000,
+    });
     await expect(page.locator('a[href="/audit-logs"]').first()).toBeVisible({ timeout: 8000 });
   });
 
@@ -42,12 +46,18 @@ test.describe('Settings — /settings (Settings Hub)', () => {
   test('Struktur Organisasi link navigates to /settings/org-structure', async ({ page }) => {
     // referrerPolicy NO REFERRER: request RSC klik link tidak membawa referer
     // yang membuat proxy salah menganggap navigasi lintas situs → kick ke /login.
-    await page.locator('a[href="/settings/org-structure"]').first().click({ referrerPolicy: 'no-referrer' });
+    await page
+      .locator('a[href="/settings/org-structure"]')
+      .first()
+      .click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(/\/settings\/org-structure/);
   });
 
   test('Riwayat Email link navigates to /settings/email/logs', async ({ page }) => {
-    await page.locator('a[href="/settings/email/logs"]').first().click({ referrerPolicy: 'no-referrer' });
+    await page
+      .locator('a[href="/settings/email/logs"]')
+      .first()
+      .click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(/\/settings\/email\/logs/);
   });
 

@@ -11,7 +11,15 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Get()
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @ApiOperation({
     summary: 'Pencarian gabungan lintas entitas (anggota, calon, kegiatan, latihan, user, dokumen)',
   })
@@ -22,7 +30,10 @@ export class SearchController {
     @Req() req: ScopedRequest,
   ) {
     const types = type
-      ? type.split(',').map((t) => t.trim()).filter(Boolean)
+      ? type
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
       : ['all'];
     const parsedLimit = Math.min(Math.max(parseInt(limit || '8', 10) || 8, 1), 50);
     return this.searchService.search(q, req.scope, types, parsedLimit);

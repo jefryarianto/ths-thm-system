@@ -48,8 +48,14 @@ describe('OrgDocumentsService', () => {
         OrgDocumentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
-        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        {
+          provide: require('../../common/utils/scope-helpers').ScopeHelper,
+          useValue: mockScopeHelper,
+        },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
       ],
     }).compile();
 

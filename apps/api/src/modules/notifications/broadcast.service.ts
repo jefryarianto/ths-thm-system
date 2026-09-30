@@ -36,12 +36,18 @@ export class BroadcastService {
           this.mailService.sendMail({
             to: member.email,
             subject: dto.subject,
-            html: (await this.mailService.renderWithOverride(
-              'generalNotificationEmail',
-              () => generalNotificationEmail(member.namaLengkap, dto.subject, dto.content),
-              { nama: member.namaLengkap, judul: dto.subject, isi: dto.content },
-            )).html,
-            metadata: { module: 'broadcast', template: 'generalNotificationEmail', userId: member.id },
+            html: (
+              await this.mailService.renderWithOverride(
+                'generalNotificationEmail',
+                () => generalNotificationEmail(member.namaLengkap, dto.subject, dto.content),
+                { nama: member.namaLengkap, judul: dto.subject, isi: dto.content },
+              )
+            ).html,
+            metadata: {
+              module: 'broadcast',
+              template: 'generalNotificationEmail',
+              userId: member.id,
+            },
           }),
         ),
       );
@@ -58,7 +64,9 @@ export class BroadcastService {
       }
     }
 
-    this.logger.log(`Broadcast email: ${sent} sent, ${failed} failed out of ${members.length} targets`);
+    this.logger.log(
+      `Broadcast email: ${sent} sent, ${failed} failed out of ${members.length} targets`,
+    );
 
     return {
       success: true,
@@ -108,6 +116,10 @@ export class BroadcastService {
       select: { id: true, email: true, namaLengkap: true },
     });
 
-    return members.filter((m) => m.email) as Array<{ id: string; email: string; namaLengkap: string }>;
+    return members.filter((m) => m.email) as Array<{
+      id: string;
+      email: string;
+      namaLengkap: string;
+    }>;
   }
 }

@@ -62,17 +62,43 @@ function formatDuration(ms: number): string {
 }
 
 function getSeverity(durationMs?: number): { label: string; color: string; bg: string } {
-  if (!durationMs) return { label: 'Unknown', color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700' };
-  if (durationMs >= 1_800_000) return { label: 'Critical', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-950' };
-  if (durationMs >= 300_000) return { label: 'Long', color: 'text-orange-700 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-950' };
-  if (durationMs >= 60_000) return { label: 'Medium', color: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-950' };
-  return { label: 'Short', color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-950' };
+  if (!durationMs)
+    return {
+      label: 'Unknown',
+      color: 'text-gray-600 dark:text-gray-400',
+      bg: 'bg-gray-100 dark:bg-gray-700',
+    };
+  if (durationMs >= 1_800_000)
+    return {
+      label: 'Critical',
+      color: 'text-red-700 dark:text-red-400',
+      bg: 'bg-red-100 dark:bg-red-950',
+    };
+  if (durationMs >= 300_000)
+    return {
+      label: 'Long',
+      color: 'text-orange-700 dark:text-orange-400',
+      bg: 'bg-orange-100 dark:bg-orange-950',
+    };
+  if (durationMs >= 60_000)
+    return {
+      label: 'Medium',
+      color: 'text-yellow-700 dark:text-yellow-400',
+      bg: 'bg-yellow-100 dark:bg-yellow-950',
+    };
+  return {
+    label: 'Short',
+    color: 'text-blue-700 dark:text-blue-400',
+    bg: 'bg-blue-100 dark:bg-blue-950',
+  };
 }
 
 function SeverityBadge({ durationMs }: { durationMs?: number }) {
   const sev = getSeverity(durationMs);
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${sev.bg} ${sev.color}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${sev.bg} ${sev.color}`}
+    >
       {sev.label}
     </span>
   );
@@ -85,10 +111,13 @@ function TimelineBar({ durationMs, maxDuration }: { durationMs?: number; maxDura
     <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex-1 max-w-[200px]">
       <div
         className={`h-full rounded-full transition-all ${
-          sev.label === 'Critical' ? 'bg-red-500' :
-          sev.label === 'Long' ? 'bg-orange-500' :
-          sev.label === 'Medium' ? 'bg-yellow-500' :
-          'bg-blue-500'
+          sev.label === 'Critical'
+            ? 'bg-red-500'
+            : sev.label === 'Long'
+              ? 'bg-orange-500'
+              : sev.label === 'Medium'
+                ? 'bg-yellow-500'
+                : 'bg-blue-500'
         }`}
         style={{ width: `${width}%` }}
       />
@@ -148,7 +177,10 @@ function RootCauseEditor({
     setSaving(true);
     setError('');
     try {
-      const res = await apiClient.patch(`/health/admin/queue-uptime/events/${incidentId}`, { notes, component });
+      const res = await apiClient.patch(`/health/admin/queue-uptime/events/${incidentId}`, {
+        notes,
+        component,
+      });
       if (!res.data?.success) {
         throw new Error(res.data?.error || 'Save failed');
       }
@@ -165,9 +197,13 @@ function RootCauseEditor({
       <div className="flex items-start gap-2 group">
         <div className="flex-1 min-w-0">
           {initialNotes ? (
-            <p className="text-xs text-gray-600 dark:text-gray-400 italic leading-relaxed">{initialNotes}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 italic leading-relaxed">
+              {initialNotes}
+            </p>
           ) : (
-            <p className="text-xs text-gray-400 dark:text-gray-500 italic">No root cause recorded</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+              No root cause recorded
+            </p>
           )}
           {initialComponent && (
             <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-gray-400 dark:text-gray-500">
@@ -189,7 +225,9 @@ function RootCauseEditor({
   return (
     <div className="space-y-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-2">
-        <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Component</label>
+        <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Component
+        </label>
       </div>
       <select
         value={component}
@@ -202,7 +240,9 @@ function RootCauseEditor({
         <option value="other">Other</option>
       </select>
       <div className="flex items-center gap-2">
-        <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Root Cause</label>
+        <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Root Cause
+        </label>
       </div>
       <textarea
         value={notes}
@@ -220,7 +260,11 @@ function RootCauseEditor({
       )}
       <div className="flex items-center justify-end gap-2">
         <button
-          onClick={() => { setEditing(false); setNotes(initialNotes || ''); setError(''); }}
+          onClick={() => {
+            setEditing(false);
+            setNotes(initialNotes || '');
+            setError('');
+          }}
           className="flex items-center gap-1 px-2 py-1 text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
         >
           <X size={10} /> Cancel
@@ -239,7 +283,11 @@ function RootCauseEditor({
 
 // ── Incident Row ─────────────────────────────────────────────
 
-function IncidentRow({ incident, maxDuration, onNotesSaved }: {
+function IncidentRow({
+  incident,
+  maxDuration,
+  onNotesSaved,
+}: {
   incident: Incident;
   maxDuration: number;
   onNotesSaved: () => void;
@@ -262,12 +310,17 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
           <div className="flex items-start gap-4 flex-1 min-w-0">
             {/* Severity dot */}
             <div className="mt-1.5 shrink-0">
-              <div className={`w-3 h-3 rounded-full ${
-                sev.label === 'Critical' ? 'bg-red-500' :
-                sev.label === 'Long' ? 'bg-orange-500' :
-                sev.label === 'Medium' ? 'bg-yellow-500' :
-                'bg-blue-500'
-              }`} />
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  sev.label === 'Critical'
+                    ? 'bg-red-500'
+                    : sev.label === 'Long'
+                      ? 'bg-orange-500'
+                      : sev.label === 'Medium'
+                        ? 'bg-yellow-500'
+                        : 'bg-blue-500'
+                }`}
+              />
             </div>
 
             {/* Info */}
@@ -278,8 +331,8 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
                   {incident.component === 'database'
                     ? 'Database Disconnect'
                     : incident.component === 'api'
-                    ? 'API Server Down'
-                    : 'Queue Disconnect'}
+                      ? 'API Server Down'
+                      : 'Queue Disconnect'}
                 </h3>
                 <SeverityBadge durationMs={incident.durationMs} />
                 {endDate ? (
@@ -296,12 +349,17 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
                 <span className="flex items-center gap-1">
                   <Calendar size={11} />
-                  {startDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  {startDate.toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
                   {startDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                  {endDate && ` - ${endDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}
+                  {endDate &&
+                    ` - ${endDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}
                 </span>
                 {incident.durationMs && (
                   <span className="flex items-center gap-1 font-mono text-gray-700 dark:text-gray-300">
@@ -323,7 +381,11 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
           {/* Right: Timeline bar + expand icon */}
           <div className="flex items-center gap-3 shrink-0">
             <TimelineBar durationMs={incident.durationMs} maxDuration={maxDuration} />
-            {expanded ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+            {expanded ? (
+              <ChevronUp size={14} className="text-gray-400" />
+            ) : (
+              <ChevronDown size={14} className="text-gray-400" />
+            )}
           </div>
         </div>
       </button>
@@ -348,19 +410,41 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
               <span className="text-gray-400 dark:text-gray-500">Incident ID</span>
-              <p className="font-mono text-gray-700 dark:text-gray-300 text-[11px] truncate">{incident.id}</p>
+              <p className="font-mono text-gray-700 dark:text-gray-300 text-[11px] truncate">
+                {incident.id}
+              </p>
             </div>
             <div>
               <span className="text-gray-400 dark:text-gray-500">Total Duration</span>
-              <p className="font-mono text-gray-700 dark:text-gray-300">{incident.durationMs ? formatDuration(incident.durationMs) : '-'}</p>
+              <p className="font-mono text-gray-700 dark:text-gray-300">
+                {incident.durationMs ? formatDuration(incident.durationMs) : '-'}
+              </p>
             </div>
             <div>
               <span className="text-gray-400 dark:text-gray-500">Started</span>
-              <p className="text-gray-700 dark:text-gray-300">{startDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              <p className="text-gray-700 dark:text-gray-300">
+                {startDate.toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
             </div>
             <div>
               <span className="text-gray-400 dark:text-gray-500">Resolved</span>
-              <p className="text-gray-700 dark:text-gray-300">{endDate ? endDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not yet'}</p>
+              <p className="text-gray-700 dark:text-gray-300">
+                {endDate
+                  ? endDate.toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : 'Not yet'}
+              </p>
             </div>
           </div>
         </div>
@@ -408,14 +492,25 @@ export default function IncidentsPage() {
   // ── Computed stats ──
   const totalIncidents = incidents.length;
   const resolvedIncidents = incidents.filter((i) => i.endTime).length;
-  const avgDuration = totalIncidents > 0
-    ? incidents.reduce((sum, i) => sum + (i.durationMs || 0), 0) / totalIncidents
-    : 0;
+  const avgDuration =
+    totalIncidents > 0
+      ? incidents.reduce((sum, i) => sum + (i.durationMs || 0), 0) / totalIncidents
+      : 0;
   const maxDuration = incidents.reduce((max, i) => Math.max(max, i.durationMs || 0), 0);
   const withRootCause = incidents.filter((i) => i.notes).length;
 
   const exportCSV = () => {
-    const headers = ['ID', 'Start Time', 'End Time', 'Duration (ms)', 'Duration (readable)', 'Severity', 'Status', 'Component', 'Root Cause'];
+    const headers = [
+      'ID',
+      'Start Time',
+      'End Time',
+      'Duration (ms)',
+      'Duration (readable)',
+      'Severity',
+      'Status',
+      'Component',
+      'Root Cause',
+    ];
     const rows = incidents.map((i) => {
       const sev = getSeverity(i.durationMs);
       return [
@@ -462,7 +557,10 @@ export default function IncidentsPage() {
                 <option value="medium">Medium</option>
                 <option value="short">Short</option>
               </select>
-              <Filter size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Filter
+                size={14}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
             </div>
 
             {/* Days Filter */}
@@ -478,7 +576,10 @@ export default function IncidentsPage() {
                 <option value={60}>60 days</option>
                 <option value={90}>90 days</option>
               </select>
-              <Calendar size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Calendar
+                size={14}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
             </div>
 
             {/* Export CSV */}
@@ -529,7 +630,9 @@ export default function IncidentsPage() {
             label="Uptime"
             value={`${uptimePct}%`}
             sub="Last 24 hours"
-            color={uptimePct >= 99.9 ? 'bg-green-500' : uptimePct >= 99 ? 'bg-yellow-500' : 'bg-red-500'}
+            color={
+              uptimePct >= 99.9 ? 'bg-green-500' : uptimePct >= 99 ? 'bg-yellow-500' : 'bg-red-500'
+            }
           />
         </div>
 
@@ -537,7 +640,10 @@ export default function IncidentsPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 animate-pulse"
+              >
                 <div className="flex items-start gap-4">
                   <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700 mt-1" />
                   <div className="flex-1">

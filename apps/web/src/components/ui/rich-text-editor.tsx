@@ -37,10 +37,7 @@ export function RichTextEditor({
         ${className}
       `}
     >
-      <EditorContent
-        className="prose prose-sm max-w-none focus:outline-none"
-        editor={editor}
-      />
+      <EditorContent className="prose prose-sm max-w-none focus:outline-none" editor={editor} />
     </div>
   );
 }

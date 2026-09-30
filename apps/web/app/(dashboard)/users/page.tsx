@@ -21,7 +21,6 @@ import UserActions from '@/components/users/UserActions';
 import CreateUserModal from '@/components/users/CreateUserModal';
 import EditUserModal from '@/components/users/EditUserModal';
 
-
 export default function UsersPage() {
   const toast = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -106,7 +105,10 @@ export default function UsersPage() {
     const oldRole = user.role;
     try {
       await apiClient.patch(`/users/${user.id}`, { role: newRole });
-      toast('success', `Role ${user.namaLengkap} berubah: ${ROLE_LABELS[oldRole] || oldRole} → ${ROLE_LABELS[newRole] || newRole}`);
+      toast(
+        'success',
+        `Role ${user.namaLengkap} berubah: ${ROLE_LABELS[oldRole] || oldRole} → ${ROLE_LABELS[newRole] || newRole}`,
+      );
       setRoleChangeTarget(null);
       refetch();
     } catch {
@@ -169,7 +171,11 @@ export default function UsersPage() {
       hidden: 'hidden md:table-cell',
       render: (user: User) => (
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {new Date(user.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+          {new Date(user.createdAt).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })}
         </span>
       ),
     },
@@ -177,105 +183,105 @@ export default function UsersPage() {
 
   return (
     <PermissionGuard module="users" action="view">
-    <PageContainer>
-      <PageHeader title="Manajemen User" onRefresh={refetch}>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+      <PageContainer>
+        <PageHeader title="Manajemen User" onRefresh={refetch}>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={14} /> Tambah User
+          </button>
+        </PageHeader>
+
+        <SummaryBar icon={Users} label="Total User" total={meta.total} />
+
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder="Cari nama, email..."
+          debounceMs={300}
         >
-          <Plus size={14} /> Tambah User
-        </button>
-      </PageHeader>
-
-      <SummaryBar icon={Users} label="Total User" total={meta.total} />
-
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari nama, email..."
-        debounceMs={300}
-      >
-        <FilterSelect
-          value={filters.role}
-          onChange={(v) => setFilter('role', v)}
-          options={ROLE_OPTIONS}
-          placeholder="Semua Role"
-        />
-        <FilterSelect
-          value={filters.active}
-          onChange={(v) => setFilter('active', v)}
-          options={[
-            { value: 'active', label: 'Aktif' },
-            { value: 'inactive', label: 'Nonaktif' },
-          ]}
-          placeholder="Semua Status"
-        />
-      </SearchBar>
-
-      <DataTable
-        columns={columns}
-        data={users}
-        loading={loading}
-        empty={{
-          icon: Users,
-          ...buildEmptyMessage('user', hasActiveFilters, resetFilters),
-        }}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={handlePageChange}
-        actions={(user: User) => (
-          <UserActions
-            user={user}
-            actionLoading={actionLoading}
-            onEdit={(id) => setEditUserId(id)}
-            onToggleActive={handleToggleActive}
-            onDelete={(_id) => setDeleteTarget(user)}
+          <FilterSelect
+            value={filters.role}
+            onChange={(v) => setFilter('role', v)}
+            options={ROLE_OPTIONS}
+            placeholder="Semua Role"
           />
-        )}
-      />
+          <FilterSelect
+            value={filters.active}
+            onChange={(v) => setFilter('active', v)}
+            options={[
+              { value: 'active', label: 'Aktif' },
+              { value: 'inactive', label: 'Nonaktif' },
+            ]}
+            placeholder="Semua Status"
+          />
+        </SearchBar>
 
-      <CreateUserModal
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={refetch}
-      />
+        <DataTable
+          columns={columns}
+          data={users}
+          loading={loading}
+          empty={{
+            icon: Users,
+            ...buildEmptyMessage('user', hasActiveFilters, resetFilters),
+          }}
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={handlePageChange}
+          actions={(user: User) => (
+            <UserActions
+              user={user}
+              actionLoading={actionLoading}
+              onEdit={(id) => setEditUserId(id)}
+              onToggleActive={handleToggleActive}
+              onDelete={(_id) => setDeleteTarget(user)}
+            />
+          )}
+        />
 
-      <EditUserModal
-        open={!!editUserId}
-        onClose={() => setEditUserId(null)}
-        onSuccess={refetch}
-        userId={editUserId}
-      />
+        <CreateUserModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={refetch}
+        />
 
-      <ConfirmModal
-        open={!!deleteTarget}
-        title="Nonaktifkan User"
-        message={`Apakah Anda yakin ingin menonaktifkan user "${deleteTarget?.namaLengkap}"?`}
-        confirmLabel="Ya, Nonaktifkan"
-        cancelLabel="Batal"
-        variant="danger"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+        <EditUserModal
+          open={!!editUserId}
+          onClose={() => setEditUserId(null)}
+          onSuccess={refetch}
+          userId={editUserId}
+        />
 
-      {/* ── Role Change Confirmation Modal ── */}
-      <ConfirmModal
-        open={!!roleChangeTarget}
-        title="Ubah Role User"
-        message={
-          roleChangeTarget
-            ? `Ubah role "${roleChangeTarget.user.namaLengkap}" dari "${ROLE_LABELS[roleChangeTarget.user.role] || roleChangeTarget.user.role}" menjadi "${ROLE_LABELS[roleChangeTarget.newRole] || roleChangeTarget.newRole}"?\n\nPerubahan ini akan tercatat di audit log.`
-            : ''
-        }
-        confirmLabel={roleChangeLoading ? 'Menyimpan...' : 'Ya, Ubah'}
-        cancelLabel="Batal"
-        variant="warning"
-        onConfirm={handleRoleChange}
-        onCancel={() => setRoleChangeTarget(null)}
-      />
-    </PageContainer>
+        <ConfirmModal
+          open={!!deleteTarget}
+          title="Nonaktifkan User"
+          message={`Apakah Anda yakin ingin menonaktifkan user "${deleteTarget?.namaLengkap}"?`}
+          confirmLabel="Ya, Nonaktifkan"
+          cancelLabel="Batal"
+          variant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+
+        {/* ── Role Change Confirmation Modal ── */}
+        <ConfirmModal
+          open={!!roleChangeTarget}
+          title="Ubah Role User"
+          message={
+            roleChangeTarget
+              ? `Ubah role "${roleChangeTarget.user.namaLengkap}" dari "${ROLE_LABELS[roleChangeTarget.user.role] || roleChangeTarget.user.role}" menjadi "${ROLE_LABELS[roleChangeTarget.newRole] || roleChangeTarget.newRole}"?\n\nPerubahan ini akan tercatat di audit log.`
+              : ''
+          }
+          confirmLabel={roleChangeLoading ? 'Menyimpan...' : 'Ya, Ubah'}
+          cancelLabel="Batal"
+          variant="warning"
+          onConfirm={handleRoleChange}
+          onCancel={() => setRoleChangeTarget(null)}
+        />
+      </PageContainer>
     </PermissionGuard>
   );
 }

@@ -44,10 +44,7 @@ interface UseBatchProgressOptions {
   autoStart?: boolean;
 }
 
-export function useBatchProgress(
-  batchId: string | null,
-  options: UseBatchProgressOptions = {},
-) {
+export function useBatchProgress(batchId: string | null, options: UseBatchProgressOptions = {}) {
   const { pollingInterval = 3000, autoStart = true } = options;
 
   const [progress, setProgress] = useState<BatchProgress | null>(null);
@@ -209,12 +206,7 @@ export function formatBatchType(type: string): string {
     sertifikat_pelatihan: 'Sertifikat Pelatihan',
     piagam_prestasi: 'Piagam Prestasi',
   };
-  return (
-    labels[type] ||
-    type
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-  );
+  return labels[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ─── Batch History Hook ───
@@ -227,22 +219,25 @@ export function useBatchHistory() {
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
 
-  const fetchHistory = useCallback(async (p = page) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await apiClient.get('/documents/batch', {
-        params: { page: p, limit: 10 },
-      });
-      setBatches(unwrap<BatchDetail[]>(res) || []);
-      setTotalPages(res.data?.meta?.totalPages || 0);
-      setTotal(res.data?.meta?.total || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal memuat riwayat batch');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  const fetchHistory = useCallback(
+    async (p = page) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await apiClient.get('/documents/batch', {
+          params: { page: p, limit: 10 },
+        });
+        setBatches(unwrap<BatchDetail[]>(res) || []);
+        setTotalPages(res.data?.meta?.totalPages || 0);
+        setTotal(res.data?.meta?.total || 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat riwayat batch');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [page],
+  );
 
   useEffect(() => {
     fetchHistory();

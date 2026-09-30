@@ -15,7 +15,13 @@ interface UserActionsProps {
   onDelete: (id: string) => void;
 }
 
-export default function UserActions({ user, actionLoading, onEdit, onToggleActive, onDelete }: UserActionsProps) {
+export default function UserActions({
+  user,
+  actionLoading,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}: UserActionsProps) {
   const [showMenu, setShowMenu] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -43,7 +49,13 @@ export default function UserActions({ user, actionLoading, onEdit, onToggleActiv
       action: () => onToggleActive(user.id, user.isActive),
       disabled: isLoading,
     },
-    { label: 'Hapus', icon: Trash2, action: () => onDelete(user.id), danger: true, disabled: isLoading },
+    {
+      label: 'Hapus',
+      icon: Trash2,
+      action: () => onDelete(user.id),
+      danger: true,
+      disabled: isLoading,
+    },
   ];
 
   return (
@@ -61,7 +73,11 @@ export default function UserActions({ user, actionLoading, onEdit, onToggleActiv
         </button>
         {showMenu && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} aria-hidden="true" />
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowMenu(false)}
+              aria-hidden="true"
+            />
             <div
               style={menuStyle}
               className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
@@ -70,10 +86,17 @@ export default function UserActions({ user, actionLoading, onEdit, onToggleActiv
               {menuItems.map((item, i) => (
                 <button
                   key={i}
-                  onClick={() => { if (!item.disabled) { setShowMenu(false); item.action(); } }}
+                  onClick={() => {
+                    if (!item.disabled) {
+                      setShowMenu(false);
+                      item.action();
+                    }
+                  }}
                   disabled={item.disabled}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+                    item.danger
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-700 dark:text-gray-300'
                   } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   role="menuitem"
                 >

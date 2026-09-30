@@ -136,3 +136,7 @@ dc.json
 login.json
 # unused; mobile_flutter kini track-able (flutter masuk monorepo)
 apps/api/Dockerfile.font
+
+tmp_*.png
+tmp_screencap_*.png
+tmp_statuta.txt

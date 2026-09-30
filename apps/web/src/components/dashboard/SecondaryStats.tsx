@@ -21,10 +21,7 @@ export default function SecondaryStats({ data }: { data: DashboardData }) {
             href={href}
             className="card-elegant relative overflow-hidden p-3.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <span
-              aria-hidden="true"
-              className={`absolute left-0 top-0 h-full w-1 ${styles.bar}`}
-            />
+            <span aria-hidden="true" className={`absolute left-0 top-0 h-full w-1 ${styles.bar}`} />
             <div className="flex items-center gap-2.5 pl-1.5">
               <span className={`p-1.5 rounded-lg shrink-0 ${styles.icon}`}>
                 <Icon size={15} aria-hidden="true" />

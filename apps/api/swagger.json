@@ -15535,8 +15535,38 @@
         "operationId": "ContentController_submitBerita",
         "summary": "Submit berita untuk persetujuan admin",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitBeritaDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Content"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/content/berita/mine": {
+      "get": {
+        "operationId": "ContentController_getMyBeritaSubmissions",
+        "summary": "Riwayat pengajuan berita milik user (dengan status persetujuan)",
+        "parameters": [],
+        "responses": {
+          "200": {
             "description": ""
           }
         },
@@ -18742,6 +18772,37 @@
             "description": "Durasi standar menit (default durasi ujian atau 30)"
           }
         }
+      },
+      "SubmitBeritaDto": {
+        "type": "object",
+        "properties": {
+          "judul": {
+            "type": "string",
+            "description": "Judul berita"
+          },
+          "ringkasan": {
+            "type": "string",
+            "description": "Ringkasan singkat berita"
+          },
+          "konten": {
+            "type": "string",
+            "description": "Isi/konten berita"
+          },
+          "gambar": {
+            "type": "string",
+            "description": "Path gambar sampul (opsional)"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Slug URL unik untuk berita"
+          }
+        },
+        "required": [
+          "judul",
+          "ringkasan",
+          "konten",
+          "slug"
+        ]
       },
       "CreateMutationDto": {
         "type": "object",

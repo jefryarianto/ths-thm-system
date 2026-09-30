@@ -1,7 +1,22 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import { CARD, COLORS, FRONT, BACK, PATTERN, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss, resolveCardSpec, patternRows } from '@/lib/card-design';
+import {
+  CARD,
+  COLORS,
+  FRONT,
+  BACK,
+  PATTERN,
+  getLevelVisual,
+  photoCrop,
+  fmt,
+  decorFrontSvg,
+  decorBackSvg,
+  guillocheSvg,
+  cardCss,
+  resolveCardSpec,
+  patternRows,
+} from '@/lib/card-design';
 
 import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -11,7 +26,6 @@ import { formatPeriode } from '@/lib/format';
 import ProfileHeader from '@/components/ui/profile-header';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   ArrowLeft,
   User,
   Mail,
@@ -45,7 +59,8 @@ import {
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import EditMemberModal from '@/components/members/EditMemberModal';
-import { StatusBadge,
+import {
+  StatusBadge,
   InfoRow,
   DetailStats,
   DetailSkeleton,
@@ -84,7 +99,11 @@ interface MemberDetail {
     nama: string;
     kodeRanting: string;
     lokasiLatihan: string | null;
-    wilayah?: { id: string; nama: string; distrik?: { id: string; nama: string; alamat?: string | null } };
+    wilayah?: {
+      id: string;
+      nama: string;
+      distrik?: { id: string; nama: string; alamat?: string | null };
+    };
   };
   dokumen: DocumentItem[];
   iuran: DuesItem[];
@@ -161,7 +180,15 @@ interface DuesItem {
 // ─── Card Preview Helpers ───
 // Visual tingkat (LEVELS/getLevelVisual) dan format data (fmt) diambil dari
 // packages/card-design - sumber tunggal desain kartu (mobile/web/PDF/preview).
-function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+function InfoPreview({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
   return (
     <div style={{ marginBottom: FRONT.info.rowMarginBottom }}>
       <div
@@ -177,31 +204,29 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
       </div>
       <div
         className="font-ocr"
-        style={
-          {
-            ...(strong
-              ? {
-                  fontSize: FRONT.info.valueStrong.fontSize,
-                  fontWeight: 900,
-                  color: FRONT.info.valueStrong.color,
-                  letterSpacing: FRONT.info.valueStrong.letterSpacing,
-                  marginTop: FRONT.info.valueStrong.marginTop,
-                }
-              : {
-                  fontSize: FRONT.info.value.fontSize,
-                  fontWeight: 700,
-                  color: FRONT.info.value.color,
-                  marginTop: FRONT.info.value.marginTop,
-                }),
-            lineHeight: `${FRONT.info.value.lineHeight}px`,
-            // Jaga satu baris (sama dgn renderer SVG resmi — text SVG tidak wrap) agar
-            // nilai panjang tidak mendorong baris berikutnya turun menimpa area
-            // penandatangan / "Berlaku sampai".
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }
-        }
+        style={{
+          ...(strong
+            ? {
+                fontSize: FRONT.info.valueStrong.fontSize,
+                fontWeight: 900,
+                color: FRONT.info.valueStrong.color,
+                letterSpacing: FRONT.info.valueStrong.letterSpacing,
+                marginTop: FRONT.info.valueStrong.marginTop,
+              }
+            : {
+                fontSize: FRONT.info.value.fontSize,
+                fontWeight: 700,
+                color: FRONT.info.value.color,
+                marginTop: FRONT.info.value.marginTop,
+              }),
+          lineHeight: `${FRONT.info.value.lineHeight}px`,
+          // Jaga satu baris (sama dgn renderer SVG resmi — text SVG tidak wrap) agar
+          // nilai panjang tidak mendorong baris berikutnya turun menimpa area
+          // penandatangan / "Berlaku sampai".
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
       >
         {value}
       </div>
@@ -211,12 +236,40 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
 
 function BackPreview({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: BACK.info.row.marginBottom }}>
-      <div style={{ width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: 700, color: '#ffffff' }}>
+    <div
+      style={{ display: 'flex', alignItems: 'center', marginBottom: BACK.info.row.marginBottom }}
+    >
+      <div
+        style={{
+          width: BACK.info.row.label.w,
+          fontSize: BACK.info.row.label.fontSize,
+          fontWeight: 700,
+          color: '#ffffff',
+        }}
+      >
         {label}
       </div>
-      <div style={{ width: BACK.info.row.colon.w, fontSize: BACK.info.row.label.fontSize, fontWeight: 700, color: '#ffffff', opacity: 0.9 }}>:</div>
-      <div style={{ flex: 1, fontSize: BACK.info.row.value.fontSize, fontWeight: 600, color: '#ffffff' }}>{value}</div>
+      <div
+        style={{
+          width: BACK.info.row.colon.w,
+          fontSize: BACK.info.row.label.fontSize,
+          fontWeight: 700,
+          color: '#ffffff',
+          opacity: 0.9,
+        }}
+      >
+        :
+      </div>
+      <div
+        style={{
+          flex: 1,
+          fontSize: BACK.info.row.value.fontSize,
+          fontWeight: 600,
+          color: '#ffffff',
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -231,10 +284,24 @@ function PatternWeb({ name, side }: { name: string; side: 'front' | 'back' }) {
         <div
           key={i}
           className="absolute left-[-80px] right-[-80px] flex justify-center"
-          style={{ top: cfg.top + i * cfg.stepY, gap: cfg.gapX, opacity: cfg.opacity, transform: `rotate(${cfg.angle}deg)` }}
+          style={{
+            top: cfg.top + i * cfg.stepY,
+            gap: cfg.gapX,
+            opacity: cfg.opacity,
+            transform: `rotate(${cfg.angle}deg)`,
+          }}
         >
           {row.map((w, j) => (
-            <span key={j} style={{ fontSize: cfg.fontSize, letterSpacing: cfg.letterSpacing, color: cfg.color, fontWeight: 900, whiteSpace: 'nowrap' }}>
+            <span
+              key={j}
+              style={{
+                fontSize: cfg.fontSize,
+                letterSpacing: cfg.letterSpacing,
+                color: cfg.color,
+                fontWeight: 900,
+                whiteSpace: 'nowrap',
+              }}
+            >
               {w}
             </span>
           ))}
@@ -245,7 +312,17 @@ function PatternWeb({ name, side }: { name: string; side: 'front' | 'back' }) {
 }
 
 /** Foto anggota - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onError → 404). */
-function MemberPhotoWeb({ src, iconSrc, crop, iconCls }: { src: string | null; iconSrc: string; crop?: { left: number; top: number; w: number; h: number }; iconCls: string }) {
+function MemberPhotoWeb({
+  src,
+  iconSrc,
+  crop,
+  iconCls,
+}: {
+  src: string | null;
+  iconSrc: string;
+  crop?: { left: number; top: number; w: number; h: number };
+  iconCls: string;
+}) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return <img src={iconSrc} alt="foto" className={iconCls} />;
@@ -256,9 +333,14 @@ function MemberPhotoWeb({ src, iconSrc, crop, iconCls }: { src: string | null; i
       src={src}
       alt="Foto"
       className="absolute max-w-none"
-      style={crop ? { left: crop.left, top: crop.top, width: crop.w, height: crop.h, objectFit: 'cover' } : { width: '100%', height: '100%', objectFit: 'cover' }}
+      style={
+        crop
+          ? { left: crop.left, top: crop.top, width: crop.w, height: crop.h, objectFit: 'cover' }
+          : { width: '100%', height: '100%', objectFit: 'cover' }
+      }
       onError={() => setFailed(true)}
-    />  );
+    />
+  );
 }
 
 /**
@@ -318,10 +400,7 @@ function ScaledCardCanvas({ kind, children }: { kind: 'front' | 'back'; children
         }}
       >
         {/* Clip layout overflow dari canvas 856×540 (trasform scale tidak mengubah layout) */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          style={{ borderRadius: radius }}
-        >
+        <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: radius }}>
           <div
             className="relative"
             style={{
@@ -343,14 +422,29 @@ function ScaledCardCanvas({ kind, children }: { kind: 'front' | 'back'; children
 
 /** Tumpukan strip tingkatan (simbol balok) — dipakai di badge header & InfoRow,.
  * Konsisten dengan desain kartu (pakai `color` dari getLevelVisual/LEVELS). */
-function LevelStrips({ count, color, title, className = '' }: { count: number; color: string; title?: string; className?: string }) {
+function LevelStrips({
+  count,
+  color,
+  title,
+  className = '',
+}: {
+  count: number;
+  color: string;
+  title?: string;
+  className?: string;
+}) {
   if (count <= 0) return null;
   return (
     <span
       title={title}
       aria-hidden
       className={`inline-flex flex-col items-center gap-[2px] rounded-[3px] ${className}`}
-      style={{ width: 18, padding: '2px 3px', backgroundColor: `${color}1f`, border: `1px solid ${color}4d` }}
+      style={{
+        width: 18,
+        padding: '2px 3px',
+        backgroundColor: `${color}1f`,
+        border: `1px solid ${color}4d`,
+      }}
     >
       {Array.from({ length: count }).map((_, i) => (
         <span key={i} style={{ width: 12, height: 3, borderRadius: 1, backgroundColor: color }} />
@@ -371,7 +465,7 @@ export default function MemberDetailPage() {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as 'info' | 'documents' | 'dues' | 'card' | null;
   const [activeTab, setActiveTab] = useState<'info' | 'documents' | 'dues' | 'card'>(
-    tabFromUrl || 'info'
+    tabFromUrl || 'info',
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -384,7 +478,11 @@ export default function MemberDetailPage() {
     signatureImage?: string | null;
     stampImage?: string | null;
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
-    template?: { frontImage?: string | null; backImage?: string | null; overlayConfig?: Record<string, unknown> } | null;
+    template?: {
+      frontImage?: string | null;
+      backImage?: string | null;
+      overlayConfig?: Record<string, unknown>;
+    } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
@@ -393,7 +491,12 @@ export default function MemberDetailPage() {
     qr: { isValid: boolean; scanCount: number; scannedAt: string | null; createdAt: string };
     scanLimit: number;
     scanLeft: number;
-    scanLog: Array<{ id: string; scannedAt: string; ipAddress: string | null; userAgent: string | null }>;
+    scanLog: Array<{
+      id: string;
+      scannedAt: string;
+      ipAddress: string | null;
+      userAgent: string | null;
+    }>;
   } | null>(null);
   const [cardIssuances, setCardIssuances] = useState<Array<{
     id: string;
@@ -436,9 +539,12 @@ export default function MemberDetailPage() {
     setCardError(null);
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${window.location.origin}/api/members/${member.id}/digital-card`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/members/${member.id}/digital-card`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const data = await response.json();
       if (response.ok && data.success) {
         setCardData({
@@ -458,7 +564,7 @@ export default function MemberDetailPage() {
         setCardError(
           response.status === 403
             ? 'Kartu tidak dapat diakses untuk anggota ini: berada di luar cakupan data Anda.'
-            : (data?.message as string) || 'Gagal memuat data kartu.'
+            : (data?.message as string) || 'Gagal memuat data kartu.',
         );
       }
     } catch (err) {
@@ -509,7 +615,9 @@ export default function MemberDetailPage() {
     if (!member) return;
     setActionLoading('card-print');
     try {
-      const { data: res } = await apiClient.post(`/members/${member.id}/digital-card/printed`, { reason });
+      const { data: res } = await apiClient.post(`/members/${member.id}/digital-card/printed`, {
+        reason,
+      });
       toast('success', 'Kartu fisik diterbitkan');
       await Promise.all([fetchCardIssuances(), fetchCardSecurity(), fetchCardData()]);
       if (res?.data?.pdfUrl) {
@@ -526,8 +634,14 @@ export default function MemberDetailPage() {
     if (!member) return;
     setActionLoading(activate ? 'card-activate' : 'card-revoke');
     try {
-      await apiClient.patch(`/members/${member.id}/digital-card/${activate ? 'activate' : 'revoke'}`, {});
-      toast('success', activate ? 'Kartu diaktifkan kembali' : 'Kartu dicabut — QR tidak lagi berlaku');
+      await apiClient.patch(
+        `/members/${member.id}/digital-card/${activate ? 'activate' : 'revoke'}`,
+        {},
+      );
+      toast(
+        'success',
+        activate ? 'Kartu diaktifkan kembali' : 'Kartu dicabut — QR tidak lagi berlaku',
+      );
       await Promise.all([fetchCardSecurity(), fetchCardData()]);
     } catch {
       toast('error', 'Gagal memperbarui status kartu');
@@ -558,9 +672,13 @@ export default function MemberDetailPage() {
       }
       await fetchMember();
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast('error', apiError || `Gagal ${action === 'suspend' ? 'menonaktifkan' : action === 'reactivate' ? 'mengaktifkan kembali' : 'memproses'} anggota`);
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
+      toast(
+        'error',
+        apiError ||
+          `Gagal ${action === 'suspend' ? 'menonaktifkan' : action === 'reactivate' ? 'mengaktifkan kembali' : 'memproses'} anggota`,
+      );
     }
     setActionLoading(null);
   };
@@ -586,8 +704,8 @@ export default function MemberDetailPage() {
       const endpoint =
         format === 'pdf'
           ? `${window.location.origin}/api/members/${memberId}/digital-card/pdf`
-          // PNG digital diberi watermark anti-fotokopi (nama + nomor anggota).
-          : `${window.location.origin}/api/members/${memberId}/digital-card/image?watermark=1`;
+          : // PNG digital diberi watermark anti-fotokopi (nama + nomor anggota).
+            `${window.location.origin}/api/members/${memberId}/digital-card/image?watermark=1`;
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -599,7 +717,10 @@ export default function MemberDetailPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = format === 'pdf' ? `KTA-${member?.nomorAnggota || memberId}.pdf` : `KTA-${member?.nomorAnggota || memberId}.png`;
+      a.download =
+        format === 'pdf'
+          ? `KTA-${member?.nomorAnggota || memberId}.pdf`
+          : `KTA-${member?.nomorAnggota || memberId}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -615,12 +736,15 @@ export default function MemberDetailPage() {
   const previewKTA = async (memberId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${window.location.origin}/api/members/${memberId}/digital-card`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${window.location.origin}/api/members/${memberId}/digital-card`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const data = await response.json();
       if (!data.success) {
-         toast('error', 'Gagal memuat data KTA');
+        toast('error', 'Gagal memuat data KTA');
         return;
       }
 
@@ -636,10 +760,14 @@ export default function MemberDetailPage() {
         .map(() => `<div class="rank-strip" style="background:${lv.color}"></div>`)
         .join('');
       // Foto - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onerror → 404/korup)
-      const photoIconSrc = m.jenisKelamin === 'P' ? `${window.location.origin}/woman-icon.png` : `${window.location.origin}/man-icon.png`;
+      const photoIconSrc =
+        m.jenisKelamin === 'P'
+          ? `${window.location.origin}/woman-icon.png`
+          : `${window.location.origin}/man-icon.png`;
       const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
       const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
-      const cropStyle = (c: ReturnType<typeof photoCrop>) => `position:absolute;left:${c.left}px;top:${c.top}px;width:${c.w}px;height:${c.h}px;object-fit:cover`;
+      const cropStyle = (c: ReturnType<typeof photoCrop>) =>
+        `position:absolute;left:${c.left}px;top:${c.top}px;width:${c.w}px;height:${c.h}px;object-fit:cover`;
       const photoHtml = m.fotoPath
         ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropBig)}" onerror="this.onerror=null;this.src='${photoIconSrc}';this.style.cssText='width:130px;height:130px;object-fit:contain;opacity:0.9'"/>`
         : `<img src="${photoIconSrc}" alt="foto" style="width:130px;height:130px;object-fit:contain;opacity:0.9"/>`;
@@ -652,12 +780,29 @@ export default function MemberDetailPage() {
       const petaUrl = `${window.location.origin}/peta-indonesia.png`;
       const sig = FRONT.signer;
       // Pattern nama miring (anti-fotokopi) untuk print — dikonversi ke HTML inline
-      const patternHtml = (rows: string[][], cfg: { top: number; stepY: number; gapX: number; angle: number; opacity: number; fontSize: number; letterSpacing: number; color: string }) =>
+      const patternHtml = (
+        rows: string[][],
+        cfg: {
+          top: number;
+          stepY: number;
+          gapX: number;
+          angle: number;
+          opacity: number;
+          fontSize: number;
+          letterSpacing: number;
+          color: string;
+        },
+      ) =>
         rows
           .map(
             (row, i) =>
               `<div style="position:absolute;left:-80px;right:-80px;top:${cfg.top + i * cfg.stepY}px;display:flex;justify-content:center;gap:${cfg.gapX}px;transform:rotate(${cfg.angle}deg);opacity:${cfg.opacity}">` +
-              row.map((w) => `<span style="font-size:${cfg.fontSize}px;letter-spacing:${cfg.letterSpacing}px;color:${cfg.color};font-weight:900;white-space:nowrap">${w}</span>`).join('') +
+              row
+                .map(
+                  (w) =>
+                    `<span style="font-size:${cfg.fontSize}px;letter-spacing:${cfg.letterSpacing}px;color:${cfg.color};font-weight:900;white-space:nowrap">${w}</span>`,
+                )
+                .join('') +
               `</div>`,
           )
           .join('');
@@ -753,7 +898,7 @@ export default function MemberDetailPage() {
       win.document.close();
     } catch (err) {
       logError(err, { module: 'Members', action: 'preview-kta' });
-       toast('error', 'Gagal memuat KTA. Silakan coba lagi.');
+      toast('error', 'Gagal memuat KTA. Silakan coba lagi.');
     }
   };
 
@@ -789,8 +934,8 @@ export default function MemberDetailPage() {
     try {
       await apiClient.delete(`/members/${member.id}`);
     } catch (err) {
-      const apiError =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       toast('error', apiError || 'Gagal menghapus anggota');
       setActionLoading(null);
       setShowDeleteModal(false);
@@ -858,1096 +1003,1440 @@ export default function MemberDetailPage() {
   const dadar = fmt.dadar(member.tempatDadar, member.tahunDadar);
 
   return (
-      <PermissionGuard module="members" action="view">
-        <Breadcrumbs suffix={{ href: '#', label: toProperCase(member?.namaLengkap || 'Detail') }} />
-        <div className="space-y-6">
-              {/* ── Back Button ── */}
-              <Link
-                href="/members"
-                className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+    <PermissionGuard module="members" action="view">
+      <Breadcrumbs suffix={{ href: '#', label: toProperCase(member?.namaLengkap || 'Detail') }} />
+      <div className="space-y-6">
+        {/* ── Back Button ── */}
+        <Link
+          href="/members"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          Kembali ke Daftar Anggota
+        </Link>
+
+        {/* ── Profile Header ── */}
+        <ProfileHeader
+          name={toProperCase(member.namaLengkap)}
+          subtitle={orgPath}
+          meta={member.nomorAnggota}
+          hideGradient
+          avatar={{
+            src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
+            onUpload: async (file) => {
+              try {
+                const token = localStorage.getItem('accessToken');
+                const formData = new FormData();
+                formData.append('photo', file);
+                const res = await fetch(`/api/upload/member-photo/${member.id}`, {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${token}` },
+                  body: formData,
+                });
+                const data = await res.json();
+                if (data.success) await fetchMember();
+                else toast('error', data.message || 'Gagal upload foto');
+              } catch {
+                toast('error', 'Gagal upload foto. Silakan coba lagi.');
+              }
+            },
+          }}
+          badges={[
+            <StatusBadge key="keanggotaan" status={member.statusKeanggotaan} bordered />,
+            <StatusBadge key="validasi" status={member.statusValidasi} bordered />,
+            <StatusBadge key="data" status={member.statusData} bordered />,
+            ...(member.tingkat
+              ? [
+                  <span
+                    key="tingkat"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400"
+                  >
+                    <Award size={12} />
+                    {member.tingkat}
+                    {levelVisual.stripCount > 0 && (
+                      <LevelStrips
+                        count={levelVisual.stripCount}
+                        color={levelVisual.color}
+                        title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
+                      />
+                    )}
+                  </span>,
+                ]
+              : []),
+          ]}
+          onRefresh={fetchMember}
+          actions={
+            <>
+              {member.statusValidasi === 'pending' && (
+                <button
+                  onClick={() => handleAction('approve')}
+                  disabled={actionLoading === 'approve'}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                >
+                  <CheckCircle2 size={14} />
+                  {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
+                </button>
+              )}
+              {member.statusKeanggotaan === 'aktif' ? (
+                <button
+                  onClick={() => handleAction('suspend')}
+                  disabled={actionLoading === 'suspend'}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
+                >
+                  <UserX size={14} />
+                  {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
+                </button>
+              ) : member.statusKeanggotaan === 'nonaktif' ? (
+                <button
+                  onClick={() => handleAction('reactivate')}
+                  disabled={actionLoading === 'reactivate'}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                >
+                  <Shield size={14} />
+                  {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
+                </button>
+              ) : null}
+              {member.statusValidasi === 'rejected' && (
+                <button
+                  onClick={() => handleAction('approve')}
+                  disabled={actionLoading === 'approve'}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                >
+                  <BadgeCheck size={14} />
+                  Setujui
+                </button>
+              )}
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
               >
-                <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-                Kembali ke Daftar Anggota
-              </Link>
-        
-              {/* ── Profile Header ── */}
-              <ProfileHeader
-                name={toProperCase(member.namaLengkap)}
-                subtitle={orgPath}
-                meta={member.nomorAnggota}
-                hideGradient
-                avatar={{
-                  src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
-                  onUpload: async (file) => {
-                    try {
-                      const token = localStorage.getItem('accessToken');
-                      const formData = new FormData();
-                      formData.append('photo', file);
-                      const res = await fetch(`/api/upload/member-photo/${member.id}`, {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${token}` },
-                        body: formData,
-                      });
-                      const data = await res.json();
-                      if (data.success) await fetchMember();
-                       else toast('error', data.message || 'Gagal upload foto');
-                    } catch {
-                       toast('error', 'Gagal upload foto. Silakan coba lagi.');
-                    }
-                  },
-                }}
-                badges={[
-                  <StatusBadge key="keanggotaan" status={member.statusKeanggotaan} bordered />,
-                  <StatusBadge key="validasi" status={member.statusValidasi} bordered />,
-                  <StatusBadge key="data" status={member.statusData} bordered />,
-                  ...(member.tingkat ? [
-                    <span key="tingkat" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
-                      <Award size={12} />
-                      {member.tingkat}
-                      {levelVisual.stripCount > 0 && (
-                        <LevelStrips
-                          count={levelVisual.stripCount}
-                          color={levelVisual.color}
-                          title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
-                        />
-                      )}
-                    </span>
-                  ] : []),
-                ]}
-                onRefresh={fetchMember}
-                actions={
-                  <>
-                    {member.statusValidasi === 'pending' && (
-                      <button
-                        onClick={() => handleAction('approve')}
-                        disabled={actionLoading === 'approve'}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                      >
-                        <CheckCircle2 size={14} />
-                        {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
-                      </button>
-                    )}
-                    {member.statusKeanggotaan === 'aktif' ? (
-                      <button
-                        onClick={() => handleAction('suspend')}
-                        disabled={actionLoading === 'suspend'}
-                        className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
-                      >
-                        <UserX size={14} />
-                        {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
-                      </button>
-                    ) : member.statusKeanggotaan === 'nonaktif' ? (
-                      <button
-                        onClick={() => handleAction('reactivate')}
-                        disabled={actionLoading === 'reactivate'}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                      >
-                        <Shield size={14} />
-                        {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
-                      </button>
-                    ) : null}
-                    {member.statusValidasi === 'rejected' && (
-                      <button
-                        onClick={() => handleAction('approve')}
-                        disabled={actionLoading === 'approve'}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
-                      >
-                        <BadgeCheck size={14} />
-                        Setujui
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
-                    >
-                      <Pencil size={14} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={handleResendCredentials}
-                      disabled={actionLoading === 'resend'}
-                      className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
-                    >
-                      <Mail size={14} />
-                      {actionLoading === 'resend' ? 'Mengirim...' : 'Kirim Ulang Credential'}
-                    </button>
-                    <button
-                      onClick={() => setShowDeleteModal(true)}
-                      className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
-                      title="Hapus anggota"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </>
-                }
-              />
-        
-              {/* ── Summary Cards ── */}
-              <DetailStats
-                createdAt={member.createdAt}
-                dokumenCount={dokumenList.length}
-                paidDues={paidDues}
-                totalDues={totalDues}
-                rantingNama={member.ranting?.nama || '-'}
-              />
-        
-              {/* ── Tabs ── */}
-              <div className="border-b border-gray-200 dark:border-gray-700">
-                <div className="flex gap-6">
-                  {[
-                    { key: 'info', label: 'Informasi Pribadi', icon: User },
-                    { key: 'documents', label: `Dokumen (${dokumenList.length})`, icon: FileText },
-                    { key: 'dues', label: `Riwayat Iuran (${totalDues})`, icon: CreditCard },
-                    { key: 'card', label: `Kartu Digital`, icon: IdCard },
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = activeTab === tab.key;
-                    return (
-                      <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                          isActive
-                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        {tab.label}
-                      </button>
-                    );
-                  })}
+                <Pencil size={14} />
+                Edit
+              </button>
+              <button
+                onClick={handleResendCredentials}
+                disabled={actionLoading === 'resend'}
+                className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
+              >
+                <Mail size={14} />
+                {actionLoading === 'resend' ? 'Mengirim...' : 'Kirim Ulang Credential'}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
+                title="Hapus anggota"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          }
+        />
+
+        {/* ── Summary Cards ── */}
+        <DetailStats
+          createdAt={member.createdAt}
+          dokumenCount={dokumenList.length}
+          paidDues={paidDues}
+          totalDues={totalDues}
+          rantingNama={member.ranting?.nama || '-'}
+        />
+
+        {/* ── Tabs ── */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-6">
+            {[
+              { key: 'info', label: 'Informasi Pribadi', icon: User },
+              { key: 'documents', label: `Dokumen (${dokumenList.length})`, icon: FileText },
+              { key: 'dues', label: `Riwayat Iuran (${totalDues})`, icon: CreditCard },
+              { key: 'card', label: `Kartu Digital`, icon: IdCard },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                    isActive
+                      ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  <Icon size={16} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Tab: Info Pribadi ── */}
+        {activeTab === 'info' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Personal Info */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                <User size={18} className="text-blue-500" />
+                Data Pribadi
+              </h3>
+              <div className="space-y-2">
+                <InfoRow
+                  icon={User}
+                  label="Nama Lengkap"
+                  value={toProperCase(member.namaLengkap)}
+                />
+                <InfoRow
+                  icon={User}
+                  label="Jenis Kelamin"
+                  value={member.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
+                />
+                <InfoRow
+                  icon={Calendar}
+                  label="Tempat, Tgl Lahir"
+                  value={
+                    [
+                      member.tempatLahir,
+                      member.tanggalLahir ? formatDate(member.tanggalLahir) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(', ') || null
+                  }
+                />
+                <InfoRow
+                  icon={Calendar}
+                  label="Tempat - Tahun Dadar"
+                  value={
+                    [member.tempatDadar, member.tahunDadar].filter(Boolean).join(' - ') || null
+                  }
+                />
+                <InfoRow icon={MapPin} label="Alamat" value={member.alamat} />
+              </div>
+            </div>
+
+            {/* Contact & Organization */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                  <Mail size={18} className="text-blue-500" />
+                  Kontak
+                </h3>
+                <div className="space-y-2">
+                  <InfoRow
+                    icon={Mail}
+                    label="Email"
+                    value={member.email}
+                    href={member.email ? `mailto:${member.email}` : undefined}
+                  />
+                  <InfoRow
+                    icon={Phone}
+                    label="No. HP"
+                    value={member.noHp}
+                    href={member.noHp ? `tel:${member.noHp}` : undefined}
+                  />
                 </div>
               </div>
-        
-              {/* ── Tab: Info Pribadi ── */}
-              {activeTab === 'info' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Personal Info */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                      <User size={18} className="text-blue-500" />
-                      Data Pribadi
-                    </h3>
-                    <div className="space-y-2">
-                      <InfoRow icon={User} label="Nama Lengkap" value={toProperCase(member.namaLengkap)} />
-                      <InfoRow
-                        icon={User}
-                        label="Jenis Kelamin"
-                        value={member.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
-                      />
-                      <InfoRow
-                        icon={Calendar}
-                        label="Tempat, Tgl Lahir"
-                        value={
-                          [member.tempatLahir, member.tanggalLahir ? formatDate(member.tanggalLahir) : null]
-                            .filter(Boolean)
-                            .join(', ') || null
-                        }
-                      />
-                      <InfoRow
-                        icon={Calendar}
-                        label="Tempat - Tahun Dadar"
-                        value={
-                          [member.tempatDadar, member.tahunDadar]
-                            .filter(Boolean)
-                            .join(' - ') || null
-                        }
-                      />
-                      <InfoRow icon={MapPin} label="Alamat" value={member.alamat} />
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                  <Users size={18} className="text-blue-500" />
+                  Organisasi
+                </h3>
+                <div className="space-y-2">
+                  <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <div className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-sm">
+                      <Award size={16} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                  </div>
-        
-                  {/* Contact & Organization */}
-                  <div className="space-y-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                        <Mail size={18} className="text-blue-500" />
-                        Kontak
-                      </h3>
-                      <div className="space-y-2">
-                        <InfoRow
-                          icon={Mail}
-                          label="Email"
-                          value={member.email}
-                          href={member.email ? `mailto:${member.email}` : undefined}
-                        />
-                        <InfoRow
-                          icon={Phone}
-                          label="No. HP"
-                          value={member.noHp}
-                          href={member.noHp ? `tel:${member.noHp}` : undefined}
-                        />
-                      </div>
-                    </div>
-        
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                        <Users size={18} className="text-blue-500" />
-                        Organisasi
-                      </h3>
-                      <div className="space-y-2">
-                        <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
-                        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                          <div className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-sm">
-                            <Award size={16} className="text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                              Tingkatan
-                            </p>
-                            {member.tingkat ? (
-                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {member.tingkat}
-                                </span>
-                                {levelVisual.stripCount > 0 && (
-                                  <LevelStrips
-                                    count={levelVisual.stripCount}
-                                    color={levelVisual.color}
-                                    title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
-                                  />
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-sm font-medium text-gray-400 dark:text-gray-500 italic mt-0.5">
-                                Tidak ada data
-                              </p>
-                            )}
-                          </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        Tingkatan
+                      </p>
+                      {member.tingkat ? (
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {member.tingkat}
+                          </span>
+                          {levelVisual.stripCount > 0 && (
+                            <LevelStrips
+                              count={levelVisual.stripCount}
+                              color={levelVisual.color}
+                              title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
+                            />
+                          )}
                         </div>
-                        <InfoRow
-                          icon={Calendar}
-                          label="Terakhir Diperbarui"
-                          value={formatDate(member.updatedAt)}
-                        />
-                      </div>
+                      ) : (
+                        <p className="text-sm font-medium text-gray-400 dark:text-gray-500 italic mt-0.5">
+                          Tidak ada data
+                        </p>
+                      )}
                     </div>
                   </div>
+                  <InfoRow
+                    icon={Calendar}
+                    label="Terakhir Diperbarui"
+                    value={formatDate(member.updatedAt)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Dokumen ── */}
+        {activeTab === 'documents' && (
+          <div className="space-y-4">
+            {/* Ringkasan per tipe dokumen */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {(
+                [
+                  'kartu_anggota',
+                  'sertifikat_pendadaran',
+                  'sertifikat_pelatihan',
+                  'piagam_prestasi',
+                ] as const
+              ).map((t) => {
+                const count = dokumenList.filter((d: DocumentItem) => d.tipe === t).length;
+                return (
+                  <div
+                    key={t}
+                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4"
+                  >
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {DOKUMEN_TIPE_LABEL[t]}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{count}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <FileText size={18} className="text-blue-500" />
+                  Daftar Dokumen
+                </h3>
+                <span className="text-xs text-gray-400">{dokumenList.length} dokumen</span>
+              </div>
+              {dokumenList.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Tipe Dokumen
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          No. Dokumen
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Status
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                          Dibuat
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                          Diperbarui
+                        </th>
+                        <th className="text-right px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Aksi
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {member.dokumen.map((doc) => {
+                        const statusMeta = docStatusMeta(doc.status);
+                        const verifyToken = docVerificationToken(doc.verificationUrl);
+                        const filePath = doc.filePath;
+                        return (
+                          <tr
+                            key={doc.id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                          >
+                            <td className="px-5 py-3">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {DOKUMEN_TIPE_LABEL[doc.tipe] || doc.tipe || '-'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className="font-mono text-xs text-blue-700 dark:text-blue-400">
+                                {doc.nomorDokumen || '-'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusMeta.className || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
+                              >
+                                {statusMeta.label}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
+                              {formatDate(doc.createdAt)}
+                            </td>
+                            <td className="px-5 py-3 hidden lg:table-cell text-xs text-gray-500">
+                              {doc.updatedAt ? formatDate(doc.updatedAt) : '-'}
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {doc.tipe === 'kartu_anggota' && (
+                                  <>
+                                    <button
+                                      onClick={() => downloadKTA(member!.id, 'pdf')}
+                                      className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
+                                      title="Download PDF KTA"
+                                    >
+                                      <Download size={14} className="text-red-500" />
+                                    </button>
+                                    <button
+                                      onClick={() => downloadKTA(member!.id, 'image')}
+                                      className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-950 transition"
+                                      title="Download PNG KTA"
+                                    >
+                                      <Image size={14} className="text-green-600" />
+                                    </button>
+                                  </>
+                                )}
+                                {doc.tipe !== 'kartu_anggota' && filePath && (
+                                  <button
+                                    onClick={() =>
+                                      downloadDocumentFile(
+                                        doc.id,
+                                        `${doc.nomorDokumen || 'dokumen'}${
+                                          filePath.toLowerCase().endsWith('.png') ? '.png' : '.pdf'
+                                        }`,
+                                      )
+                                    }
+                                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
+                                    title="Download File"
+                                  >
+                                    <Download size={14} className="text-red-500" />
+                                  </button>
+                                )}
+                                {verifyToken && (
+                                  <Link
+                                    href={`/verify/${verifyToken}`}
+                                    target="_blank"
+                                    className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                                    title="Verifikasi Dokumen"
+                                  >
+                                    <BadgeCheck size={14} className="text-blue-600" />
+                                  </Link>
+                                )}
+                                <Link
+                                  href={`/documents/${doc.id}`}
+                                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                  title="Lihat Detail"
+                                >
+                                  <ExternalLink size={14} className="text-gray-400" />
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Dokumen akan muncul setelah di-generate
+                  </p>
                 </div>
               )}
-        
-              {/* ── Tab: Dokumen ── */}
-              {activeTab === 'documents' && (
-                <div className="space-y-4">
-                  {/* Ringkasan per tipe dokumen */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {(['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] as const).map((t) => {
-                      const count = dokumenList.filter((d: DocumentItem) => d.tipe === t).length;
-                      return (
-                        <div key={t} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{DOKUMEN_TIPE_LABEL[t]}</p>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{count}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+            </div>
+          </div>
+        )}
 
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <FileText size={18} className="text-blue-500" />
-                        Daftar Dokumen
-                      </h3>
-                      <span className="text-xs text-gray-400">{dokumenList.length} dokumen</span>
-                    </div>
-                    {dokumenList.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Tipe Dokumen
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                No. Dokumen
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Status
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                                Dibuat
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">
-                                Diperbarui
-                              </th>
-                              <th className="text-right px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Aksi
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {member.dokumen.map((doc) => {
-                              const statusMeta = docStatusMeta(doc.status);
-                              const verifyToken = docVerificationToken(doc.verificationUrl);
-                              const filePath = doc.filePath;
-                              return (
-                                <tr
-                                  key={doc.id}
-                                  className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
-                                >
-                                  <td className="px-5 py-3">
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                      {DOKUMEN_TIPE_LABEL[doc.tipe] || doc.tipe || '-'}
-                                    </span>
-                                  </td>
-                                  <td className="px-5 py-3">
-                                    <span className="font-mono text-xs text-blue-700 dark:text-blue-400">
-                                      {doc.nomorDokumen || '-'}
-                                    </span>
-                                  </td>
-                                  <td className="px-5 py-3">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusMeta.className || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
-                                      {statusMeta.label}
-                                    </span>
-                                  </td>
-                                  <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
-                                    {formatDate(doc.createdAt)}
-                                  </td>
-                                  <td className="px-5 py-3 hidden lg:table-cell text-xs text-gray-500">
-                                    {doc.updatedAt ? formatDate(doc.updatedAt) : '-'}
-                                  </td>
-                                  <td className="px-5 py-3 text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                      {doc.tipe === 'kartu_anggota' && (
-                                        <>
-                                          <button
-                                            onClick={() => downloadKTA(member!.id, 'pdf')}
-                                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
-                                            title="Download PDF KTA"
-                                          >
-                                            <Download size={14} className="text-red-500" />
-                                          </button>
-                                          <button
-                                            onClick={() => downloadKTA(member!.id, 'image')}
-                                            className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-950 transition"
-                                            title="Download PNG KTA"
-                                          >
-                                            <Image size={14} className="text-green-600" />
-                                          </button>
-                                        </>
-                                      )}
-                                      {doc.tipe !== 'kartu_anggota' && filePath && (
-                                        <button
-                                          onClick={() =>
-                                            downloadDocumentFile(
-                                              doc.id,
-                                              `${doc.nomorDokumen || 'dokumen'}${
-                                                filePath.toLowerCase().endsWith('.png') ? '.png' : '.pdf'
-                                              }`,
-                                            )
-                                          }
-                                          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
-                                          title="Download File"
-                                        >
-                                          <Download size={14} className="text-red-500" />
-                                        </button>
-                                      )}
-                                      {verifyToken && (
-                                        <Link
-                                          href={`/verify/${verifyToken}`}
-                                          target="_blank"
-                                          className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                                          title="Verifikasi Dokumen"
-                                        >
-                                          <BadgeCheck size={14} className="text-blue-600" />
-                                        </Link>
-                                      )}
-                                      <Link
-                                        href={`/documents/${doc.id}`}
-                                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                                        title="Lihat Detail"
-                                      >
-                                        <ExternalLink size={14} className="text-gray-400" />
-                                      </Link>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+        {/* ── Tab: Kartu Digital ── */}
+        {activeTab === 'card' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <IdCard size={20} className="text-blue-500" />
+                Kartu Anggota Digital (KTA)
+              </h3>
+              <button
+                onClick={fetchCardData}
+                disabled={cardLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={cardLoading ? 'animate-spin' : ''} />
+                {cardLoading ? 'Memuat...' : 'Refresh'}
+              </button>
+            </div>
+
+            {/* Loading State */}
+            {cardLoading && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Memuat data kartu anggota...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Error banner - data kartu gagal dimuat (jgn diam-diam tampilkan placeholder) */}
+            {cardError && (
+              <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={20} className="text-red-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      {cardError}
+                    </p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Pratinjau di bawah menampilkan desain generik dan bukan cap/isi kartu
+                      sebenarnya.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={fetchCardData}
+                  disabled={cardLoading}
+                  className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={cardLoading ? 'animate-spin' : ''} />
+                  Coba lagi
+                </button>
+              </div>
+            )}
+
+            {/* Card Previews - hidden during loading */}
+            <div className={`space-y-6 ${cardLoading ? 'hidden' : ''}`}>
+              {/* Front Side Preview - geometri 856×540 dari packages/card-design (sumber tunggal) */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Sisi Depan
+                </h4>
+                <ScaledCardCanvas kind="front">
+                  {cardSpec.hasFrontImage ? (
+                    /* Template aktif: gambar desain depan sebagai latar (menggantikan dekorasi bawaan) */
+                    <img
+                      src={`/api/uploads/${encodeURIComponent(cardSpec.template!.frontImage!)}`}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    /* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */
+                    <>
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        dangerouslySetInnerHTML={{
+                          __html: decorFrontSvg().replace(
+                            '<svg ',
+                            '<svg style="width:100%;height:100%" ',
+                          ),
+                        }}
+                      />
+                      {/* Lingkaran dekorasi (sinkron dgn mobile & API SVG) */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div
+                          className="absolute rounded-full"
+                          style={{
+                            left: 776 - 160,
+                            top: 80 - 160,
+                            width: 320,
+                            height: 320,
+                            backgroundColor: 'rgba(6,182,212,0.15)',
+                          }}
+                        />
+                        <div
+                          className="absolute rounded-full"
+                          style={{
+                            left: 80 - 190,
+                            top: 270 - 190,
+                            width: 380,
+                            height: 380,
+                            backgroundColor: 'rgba(29,78,216,0.08)',
+                          }}
+                        />
                       </div>
-                    ) : (
-                      <div className="text-center py-10">
-                        <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          Dokumen akan muncul setelah di-generate
-                        </p>
+                    </>
+                  )}
+                  {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
+                  {cardSpec.guilloche.front && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      dangerouslySetInnerHTML={{
+                        __html: guillocheSvg('front', cardSpec.guilloche.strokeFront).replace(
+                          '<svg ',
+                          '<svg style="width:100%;height:100%" ',
+                        ),
+                      }}
+                    />
+                  )}
+
+                  {/* Watermark - peta indonesia.png tint biru navy (sama dgn mobile), opacity dari spec (default 0.35) */}
+                  {cardSpec.watermark.front && (
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: FRONT.watermark.left,
+                        top: FRONT.watermark.top,
+                        width: FRONT.watermark.w,
+                        height: FRONT.watermark.h,
+                        opacity: cardSpec.watermark.opacity ?? 0.35,
+                      }}
+                    >
+                      <div
+                        className="w-full h-full"
+                        style={{
+                          backgroundColor: '#1A2E40',
+                          WebkitMaskImage: 'url(/peta-indonesia.png)',
+                          maskImage: 'url(/peta-indonesia.png)',
+                          WebkitMaskSize: 'contain',
+                          maskSize: 'contain',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskPosition: 'center',
+                          maskPosition: 'center',
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.front */}
+                  <PatternWeb name={member.namaLengkap || 'THS-THM'} side="front" />
+
+                  <div className="relative z-10 h-full">
+                    {/* Header - 4 baris + logo utuh */}
+                    <div
+                      className="flex items-start text-white"
+                      style={{
+                        padding: `${FRONT.header.padTop}px ${FRONT.header.padH}px`,
+                        gap: FRONT.header.gap,
+                      }}
+                    >
+                      <div
+                        className="relative rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
+                        style={{ width: FRONT.logo.size, height: FRONT.logo.size }}
+                      >
+                        <img
+                          src="/logo.svg"
+                          alt="THS-THM"
+                          style={{
+                            width: FRONT.logo.img,
+                            height: FRONT.logo.img,
+                            objectFit: 'contain',
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
+                      </div>
+                      <div style={{ lineHeight: `${FRONT.header.row.lineHeight}px` }}>
+                        {[
+                          { t: 'KARTU TANDA ANGGOTA', sp: FRONT.header.row.spacing[0] },
+                          {
+                            t: 'ORGANISASI PENCAK SILAT PENDIDIKAN',
+                            sp: FRONT.header.row.spacing[1],
+                          },
+                          {
+                            t: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA',
+                            sp: FRONT.header.row.spacing[2],
+                          },
+                          {
+                            t: `DISTRIK KEUSKUPAN ${(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`,
+                            sp: FRONT.header.row.spacing[3],
+                          },
+                        ].map((row, i) => (
+                          <div
+                            key={i}
+                            className="font-bold"
+                            style={{
+                              fontSize: FRONT.header.row.fontSize,
+                              fontFamily: 'Open Sans',
+                              fontWeight: 700,
+                              letterSpacing: row.sp,
+                              marginTop: i > 0 ? FRONT.header.row.rowGap : 0,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {row.t}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Photo besar kiri - TANPA bingkai; fallback siluet man/woman-icon (onError) */}
+                    <div
+                      className="absolute overflow-hidden flex items-center justify-center"
+                      style={{
+                        left: FRONT.photo.big.left,
+                        top: FRONT.photo.big.top,
+                        width: FRONT.photo.big.w,
+                        height: FRONT.photo.big.h,
+                      }}
+                    >
+                      <MemberPhotoWeb
+                        src={
+                          member.fotoPath
+                            ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
+                            : null
+                        }
+                        iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
+                        crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
+                        iconCls="w-[130px] h-[130px] object-contain opacity-90"
+                      />
+                    </div>
+
+                    {/* Photo kecil kanan atas - TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
+                    <div
+                      className="absolute overflow-hidden flex items-center justify-center"
+                      style={{
+                        right: FRONT.photo.small.right,
+                        top: FRONT.photo.small.top,
+                        width: FRONT.photo.small.w,
+                        height: FRONT.photo.small.h,
+                      }}
+                    >
+                      <MemberPhotoWeb
+                        src={
+                          member.fotoPath
+                            ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
+                            : null
+                        }
+                        iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
+                        crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
+                        iconCls="w-[100px] h-[100px] object-contain opacity-90"
+                      />
+                    </div>
+
+                    {/* Level rank - DI BAWAH photo kecil (kanan atas); sembunyi utk 'Anggota' */}
+                    {levelVisual.stripCount > 0 && (
+                      <div
+                        className="absolute"
+                        style={{
+                          right: FRONT.rank.right,
+                          top: FRONT.rank.top,
+                          width: FRONT.rank.w,
+                        }}
+                      >
+                        <div
+                          className="text-center font-black"
+                          style={{
+                            fontSize: FRONT.rank.name.fontSize,
+                            color: COLORS.rankText,
+                            letterSpacing: FRONT.rank.name.letterSpacing,
+                            marginBottom: FRONT.rank.name.marginBottom,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {(member.tingkat || levelVisual.label || '').toUpperCase()}
+                        </div>
+                        <div className="flex flex-col" style={{ gap: FRONT.rank.strip.gap }}>
+                          {Array.from({ length: levelVisual.stripCount }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="w-full rounded-sm border border-black/25"
+                              style={{
+                                height: FRONT.rank.strip.h,
+                                borderRadius: FRONT.rank.strip.radius,
+                                backgroundColor: levelVisual.color,
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
-        
-              {/* ── Tab: Kartu Digital ── */}
-              {activeTab === 'card' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <IdCard size={20} className="text-blue-500" />
-                      Kartu Anggota Digital (KTA)
-                    </h3>
-                    <button
-                      onClick={fetchCardData}
-                      disabled={cardLoading}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition disabled:opacity-50"
-                    >
-                      <RefreshCw size={16} className={cardLoading ? 'animate-spin' : ''} />
-                      {cardLoading ? 'Memuat...' : 'Refresh'}
-                    </button>
-                  </div>
 
-                  {/* Loading State */}
-                  {cardLoading && (
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
-                      <div className="flex flex-col items-center justify-center gap-4">
-                        <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data kartu anggota...</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error banner - data kartu gagal dimuat (jgn diam-diam tampilkan placeholder) */}
-                  {cardError && (
-                    <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle size={20} className="text-red-500 mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-red-800 dark:text-red-200">{cardError}</p>
-                          <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                            Pratinjau di bawah menampilkan desain generik dan bukan cap/isi kartu sebenarnya.
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={fetchCardData}
-                        disabled={cardLoading}
-                        className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition disabled:opacity-50"
-                      >
-                        <RefreshCw size={14} className={cardLoading ? 'animate-spin' : ''} />
-                        Coba lagi
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Card Previews - hidden during loading */}
-                  <div className={`space-y-6 ${cardLoading ? 'hidden' : ''}`}>
-                  {/* Front Side Preview - geometri 856×540 dari packages/card-design (sumber tunggal) */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
-                    <ScaledCardCanvas kind="front">
-                    {cardSpec.hasFrontImage ? (
-                        /* Template aktif: gambar desain depan sebagai latar (menggantikan dekorasi bawaan) */
-                        <img
-                          src={`/api/uploads/${encodeURIComponent(cardSpec.template!.frontImage!)}`}
-                          alt=""
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        /* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */
-                        <>
-                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorFrontSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                        {/* Lingkaran dekorasi (sinkron dgn mobile & API SVG) */}
-                        <div className="absolute inset-0 pointer-events-none">
-                          <div className="absolute rounded-full" style={{ left: 776 - 160, top: 80 - 160, width: 320, height: 320, backgroundColor: 'rgba(6,182,212,0.15)' }} />
-                          <div className="absolute rounded-full" style={{ left: 80 - 190, top: 270 - 190, width: 380, height: 380, backgroundColor: 'rgba(29,78,216,0.08)' }} />
-                        </div>
-                        </>
-                      )}
-                      {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
-                      {cardSpec.guilloche.front && (
-                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('front', cardSpec.guilloche.strokeFront).replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      )}
-
-                      {/* Watermark - peta indonesia.png tint biru navy (sama dgn mobile), opacity dari spec (default 0.35) */}
-                      {cardSpec.watermark.front && (
-                        <div
-                          className="absolute pointer-events-none"
-                          style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h, opacity: cardSpec.watermark.opacity ?? 0.35 }}
-                        >
-                          <div
-                            className="w-full h-full"
-                            style={{
-                              backgroundColor: '#1A2E40',
-                              WebkitMaskImage: 'url(/peta-indonesia.png)',
-                              maskImage: 'url(/peta-indonesia.png)',
-                              WebkitMaskSize: 'contain',
-                              maskSize: 'contain',
-                              WebkitMaskRepeat: 'no-repeat',
-                              maskRepeat: 'no-repeat',
-                              WebkitMaskPosition: 'center',
-                              maskPosition: 'center',
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.front */}
-                      <PatternWeb name={member.namaLengkap || 'THS-THM'} side="front" />
-
-                      <div className="relative z-10 h-full">
-                        {/* Header - 4 baris + logo utuh */}
-                        <div className="flex items-start text-white" style={{ padding: `${FRONT.header.padTop}px ${FRONT.header.padH}px`, gap: FRONT.header.gap }}>
-                          <div
-                            className="relative rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
-                            style={{ width: FRONT.logo.size, height: FRONT.logo.size }}
-                          >
-                            <img src="/logo.svg" alt="THS-THM" style={{ width: FRONT.logo.img, height: FRONT.logo.img, objectFit: 'contain' }} />
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
-                          </div>
-                          <div style={{ lineHeight: `${FRONT.header.row.lineHeight}px` }}>
-                            {[
-                              { t: 'KARTU TANDA ANGGOTA', sp: FRONT.header.row.spacing[0] },
-                              { t: 'ORGANISASI PENCAK SILAT PENDIDIKAN', sp: FRONT.header.row.spacing[1] },
-                              { t: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA', sp: FRONT.header.row.spacing[2] },
-                              { t: `DISTRIK KEUSKUPAN ${(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`, sp: FRONT.header.row.spacing[3] },
-                            ].map((row, i) => (
-                              <div key={i} className="font-bold" style={{ fontSize: FRONT.header.row.fontSize, fontFamily: 'Open Sans', fontWeight: 700, letterSpacing: row.sp, marginTop: i > 0 ? FRONT.header.row.rowGap : 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {row.t}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Photo besar kiri - TANPA bingkai; fallback siluet man/woman-icon (onError) */}
-                        <div className="absolute overflow-hidden flex items-center justify-center" style={{ left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h }}>
-                          <MemberPhotoWeb
-                            src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
-                            iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
-                            crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
-                            iconCls="w-[130px] h-[130px] object-contain opacity-90"
-                          />
-                        </div>
-
-                        {/* Photo kecil kanan atas - TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
-                        <div className="absolute overflow-hidden flex items-center justify-center" style={{ right: FRONT.photo.small.right, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }}>
-                          <MemberPhotoWeb
-                            src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
-                            iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
-                            crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
-                            iconCls="w-[100px] h-[100px] object-contain opacity-90"
-                          />
-                        </div>
-
-                        {/* Level rank - DI BAWAH photo kecil (kanan atas); sembunyi utk 'Anggota' */}
-                        {levelVisual.stripCount > 0 && (
-                          <div className="absolute" style={{ right: FRONT.rank.right, top: FRONT.rank.top, width: FRONT.rank.w }}>
-                            <div
-                              className="text-center font-black"
-                              style={{ fontSize: FRONT.rank.name.fontSize, color: COLORS.rankText, letterSpacing: FRONT.rank.name.letterSpacing, marginBottom: FRONT.rank.name.marginBottom, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                            >
-                              {(member.tingkat || levelVisual.label || '').toUpperCase()}
-                            </div>
-                            <div className="flex flex-col" style={{ gap: FRONT.rank.strip.gap }}>
-                              {Array.from({ length: levelVisual.stripCount }).map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="w-full rounded-sm border border-black/25"
-                                  style={{ height: FRONT.rank.strip.h, borderRadius: FRONT.rank.strip.radius, backgroundColor: levelVisual.color }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20.
+                    {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20.
                             Murni absolute sesuai spec (left 250 / top 164 / right 176) — JANGAN timpa dengan
                             position relative, itu menggeser blok info ke bawah dan menimpa area bawah kartu. */}
-                        <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right }}>
-                          <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
-                          <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
-                          {/* Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama.
+                    <div
+                      className="absolute z-20"
+                      style={{
+                        left: FRONT.info.left,
+                        top: FRONT.info.top,
+                        right: FRONT.info.right,
+                      }}
+                    >
+                      <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
+                      <InfoPreview
+                        label="No. Anggota"
+                        value={(member.nomorAnggota || '-').toUpperCase()}
+                        strong
+                      />
+                      {/* Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama.
                               Struktur sesuai CSS kanonik packages/card-design (.info-pair): kolom kiri flex:1
                               (= infoW - jk.w - jk.marginLeft = 346), jk-box 44px + marginLeft 40 → teks JK
                               mulai di x = infoX + infoW - jk.w = 636 (sama dgn mobile, PDF, SVG API). */}
-                          <div className="flex">
-                            <div className="min-w-0" style={{ flex: 1 }}>
-                              <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
-                            </div>
-                            <div style={{ width: FRONT.info.jk.w, marginLeft: FRONT.info.jk.marginLeft, flexShrink: 0 }}>
-                              <div
-                                style={{ fontSize: FRONT.info.label.fontSize, fontWeight: 800, color: COLORS.label, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing }}
-                              >
-                                JK
-                              </div>
-                              <div className="font-ocr" style={{ fontSize: FRONT.info.value.fontSize, fontWeight: 700, color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop, lineHeight: `${FRONT.info.value.lineHeight}px` }}>
-                                {member.jenisKelamin === 'P' ? 'P' : 'L'}
-                              </div>
-                            </div>
-                          </div>
-                          <InfoPreview label="Tempat, Tanggal Lahir" value={ttl.toUpperCase()} />
-                          <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
-                          <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
+                      <div className="flex">
+                        <div className="min-w-0" style={{ flex: 1 }}>
+                          <InfoPreview
+                            label="Nama"
+                            value={(member.namaLengkap || '-').toUpperCase()}
+                          />
                         </div>
-
-                        {/* Bottom - jarak bawah sama dengan jarak atas header */}
-                        <div className="absolute" style={{ left: FRONT.bottom.left, bottom: FRONT.bottom.bottom }}>
-                          <div style={{ fontSize: FRONT.bottom.label.fontSize, fontWeight: 700, color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom, whiteSpace: 'nowrap' }}>
-                            Berlaku sampai
+                        <div
+                          style={{
+                            width: FRONT.info.jk.w,
+                            marginLeft: FRONT.info.jk.marginLeft,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: FRONT.info.label.fontSize,
+                              fontWeight: 800,
+                              color: COLORS.label,
+                              textTransform: 'uppercase',
+                              letterSpacing: FRONT.info.label.letterSpacing,
+                            }}
+                          >
+                            JK
                           </div>
-                          <div className="font-['Roboto']" style={{ fontSize: FRONT.bottom.value.fontSize, fontWeight: 700, color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop, whiteSpace: 'nowrap' }}>
-                            {validUntilText}
+                          <div
+                            className="font-ocr"
+                            style={{
+                              fontSize: FRONT.info.value.fontSize,
+                              fontWeight: 700,
+                              color: FRONT.info.value.color,
+                              marginTop: FRONT.info.value.marginTop,
+                              lineHeight: `${FRONT.info.value.lineHeight}px`,
+                            }}
+                          >
+                            {member.jenisKelamin === 'P' ? 'P' : 'L'}
                           </div>
                         </div>
+                      </div>
+                      <InfoPreview label="Tempat, Tanggal Lahir" value={ttl.toUpperCase()} />
+                      <InfoPreview
+                        label="Ranting"
+                        value={(member.ranting?.nama || '-').toUpperCase()}
+                      />
+                      <InfoPreview
+                        label="Wilayah"
+                        value={(member.ranting?.wilayah?.nama || '-').toUpperCase()}
+                      />
+                    </div>
 
-                        {/* Signer - teks RATA-KIRI: batas kanan ditentukan baris terpanjang; stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
-                        <div className="absolute text-left" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
-                          <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            KOORDINATORAT DISTRIK THS-THM
-                          </div>
-                          <div className="absolute font-bold font-['Roboto']" style={{ left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            KEUSKUPAN {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}
-                          </div>
-                          <div className="absolute" style={{ left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
-                            <div
-                              className="absolute rounded-full overflow-hidden flex items-center justify-center border-2"
-                              style={{
-                                left: FRONT.signer.stamp.left,
-                                top: FRONT.signer.stamp.top,
-                                width: FRONT.signer.stamp.size,
-                                height: FRONT.signer.stamp.size,
-                                borderColor: COLORS.stampBorder,
-                                transform: `rotate(${FRONT.signer.stamp.rotate}deg)`,
-                                fontSize: FRONT.signer.stamp.text.fontSize,
-                                fontWeight: 900,
-                                color: COLORS.stampText,
-                              }}
-                            >
-                              {cardData?.stampImage ? (
-                                <img src={`/api/uploads/${encodeURIComponent(cardData.stampImage)}`} alt="stempel" className="w-full h-full object-cover" />
-                              ) : (
-                                <span>STEMPEL</span>
-                              )}
-                            </div>
-                            {cardData?.signatureImage ? (
-                              <div className="absolute" style={{ left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h }}>
-                                {[0, 1, 2].map((k) => (
-                                  <img
-                                    key={k}
-                                    src={`/api/uploads/${encodeURIComponent(cardData?.signatureImage ?? '')}`}
-                                    alt="ttd"
-                                    className="absolute left-0 top-0"
-                                    style={{
-                                      width: '100%',
-                                      height: '100%',
-                                      objectFit: 'contain',
-                                      opacity: 0.7,
-                                      transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            ) : (
-                              <div
-                                className="absolute flex items-center justify-center"
+                    {/* Bottom - jarak bawah sama dengan jarak atas header */}
+                    <div
+                      className="absolute"
+                      style={{ left: FRONT.bottom.left, bottom: FRONT.bottom.bottom }}
+                    >
+                      <div
+                        style={{
+                          fontSize: FRONT.bottom.label.fontSize,
+                          fontWeight: 700,
+                          color: FRONT.bottom.label.color,
+                          marginBottom: FRONT.bottom.label.marginBottom,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Berlaku sampai
+                      </div>
+                      <div
+                        className="font-['Roboto']"
+                        style={{
+                          fontSize: FRONT.bottom.value.fontSize,
+                          fontWeight: 700,
+                          color: FRONT.bottom.value.color,
+                          marginTop: FRONT.bottom.value.marginTop,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {validUntilText}
+                      </div>
+                    </div>
+
+                    {/* Signer - teks RATA-KIRI: batas kanan ditentukan baris terpanjang; stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
+                    <div
+                      className="absolute text-left"
+                      style={{
+                        right: FRONT.signer.right,
+                        bottom: FRONT.signer.bottom,
+                        width: FRONT.signer.w,
+                        height: FRONT.signer.h,
+                        color: COLORS.value,
+                      }}
+                    >
+                      <div
+                        className="absolute font-black font-['Roboto']"
+                        style={{
+                          left: FRONT.signer.title1.left,
+                          top: FRONT.signer.title1.top,
+                          fontSize: FRONT.signer.title1.fontSize,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        KOORDINATORAT DISTRIK THS-THM
+                      </div>
+                      <div
+                        className="absolute font-bold font-['Roboto']"
+                        style={{
+                          left: FRONT.signer.title2.left,
+                          top: FRONT.signer.title2.top,
+                          fontSize: FRONT.signer.title2.fontSize,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        KEUSKUPAN{' '}
+                        {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM')
+                          .replace(/^keuskupan\s*/i, '')
+                          .toUpperCase()}
+                      </div>
+                      <div
+                        className="absolute"
+                        style={{
+                          left: FRONT.signer.wrap.left,
+                          top: FRONT.signer.wrap.top,
+                          width: FRONT.signer.wrap.w,
+                          height: FRONT.signer.wrap.h,
+                        }}
+                      >
+                        <div
+                          className="absolute rounded-full overflow-hidden flex items-center justify-center border-2"
+                          style={{
+                            left: FRONT.signer.stamp.left,
+                            top: FRONT.signer.stamp.top,
+                            width: FRONT.signer.stamp.size,
+                            height: FRONT.signer.stamp.size,
+                            borderColor: COLORS.stampBorder,
+                            transform: `rotate(${FRONT.signer.stamp.rotate}deg)`,
+                            fontSize: FRONT.signer.stamp.text.fontSize,
+                            fontWeight: 900,
+                            color: COLORS.stampText,
+                          }}
+                        >
+                          {cardData?.stampImage ? (
+                            <img
+                              src={`/api/uploads/${encodeURIComponent(cardData.stampImage)}`}
+                              alt="stempel"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>STEMPEL</span>
+                          )}
+                        </div>
+                        {cardData?.signatureImage ? (
+                          <div
+                            className="absolute"
+                            style={{
+                              left: FRONT.signer.sig.left,
+                              top: FRONT.signer.sig.top,
+                              width: FRONT.signer.sig.w,
+                              height: FRONT.signer.sig.h,
+                            }}
+                          >
+                            {[0, 1, 2].map((k) => (
+                              <img
+                                key={k}
+                                src={`/api/uploads/${encodeURIComponent(cardData?.signatureImage ?? '')}`}
+                                alt="ttd"
+                                className="absolute left-0 top-0"
                                 style={{
-                                  left: FRONT.signer.sig.left,
-                                  top: FRONT.signer.sig.top,
-                                  width: FRONT.signer.sig.w,
-                                  height: FRONT.signer.sig.h,
-                                  fontSize: FRONT.signer.sig.fontSize,
-                                  fontFamily: 'Roboto',
-                                  fontStyle: 'italic',
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain',
+                                  opacity: 0.7,
                                   transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
-                                  color: FRONT.signer.sig.color,
                                 }}
-                              >
-                                ttd
-                              </div>
-                            )}
-                          </div>
-                          <div className="absolute w-full text-left" style={{ left: 0, bottom: 0 }}>
-                            {(cardData?.signers && cardData.signers.length > 0
-                              ? cardData.signers
-                              : [{ signerName: cardData?.signerName || 'Koordinator Distrik', signerTitle: cardData?.signerTitle || 'THS-THM' }]
-                            ).map((s, i) => (
-                              <div key={i} className="absolute w-full text-left" style={{ left: 0, bottom: i * 34 }}>
-                                <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {(s.signerName || 'Koordinator Distrik').toUpperCase()}
-                                </div>
-                                {s.signerTitle ? (
-                                  <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {s.signerTitle.toUpperCase()}
-                                  </div>
-                                ) : null}
-                              </div>
+                              />
                             ))}
                           </div>
-                        </div>
-                      </div>
-                    </ScaledCardCanvas>
-                  </div>                  {/* Back Side Preview - geometri dari packages/card-design (sumber tunggal) */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
-                    <ScaledCardCanvas kind="back">
-                      {cardSpec.hasBackImage ? (
-                        /* Template aktif: gambar desain belakang sebagai latar */
-                        <img
-                          src={`/api/uploads/${encodeURIComponent(cardSpec.template!.backImage!)}`}
-                          alt=""
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        /* Gradien + ombak (SVG kanon dari spec) */
-                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorBackSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      )}
-                      {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
-                      {cardSpec.guilloche.back && (
-                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('back', cardSpec.guilloche.strokeBack).replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      )}
-                      {/* Watermark peta PUTIH - posisi dari spec */}
-                      {cardSpec.watermark.back && (
-                        <div
-                          className="absolute pointer-events-none"
-                          style={{ left: (CARD.W - BACK.watermark.w) / 2, top: (CARD.H - BACK.watermark.h) / 2, width: BACK.watermark.w, height: BACK.watermark.h, opacity: BACK.watermark.opacity }}
-                        >
-                          <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain invert" />
-                        </div>
-                      )}
-
-                      {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.back */}
-                      <PatternWeb name={member.namaLengkap || 'THS-THM'} side="back" />
-
-                      <div className="relative z-10 h-full">
-                        {/* Header band - gradien biru + logo + judul verifikasi + hairline (spec BACK.header) */}
-                        <div className="absolute left-0 right-0 flex items-center" style={{ top: 0, height: BACK.header.height, padding: `0 ${BACK.header.padH}px`, gap: BACK.header.gap }}>
-                          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${COLORS.header.from}, ${COLORS.header.to})` }} />
+                        ) : (
                           <div
-                            className="relative rounded-full overflow-hidden flex items-center justify-center"
-                            style={{ width: BACK.header.logo.size, height: BACK.header.logo.size, background: BACK.header.logo.bg, border: `${BACK.header.logo.border}px solid ${BACK.header.logo.borderColor}` }}
+                            className="absolute flex items-center justify-center"
+                            style={{
+                              left: FRONT.signer.sig.left,
+                              top: FRONT.signer.sig.top,
+                              width: FRONT.signer.sig.w,
+                              height: FRONT.signer.sig.h,
+                              fontSize: FRONT.signer.sig.fontSize,
+                              fontFamily: 'Roboto',
+                              fontStyle: 'italic',
+                              transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
+                              color: FRONT.signer.sig.color,
+                            }}
                           >
-                            <img src="/logo.svg" alt="THS-THM" style={{ width: BACK.header.logo.img, height: BACK.header.logo.img, objectFit: 'contain' }} />
-                          </div>
-                          <div className="relative flex-1" style={{ color: '#ffffff' }}>
-                            <div className="font-black" style={{ fontSize: BACK.header.title.fontSize, letterSpacing: BACK.header.title.letterSpacing, lineHeight: 1.1 }}>
-                              VERIFIKASI KARTU ANGGOTA
-                            </div>
-                            <div className="opacity-90" style={{ fontSize: BACK.header.subtitle.fontSize, opacity: BACK.header.subtitle.opacity, marginTop: BACK.header.subtitle.marginTop }}>
-                              Scan QR untuk memeriksa keabsahan anggota
-                            </div>
-                          </div>
-                          <div className="absolute left-0 right-0" style={{ bottom: 0, height: BACK.header.hairline.height, backgroundColor: BACK.header.hairline.color }} />
-                        </div>
-                        <div
-                          className="absolute bg-white flex items-center justify-center rounded-2xl shadow-lg"
-                          style={{ left: BACK.qr.left, top: BACK.qr.top, width: BACK.qr.size, height: BACK.qr.size, borderRadius: BACK.qr.radius, border: `${BACK.qr.border}px solid ${BACK.qr.borderColor}`, padding: BACK.qr.padding }}
-                        >
-                          {cardData?.qrCode ? (
-                            <img src={cardData.qrCode} alt="QR Code" className="w-full h-full" />
-                          ) : (
-                            <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
-                              {Array.from({ length: 25 }).map((_, i) => (
-                                <div key={i} className={`${i % 3 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {/* Area teks belakang transparan - teks putih langsung di atas gradien */}
-                        <div className="absolute" style={{ left: BACK.info.left, top: BACK.info.top, right: BACK.info.right, padding: BACK.info.padding }}>
-                          <p className="font-['Roboto'] text-white/95" style={{ fontSize: BACK.info.desc.fontSize, lineHeight: `${BACK.info.desc.lineHeight}px`, opacity: BACK.info.desc.opacity, marginBottom: BACK.info.desc.marginBottom }}>
-                            Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.
-                          </p>
-                          <BackPreview label="TTL" value={fmt.proper(ttl)} />
-                          <BackPreview label="DADAR" value={fmt.proper(dadar)} />
-                          <BackPreview label="Status" value={fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')} />
-                          <BackPreview label="Valid s/d" value={fmt.proper(validUntilText)} />
-                          <BackPreview label="Alamat" value={`THS-THM, ${fmt.proper(member.ranting?.wilayah?.distrik?.alamat || 'Distrik')}`} />
-                        </div>
-                        <div className="absolute text-white flex items-end justify-between gap-6" style={{ left: BACK.footer.left, right: BACK.footer.right, bottom: BACK.footer.bottom }}>
-                          <div className="opacity-95" style={{ flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: `${BACK.footer.text.lineHeight}px` }}>
-                            Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.
-                          </div>
-                          {cardData?.verificationUrl && (
-                            <div className="text-right">
-                              <div className="uppercase opacity-80" style={{ fontSize: BACK.footer.urlLabel.fontSize }}>
-                                URL Verifikasi
-                              </div>
-                              <div className="font-bold" style={{ fontSize: BACK.footer.urlValue.fontSize, marginTop: BACK.footer.urlValue.marginTop }}>
-                                {cardData.verificationUrl}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </ScaledCardCanvas>
-                  </div>
-                  </div>
-                  {/* Download Actions */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Download size={18} className="text-blue-500" />
-                      Unduh & Cetak Kartu
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <button
-                        onClick={() => downloadKTA(member.id, 'pdf')}
-                        className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg hover:shadow-xl"
-                      >
-                        <Download size={20} />
-                        Download PDF - 2 Sisi
-                      </button>
-                      <button
-                        onClick={() => downloadKTA(member.id, 'image')}
-                        className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg hover:shadow-xl"
-                      >
-                        <Image size={20} />
-                        Download PNG - 2 Sisi
-                      </button>
-                      <button
-                        onClick={() => previewKTA(member.id)}
-                        className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition font-medium shadow-lg hover:shadow-xl"
-                      >
-                        <Printer size={20} />
-                        Preview & Cetak (HTML)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Keamanan QR & Riwayat Pemindaian */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ShieldAlert size={18} className="text-amber-500" />
-                        Keamanan QR &amp; Riwayat Pemindaian
-                      </h4>
-                      <button
-                        onClick={fetchCardSecurity}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition"
-                      >
-                        <RefreshCw size={13} />
-                        Muat Ulang
-                      </button>
-                    </div>
-
-                    {cardSecurity ? (
-                      <>
-                        {/* Status QR + aksi cabut/aktifkan */}
-                        <div
-                          className={`flex items-center justify-between flex-wrap gap-4 p-4 rounded-2xl border ${
-                            cardSecurity.qr.isValid
-                              ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800'
-                              : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {cardSecurity.qr.isValid ? (
-                              <ShieldCheck size={26} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            ) : (
-                              <Lock size={26} className="text-red-500 shrink-0" />
-                            )}
-                            <div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Status QR</p>
-                              <p className={`text-sm font-bold ${cardSecurity.qr.isValid ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                                {cardSecurity.qr.isValid ? 'AKTIF — QR dapat diverifikasi' : 'DICABUT — QR tidak berlaku'}
-                              </p>
-                              {cardSecurity.dokumen.status === 'revoked' && !cardSecurity.qr.isValid && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  Dokumen {cardSecurity.dokumen.nomorDokumen} telah dicabut
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          {cardSecurity.qr.isValid ? (
-                            <button
-                              onClick={() => {
-                                if (window.confirm('Cabut kartu ini? QR pada kartu tidak akan berlaku lagi.')) {
-                                  toggleCardActive(false);
-                                }
-                              }}
-                              disabled={actionLoading === 'card-revoke'}
-                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition disabled:opacity-50"
-                            >
-                              <Lock size={14} />
-                              {actionLoading === 'card-revoke' ? 'Mencabut...' : 'Cabut Kartu'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => toggleCardActive(true)}
-                              disabled={actionLoading === 'card-activate'}
-                              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
-                            >
-                              <Unlock size={14} />
-                              {actionLoading === 'card-activate' ? 'Mengaktifkan...' : 'Aktifkan Kembali'}
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Statistik scan */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
-                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Pemindaian</p>
-                            <p className="text-lg font-bold text-gray-900 dark:text-white">{cardSecurity.qr.scanCount}x</p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
-                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Sisa Scan</p>
-                            <p className={`text-lg font-bold ${cardSecurity.scanLeft <= 5 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                              {cardSecurity.scanLeft}
-                            </p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
-                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Terakhir Dipindai</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDateTime(cardSecurity.qr.scannedAt)}</p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
-                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">QR Dibuat</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDateTime(cardSecurity.qr.createdAt)}</p>
-                          </div>
-                        </div>
-
-                        {/* Peringatan bila sisa scan menipis / terduga difotokopi */}
-                        {cardSecurity.scanLeft <= 5 && cardSecurity.qr.isValid && (
-                          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 mt-4">
-                            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
-                            <p className="text-xs text-amber-700 dark:text-amber-300">
-                              QR sudah dipindai {cardSecurity.qr.scanCount} dari batas {cardSecurity.scanLimit}. Bila
-                              mencapai batas, kartu otomatis dinonaktifkan karena terduga difotokopi/digandakan.
-                            </p>
+                            ttd
                           </div>
                         )}
-
-                        {/* Riwayat pemindaian */}
-                        <div className="mt-5">
-                          <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2 flex items-center gap-1.5">
-                            <History size={13} />
-                            Riwayat Pemindaian Terbaru
-                          </h5>
-                          {cardSecurity.scanLog.length > 0 ? (
-                            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                              <table className="w-full text-xs">
-                                <thead className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
-                                  <tr>
-                                    <th className="px-3 py-2 font-medium">Waktu</th>
-                                    <th className="px-3 py-2 font-medium">IP</th>
-                                    <th className="px-3 py-2 font-medium hidden sm:table-cell">Perangkat</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                  {cardSecurity.scanLog.slice(0, 10).map((s) => (
-                                    <tr key={s.id}>
-                                      <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
-                                        {formatDateTime(s.scannedAt)}
-                                      </td>
-                                      <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">{s.ipAddress || '-'}</td>
-                                      <td className="px-3 py-2 hidden sm:table-cell text-gray-500 dark:text-gray-400 max-w-[220px] truncate">
-                                        {s.userAgent || '-'}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                      </div>
+                      <div className="absolute w-full text-left" style={{ left: 0, bottom: 0 }}>
+                        {(cardData?.signers && cardData.signers.length > 0
+                          ? cardData.signers
+                          : [
+                              {
+                                signerName: cardData?.signerName || 'Koordinator Distrik',
+                                signerTitle: cardData?.signerTitle || 'THS-THM',
+                              },
+                            ]
+                        ).map((s, i) => (
+                          <div
+                            key={i}
+                            className="absolute w-full text-left"
+                            style={{ left: 0, bottom: i * 34 }}
+                          >
+                            <div
+                              className="font-black underline"
+                              style={{
+                                fontSize: FRONT.signer.name.fontSize,
+                                color: COLORS.value,
+                                textAlign: 'left',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {(s.signerName || 'Koordinator Distrik').toUpperCase()}
                             </div>
-                          ) : (
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Belum ada pemindaian. QR akan tercatat di sini setiap kali dipindai.
-                            </p>
-                          )}
+                            {s.signerTitle ? (
+                              <div
+                                className="font-bold"
+                                style={{
+                                  fontSize: FRONT.signer.title.fontSize,
+                                  color: COLORS.value,
+                                  marginTop: FRONT.signer.title.marginTop,
+                                  textAlign: 'left',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {s.signerTitle.toUpperCase()}
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ScaledCardCanvas>
+              </div>{' '}
+              {/* Back Side Preview - geometri dari packages/card-design (sumber tunggal) */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Sisi Belakang
+                </h4>
+                <ScaledCardCanvas kind="back">
+                  {cardSpec.hasBackImage ? (
+                    /* Template aktif: gambar desain belakang sebagai latar */
+                    <img
+                      src={`/api/uploads/${encodeURIComponent(cardSpec.template!.backImage!)}`}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    /* Gradien + ombak (SVG kanon dari spec) */
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      dangerouslySetInnerHTML={{
+                        __html: decorBackSvg().replace(
+                          '<svg ',
+                          '<svg style="width:100%;height:100%" ',
+                        ),
+                      }}
+                    />
+                  )}
+                  {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
+                  {cardSpec.guilloche.back && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      dangerouslySetInnerHTML={{
+                        __html: guillocheSvg('back', cardSpec.guilloche.strokeBack).replace(
+                          '<svg ',
+                          '<svg style="width:100%;height:100%" ',
+                        ),
+                      }}
+                    />
+                  )}
+                  {/* Watermark peta PUTIH - posisi dari spec */}
+                  {cardSpec.watermark.back && (
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: (CARD.W - BACK.watermark.w) / 2,
+                        top: (CARD.H - BACK.watermark.h) / 2,
+                        width: BACK.watermark.w,
+                        height: BACK.watermark.h,
+                        opacity: BACK.watermark.opacity,
+                      }}
+                    >
+                      <img
+                        src="/peta-indonesia.png"
+                        alt=""
+                        className="w-full h-full object-contain invert"
+                      />
+                    </div>
+                  )}
+
+                  {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.back */}
+                  <PatternWeb name={member.namaLengkap || 'THS-THM'} side="back" />
+
+                  <div className="relative z-10 h-full">
+                    {/* Header band - gradien biru + logo + judul verifikasi + hairline (spec BACK.header) */}
+                    <div
+                      className="absolute left-0 right-0 flex items-center"
+                      style={{
+                        top: 0,
+                        height: BACK.header.height,
+                        padding: `0 ${BACK.header.padH}px`,
+                        gap: BACK.header.gap,
+                      }}
+                    >
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: `linear-gradient(135deg, ${COLORS.header.from}, ${COLORS.header.to})`,
+                        }}
+                      />
+                      <div
+                        className="relative rounded-full overflow-hidden flex items-center justify-center"
+                        style={{
+                          width: BACK.header.logo.size,
+                          height: BACK.header.logo.size,
+                          background: BACK.header.logo.bg,
+                          border: `${BACK.header.logo.border}px solid ${BACK.header.logo.borderColor}`,
+                        }}
+                      >
+                        <img
+                          src="/logo.svg"
+                          alt="THS-THM"
+                          style={{
+                            width: BACK.header.logo.img,
+                            height: BACK.header.logo.img,
+                            objectFit: 'contain',
+                          }}
+                        />
+                      </div>
+                      <div className="relative flex-1" style={{ color: '#ffffff' }}>
+                        <div
+                          className="font-black"
+                          style={{
+                            fontSize: BACK.header.title.fontSize,
+                            letterSpacing: BACK.header.title.letterSpacing,
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          VERIFIKASI KARTU ANGGOTA
                         </div>
-                      </>
-                    ) : (
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Kartu belum dibuat atau status keamanan tidak dapat dimuat. Generate kartu digital terlebih dahulu.
+                        <div
+                          className="opacity-90"
+                          style={{
+                            fontSize: BACK.header.subtitle.fontSize,
+                            opacity: BACK.header.subtitle.opacity,
+                            marginTop: BACK.header.subtitle.marginTop,
+                          }}
+                        >
+                          Scan QR untuk memeriksa keabsahan anggota
+                        </div>
+                      </div>
+                      <div
+                        className="absolute left-0 right-0"
+                        style={{
+                          bottom: 0,
+                          height: BACK.header.hairline.height,
+                          backgroundColor: BACK.header.hairline.color,
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="absolute bg-white flex items-center justify-center rounded-2xl shadow-lg"
+                      style={{
+                        left: BACK.qr.left,
+                        top: BACK.qr.top,
+                        width: BACK.qr.size,
+                        height: BACK.qr.size,
+                        borderRadius: BACK.qr.radius,
+                        border: `${BACK.qr.border}px solid ${BACK.qr.borderColor}`,
+                        padding: BACK.qr.padding,
+                      }}
+                    >
+                      {cardData?.qrCode ? (
+                        <img src={cardData.qrCode} alt="QR Code" className="w-full h-full" />
+                      ) : (
+                        <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
+                          {Array.from({ length: 25 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`${i % 3 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {/* Area teks belakang transparan - teks putih langsung di atas gradien */}
+                    <div
+                      className="absolute"
+                      style={{
+                        left: BACK.info.left,
+                        top: BACK.info.top,
+                        right: BACK.info.right,
+                        padding: BACK.info.padding,
+                      }}
+                    >
+                      <p
+                        className="font-['Roboto'] text-white/95"
+                        style={{
+                          fontSize: BACK.info.desc.fontSize,
+                          lineHeight: `${BACK.info.desc.lineHeight}px`,
+                          opacity: BACK.info.desc.opacity,
+                          marginBottom: BACK.info.desc.marginBottom,
+                        }}
+                      >
+                        Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan
+                        keabsahan anggota.
                       </p>
+                      <BackPreview label="TTL" value={fmt.proper(ttl)} />
+                      <BackPreview label="DADAR" value={fmt.proper(dadar)} />
+                      <BackPreview
+                        label="Status"
+                        value={fmt.proper(
+                          member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif',
+                        )}
+                      />
+                      <BackPreview label="Valid s/d" value={fmt.proper(validUntilText)} />
+                      <BackPreview
+                        label="Alamat"
+                        value={`THS-THM, ${fmt.proper(member.ranting?.wilayah?.distrik?.alamat || 'Distrik')}`}
+                      />
+                    </div>
+                    <div
+                      className="absolute text-white flex items-end justify-between gap-6"
+                      style={{
+                        left: BACK.footer.left,
+                        right: BACK.footer.right,
+                        bottom: BACK.footer.bottom,
+                      }}
+                    >
+                      <div
+                        className="opacity-95"
+                        style={{
+                          flex: 1,
+                          fontSize: BACK.footer.text.fontSize,
+                          lineHeight: `${BACK.footer.text.lineHeight}px`,
+                        }}
+                      >
+                        Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.
+                      </div>
+                      {cardData?.verificationUrl && (
+                        <div className="text-right">
+                          <div
+                            className="uppercase opacity-80"
+                            style={{ fontSize: BACK.footer.urlLabel.fontSize }}
+                          >
+                            URL Verifikasi
+                          </div>
+                          <div
+                            className="font-bold"
+                            style={{
+                              fontSize: BACK.footer.urlValue.fontSize,
+                              marginTop: BACK.footer.urlValue.marginTop,
+                            }}
+                          >
+                            {cardData.verificationUrl}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </ScaledCardCanvas>
+              </div>
+            </div>
+            {/* Download Actions */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Download size={18} className="text-blue-500" />
+                Unduh & Cetak Kartu
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button
+                  onClick={() => downloadKTA(member.id, 'pdf')}
+                  className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg hover:shadow-xl"
+                >
+                  <Download size={20} />
+                  Download PDF - 2 Sisi
+                </button>
+                <button
+                  onClick={() => downloadKTA(member.id, 'image')}
+                  className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg hover:shadow-xl"
+                >
+                  <Image size={20} />
+                  Download PNG - 2 Sisi
+                </button>
+                <button
+                  onClick={() => previewKTA(member.id)}
+                  className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition font-medium shadow-lg hover:shadow-xl"
+                >
+                  <Printer size={20} />
+                  Preview & Cetak (HTML)
+                </button>
+              </div>
+            </div>
+
+            {/* Keamanan QR & Riwayat Pemindaian */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <ShieldAlert size={18} className="text-amber-500" />
+                  Keamanan QR &amp; Riwayat Pemindaian
+                </h4>
+                <button
+                  onClick={fetchCardSecurity}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition"
+                >
+                  <RefreshCw size={13} />
+                  Muat Ulang
+                </button>
+              </div>
+
+              {cardSecurity ? (
+                <>
+                  {/* Status QR + aksi cabut/aktifkan */}
+                  <div
+                    className={`flex items-center justify-between flex-wrap gap-4 p-4 rounded-2xl border ${
+                      cardSecurity.qr.isValid
+                        ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {cardSecurity.qr.isValid ? (
+                        <ShieldCheck
+                          size={26}
+                          className="text-emerald-600 dark:text-emerald-400 shrink-0"
+                        />
+                      ) : (
+                        <Lock size={26} className="text-red-500 shrink-0" />
+                      )}
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Status QR</p>
+                        <p
+                          className={`text-sm font-bold ${cardSecurity.qr.isValid ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}
+                        >
+                          {cardSecurity.qr.isValid
+                            ? 'AKTIF — QR dapat diverifikasi'
+                            : 'DICABUT — QR tidak berlaku'}
+                        </p>
+                        {cardSecurity.dokumen.status === 'revoked' && !cardSecurity.qr.isValid && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Dokumen {cardSecurity.dokumen.nomorDokumen} telah dicabut
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {cardSecurity.qr.isValid ? (
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              'Cabut kartu ini? QR pada kartu tidak akan berlaku lagi.',
+                            )
+                          ) {
+                            toggleCardActive(false);
+                          }
+                        }}
+                        disabled={actionLoading === 'card-revoke'}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition disabled:opacity-50"
+                      >
+                        <Lock size={14} />
+                        {actionLoading === 'card-revoke' ? 'Mencabut...' : 'Cabut Kartu'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => toggleCardActive(true)}
+                        disabled={actionLoading === 'card-activate'}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+                      >
+                        <Unlock size={14} />
+                        {actionLoading === 'card-activate' ? 'Mengaktifkan...' : 'Aktifkan Kembali'}
+                      </button>
                     )}
                   </div>
 
-                  {/* Kartu Fisik & Riwayat Penerbitan */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <IdCard size={18} className="text-blue-500" />
-                        Kartu Fisik &amp; Riwayat Penerbitan
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            if (window.confirm('Cetak kartu fisik baru? QR baru dengan source "printed" akan dibuat.')) {
-                              issuePrintedCard(null);
-                            }
-                          }}
-                          disabled={actionLoading === 'card-print'}
-                          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
-                        >
-                          <Printer size={13} />
-                          {actionLoading === 'card-print' ? 'Mencetak...' : 'Cetak Kartu Fisik'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm('Penggantian kartu hilang/rusak? Kartu fisik lama akan dicabut.')) {
-                              issuePrintedCard('hilang');
-                            }
-                          }}
-                          disabled={actionLoading === 'card-print'}
-                          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition disabled:opacity-50"
-                        >
-                          <AlertTriangle size={13} />
-                          Ganti Hilang/Rusak
-                        </button>
-                      </div>
+                  {/* Statistik scan */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                      <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">
+                        Pemindaian
+                      </p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        {cardSecurity.qr.scanCount}x
+                      </p>
                     </div>
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                      <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">
+                        Sisa Scan
+                      </p>
+                      <p
+                        className={`text-lg font-bold ${cardSecurity.scanLeft <= 5 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}
+                      >
+                        {cardSecurity.scanLeft}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                      <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">
+                        Terakhir Dipindai
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {formatDateTime(cardSecurity.qr.scannedAt)}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                      <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">
+                        QR Dibuat
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {formatDateTime(cardSecurity.qr.createdAt)}
+                      </p>
+                    </div>
+                  </div>
 
-                    {cardIssuances !== null && cardIssuances.length > 0 ? (
+                  {/* Peringatan bila sisa scan menipis / terduga difotokopi */}
+                  {cardSecurity.scanLeft <= 5 && cardSecurity.qr.isValid && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 mt-4">
+                      <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        QR sudah dipindai {cardSecurity.qr.scanCount} dari batas{' '}
+                        {cardSecurity.scanLimit}. Bila mencapai batas, kartu otomatis dinonaktifkan
+                        karena terduga difotokopi/digandakan.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Riwayat pemindaian */}
+                  <div className="mt-5">
+                    <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2 flex items-center gap-1.5">
+                      <History size={13} />
+                      Riwayat Pemindaian Terbaru
+                    </h5>
+                    {cardSecurity.scanLog.length > 0 ? (
                       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
                         <table className="w-full text-xs">
                           <thead className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
                             <tr>
-                              <th className="px-3 py-2 font-medium">Edisi</th>
-                              <th className="px-3 py-2 font-medium">Jenis</th>
-                              <th className="px-3 py-2 font-medium">Alasan</th>
-                              <th className="px-3 py-2 font-medium">Status</th>
-                              <th className="px-3 py-2 font-medium hidden sm:table-cell">Scan</th>
-                              <th className="px-3 py-2 font-medium hidden md:table-cell">Waktu</th>
-                              <th className="px-3 py-2 font-medium">Aksi</th>
+                              <th className="px-3 py-2 font-medium">Waktu</th>
+                              <th className="px-3 py-2 font-medium">IP</th>
+                              <th className="px-3 py-2 font-medium hidden sm:table-cell">
+                                Perangkat
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {cardIssuances.map((iss) => (
-                              <tr key={iss.id}>
-                                <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">#{iss.edisi}</td>
-                                <td className="px-3 py-2">
-                                  <span
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                                      iss.source === 'printed'
-                                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                                        : 'bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400'
-                                    }`}
-                                  >
-                                    {iss.source === 'printed' ? <Printer size={10} /> : <Smartphone size={10} />}
-                                    {iss.source === 'printed' ? 'Fisik' : 'Digital'}
-                                  </span>
+                            {cardSecurity.scanLog.slice(0, 10).map((s) => (
+                              <tr key={s.id}>
+                                <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
+                                  {formatDateTime(s.scannedAt)}
                                 </td>
-                                <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                                  {iss.reason ? toProperCase(iss.reason.replace('replacement', 'Penggantian')) : '-'}
+                                <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
+                                  {s.ipAddress || '-'}
                                 </td>
-                                <td className="px-3 py-2">
-                                  <span
-                                    className={`font-semibold ${
-                                      iss.isValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                                    }`}
-                                  >
-                                    {iss.isValid ? 'Berlaku' : 'Dicabut'}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2 hidden sm:table-cell text-gray-600 dark:text-gray-300">{iss.scanCount}×</td>
-                                <td className="px-3 py-2 hidden md:table-cell text-gray-600 dark:text-gray-300">
-                                  {formatDateTime(iss.createdAt)}
-                                </td>
-                                <td className="px-3 py-2">
-                                  {iss.source === 'printed' && (
-                                    <button
-                                      onClick={() =>
-                                        window.open(
-                                          `${window.location.origin}/api/members/${member?.id}/digital-card/printed/pdf?issuanceId=${iss.id}`,
-                                          '_blank',
-                                        )
-                                      }
-                                      className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                                    >
-                                      <Download size={12} />
-                                      PDF
-                                    </button>
-                                  )}
+                                <td className="px-3 py-2 hidden sm:table-cell text-gray-500 dark:text-gray-400 max-w-[220px] truncate">
+                                  {s.userAgent || '-'}
                                 </td>
                               </tr>
                             ))}
@@ -1956,173 +2445,314 @@ export default function MemberDetailPage() {
                       </div>
                     ) : (
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Belum ada penerbitan kartu fisik. Klik "Cetak Kartu Fisik" untuk membuat QR statis per-penerbitan.
+                        Belum ada pemindaian. QR akan tercatat di sini setiap kali dipindai.
                       </p>
                     )}
                   </div>
-                </div>
+                </>
+              ) : (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Kartu belum dibuat atau status keamanan tidak dapat dimuat. Generate kartu digital
+                  terlebih dahulu.
+                </p>
               )}
-        
-              {/* ── Tab: Iuran ── */}
-              {activeTab === 'dues' && (
-                <div className="space-y-6">
-                  {/* Dues Summary */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
-                          <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Lunas</p>
-                          <p className="text-lg font-bold text-green-600">{paidDues}x</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
-                          <CreditCard size={18} className="text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Dibayar</p>
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">
-                            {formatRupiah(totalPaid)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
-                          <Award size={18} className="text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Kepatuhan</p>
-                          <p className="text-lg font-bold text-purple-600">
-                            {totalDues > 0 ? Math.round((paidDues / totalDues) * 100) : 0}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-        
-                  {/* Dues Table */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Riwayat Pembayaran Iuran
-                      </h3>
-                    </div>
-                    {member.iuran.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Periode
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Jumlah
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                                Status
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                                Tgl Bayar
-                              </th>
-                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                                Tgl Input
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {member.iuran.map((dues) => (
-                              <tr
-                                key={dues.id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+            </div>
+
+            {/* Kartu Fisik & Riwayat Penerbitan */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <IdCard size={18} className="text-blue-500" />
+                  Kartu Fisik &amp; Riwayat Penerbitan
+                </h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Cetak kartu fisik baru? QR baru dengan source "printed" akan dibuat.',
+                        )
+                      ) {
+                        issuePrintedCard(null);
+                      }
+                    }}
+                    disabled={actionLoading === 'card-print'}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
+                  >
+                    <Printer size={13} />
+                    {actionLoading === 'card-print' ? 'Mencetak...' : 'Cetak Kartu Fisik'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Penggantian kartu hilang/rusak? Kartu fisik lama akan dicabut.',
+                        )
+                      ) {
+                        issuePrintedCard('hilang');
+                      }
+                    }}
+                    disabled={actionLoading === 'card-print'}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition disabled:opacity-50"
+                  >
+                    <AlertTriangle size={13} />
+                    Ganti Hilang/Rusak
+                  </button>
+                </div>
+              </div>
+
+              {cardIssuances !== null && cardIssuances.length > 0 ? (
+                <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Edisi</th>
+                        <th className="px-3 py-2 font-medium">Jenis</th>
+                        <th className="px-3 py-2 font-medium">Alasan</th>
+                        <th className="px-3 py-2 font-medium">Status</th>
+                        <th className="px-3 py-2 font-medium hidden sm:table-cell">Scan</th>
+                        <th className="px-3 py-2 font-medium hidden md:table-cell">Waktu</th>
+                        <th className="px-3 py-2 font-medium">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {cardIssuances.map((iss) => (
+                        <tr key={iss.id}>
+                          <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
+                            #{iss.edisi}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                iss.source === 'printed'
+                                  ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                                  : 'bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                              }`}
+                            >
+                              {iss.source === 'printed' ? (
+                                <Printer size={10} />
+                              ) : (
+                                <Smartphone size={10} />
+                              )}
+                              {iss.source === 'printed' ? 'Fisik' : 'Digital'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                            {iss.reason
+                              ? toProperCase(iss.reason.replace('replacement', 'Penggantian'))
+                              : '-'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`font-semibold ${
+                                iss.isValid
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}
+                            >
+                              {iss.isValid ? 'Berlaku' : 'Dicabut'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 hidden sm:table-cell text-gray-600 dark:text-gray-300">
+                            {iss.scanCount}×
+                          </td>
+                          <td className="px-3 py-2 hidden md:table-cell text-gray-600 dark:text-gray-300">
+                            {formatDateTime(iss.createdAt)}
+                          </td>
+                          <td className="px-3 py-2">
+                            {iss.source === 'printed' && (
+                              <button
+                                onClick={() =>
+                                  window.open(
+                                    `${window.location.origin}/api/members/${member?.id}/digital-card/printed/pdf?issuanceId=${iss.id}`,
+                                    '_blank',
+                                  )
+                                }
+                                className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
                               >
-                                <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                  {formatPeriode(dues.periode)}
-                                </td>
-                                <td className="px-5 py-3 font-mono text-sm text-gray-700 dark:text-gray-300">
-                                  {formatRupiah(Number(dues.jumlah))}
-                                </td>
-                                <td className="px-5 py-3">
-                                  <span
-                                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${DUES_STATUS_STYLES[dues.status] || ''}`}
-                                  >
-                                    {FLAT_STATUS_LABELS[dues.status] || dues.status}
-                                  </span>
-                                </td>
-                                <td className="px-5 py-3 hidden sm:table-cell text-xs text-gray-500">
-                                  {dues.tanggalBayar ? formatDate(dues.tanggalBayar) : '-'}
-                                </td>
-                                <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
-                                  {formatDate(dues.createdAt)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-10">
-                        <CreditCard size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada riwayat iuran</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          Data iuran akan muncul setelah dicatat
-                        </p>
-                      </div>
-                    )}
+                                <Download size={12} />
+                                PDF
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Belum ada penerbitan kartu fisik. Klik "Cetak Kartu Fisik" untuk membuat QR statis
+                  per-penerbitan.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Iuran ── */}
+        {activeTab === 'dues' && (
+          <div className="space-y-6">
+            {/* Dues Summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
+                    <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Lunas</p>
+                    <p className="text-lg font-bold text-green-600">{paidDues}x</p>
                   </div>
                 </div>
-              )}
-        
-              {/* ── Edit Modal ── */}
-              <EditMemberModal
-                open={showEditModal}
-                memberId={id}
-                onClose={() => setShowEditModal(false)}
-                onSuccess={fetchMember}
-              />
-        
-              {/* ── Delete Modal ── */}
-              <Modal
-                open={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                title="Hapus Anggota"
-                size="sm"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-                    <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
-                    <p className="text-sm text-red-700 dark:text-red-400">
-                      Tindakan ini akan menghapus <strong>{toProperCase(member.namaLengkap)}</strong> secara permanen.
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
+                    <CreditCard size={18} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Dibayar</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      {formatRupiah(totalPaid)}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Data yang terkait seperti dokumen dan riwayat iuran juga akan terhapus. Tindakan ini
-                    tidak dapat dibatalkan.
-                  </p>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      onClick={() => setShowDeleteModal(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      disabled={actionLoading === 'delete'}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
-                    >
-                      {actionLoading === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
-                    </button>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
+                    <Award size={18} className="text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Kepatuhan</p>
+                    <p className="text-lg font-bold text-purple-600">
+                      {totalDues > 0 ? Math.round((paidDues / totalDues) * 100) : 0}%
+                    </p>
                   </div>
                 </div>
-              </Modal>
+              </div>
             </div>
-      </PermissionGuard>
-    );
+
+            {/* Dues Table */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Riwayat Pembayaran Iuran
+                </h3>
+              </div>
+              {member.iuran.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Periode
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Jumlah
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                          Status
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                          Tgl Bayar
+                        </th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                          Tgl Input
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {member.iuran.map((dues) => (
+                        <tr
+                          key={dues.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                        >
+                          <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                            {formatPeriode(dues.periode)}
+                          </td>
+                          <td className="px-5 py-3 font-mono text-sm text-gray-700 dark:text-gray-300">
+                            {formatRupiah(Number(dues.jumlah))}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${DUES_STATUS_STYLES[dues.status] || ''}`}
+                            >
+                              {FLAT_STATUS_LABELS[dues.status] || dues.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 hidden sm:table-cell text-xs text-gray-500">
+                            {dues.tanggalBayar ? formatDate(dues.tanggalBayar) : '-'}
+                          </td>
+                          <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
+                            {formatDate(dues.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <CreditCard size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Belum ada riwayat iuran
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Data iuran akan muncul setelah dicatat
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Edit Modal ── */}
+        <EditMemberModal
+          open={showEditModal}
+          memberId={id}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={fetchMember}
+        />
+
+        {/* ── Delete Modal ── */}
+        <Modal
+          open={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          title="Hapus Anggota"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+              <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700 dark:text-red-400">
+                Tindakan ini akan menghapus <strong>{toProperCase(member.namaLengkap)}</strong>{' '}
+                secara permanen.
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Data yang terkait seperti dokumen dan riwayat iuran juga akan terhapus. Tindakan ini
+              tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={actionLoading === 'delete'}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {actionLoading === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    </PermissionGuard>
+  );
 }

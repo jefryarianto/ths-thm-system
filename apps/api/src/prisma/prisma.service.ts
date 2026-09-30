@@ -58,9 +58,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             const userId = ctx?.userId;
 
             // Only apply to models that have createdById/updatedById fields
-            const modelsWithAuditFields = new Set([
-              'anggota', 'kegiatan'
-            ]);
+            const modelsWithAuditFields = new Set(['anggota', 'kegiatan']);
 
             if (modelsWithAuditFields.has(model) && userId) {
               args.data = {
@@ -78,9 +76,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             const userId = ctx?.userId;
 
             // Only apply to models that have updatedById field
-            const modelsWithAuditFields = new Set([
-              'anggota', 'kegiatan'
-            ]);
+            const modelsWithAuditFields = new Set(['anggota', 'kegiatan']);
 
             if (modelsWithAuditFields.has(model) && userId) {
               args.data = {

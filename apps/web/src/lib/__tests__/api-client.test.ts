@@ -26,28 +26,34 @@ Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, wri
 vi.mock('axios', () => {
   // Instance dari axios.create() harus CALLABLE — api-client memanggil ulang
   // apiClient(config) untuk retry setelah refresh sukses.
-  const mockAxiosInstance = Object.assign(vi.fn(() => Promise.resolve({ data: {} })), {
-    interceptors: {
-      request: { use: vi.fn() },
-      response: { use: vi.fn() },
+  const mockAxiosInstance = Object.assign(
+    vi.fn(() => Promise.resolve({ data: {} })),
+    {
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() },
+      },
+      get: vi.fn(),
+      post: vi.fn(),
+      defaults: {} as { timeout?: number },
     },
-    get: vi.fn(),
-    post: vi.fn(),
-    defaults: {} as { timeout?: number },
-  });
+  );
 
-  const mockedAxios = Object.assign(vi.fn(() => mockAxiosInstance), {
-    // axios.create(config) merges config into the instance's defaults
-    create: vi.fn((config: Record<string, unknown>) => {
-      Object.assign(mockAxiosInstance.defaults, config);
-      return mockAxiosInstance;
-    }),
-    // api-client memanggil axios.post (default export) untuk /auth/refresh
-    get: vi.fn(),
-    post: vi.fn(),
-    isCancel: vi.fn(() => false),
-    CancelToken: class {},
-  });
+  const mockedAxios = Object.assign(
+    vi.fn(() => mockAxiosInstance),
+    {
+      // axios.create(config) merges config into the instance's defaults
+      create: vi.fn((config: Record<string, unknown>) => {
+        Object.assign(mockAxiosInstance.defaults, config);
+        return mockAxiosInstance;
+      }),
+      // api-client memanggil axios.post (default export) untuk /auth/refresh
+      get: vi.fn(),
+      post: vi.fn(),
+      isCancel: vi.fn(() => false),
+      CancelToken: class {},
+    },
+  );
 
   return {
     default: mockedAxios,
@@ -166,9 +172,8 @@ describe('api-client', () => {
     // Interceptor kini async (mendukung self-healing refresh), jadi hasilnya
     // berupa Promise yang harus di-await.
     const getRequestInterceptor = () =>
-      (
-        apiClient as unknown as { interceptors: { request: { use: ReturnType<typeof vi.fn> } } }
-      ).interceptors.request.use.mock.calls[0][0] as (config: {
+      (apiClient as unknown as { interceptors: { request: { use: ReturnType<typeof vi.fn> } } })
+        .interceptors.request.use.mock.calls[0][0] as (config: {
         url?: string;
         headers: Record<string, string>;
       }) => Promise<{ url?: string; headers: Record<string, string> }>;
@@ -193,9 +198,8 @@ describe('api-client', () => {
 
   describe('request interceptor - session expiry self-healing', () => {
     const getRequestInterceptor = () =>
-      (
-        apiClient as unknown as { interceptors: { request: { use: ReturnType<typeof vi.fn> } } }
-      ).interceptors.request.use.mock.calls[0][0] as (config: {
+      (apiClient as unknown as { interceptors: { request: { use: ReturnType<typeof vi.fn> } } })
+        .interceptors.request.use.mock.calls[0][0] as (config: {
         url?: string;
         headers: Record<string, string>;
       }) => Promise<{ url?: string; headers: Record<string, string> }>;
@@ -209,7 +213,11 @@ describe('api-client', () => {
       const config = { url: '/members', headers: {} as Record<string, string> };
       const result = await getRequestInterceptor()(config);
 
-      expect(axios.post).toHaveBeenCalledWith('/api/auth/refresh', {}, { withCredentials: true, timeout: 15000 });
+      expect(axios.post).toHaveBeenCalledWith(
+        '/api/auth/refresh',
+        {},
+        { withCredentials: true, timeout: 15000 },
+      );
       expect(result.headers.Authorization).toBe('Bearer recovered-token');
       expect(localStorage.getItem('accessToken')).toBe('recovered-token');
       // Flag expired berhasil dipulihkan — sesi hidup kembali tanpa logout.
@@ -317,9 +325,8 @@ describe('api-client', () => {
 
   describe('response interceptor - refresh failure semantics', () => {
     const getResponseErrorHandler = () =>
-      (
-        apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } }
-      ).interceptors.response.use.mock.calls[0][1] as (error: {
+      (apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } })
+        .interceptors.response.use.mock.calls[0][1] as (error: {
         response?: { status: number; data?: { message?: string } };
         config: { headers?: Record<string, string>; _retry?: boolean };
         message?: string;
@@ -331,10 +338,17 @@ describe('api-client', () => {
         data: { data: { accessToken: 'fresh-token' } },
       });
 
-      const error = { response: { status: 401 }, config: { headers: {} as Record<string, string> } };
+      const error = {
+        response: { status: 401 },
+        config: { headers: {} as Record<string, string> },
+      };
       const result = await getResponseErrorHandler()(error);
 
-      expect(axios.post).toHaveBeenCalledWith('/api/auth/refresh', {}, { withCredentials: true, timeout: 15000 });
+      expect(axios.post).toHaveBeenCalledWith(
+        '/api/auth/refresh',
+        {},
+        { withCredentials: true, timeout: 15000 },
+      );
       expect(error.config.headers?.Authorization).toBe('Bearer fresh-token');
       expect(result).toBeDefined();
     });
@@ -355,7 +369,11 @@ describe('api-client', () => {
         const result = await getResponseErrorHandler()(error);
 
         // Refresh tetap dipanggil dan original request di-retry dengan token baru.
-        expect(axios.post).toHaveBeenCalledWith('/api/auth/refresh', {}, { withCredentials: true, timeout: 15000 });
+        expect(axios.post).toHaveBeenCalledWith(
+          '/api/auth/refresh',
+          {},
+          { withCredentials: true, timeout: 15000 },
+        );
         expect(error.config.headers?.Authorization).toBe('Bearer fresh-token');
         expect(apiClient).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -396,198 +414,246 @@ describe('api-client', () => {
       expect(localStorage.getItem('accessToken')).toBe('still-present');
     });
 
-      it('does NOT expire the session when refresh fails with a 5xx error', async () => {
-        vi.mocked(axios.post).mockRejectedValue({
-          response: { status: 503, data: { message: 'Service Unavailable' } },
-        });
+    it('does NOT expire the session when refresh fails with a 5xx error', async () => {
+      vi.mocked(axios.post).mockRejectedValue({
+        response: { status: 503, data: { message: 'Service Unavailable' } },
+      });
 
-        const error = { response: { status: 401 }, config: { headers: {} } };
-        await expect(getResponseErrorHandler()(error)).rejects.toEqual({
-          status: 503,
-          message: 'Service Unavailable',
-          data: { message: 'Service Unavailable' },
-        });
+      const error = { response: { status: 401 }, config: { headers: {} } };
+      await expect(getResponseErrorHandler()(error)).rejects.toEqual({
+        status: 503,
+        message: 'Service Unavailable',
+        data: { message: 'Service Unavailable' },
+      });
 
-        expect(sessionManager.isExpired).toBe(false);
+      expect(sessionManager.isExpired).toBe(false);
+    });
+  });
+
+  // ─── NETWORK RETRY METHOD SAFETY TESTS ───
+  describe('response interceptor - network retry method safety', () => {
+    const getResponseErrorHandler = () =>
+      (apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } })
+        .interceptors.response.use.mock.calls[0][1] as (error: {
+        code?: string;
+        message?: string;
+        response?: null;
+        config: {
+          url?: string;
+          method?: string;
+          headers?: Record<string, string>;
+          _retryCount?: number;
+        };
+      }) => Promise<unknown>;
+
+    beforeEach(() => {
+      // Reset retry count before each test
+      localStorage.clear();
+    });
+
+    it('retries GET on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'GET', url: '/test', headers: {} },
+      };
+      await getResponseErrorHandler()(error);
+      // Should retry (recursively call apiClient)
+      expect(apiClient).toHaveBeenCalledWith({
+        method: 'GET',
+        url: '/test',
+        headers: {},
+        _retryCount: 2,
       });
     });
 
-    // ─── NETWORK RETRY METHOD SAFETY TESTS ───
-    describe('response interceptor - network retry method safety', () => {
-      const getResponseErrorHandler = () =>
-        (
-          apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } }
-        ).interceptors.response.use.mock.calls[0][1] as (error: {
-          code?: string;
-          message?: string;
-          response?: null;
-          config: {
-            url?: string;
-            method?: string;
-            headers?: Record<string, string>;
-            _retryCount?: number;
-          };
-        }) => Promise<unknown>;
-
-      beforeEach(() => {
-        // Reset retry count before each test
-        localStorage.clear();
-      });
-
-      it('retries GET on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'GET', url: '/test', headers: {} } 
-        };
-        await getResponseErrorHandler()(error);
-        // Should retry (recursively call apiClient)
-        expect(apiClient).toHaveBeenCalledWith({ method: 'GET', url: '/test', headers: {}, _retryCount: 2 });
-      });
-
-      it('retries HEAD on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'HEAD', url: '/test', headers: {} } 
-        };
-        await getResponseErrorHandler()(error);
-        // Should retry (recursively call apiClient)
-        expect(apiClient).toHaveBeenCalledWith({ method: 'HEAD', url: '/test', headers: {}, _retryCount: 2 });
-      });
-
-      it('retries OPTIONS on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'OPTIONS', url: '/test', headers: {} } 
-        };
-        await getResponseErrorHandler()(error);
-        // Should retry (recursively call apiClient)
-        expect(apiClient).toHaveBeenCalledWith({ method: 'OPTIONS', url: '/test', headers: {}, _retryCount: 2 });
-      });
-
-      it('does NOT retry POST on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'POST', url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith({ method: 'POST', url: '/test', headers: {}, _retryCount: 1 });
-      });
-
-      it('does NOT retry PUT on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'PUT', url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith({ method: 'PUT', url: '/test', headers: {}, _retryCount: 1 });
-      });
-
-      it('does NOT retry PATCH on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'PATCH', url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith({ method: 'PATCH', url: '/test', headers: {}, _retryCount: 1 });
-      });
-
-      it('does NOT retry DELETE on network error', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'DELETE', url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith({ method: 'DELETE', url: '/test', headers: {}, _retryCount: 1 });
-      });
-
-      it('does NOT retry on network error when method is missing', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith(expect.objectContaining({ _retryCount: 1 }));
-      });
-
-      it('does NOT retry on network error when method is undefined', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: undefined, url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith(expect.objectContaining({ _retryCount: 1 }));
-      });
-
-      it('handles case insensitive methods correctly', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'get', url: '/test', headers: {} } 
-        };
-        await getResponseErrorHandler()(error);
-        // Should retry (recursively call apiClient)
-        expect(apiClient).toHaveBeenCalledWith({ method: 'get', url: '/test', headers: {}, _retryCount: 2 });
+    it('retries HEAD on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'HEAD', url: '/test', headers: {} },
+      };
+      await getResponseErrorHandler()(error);
+      // Should retry (recursively call apiClient)
+      expect(apiClient).toHaveBeenCalledWith({
+        method: 'HEAD',
+        url: '/test',
+        headers: {},
+        _retryCount: 2,
       });
     });
 
-    // ─── TIMEOUT BEHAVIOR TESTS ───
-    describe('response interceptor - timeout behavior', () => {
-      const getResponseErrorHandler = () =>
-        (
-          apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } }
-        ).interceptors.response.use.mock.calls[0][1] as (error: {
-          code?: string;
-          message?: string;
-          response?: null;
-          config: {
-            url?: string;
-            method?: string;
-            headers?: Record<string, string>;
-            _retryCount?: number;
-          };
-        }) => Promise<unknown>;
-
-      beforeEach(() => {
-        // Reset retry count before each test
-        localStorage.clear();
-      });
-
-      it('treats timeout as network error for GET', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'GET', url: '/test', headers: {} } 
-        };
-        await getResponseErrorHandler()(error);
-        // Should retry (recursively call apiClient)
-        expect(apiClient).toHaveBeenCalledWith({ method: 'GET', url: '/test', headers: {}, _retryCount: 2 });
-      });
-
-      it('does NOT treat timeout as retryable for POST', async () => {
-        const error = { 
-          code: 'ECONNABORTED', 
-          config: { method: 'POST', url: '/test', headers: {} } 
-        };
-        await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
-        // Should NOT have called apiClient for retry
-        expect(apiClient).not.toHaveBeenCalledWith({ method: 'POST', url: '/test', headers: {}, _retryCount: 1 });
-      });
-
-      it('respects default timeout on axios instance', async () => {
-        // This test verifies that the axios instance has a timeout set
-        // We can't easily test the actual timeout behavior in unit tests without mocking timers
-        // but we can verify the instance was created with timeout option
-        expect(
-          (apiClient as unknown as { defaults: { timeout: number } }).defaults.timeout,
-        ).toBe(30000);
+    it('retries OPTIONS on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'OPTIONS', url: '/test', headers: {} },
+      };
+      await getResponseErrorHandler()(error);
+      // Should retry (recursively call apiClient)
+      expect(apiClient).toHaveBeenCalledWith({
+        method: 'OPTIONS',
+        url: '/test',
+        headers: {},
+        _retryCount: 2,
       });
     });
 
-    describe('clearTokens on auth failure', () => {
+    it('does NOT retry POST on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'POST', url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/test',
+        headers: {},
+        _retryCount: 1,
+      });
+    });
+
+    it('does NOT retry PUT on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'PUT', url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith({
+        method: 'PUT',
+        url: '/test',
+        headers: {},
+        _retryCount: 1,
+      });
+    });
+
+    it('does NOT retry PATCH on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'PATCH', url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith({
+        method: 'PATCH',
+        url: '/test',
+        headers: {},
+        _retryCount: 1,
+      });
+    });
+
+    it('does NOT retry DELETE on network error', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'DELETE', url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith({
+        method: 'DELETE',
+        url: '/test',
+        headers: {},
+        _retryCount: 1,
+      });
+    });
+
+    it('does NOT retry on network error when method is missing', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith(expect.objectContaining({ _retryCount: 1 }));
+    });
+
+    it('does NOT retry on network error when method is undefined', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: undefined, url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith(expect.objectContaining({ _retryCount: 1 }));
+    });
+
+    it('handles case insensitive methods correctly', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'get', url: '/test', headers: {} },
+      };
+      await getResponseErrorHandler()(error);
+      // Should retry (recursively call apiClient)
+      expect(apiClient).toHaveBeenCalledWith({
+        method: 'get',
+        url: '/test',
+        headers: {},
+        _retryCount: 2,
+      });
+    });
+  });
+
+  // ─── TIMEOUT BEHAVIOR TESTS ───
+  describe('response interceptor - timeout behavior', () => {
+    const getResponseErrorHandler = () =>
+      (apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } })
+        .interceptors.response.use.mock.calls[0][1] as (error: {
+        code?: string;
+        message?: string;
+        response?: null;
+        config: {
+          url?: string;
+          method?: string;
+          headers?: Record<string, string>;
+          _retryCount?: number;
+        };
+      }) => Promise<unknown>;
+
+    beforeEach(() => {
+      // Reset retry count before each test
+      localStorage.clear();
+    });
+
+    it('treats timeout as network error for GET', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'GET', url: '/test', headers: {} },
+      };
+      await getResponseErrorHandler()(error);
+      // Should retry (recursively call apiClient)
+      expect(apiClient).toHaveBeenCalledWith({
+        method: 'GET',
+        url: '/test',
+        headers: {},
+        _retryCount: 2,
+      });
+    });
+
+    it('does NOT treat timeout as retryable for POST', async () => {
+      const error = {
+        code: 'ECONNABORTED',
+        config: { method: 'POST', url: '/test', headers: {} },
+      };
+      await expect(getResponseErrorHandler()(error)).rejects.toBeDefined();
+      // Should NOT have called apiClient for retry
+      expect(apiClient).not.toHaveBeenCalledWith({
+        method: 'POST',
+        url: '/test',
+        headers: {},
+        _retryCount: 1,
+      });
+    });
+
+    it('respects default timeout on axios instance', async () => {
+      // This test verifies that the axios instance has a timeout set
+      // We can't easily test the actual timeout behavior in unit tests without mocking timers
+      // but we can verify the instance was created with timeout option
+      expect((apiClient as unknown as { defaults: { timeout: number } }).defaults.timeout).toBe(
+        30000,
+      );
+    });
+  });
+
+  describe('clearTokens on auth failure', () => {
     it('exposes clearTokens as an exported function', () => {
       expect(clearTokens).toBeDefined();
       expect(typeof clearTokens).toBe('function');

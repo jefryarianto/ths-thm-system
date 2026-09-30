@@ -48,7 +48,11 @@ function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function lerp(a: [number, number, number], b: [number, number, number], t: number): [number, number, number] {
+function lerp(
+  a: [number, number, number],
+  b: [number, number, number],
+  t: number,
+): [number, number, number] {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
@@ -140,7 +144,9 @@ export async function removePhotoBackground(
     const allBorder = [...topSamples, ...bottomSamples, ...leftSamples, ...rightSamples];
     const BUCKET = 24;
     const qkey = (c: [number, number, number]) =>
-      (Math.floor(c[0] / BUCKET) << 10) | (Math.floor(c[1] / BUCKET) << 5) | Math.floor(c[2] / BUCKET);
+      (Math.floor(c[0] / BUCKET) << 10) |
+      (Math.floor(c[1] / BUCKET) << 5) |
+      Math.floor(c[2] / BUCKET);
     const bucketCount = new Map<number, number>();
     for (const c of allBorder) {
       const k = qkey(c);
@@ -157,7 +163,9 @@ export async function removePhotoBackground(
     const bgBase = med(allBorder.filter((c) => qkey(c) === bestKey));
 
     /** Warna bg satu tepi: cluster terdepan sebelum gap terbesar yang signifikan. */
-    const edgeColor = (samples: Array<[number, number, number]>): {
+    const edgeColor = (
+      samples: Array<[number, number, number]>,
+    ): {
       col: [number, number, number];
       bgSamples: Array<[number, number, number]>;
     } => {
@@ -207,7 +215,9 @@ export async function removePhotoBackground(
 
     // ── 3. Toleransi adaptif konservatif dari sebaran warna bg di tepi ──
     const edgeDists: number[] = [];
-    const edgeList: Array<[Array<[number, number, number]>, string, number, Array<[number, number, number]>]> = [
+    const edgeList: Array<
+      [Array<[number, number, number]>, string, number, Array<[number, number, number]>]
+    > = [
       [topSamples, 'x', strip, topEdge.bgSamples],
       [bottomSamples, 'x', h - 1 - strip, bottomEdge.bgSamples],
       [leftSamples, 'y', strip, leftEdge.bgSamples],
@@ -269,8 +279,14 @@ export async function removePhotoBackground(
         const i = y * w + x;
         if (!isBg[i]) continue;
         const n =
-          isBg[i - 1] && isBg[i + 1] && isBg[i - w] && isBg[i + w] &&
-          isBg[i - w - 1] && isBg[i - w + 1] && isBg[i + w - 1] && isBg[i + w + 1];
+          isBg[i - 1] &&
+          isBg[i + 1] &&
+          isBg[i - w] &&
+          isBg[i + w] &&
+          isBg[i - w - 1] &&
+          isBg[i - w + 1] &&
+          isBg[i + w - 1] &&
+          isBg[i + w + 1];
         if (n) erodedBg[i] = 1;
       }
     }
@@ -358,7 +374,7 @@ async function composePasfoto(
   const outW = Math.max(1, Math.round(subW * scale));
   const outH = Math.max(1, Math.round(subH * scale));
 
-    const scaled = await sharp(sub, { raw: { width: subW, height: subH, channels: 4 } })
+  const scaled = await sharp(sub, { raw: { width: subW, height: subH, channels: 4 } })
     .resize(outW, outH, { fit: 'cover', position: 'centre' })
     .png()
     .toBuffer();

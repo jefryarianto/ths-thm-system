@@ -13,24 +13,37 @@ test.describe('Additional Dashboard Pages', () => {
       await expect(page.locator('h1').first()).toContainText('Statistik Scan');
       // Wait for either stat cards or skeleton (API-dependent)
       await page.waitForTimeout(2000);
-      const headerVisible = await page.getByText('Total Absensi').isVisible().catch(() => false);
+      const headerVisible = await page
+        .getByText('Total Absensi')
+        .isVisible()
+        .catch(() => false);
       if (headerVisible) {
-        await expect(page.getByText('Dokumen Terverifikasi').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('Dokumen Terverifikasi').first()).toBeVisible({
+          timeout: 5000,
+        });
         await expect(page.getByText('Kegiatan Aktif').first()).toBeVisible({ timeout: 5000 });
       }
     });
 
     test('renders absensi chart section', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const chartVisible = await page.getByText('Absensi 30 Hari Terakhir').isVisible().catch(() => false);
+      const chartVisible = await page
+        .getByText('Absensi 30 Hari Terakhir')
+        .isVisible()
+        .catch(() => false);
       if (chartVisible) {
-        await expect(page.getByText('Absensi 30 Hari Terakhir').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('Absensi 30 Hari Terakhir').first()).toBeVisible({
+          timeout: 5000,
+        });
       }
     });
 
     test('renders absensi table with data', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const tableVisible = await page.getByText('Absensi Terbaru').isVisible().catch(() => false);
+      const tableVisible = await page
+        .getByText('Absensi Terbaru')
+        .isVisible()
+        .catch(() => false);
       if (tableVisible) {
         await expect(page.getByText('Absensi Terbaru').first()).toBeVisible({ timeout: 5000 });
         await expect(page.locator('table').first()).toBeVisible({ timeout: 5000 });
@@ -65,17 +78,29 @@ test.describe('Additional Dashboard Pages', () => {
     test('switches between tabs', async ({ page }) => {
       // Click Anggota tab (scoped to main content — sidebar group header "Keanggotaan" also matches substring "Anggota")
       await page.locator('main').getByRole('button', { name: 'Anggota' }).click();
-      const searchVisible = await page.locator('input[placeholder="Cari anggota..."]').first().isVisible().catch(() => false);
+      const searchVisible = await page
+        .locator('input[placeholder="Cari anggota..."]')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (searchVisible) {
-        await expect(page.locator('input[placeholder="Cari anggota..."]').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('input[placeholder="Cari anggota..."]').first()).toBeVisible({
+          timeout: 5000,
+        });
       }
 
       // Click Absensi tab
       await page.getByRole('button', { name: 'Absensi' }).click();
       await page.waitForTimeout(2000);
-      const absensiVisible = await page.getByText('Absensi 30 Hari Terakhir').first().isVisible().catch(() => false);
+      const absensiVisible = await page
+        .getByText('Absensi 30 Hari Terakhir')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (absensiVisible) {
-        await expect(page.getByText('Absensi 30 Hari Terakhir').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('Absensi 30 Hari Terakhir').first()).toBeVisible({
+          timeout: 5000,
+        });
       }
 
       // Click Ekspor Data tab
@@ -85,15 +110,25 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('shows monthly dues chart on overview', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const duesVisible = await page.getByText('Iuran 6 Bulan Terakhir').first().isVisible().catch(() => false);
+      const duesVisible = await page
+        .getByText('Iuran 6 Bulan Terakhir')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (duesVisible) {
-        await expect(page.getByText('Iuran 6 Bulan Terakhir').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('Iuran 6 Bulan Terakhir').first()).toBeVisible({
+          timeout: 5000,
+        });
       }
     });
 
     test('shows member status pie chart on overview', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const statusVisible = await page.getByText('Status Keanggotaan').first().isVisible().catch(() => false);
+      const statusVisible = await page
+        .getByText('Status Keanggotaan')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (statusVisible) {
         await expect(page.getByText('Status Keanggotaan').first()).toBeVisible({ timeout: 5000 });
       }
@@ -110,7 +145,11 @@ test.describe('Additional Dashboard Pages', () => {
     test('renders header and stat cards', async ({ page }) => {
       await expect(page.locator('h1').first()).toContainText('Gamifikasi', { timeout: 10000 });
       await page.waitForTimeout(2000);
-      const statsVisible = await page.getByText('Peserta Aktif').first().isVisible().catch(() => false);
+      const statsVisible = await page
+        .getByText('Peserta Aktif')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (statsVisible) {
         await expect(page.getByText('Peserta Aktif').first()).toBeVisible({ timeout: 5000 });
         await expect(page.getByText('Total Poin').first()).toBeVisible({ timeout: 5000 });
@@ -119,16 +158,26 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('renders leaderboard section with search', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const lbVisible = await page.getByText('Leaderboard').first().isVisible().catch(() => false);
+      const lbVisible = await page
+        .getByText('Leaderboard')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (lbVisible) {
         await expect(page.getByText('Leaderboard').first()).toBeVisible({ timeout: 5000 });
-        await expect(page.locator('input[placeholder="Cari anggota..."]').first()).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('input[placeholder="Cari anggota..."]').first()).toBeVisible({
+          timeout: 5000,
+        });
       }
     });
 
     test('renders org hierarchy filters', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const selectVisible = await page.locator('select').first().isVisible().catch(() => false);
+      const selectVisible = await page
+        .locator('select')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (selectVisible) {
         await expect(page.locator('select').first()).toBeVisible({ timeout: 5000 });
       }
@@ -136,7 +185,11 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('renders recent activity section', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const eventsVisible = await page.getByText('Aktivitas Terbaru').first().isVisible().catch(() => false);
+      const eventsVisible = await page
+        .getByText('Aktivitas Terbaru')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (eventsVisible) {
         await expect(page.getByText('Aktivitas Terbaru').first()).toBeVisible({ timeout: 5000 });
       }
@@ -144,7 +197,11 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('renders badges section', async ({ page }) => {
       await page.waitForTimeout(2000);
-      const badgesVisible = await page.getByText('Semua Badge').first().isVisible().catch(() => false);
+      const badgesVisible = await page
+        .getByText('Semua Badge')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (badgesVisible) {
         await expect(page.getByText('Semua Badge').first()).toBeVisible({ timeout: 5000 });
       }
@@ -163,7 +220,9 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('shows add examiner button', async ({ page }) => {
-      await expect(page.getByRole('button', { name: /tambah|add/i })).toBeVisible({ timeout: 8000 });
+      await expect(page.getByRole('button', { name: /tambah|add/i })).toBeVisible({
+        timeout: 8000,
+      });
     });
   });
 
@@ -179,7 +238,9 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('shows search and filter controls', async ({ page }) => {
-      await expect(page.locator('input[placeholder*="Cari"]').first()).toBeVisible({ timeout: 8000 });
+      await expect(page.locator('input[placeholder*="Cari"]').first()).toBeVisible({
+        timeout: 8000,
+      });
     });
   });
 
@@ -199,7 +260,7 @@ test.describe('Additional Dashboard Pages', () => {
       await page.goto('/forum');
       await page.waitForLoadState('networkidle');
       const firstCategory = page.locator('a[href*="/forum/c/"]').first();
-      if (await firstCategory.count() > 0) {
+      if ((await firstCategory.count()) > 0) {
         await firstCategory.click();
         await page.waitForLoadState('networkidle');
         await expect(page.locator('h1').first()).toBeVisible({ timeout: 8000 });
@@ -229,7 +290,7 @@ test.describe('Additional Dashboard Pages', () => {
       await page.goto('/chat');
       await page.waitForLoadState('networkidle');
       const firstRoom = page.locator('a[href*="/chat/"]').first();
-      if (await firstRoom.count() > 0) {
+      if ((await firstRoom.count()) > 0) {
         await firstRoom.click();
         await page.waitForLoadState('networkidle');
         await expect(page.locator('h1').first()).toBeVisible({ timeout: 8000 });

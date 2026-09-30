@@ -8,7 +8,19 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, ClipboardList, Eye, EyeOff, CheckCircle, XCircle, Trash2, Edit3, ListOrdered, Upload, RotateCcw } from 'lucide-react';
+import {
+  Plus,
+  ClipboardList,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  Edit3,
+  ListOrdered,
+  Upload,
+  RotateCcw,
+} from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -16,7 +28,6 @@ import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import { useToast } from '@/components/ui/toast';
-
 
 interface AssessmentItemLite {
   id: string;
@@ -58,25 +69,33 @@ export default function AssessmentsPage() {
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: aspekData, meta: aspekMeta, loading: aspekLoading, refetch: refetchAspek } =
-    usePaginatedList<AssessmentRow>(() => {
-      const params = getApiParams({ limit: 10 });
-      if (debouncedSearch) params.search = debouncedSearch;
-      else delete params.search;
-      if (showHidden) params.includeInactive = 'true';
-      else delete params.includeInactive;
-      return apiClient.get('/assessments/aspects', { params }).then((r) => r.data);
-    }, [page, debouncedSearch, tab, showHidden]);
+  const {
+    data: aspekData,
+    meta: aspekMeta,
+    loading: aspekLoading,
+    refetch: refetchAspek,
+  } = usePaginatedList<AssessmentRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (showHidden) params.includeInactive = 'true';
+    else delete params.includeInactive;
+    return apiClient.get('/assessments/aspects', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, tab, showHidden]);
 
-  const { data: itemsData, meta: itemsMeta, loading: itemsLoading, refetch: refetchItems } =
-    usePaginatedList<ItemRow>(() => {
-      const params = getApiParams({ limit: 10 });
-      if (debouncedSearch) params.search = debouncedSearch;
-      else delete params.search;
-      if (showHidden) params.includeInactive = 'true';
-      else delete params.includeInactive;
-      return apiClient.get('/assessments/items', { params }).then((r) => r.data);
-    }, [page, debouncedSearch, tab, showHidden]);
+  const {
+    data: itemsData,
+    meta: itemsMeta,
+    loading: itemsLoading,
+    refetch: refetchItems,
+  } = usePaginatedList<ItemRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (showHidden) params.includeInactive = 'true';
+    else delete params.includeInactive;
+    return apiClient.get('/assessments/items', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, tab, showHidden]);
 
   const meta = tab === 'aspek' ? aspekMeta : itemsMeta;
 
@@ -91,305 +110,340 @@ export default function AssessmentsPage() {
 
   return (
     <PermissionGuard module="assessments" action="view">
-    <PageContainer>
-      <PageHeader title="Aspek & Item Penilaian" onRefresh={refetch}>
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-3">
+      <PageContainer>
+        <PageHeader title="Aspek & Item Penilaian" onRefresh={refetch}>
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-3">
+            <button
+              onClick={() => {
+                setTab('aspek');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-md transition ${
+                tab === 'aspek'
+                  ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              Aspek
+            </button>
+            <button
+              onClick={() => {
+                setTab('item');
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-md transition ${
+                tab === 'item'
+                  ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              Item
+            </button>
+          </div>
           <button
-            onClick={() => { setTab('aspek'); setPage(1); }}
-            className={`px-3 py-1.5 text-sm rounded-md transition ${
-              tab === 'aspek'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
+            onClick={() => router.push('/assessments/import')}
+            className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
           >
-            Aspek
+            <Upload size={14} /> Import CSV
           </button>
+          {tab === 'aspek' ? (
+            <button
+              onClick={() => router.push('/assessments/aspects/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Tambah Aspek
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/assessments/items/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Tambah Item
+            </button>
+          )}
+        </PageHeader>
+
+        <SummaryBar
+          icon={tab === 'aspek' ? ClipboardList : ListOrdered}
+          label={tab === 'aspek' ? 'Total Aspek' : 'Total Item'}
+          total={meta.total}
+        />
+
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder={tab === 'aspek' ? 'Cari aspek penilaian...' : 'Cari item penilaian...'}
+          debounceMs={300}
+        />
+
+        {/* Toggle tampil/sembunyikan item nonaktif (soft-disable tetap ada di DB) */}
+        <div className="mb-4">
           <button
-            onClick={() => { setTab('item'); setPage(1); }}
-            className={`px-3 py-1.5 text-sm rounded-md transition ${
-              tab === 'item'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            onClick={() => {
+              setShowHidden(!showHidden);
+              setPage(1);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm border transition-colors ${
+              showHidden
+                ? 'bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+                : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
-            Item
+            {showHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+            {showHidden ? 'Sembunyikan yang nonaktif' : 'Tampilkan yang disembunyikan'}
           </button>
         </div>
-        <button
-          onClick={() => router.push('/assessments/import')}
-          className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
-        >
-          <Upload size={14} /> Import CSV
-        </button>
+
         {tab === 'aspek' ? (
-          <button
-            onClick={() => router.push('/assessments/aspects/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={14} /> Tambah Aspek
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push('/assessments/items/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={14} /> Tambah Item
-          </button>
-        )}
-      </PageHeader>
-
-      <SummaryBar
-        icon={tab === 'aspek' ? ClipboardList : ListOrdered}
-        label={tab === 'aspek' ? 'Total Aspek' : 'Total Item'}
-        total={meta.total}
-      />
-
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder={tab === 'aspek' ? 'Cari aspek penilaian...' : 'Cari item penilaian...'}
-        debounceMs={300}
-      />
-
-      {/* Toggle tampil/sembunyikan item nonaktif (soft-disable tetap ada di DB) */}
-      <div className="mb-4">
-        <button
-          onClick={() => { setShowHidden(!showHidden); setPage(1); }}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm border transition-colors ${
-            showHidden
-              ? 'bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
-              : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          {showHidden ? <EyeOff size={14} /> : <Eye size={14} />}
-          {showHidden ? 'Sembunyikan yang nonaktif' : 'Tampilkan yang disembunyikan'}
-        </button>
-      </div>
-
-      {tab === 'aspek' ? (
-        <DataTable
-          columns={[
-            { label: 'Kode' },
-            { label: 'Aspek' },
-            { label: 'Item', hidden: 'hidden sm:table-cell' },
-            { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
-            { label: 'Aktif', align: 'center' },
-            { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
-          ]}
-          data={aspekData}
-          loading={aspekLoading}
-          empty={{
-            icon: ClipboardList,
-            ...buildEmptyMessage('aspek penilaian', hasActiveFilters, resetFilters),
-          }}
-          page={page}
-          totalPages={aspekMeta.totalPages}
-          total={aspekMeta.total}
-          onPageChange={handlePageChange}
-          colSpan={6}
-          renderRow={(row: AssessmentRow) => (
-            <tr
-              key={row.id}
-              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <td className="px-4 py-3">
-                <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
-                  {row.kodeAspek}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
-              </td>
-              <td className="px-4 py-3 hidden sm:table-cell">
-                {row.itemPenilaian && row.itemPenilaian.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {row.itemPenilaian.slice(0, 3).map((it) => (
-                      <span
-                        key={it.id}
-                        className={`text-[11px] px-1.5 py-0.5 rounded-md ${it.isActive
-                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                          : 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400'}`}
+          <DataTable
+            columns={[
+              { label: 'Kode' },
+              { label: 'Aspek' },
+              { label: 'Item', hidden: 'hidden sm:table-cell' },
+              { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
+              { label: 'Aktif', align: 'center' },
+              { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
+            ]}
+            data={aspekData}
+            loading={aspekLoading}
+            empty={{
+              icon: ClipboardList,
+              ...buildEmptyMessage('aspek penilaian', hasActiveFilters, resetFilters),
+            }}
+            page={page}
+            totalPages={aspekMeta.totalPages}
+            total={aspekMeta.total}
+            onPageChange={handlePageChange}
+            colSpan={6}
+            renderRow={(row: AssessmentRow) => (
+              <tr
+                key={row.id}
+                className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <td className="px-4 py-3">
+                  <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                    {row.kodeAspek}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
+                </td>
+                <td className="px-4 py-3 hidden sm:table-cell">
+                  {row.itemPenilaian && row.itemPenilaian.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {row.itemPenilaian.slice(0, 3).map((it) => (
+                        <span
+                          key={it.id}
+                          className={`text-[11px] px-1.5 py-0.5 rounded-md ${
+                            it.isActive
+                              ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                              : 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400'
+                          }`}
+                        >
+                          {it.namaItem}
+                        </span>
+                      ))}
+                      {row.itemPenilaian.length > 3 && (
+                        <span className="text-[11px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md">
+                          +{row.itemPenilaian.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {Number(row.bobot) * 100}%
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {row.isActive ? (
+                    <CheckCircle size={16} className="text-green-500 mx-auto" />
+                  ) : (
+                    <XCircle size={16} className="text-red-500 mx-auto" />
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right hidden md:table-cell">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link
+                      href={`/assessments/aspects/${row.id}/edit`}
+                      className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
+                      title="Edit aspek & item"
+                    >
+                      <Edit3 size={14} />
+                    </Link>
+                    {!row.isActive && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await apiClient.post(`/assessments/aspects/${row.id}/restore`);
+                            refetchAspek();
+                            toast(
+                              'success',
+                              'Aspek diaktifkan kembali. Item disembunyikan bisa di-restore dari Edit aspek.',
+                            );
+                          } catch {
+                            toast('error', 'Gagal mengaktifkan aspek');
+                          }
+                        }}
+                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                        title="Aktifkan kembali"
                       >
-                        {it.namaItem}
-                      </span>
-                    ))}
-                    {row.itemPenilaian.length > 3 && (
-                      <span className="text-[11px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md">
-                        +{row.itemPenilaian.length - 3}
-                      </span>
+                        <RotateCcw size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const newStatus = !row.isActive;
+                          await apiClient.patch(`/assessments/aspects/${row.id}`, {
+                            isActive: newStatus,
+                          });
+                          refetchAspek();
+                          toast('success', newStatus ? 'Aspek diaktifkan' : 'Aspek disembunyikan');
+                        } catch {
+                          toast('error', 'Gagal mengubah status aspek');
+                        }
+                      }}
+                      className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                      title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                    >
+                      <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!(await confirm(`Hapus aspek "${row.namaAspek}"?`))) return;
+                        try {
+                          await apiClient.delete(`/assessments/aspects/${row.id}`);
+                          refetchAspek();
+                          toast(
+                            'success',
+                            'Aspek dinonaktifkan bersama item-itemnya. Pendadaran yang sudah punya kopie aspek tidak terpengaruh.',
+                          );
+                        } catch {
+                          toast('error', 'Gagal menghapus aspek');
+                        }
+                      }}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                      title="Hapus (nonaktif aspek & items)"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+          />
+        ) : (
+          <DataTable
+            columns={[
+              { label: 'Kode' },
+              { label: 'Item' },
+              { label: 'Skor Maks', align: 'right', hidden: 'hidden sm:table-cell' },
+              { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
+              { label: 'Aktif', align: 'center' },
+              { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
+            ]}
+            data={itemsData}
+            loading={itemsLoading}
+            empty={{
+              icon: ListOrdered,
+              ...buildEmptyMessage('item penilaian', hasActiveFilters, resetFilters),
+            }}
+            page={page}
+            totalPages={itemsMeta.totalPages}
+            total={itemsMeta.total}
+            onPageChange={handlePageChange}
+            colSpan={6}
+            renderRow={(row: ItemRow) => (
+              <tr
+                key={row.id}
+                className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <td className="px-4 py-3">
+                  <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                    {row.kodeItem}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {row.namaItem}
+                    </span>
+                    {row.aspek && (
+                      <span className="text-xs text-gray-400">{row.aspek.namaAspek}</span>
                     )}
                   </div>
-                ) : (
-                  <span className="text-xs text-gray-400">-</span>
-                )}
-              </td>
-              <td className="px-4 py-3 text-right hidden sm:table-cell">
-                <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
-              </td>
-              <td className="px-4 py-3 text-center">
-                {row.isActive ? (
-                  <CheckCircle size={16} className="text-green-500 mx-auto" />
-                ) : (
-                  <XCircle size={16} className="text-red-500 mx-auto" />
-                )}
-              </td>
-              <td className="px-4 py-3 text-right hidden md:table-cell">
-                <div className="flex items-center justify-end gap-1">
-                  <Link
-                    href={`/assessments/aspects/${row.id}/edit`}
-                    className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
-                    title="Edit aspek & item"
-                  >
-                    <Edit3 size={14} />
-                  </Link>
-                  {!row.isActive && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          await apiClient.post(`/assessments/aspects/${row.id}/restore`);
-                          refetchAspek();
-                          toast('success', 'Aspek diaktifkan kembali. Item disembunyikan bisa di-restore dari Edit aspek.');
-                        } catch { toast('error', 'Gagal mengaktifkan aspek'); }
-                      }}
-                      className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                      title="Aktifkan kembali"
+                </td>
+                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                  <span className="text-gray-600 dark:text-gray-400 font-mono text-sm">
+                    {row.skorMaksimal}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {Number(row.bobot) * 100}%
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {row.isActive ? (
+                    <CheckCircle size={16} className="text-green-500 mx-auto" />
+                  ) : (
+                    <XCircle size={16} className="text-red-500 mx-auto" />
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right hidden md:table-cell">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link
+                      href={`/assessments/items/${row.id}/edit`}
+                      className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors inline-flex"
+                      title="Edit"
                     >
-                      <RotateCcw size={14} />
-                    </button>
-                  )}
-                  <button
-                    onClick={async () => {
-                      try {
-                        const newStatus = !row.isActive;
-                        await apiClient.patch(`/assessments/aspects/${row.id}`, { isActive: newStatus });
-                        refetchAspek();
-                        toast('success', newStatus ? 'Aspek diaktifkan' : 'Aspek disembunyikan');
-                      } catch { toast('error', 'Gagal mengubah status aspek'); }
-                    }}
-                    className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                    title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                  >
-                    <Eye size={15} />
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!(await confirm(`Hapus aspek "${row.namaAspek}"?`))) return;
-                      try {
-                        await apiClient.delete(`/assessments/aspects/${row.id}`);
-                        refetchAspek();
-                        toast('success', 'Aspek dinonaktifkan bersama item-itemnya. Pendadaran yang sudah punya kopie aspek tidak terpengaruh.');
-                      } catch { toast('error', 'Gagal menghapus aspek'); }
-                    }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                    title="Hapus (nonaktif aspek & items)"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          )}
-        />
-      ) : (
-        <DataTable
-          columns={[
-            { label: 'Kode' },
-            { label: 'Item' },
-            { label: 'Skor Maks', align: 'right', hidden: 'hidden sm:table-cell' },
-            { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
-            { label: 'Aktif', align: 'center' },
-            { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
-          ]}
-          data={itemsData}
-          loading={itemsLoading}
-          empty={{
-            icon: ListOrdered,
-            ...buildEmptyMessage('item penilaian', hasActiveFilters, resetFilters),
-          }}
-          page={page}
-          totalPages={itemsMeta.totalPages}
-          total={itemsMeta.total}
-          onPageChange={handlePageChange}
-          colSpan={6}
-          renderRow={(row: ItemRow) => (
-            <tr
-              key={row.id}
-              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <td className="px-4 py-3">
-                <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
-                  {row.kodeItem}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-900 dark:text-white">{row.namaItem}</span>
-                  {row.aspek && (
-                    <span className="text-xs text-gray-400">{row.aspek.namaAspek}</span>
-                  )}
-                </div>
-              </td>
-              <td className="px-4 py-3 text-right hidden sm:table-cell">
-                <span className="text-gray-600 dark:text-gray-400 font-mono text-sm">
-                  {row.skorMaksimal}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-right hidden sm:table-cell">
-                <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
-              </td>
-              <td className="px-4 py-3 text-center">
-                {row.isActive ? (
-                  <CheckCircle size={16} className="text-green-500 mx-auto" />
-                ) : (
-                  <XCircle size={16} className="text-red-500 mx-auto" />
-                )}
-              </td>
-              <td className="px-4 py-3 text-right hidden md:table-cell">
-                <div className="flex items-center justify-end gap-1">
-                  <Link
-                    href={`/assessments/items/${row.id}/edit`}
-                    className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors inline-flex"
-                    title="Edit"
-                  >
-                    <Edit3 size={14} />
-                  </Link>
-                  {!row.isActive && (
+                      <Edit3 size={14} />
+                    </Link>
+                    {!row.isActive && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await apiClient.post(`/assessments/items/${row.id}/restore`);
+                            refetchItems();
+                            toast('success', 'Item diaktifkan kembali');
+                          } catch {
+                            toast('error', 'Gagal mengaktifkan item');
+                          }
+                        }}
+                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                        title="Aktifkan kembali"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                    )}
                     <button
                       onClick={async () => {
+                        if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
                         try {
-                          await apiClient.post(`/assessments/items/${row.id}/restore`);
+                          await apiClient.delete(`/assessments/items/${row.id}`);
                           refetchItems();
-                          toast('success', 'Item diaktifkan kembali');
-                        } catch { toast('error', 'Gagal mengaktifkan item'); }
+                        } catch {
+                          toast('error', 'Gagal menghapus item');
+                        }
                       }}
-                      className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                      title="Aktifkan kembali"
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                      title="Hapus"
                     >
-                      <RotateCcw size={14} />
+                      <Trash2 size={14} />
                     </button>
-                  )}
-                  <button
-                    onClick={async () => {
-                      if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
-                      try {
-                        await apiClient.delete(`/assessments/items/${row.id}`);
-                        refetchItems();
-                      } catch { toast('error', 'Gagal menghapus item'); }
-                    }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                    title="Hapus"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          )}
-        />
-      )}
-      {confirmModal}
-    </PageContainer>
+                  </div>
+                </td>
+              </tr>
+            )}
+          />
+        )}
+        {confirmModal}
+      </PageContainer>
     </PermissionGuard>
   );
 }

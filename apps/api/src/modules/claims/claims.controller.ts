@@ -14,13 +14,17 @@ export class ClaimsController {
   constructor(private readonly service: ClaimsService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil semua klaim',
+  })
   findAll(@Query() q: ClaimFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(q, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil detail klaim',
+  })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
@@ -28,13 +32,17 @@ export class ClaimsController {
   @Post()
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60 } })
-  @ApiOperation({ summary: 'Tambah klaim baru (publik — pendaftaran mandiri anggota belum terdaftar)' })
+  @ApiOperation({
+    summary: 'Tambah klaim baru (publik — pendaftaran mandiri anggota belum terdaftar)',
+  })
   create(@Body() dto: CreateClaimDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui klaim',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateClaimDto, @Req() req: ScopedRequest) {
     return this.service.update(id, dto, req.scope, req.user?.id);
   }
@@ -46,19 +54,25 @@ export class ClaimsController {
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Setujui klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Setujui klaim',
+  })
   approve(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.approve(id, req.scope, req.user?.id);
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tolak klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tolak klaim',
+  })
   reject(@Param('id') id: string, @Body() b: RejectClaimDto, @Req() req: ScopedRequest) {
     return this.service.reject(id, b?.reason, req.scope);
   }
 
   @Post(':id/process')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Proses klaim' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Proses klaim',
+  })
   process(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.process(id, req.scope);
   }

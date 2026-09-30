@@ -21,67 +21,127 @@ export class TrainingsController {
   constructor(private readonly service: TrainingsService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil semua pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { summary: 'Ambil semua pelatihan' },
+  )
   findAll(@Query() query: TrainingFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(query, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil detail pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { summary: 'Ambil detail pelatihan' },
+  )
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah pelatihan baru' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Tambah pelatihan baru',
+  })
   create(@Body() dto: CreateTrainingDto, @Req() req: ScopedRequest) {
     return this.service.create(dto, req.scope, req.user.id);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Perbarui pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Perbarui pelatihan',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateTrainingDto, @Req() req: ScopedRequest) {
     return this.service.update(id, dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Hapus pelatihan',
+  })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
   }
 
   @Get(':id/attendances')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil absensi pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Ambil absensi pelatihan' },
+  )
   getAttendances(@Param('id') id: string) {
     return this.service.getAttendances(id);
   }
 
   @Post(':id/attendances')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Catat absensi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Catat absensi pelatihan',
+  })
   recordAttendance(@Param('id') id: string, @Body() dto: RecordAttendanceDto) {
     return this.service.recordAttendance(id, dto);
   }
 
   @Post(':id/attendances/import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor absensi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Impor absensi pelatihan',
+  })
   importAttendance(@Param('id') id: string, @Body() importDto: ImportAttendanceDto) {
     return this.service.importAttendance(id, importDto.data);
   }
 
   @Get(':id/evaluations')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil evaluasi pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Ambil evaluasi pelatihan' },
+  )
   getEvaluations(@Param('id') id: string) {
     return this.service.getEvaluations(id);
   }
 
   @Post(':id/evaluations')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Tambah evaluasi pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Tambah evaluasi pelatihan' },
+  )
   createEvaluation(@Param('id') id: string, @Body() dto: CreateEvaluationDto) {
     return this.service.createEvaluation(id, dto);
   }
 
   @Patch(':id/evaluations/:eid')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Perbarui evaluasi pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Perbarui evaluasi pelatihan' },
+  )
   updateEvaluation(
     @Param('id') id: string,
     @Param('eid') eid: string,
@@ -91,25 +151,40 @@ export class TrainingsController {
   }
 
   @Delete(':id/evaluations/:eid')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus evaluasi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Hapus evaluasi pelatihan',
+  })
   removeEvaluation(@Param('id') id: string, @Param('eid') eid: string) {
     return this.service.removeEvaluation(id, eid);
   }
 
   @Get(':id/materi')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil materi pelatihan' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { summary: 'Ambil materi pelatihan' },
+  )
   getMateri(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getMateri(id, req.scope);
   }
 
   @Post(':id/materi')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah materi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Tambah materi pelatihan',
+  })
   addMateri(@Param('id') id: string, @Body() dto: CreateMateriDto, @Req() req: ScopedRequest) {
     return this.service.addMateri(id, dto, req.scope);
   }
 
   @Patch(':id/materi/:mid')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Perbarui materi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Perbarui materi pelatihan',
+  })
   updateMateri(
     @Param('id') id: string,
     @Param('mid') mid: string,
@@ -120,7 +195,9 @@ export class TrainingsController {
   }
 
   @Delete(':id/materi/:mid')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus materi pelatihan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Hapus materi pelatihan',
+  })
   removeMateri(@Param('id') id: string, @Param('mid') mid: string, @Req() req: ScopedRequest) {
     return this.service.removeMateri(id, mid, req.scope);
   }

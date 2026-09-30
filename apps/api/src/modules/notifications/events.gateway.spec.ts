@@ -244,7 +244,9 @@ describe('EventsGateway', () => {
       const socket = createMockSocket('sock-1', 'valid-token');
       socket.handshake.address = '1.2.3.4';
       const next = jest.fn();
-      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      gateway.afterInit({
+        use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next),
+      } as never);
       expect(next).toHaveBeenCalled();
       expect(socket.data.userId).toBe('user-1');
       expect(socket.data.role).toBe('admin_distrik');
@@ -254,7 +256,9 @@ describe('EventsGateway', () => {
       const socket = createMockSocket('sock-1');
       socket.handshake.address = '1.2.3.4';
       const next = jest.fn();
-      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      gateway.afterInit({
+        use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next),
+      } as never);
       expect(next.mock.calls[0][0]?.message).toBe('tidak terautentikasi');
     });
 
@@ -262,7 +266,9 @@ describe('EventsGateway', () => {
       const socket = createMockSocket('sock-1', 'bad-token');
       socket.handshake.address = '1.2.3.4';
       const next = jest.fn();
-      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      gateway.afterInit({
+        use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next),
+      } as never);
       expect(next.mock.calls[0][0]?.message).toBe('token tidak valid');
     });
 
@@ -274,7 +280,9 @@ describe('EventsGateway', () => {
         '10.0.0.1',
         Array(20).fill(Date.now()),
       );
-      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      gateway.afterInit({
+        use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next),
+      } as never);
       expect(next.mock.calls[0][0]?.message).toBe('terlalu banyak koneksi');
     });
   });
@@ -292,7 +300,10 @@ describe('EventsGateway', () => {
         'sock-1',
         timestamps,
       );
-      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(gateway, socket);
+      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(
+        gateway,
+        socket,
+      );
       expect(socket.disconnect).toHaveBeenCalled();
       const stats = gateway.getStats();
       expect(stats.security.throttledPackets).toBe(1);
@@ -308,7 +319,10 @@ describe('EventsGateway', () => {
         'sock-1',
         timestamps,
       );
-      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(gateway, socket);
+      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(
+        gateway,
+        socket,
+      );
       expect(socket.disconnect).not.toHaveBeenCalled();
     });
   });

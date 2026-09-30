@@ -159,7 +159,7 @@ class SessionManager {
     // Listen for user activity
     const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     const handler = () => this.trackActivity();
-    events.forEach(event => window.addEventListener(event, handler, { passive: true }));
+    events.forEach((event) => window.addEventListener(event, handler, { passive: true }));
   }
 
   /** Stop tracking activity (called on logout) */

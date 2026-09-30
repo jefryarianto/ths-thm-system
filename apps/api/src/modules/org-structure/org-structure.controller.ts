@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
 import { OrgStructureService, ImportOrgRow } from './org-structure.service';
 import {
@@ -19,13 +29,29 @@ export class OrgStructureController {
   constructor(private readonly service: OrgStructureService) {}
 
   @Get('nasional')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar nasional' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Daftar nasional' },
+  )
   getAllNasional() {
     return this.service.getAllNasional();
   }
 
   @Get('distrik')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar semua distrik' })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Daftar semua distrik' },
+  )
   getAllDistrik() {
     return this.service.getAllDistrik();
   }
@@ -55,8 +81,20 @@ export class OrgStructureController {
   }
 
   @Get('wilayah')
-  @ApiQuery({ name: 'distrikId', required: false, description: 'Bila diisi, hanya wilayah pada distrik tersebut' })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar wilayah (opsional filter by distrikId)' })
+  @ApiQuery({
+    name: 'distrikId',
+    required: false,
+    description: 'Bila diisi, hanya wilayah pada distrik tersebut',
+  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Daftar wilayah (opsional filter by distrikId)' },
+  )
   getAllWilayah(@Query('distrikId') distrikId?: string) {
     return this.service.getAllWilayah(distrikId);
   }
@@ -86,8 +124,20 @@ export class OrgStructureController {
   }
 
   @Get('ranting')
-  @ApiQuery({ name: 'wilayahId', required: false, description: 'Bila diisi, hanya ranting pada wilayah tersebut' })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar ranting (opsional filter by wilayahId)' })
+  @ApiQuery({
+    name: 'wilayahId',
+    required: false,
+    description: 'Bila diisi, hanya ranting pada wilayah tersebut',
+  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    { summary: 'Daftar ranting (opsional filter by wilayahId)' },
+  )
   getAllRanting(@Query('wilayahId') wilayahId?: string) {
     return this.service.getAllRanting(wilayahId);
   }
@@ -129,7 +179,9 @@ export class OrgStructureController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', { summary: 'Import data organisasi (distrik, wilayah, ranting) dari list' })
+  @CrudAuth('superadmin', {
+    summary: 'Import data organisasi (distrik, wilayah, ranting) dari list',
+  })
   @ApiBody({ description: 'Array baris import { distrik, wilayah?, ranting?, lokasiLatihan? }' })
   @ApiCreatedResponse({ description: 'Struktur organisasi di-import (upsert by nama)' })
   importOrg(@Body() body: { data: ImportOrgRow[] }) {

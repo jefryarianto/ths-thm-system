@@ -39,9 +39,7 @@ const PACKET_WINDOW_MS = 10_000;
   cors: { origin: corsOrigins },
   namespace: '/',
 })
-export class EventsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -143,9 +141,7 @@ export class EventsGateway
     this.packetWindows.set(client.id, window);
     if (window.length > MAX_PACKETS_PER_WINDOW) {
       this.throttledPackets++;
-      this.logger.warn(
-        `Client ${client.id} melebihi batas paket — putuskan koneksi`,
-      );
+      this.logger.warn(`Client ${client.id} melebihi batas paket — putuskan koneksi`);
       client.disconnect(true);
     }
   }

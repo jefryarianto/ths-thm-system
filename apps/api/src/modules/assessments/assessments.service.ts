@@ -413,11 +413,14 @@ export class AssessmentsService {
       const values = this.parseCsvLine(line);
       if (values.length >= 3) {
         data.push({
-          no: colIndices.no !== undefined ? (parseInt(values[colIndices.no], 10) || 0) : i,
+          no: colIndices.no !== undefined ? parseInt(values[colIndices.no], 10) || 0 : i,
           aspek: (colIndices.aspek !== undefined ? values[colIndices.aspek] : values[1]).trim(),
           item: (colIndices.item !== undefined ? values[colIndices.item] : values[2]).trim(),
           deskripsi: colIndices.deskripsi !== undefined ? values[colIndices.deskripsi]?.trim() : '',
-          skorMaksimal: colIndices.skorMax !== undefined ? (parseInt(values[colIndices.skorMax], 10) || 100) : undefined,
+          skorMaksimal:
+            colIndices.skorMax !== undefined
+              ? parseInt(values[colIndices.skorMax], 10) || 100
+              : undefined,
         });
       }
     }
@@ -471,7 +474,10 @@ export class AssessmentsService {
       const kegiatanIds = assignments.map((a) => a.kegiatanId);
       if (kegiatanIds.length === 0) {
         // No assigned kegiatan, return empty
-        return { data: [], meta: { total: 0, totalPages: 0, page: query.page || 1, limit: query.limit || 20 } };
+        return {
+          data: [],
+          meta: { total: 0, totalPages: 0, page: query.page || 1, limit: query.limit || 20 },
+        };
       }
       where.kegiatanId = { in: kegiatanIds };
     } else if (scope) {

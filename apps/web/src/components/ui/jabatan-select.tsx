@@ -25,12 +25,8 @@ async function loadJabatanNames(): Promise<string[]> {
   const list = (res?.data ?? res ?? []) as { nama?: string }[];
   // Dedupe: preset distrik boleh bernama sama dengan preset global —
   // cukup satu opsi di dropdown karena keduanya berlaku untuk pemanggil.
-  const names = Array.from(
-    new Set(list.map((j) => j.nama).filter((n): n is string => Boolean(n))),
-  );
-  jabatanCache = names.length > 0
-    ? names
-    : FALLBACK_PRESETS;
+  const names = Array.from(new Set(list.map((j) => j.nama).filter((n): n is string => Boolean(n))));
+  jabatanCache = names.length > 0 ? names : FALLBACK_PRESETS;
   return jabatanCache;
 }
 
@@ -40,7 +36,13 @@ async function loadJabatanNames(): Promise<string[]> {
  * jabatan baru di halaman Jabatan. Opsi "Lainnya…" membuka input manual agar
  * jabatan custom yang sudah tersimpan tetap bisa dipertahankan/diedit.
  */
-export default function JabatanSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export default function JabatanSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   const [presets, setPresets] = useState<string[]>(jabatanCache ?? FALLBACK_PRESETS);
 
   useEffect(() => {

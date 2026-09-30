@@ -22,6 +22,7 @@ import {
 } from '../../common/utils/image-upload.util';
 import { unlinkSync } from 'fs';
 import type { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { SubmitBeritaDto } from './dto/submit-berita.dto';
 
 @ApiTags('Content')
 @Controller('content')
@@ -74,32 +75,52 @@ export class ContentController {
 
   // ── Pengajuan berita oleh anggota ──
   @Post('berita/submit')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', {
-    scope: 'self',
-    summary: 'Submit berita untuk persetujuan admin',
-  })
-  async submitBerita(
-    @Body()
-    body: {
-      judul: string;
-      ringkasan: string;
-      konten: string;
-      gambar?: string;
-      slug: string;
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'Submit berita untuk persetujuan admin',
     },
-    @Req() req: ScopedRequest,
-  ) {
+  )
+  async submitBerita(@Body() dto: SubmitBeritaDto, @Req() req: ScopedRequest) {
     if (!req.user?.id) {
       throw new BadRequestException('User tidak ditemukan');
     }
     // Berita dari anggota selalu disimpan sebagai draft (isVisible=false)
     return this.contentService.createBerita({
-      ...body,
+      ...dto,
       isVisible: false,
       submittedBy: req.user.id,
     });
   }
 
+  // ── Riwayat pengajuan berita milik anggota ──
+  @Get('berita/mine')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'Riwayat pengajuan berita milik user (dengan status persetujuan)',
+    },
+  )
+  async getMyBeritaSubmissions(@Req() req: ScopedRequest) {
+    if (!req.user?.id) {
+      throw new BadRequestException('User tidak ditemukan');
+    }
+    return this.contentService.getMyBeritaSubmissions(req.user.id);
+  }
   @Patch('berita/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
@@ -134,9 +155,7 @@ export class ContentController {
     scope: 'national',
     summary: 'Upload gambar berita',
   })
-  @UseInterceptors(
-    FileInterceptor('image', buildImageUploadOptions('berita')),
-  )
+  @UseInterceptors(FileInterceptor('image', buildImageUploadOptions('berita')))
   async uploadBeritaImage(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
@@ -150,9 +169,7 @@ export class ContentController {
       } catch {
         /* best-effort cleanup */
       }
-      throw new BadRequestException(
-        'File tidak valid: format gambar tidak dikenali',
-      );
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
     }
 
     return this.contentService.updateBerita(id, {

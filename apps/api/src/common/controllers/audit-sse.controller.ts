@@ -14,13 +14,11 @@ function verifyToken(req: Request): { sub: string; role: string } | null {
   const authHeader = req.headers.authorization;
   const queryToken = req.query.token as string | undefined;
 
-  const rawToken =
-    authHeader?.replace('Bearer ', '') || queryToken || '';
+  const rawToken = authHeader?.replace('Bearer ', '') || queryToken || '';
 
   if (!rawToken) return null;
 
-  const secret =
-    process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'test-secret' : '');
+  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'test-secret' : '');
 
   if (!secret) return null;
 
@@ -81,14 +79,18 @@ export class AuditSseController {
     if (!payload) {
       // Send an error event before closing so the client can stop reconnecting
       res.writeHead(401, { 'Content-Type': 'text/event-stream' });
-      res.write(`event: error\ndata: ${JSON.stringify({ code: 'UNAUTHORIZED', message: 'Token tidak valid atau kadaluarsa' })}\n\n`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ code: 'UNAUTHORIZED', message: 'Token tidak valid atau kadaluarsa' })}\n\n`,
+      );
       res.end();
       return;
     }
 
     if (payload.role !== 'superadmin') {
       res.writeHead(403, { 'Content-Type': 'text/event-stream' });
-      res.write(`event: error\ndata: ${JSON.stringify({ code: 'FORBIDDEN', message: 'Hanya superadmin yang bisa streaming audit log' })}\n\n`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ code: 'FORBIDDEN', message: 'Hanya superadmin yang bisa streaming audit log' })}\n\n`,
+      );
       res.end();
       return;
     }
@@ -97,7 +99,9 @@ export class AuditSseController {
     const userConnections = this.activeConnections.get(payload.sub) || [];
     if (userConnections.length >= 3) {
       res.writeHead(429, { 'Content-Type': 'text/event-stream' });
-      res.write(`event: error\ndata: ${JSON.stringify({ code: 'TOO_MANY_CONNECTIONS', message: 'Max 3 koneksi SSE per user' })}\n\n`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ code: 'TOO_MANY_CONNECTIONS', message: 'Max 3 koneksi SSE per user' })}\n\n`,
+      );
       res.end();
       return;
     }
@@ -114,9 +118,13 @@ export class AuditSseController {
     this.activeConnections.set(payload.sub, userConnections);
 
     // Send an initial connection event so the client knows it's connected
-    res.write(`event: connected\ndata: ${JSON.stringify({ userId: payload.sub, timestamp: new Date().toISOString() })}\n\n`);
+    res.write(
+      `event: connected\ndata: ${JSON.stringify({ userId: payload.sub, timestamp: new Date().toISOString() })}\n\n`,
+    );
 
-    this.logger.log(`SSE client connected: user=${payload.sub} (active: ${userConnections.length})`);
+    this.logger.log(
+      `SSE client connected: user=${payload.sub} (active: ${userConnections.length})`,
+    );
 
     // ── Listen for audit events ──
     const onAuditEvent = (entry: unknown) => {

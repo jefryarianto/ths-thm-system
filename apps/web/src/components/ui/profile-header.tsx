@@ -86,7 +86,7 @@ export default function ProfileHeader({
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
-                      const next = (e.currentTarget.nextElementSibling as HTMLElement | null);
+                      const next = e.currentTarget.nextElementSibling as HTMLElement | null;
                       if (next) next.classList.remove('hidden');
                     }}
                   />
@@ -98,7 +98,9 @@ export default function ProfileHeader({
                 />
               </div>
               {avatar.onUpload && (
-                <label className={`absolute inset-0 flex items-center justify-center bg-black/40 ${uploadRadius} opacity-0 group-hover:opacity-100 cursor-pointer transition`}>
+                <label
+                  className={`absolute inset-0 flex items-center justify-center bg-black/40 ${uploadRadius} opacity-0 group-hover:opacity-100 cursor-pointer transition`}
+                >
                   <Upload size={20} className="text-white" />
                   <input
                     type="file"
@@ -117,17 +119,11 @@ export default function ProfileHeader({
           {/* Name + Badges */}
           <div className="flex-1 mt-2 sm:mt-0 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-text truncate">
-                {name}
-              </h1>
+              <h1 className="text-xl font-bold text-text truncate">{name}</h1>
               {badges}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
-              {subtitle && (
-                <span className="text-sm text-muted truncate">
-                  {subtitle}
-                </span>
-              )}
+              {subtitle && <span className="text-sm text-muted truncate">{subtitle}</span>}
               {meta && (
                 <span className="font-mono text-xs text-muted bg-surface-variant px-2 py-0.5 rounded-md">
                   {meta}

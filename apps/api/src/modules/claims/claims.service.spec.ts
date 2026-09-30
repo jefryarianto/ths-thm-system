@@ -55,7 +55,10 @@ describe('ClaimsService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: MailService, useValue: mockMailService },
         { provide: MemberMailService, useValue: mockMemberMailService },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
       ],
     }).compile();
 

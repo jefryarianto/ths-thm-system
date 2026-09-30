@@ -71,8 +71,14 @@ describe('SettingsService', () => {
       providers: [
         SettingsService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        {
+          provide: require('../../common/utils/scope-helpers').ScopeHelper,
+          useValue: mockScopeHelper,
+        },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
       ],
     }).compile();
 
@@ -349,9 +355,7 @@ describe('SettingsService', () => {
   });
 
   describe('syncFromKepengurusan', () => {
-    const previewItems = [
-      { jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'Periode 2026-2028' },
-    ];
+    const previewItems = [{ jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'Periode 2026-2028' }];
 
     beforeEach(() => {
       jest.spyOn(service, 'getKepengurusanPreview').mockResolvedValue(previewItems);
@@ -366,7 +370,11 @@ describe('SettingsService', () => {
 
     it('should replace struktur when mode is replace', async () => {
       mockPrisma.organisasi.findFirst.mockResolvedValue({ id: '1', struktur: [], isVisible: true });
-      mockPrisma.organisasi.update.mockResolvedValue({ id: '1', struktur: previewItems, isVisible: true });
+      mockPrisma.organisasi.update.mockResolvedValue({
+        id: '1',
+        struktur: previewItems,
+        isVisible: true,
+      });
 
       const result = await service.syncFromKepengurusan('replace');
       expect(result.success).toBe(true);

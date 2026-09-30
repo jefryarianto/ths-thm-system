@@ -18,37 +18,49 @@ export class LettersController {
   constructor(private readonly service: LettersService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat (gabungan)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil semua surat (gabungan)',
+  })
   findAllCombined(@Query() query: LetterFilterDto) {
     return this.service.findAllCombined(query);
   }
 
   @Get('incoming')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil semua surat masuk',
+  })
   incomingFindAll(@Query() query: LetterFilterDto) {
     return this.service.incomingFindAll(query);
   }
 
   @Get('incoming/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil detail surat masuk',
+  })
   incomingFindOne(@Param('id') id: string) {
     return this.service.incomingFindOne(id);
   }
 
   @Post('incoming')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tambah surat masuk',
+  })
   incomingCreate(@Body() dto: CreateIncomingLetterDto) {
     return this.service.incomingCreate(dto);
   }
 
   @Patch('incoming/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui surat masuk',
+  })
   incomingUpdate(@Param('id') id: string, @Body() dto: UpdateIncomingLetterDto) {
     return this.service.incomingUpdate(id, dto);
   }
 
   @Delete('incoming/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Hapus surat masuk',
+  })
   incomingRemove(@Param('id') id: string) {
     return this.service.incomingRemove(id);
   }
@@ -60,49 +72,65 @@ export class LettersController {
   }
 
   @Get('outgoing')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil semua surat keluar',
+  })
   outgoingFindAll(@Query() query: LetterFilterDto) {
     return this.service.outgoingFindAll(query);
   }
 
   @Get('outgoing/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil detail surat keluar',
+  })
   outgoingFindOne(@Param('id') id: string) {
     return this.service.outgoingFindOne(id);
   }
 
   @Post('outgoing')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tambah surat keluar',
+  })
   outgoingCreate(@Body() dto: CreateOutgoingLetterDto) {
     return this.service.outgoingCreate(dto);
   }
 
   @Patch('outgoing/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui surat keluar',
+  })
   outgoingUpdate(@Param('id') id: string, @Body() dto: UpdateOutgoingLetterDto) {
     return this.service.outgoingUpdate(id, dto);
   }
 
   @Delete('outgoing/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Hapus surat keluar',
+  })
   outgoingRemove(@Param('id') id: string) {
     return this.service.outgoingRemove(id);
   }
 
   @Post('outgoing/:id/send')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Kirim surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Kirim surat keluar',
+  })
   outgoingSend(@Param('id') id: string) {
     return this.service.outgoingSend(id);
   }
 
   @Get('incoming/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ekspor surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ekspor surat masuk',
+  })
   incomingExport() {
     return this.service.incomingExport();
   }
 
   @Get('outgoing/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ekspor surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ekspor surat keluar',
+  })
   outgoingExport() {
     return this.service.outgoingExport();
   }

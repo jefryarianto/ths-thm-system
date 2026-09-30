@@ -36,7 +36,11 @@ describe('ScopeGuard', () => {
       ranting: { findUnique: jest.fn() },
       wilayah: { findUnique: jest.fn() },
     };
-    guard = new ScopeGuard(reflector as never, mockAuditService as never, mockPrismaService as never);
+    guard = new ScopeGuard(
+      reflector as never,
+      mockAuditService as never,
+      mockPrismaService as never,
+    );
   });
 
   it('should be defined', async () => {

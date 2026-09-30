@@ -67,7 +67,10 @@ describe('UsersService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
         { provide: ScopeHelper, useValue: mockScopeHelper },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
       ],
     }).compile();
 
@@ -114,10 +117,7 @@ describe('UsersService', () => {
       mockScopeHelper.buildScopeFilter.mockReturnValue({ rantingId: 'r1' });
 
       await service.findAll({ page: 1, limit: 10 }, { rantingId: 'r1' });
-      expect(mockScopeHelper.buildScopeFilter).toHaveBeenCalledWith(
-        { rantingId: 'r1' },
-        'ranting',
-      );
+      expect(mockScopeHelper.buildScopeFilter).toHaveBeenCalledWith({ rantingId: 'r1' }, 'ranting');
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
       );
@@ -145,7 +145,13 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create a user with hashed password', async () => {
-      const dto = { email: 'new@test.com', namaLengkap: 'New User', role: 'anggota', rantingId: 'r1', password: 'secret' };
+      const dto = {
+        email: 'new@test.com',
+        namaLengkap: 'New User',
+        role: 'anggota',
+        rantingId: 'r1',
+        password: 'secret',
+      };
       const mockCreated = { id: '1', email: 'new@test.com', passwordHash: 'hashed-password' };
       mockPrisma.user.create.mockResolvedValue(mockCreated);
 
@@ -212,7 +218,11 @@ describe('UsersService', () => {
 
     it('should allow a scoped admin to create a role at or below their level', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
-      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_ranting' });
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'u1',
+        email: 'x@y.com',
+        role: 'admin_ranting',
+      });
       const result = await service.create(
         { email: 'x@y.com', namaLengkap: 'X', role: 'admin_ranting', rantingId: 'r1' },
         { distrikId: 'd1' },
@@ -247,7 +257,11 @@ describe('UsersService', () => {
     });
 
     it('should allow superadmin (scope {} from ScopeGuard) to create admin_distrik', async () => {
-      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_distrik' });
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'u1',
+        email: 'x@y.com',
+        role: 'admin_distrik',
+      });
       const result = await service.create(
         { email: 'x@y.com', namaLengkap: 'X', role: 'admin_distrik', rantingId: 'r1' },
         {}, // ScopeGuard mengirim {} untuk superadmin (national)

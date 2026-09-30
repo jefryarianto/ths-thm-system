@@ -235,9 +235,7 @@ describe('Error Logger', () => {
       env.NODE_ENV = 'development';
 
       logInfo('Info message');
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('[App] Info message'),
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[App] Info message'));
 
       // Restore
       env.NODE_ENV = oldEnv;
@@ -271,12 +269,10 @@ describe('Error Logger', () => {
 
   describe('createModuleLogger', () => {
     it('creates scoped logger with correct module', () => {
-const logger = createModuleLogger('Members');
+      const logger = createModuleLogger('Members');
       const error = new Error('Test error');
       logger.error(error, 'fetch');
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('"message":"Test error"'),
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('"message":"Test error"'));
       const logArg = (console.error as ReturnType<typeof vi.spyOn>).mock.calls[0][0];
       expect(logArg).toContain('"module":"Members"');
       expect(logArg).toContain('"action":"fetch"');

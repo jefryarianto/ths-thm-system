@@ -29,12 +29,19 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'klaim',
-      prefix: 'claims:',
-      notFound: 'Klaim tidak ditemukan',
-      scopeStrategy: 'anggota_indirect',
-    }, persistentAudit, revisions);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'klaim',
+        prefix: 'claims:',
+        notFound: 'Klaim tidak ditemukan',
+        scopeStrategy: 'anggota_indirect',
+      },
+      persistentAudit,
+      revisions,
+    );
   }
 
   // ── Hooks ──────────────────────────────────────────────
@@ -108,7 +115,9 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     const claim = await this.prismaDelegate.findUnique({
       where: { id },
       include: {
-        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true } },
+        anggota: {
+          select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true },
+        },
         ranting: { select: { id: true, nama: true } },
       },
     });
@@ -117,7 +126,9 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     // ── Klaim keanggotaan baru: buat Anggota + User account ──
     if (claim.tipe === 'keanggotaan') {
       if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) {
-        throw new BadRequestException('Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi');
+        throw new BadRequestException(
+          'Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi',
+        );
       }
 
       // Cek apakah sudah ada anggota dengan email yang sama
@@ -193,7 +204,10 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         },
       });
 
-      this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap, email: claim.email }, 'disetujui');
+      this.sendClaimStatusEmail(
+        { namaLengkap: claim.namaLengkap, email: claim.email },
+        'disetujui',
+      );
     } else {
       // ── Klaim dokumen biasa ──
       await this.prismaDelegate.update({
@@ -216,7 +230,9 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.verifyScope(id, scope);
     const claim = await this.prismaDelegate.findUnique({
       where: { id },
-      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
+      include: {
+        anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } },
+      },
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
 
@@ -233,11 +249,16 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.verifyScope(id, scope);
     const claim = await this.prismaDelegate.findUnique({
       where: { id },
-      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
+      include: {
+        anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } },
+      },
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
 
-    const updated = await this.prismaDelegate.update({ where: { id }, data: { status: 'diproses' } });
+    const updated = await this.prismaDelegate.update({
+      where: { id },
+      data: { status: 'diproses' },
+    });
     this.sendClaimStatusEmail(claim.anggota, 'diproses');
     this.invalidateCache();
     return updated;

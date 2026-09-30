@@ -17,7 +17,13 @@ import {
 import { Prisma } from '@prisma/client';
 import { Request } from 'express';
 import * as crypto from 'crypto';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { TestMailDto } from './dto/test-mail.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -87,7 +93,9 @@ export class MailController {
 
   @Post('templates/test-send')
   @Roles('superadmin', 'admin_distrik')
-  @ApiOperation({ summary: 'Kirim test email menggunakan template custom (subject & HTML body dari editor)' })
+  @ApiOperation({
+    summary: 'Kirim test email menggunakan template custom (subject & HTML body dari editor)',
+  })
   async testSendTemplate(
     @Body()
     body: {
@@ -330,7 +338,9 @@ export class MailController {
     const secret = env.resendWebhookSecret;
     // Tanpa secret, tidak ada cara memverifikasi keaslian payload — tolak selalu.
     if (!secret) {
-      this.logger.error('Webhook diterima tapi RESEND_WEBHOOK_SECRET tidak dikonfigurasi — menolak payload');
+      this.logger.error(
+        'Webhook diterima tapi RESEND_WEBHOOK_SECRET tidak dikonfigurasi — menolak payload',
+      );
       throw new ForbiddenException('Webhook tidak dikonfigurasi');
     }
 
@@ -357,9 +367,7 @@ export class MailController {
 
       // Build signed content: svix-id + '.' + svix-timestamp + '.' + rawBody
       const rawBody =
-        rawBodyBuffer instanceof Buffer
-          ? rawBodyBuffer.toString('utf-8')
-          : JSON.stringify(payload);
+        rawBodyBuffer instanceof Buffer ? rawBodyBuffer.toString('utf-8') : JSON.stringify(payload);
       const signedContent = `${svixId}.${svixTimestamp}.${rawBody}`;
 
       // Compute expected HMAC SHA-256 signature

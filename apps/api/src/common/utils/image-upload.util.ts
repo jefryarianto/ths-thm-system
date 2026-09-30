@@ -125,7 +125,11 @@ export function buildImageUploadOptions(prefix: string) {
   return {
     storage: diskStorage({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      destination: (_req: unknown, _file: unknown, cb: (err: Error | null, dest: string) => void) => {
+      destination: (
+        _req: unknown,
+        _file: unknown,
+        cb: (err: Error | null, dest: string) => void,
+      ) => {
         const rawDir = process.env.UPLOAD_DIR || './uploads';
         // Resolve ke absolute path dan pastikan tetap dalam direktori project
         const resolved = resolve(rawDir);
@@ -165,7 +169,10 @@ export function buildImageUploadOptions(prefix: string) {
       cb: (err: Error | null, accept: boolean) => void,
     ) => {
       if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
-        cb(new BadRequestException('Hanya file gambar (JPEG, PNG, WebP, GIF) yang diizinkan'), false);
+        cb(
+          new BadRequestException('Hanya file gambar (JPEG, PNG, WebP, GIF) yang diizinkan'),
+          false,
+        );
         return;
       }
       cb(null, true);

@@ -17,12 +17,16 @@ export class CreateExaminerDto {
   @IsString()
   namaLengkap: string;
 
-  @ApiPropertyOptional({ description: 'Diabaikan di sini — peran ditentukan saat penugasan pada pendadaran' })
+  @ApiPropertyOptional({
+    description: 'Diabaikan di sini — peran ditentukan saat penugasan pada pendadaran',
+  })
   @IsOptional()
   @IsString()
   peran?: string;
 
-  @ApiPropertyOptional({ description: 'Diabaikan di sini — catatan diisi saat penugasan pada pendadaran' })
+  @ApiPropertyOptional({
+    description: 'Diabaikan di sini — catatan diisi saat penugasan pada pendadaran',
+  })
   @IsOptional()
   @IsString()
   catatan?: string;

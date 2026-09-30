@@ -203,8 +203,7 @@ export function useSSE(
     const resume = () => {
       if (destroyed) return;
       const isClosed =
-        !eventSourceRef.current ||
-        eventSourceRef.current.readyState === EventSource.CLOSED;
+        !eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED;
       if (isClosed) {
         retryCountRef.current = 0;
         connect();

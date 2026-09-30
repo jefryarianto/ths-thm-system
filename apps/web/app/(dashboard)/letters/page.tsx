@@ -19,7 +19,6 @@ import { statusColors, TAB_VALUES } from './shared';
 import LetterDetailPanel from './letter-detail-panel';
 import { useToast } from '@/components/ui/toast';
 
-
 const columns = [
   { key: 'nomorSurat', label: 'No. Surat' },
   {
@@ -131,9 +130,11 @@ export default function LettersPage() {
       setSelectedLetter(null);
       fetchData();
     } catch (err: unknown) {
-       toast('error',
+      toast(
+        'error',
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          'Gagal menghapus surat');
+          'Gagal menghapus surat',
+      );
     }
     setDeleting(false);
   };
@@ -144,88 +145,88 @@ export default function LettersPage() {
 
   return (
     <PermissionGuard module="letters" action="view">
-    <PageContainer>
-      <PageHeader title="Surat" onRefresh={fetchData}>
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-3">
-          {TAB_VALUES.map((value) => (
-            <button
-              key={value}
-              onClick={() => setTab(value)}
-              className={`px-3 py-1.5 text-sm rounded-md transition ${
-                tab === value
-                  ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
+      <PageContainer>
+        <PageHeader title="Surat" onRefresh={fetchData}>
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-3">
+            {TAB_VALUES.map((value) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`px-3 py-1.5 text-sm rounded-md transition ${
+                  tab === value
+                    ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                {value === 'all' ? 'Semua' : value === 'incoming' ? 'Masuk' : 'Keluar'}
+              </button>
+            ))}
+          </div>
+          <CanCreate module="letters">
+            <Link
+              href="/letters/incoming/new"
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
             >
-              {value === 'all' ? 'Semua' : value === 'incoming' ? 'Masuk' : 'Keluar'}
-            </button>
-          ))}
-        </div>
-        <CanCreate module="letters">
-          <Link
-            href="/letters/incoming/new"
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            <ExternalLink size={14} /> Surat Masuk
-          </Link>
-        </CanCreate>
-        <CanCreate module="letters">
-          <Link
-            href="/letters/outgoing/new"
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-          >
-            <ExternalLink size={14} /> Surat Keluar
-          </Link>
-        </CanCreate>
-      </PageHeader>
+              <ExternalLink size={14} /> Surat Masuk
+            </Link>
+          </CanCreate>
+          <CanCreate module="letters">
+            <Link
+              href="/letters/outgoing/new"
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            >
+              <ExternalLink size={14} /> Surat Keluar
+            </Link>
+          </CanCreate>
+        </PageHeader>
 
-      <SummaryBar icon={FileText} label="Total Surat" total={meta.total} onRefresh={fetchData} />
+        <SummaryBar icon={FileText} label="Total Surat" total={meta.total} onRefresh={fetchData} />
 
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari surat (no. surat, perihal, pengirim)..."
-      >
-        <FilterSelect
-          value={filters.status}
-          onChange={(v) => setFilter('status', v)}
-          options={Object.keys(statusColors).map((status) => ({
-            value: status,
-            label: status.charAt(0).toUpperCase() + status.slice(1),
-          }))}
-          placeholder="Semua Status"
-        />
-      </SearchBar>
-
-      {/* Table + Detail Panel */}
-      <div className="flex gap-6">
-        <div className={selectedLetter ? 'flex-1' : 'w-full'}>
-          <DataTable
-            data={data}
-            loading={loading}
-            page={page}
-            totalPages={meta.totalPages}
-            total={meta.total}
-            onPageChange={setPage}
-            columns={columns}
-            onRowClick={handleRowClick}
-            empty={{ icon: FileText, message: 'Tidak ada surat' }}
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder="Cari surat (no. surat, perihal, pengirim)..."
+        >
+          <FilterSelect
+            value={filters.status}
+            onChange={(v) => setFilter('status', v)}
+            options={Object.keys(statusColors).map((status) => ({
+              value: status,
+              label: status.charAt(0).toUpperCase() + status.slice(1),
+            }))}
+            placeholder="Semua Status"
           />
-        </div>
-        {selectedLetter && (
-          <LetterDetailPanel
-            selectedLetter={selectedLetter}
-            onClose={closeDetail}
-            onDelete={handleDelete}
-            deleting={deleting}
-          />
-        )}
-      </div>
+        </SearchBar>
 
-      {/* Create/Edit via dedicated pages: /letters/incoming/new, /letters/outgoing/new */}
-      {confirmModal}
-    </PageContainer>
+        {/* Table + Detail Panel */}
+        <div className="flex gap-6">
+          <div className={selectedLetter ? 'flex-1' : 'w-full'}>
+            <DataTable
+              data={data}
+              loading={loading}
+              page={page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              onPageChange={setPage}
+              columns={columns}
+              onRowClick={handleRowClick}
+              empty={{ icon: FileText, message: 'Tidak ada surat' }}
+            />
+          </div>
+          {selectedLetter && (
+            <LetterDetailPanel
+              selectedLetter={selectedLetter}
+              onClose={closeDetail}
+              onDelete={handleDelete}
+              deleting={deleting}
+            />
+          )}
+        </div>
+
+        {/* Create/Edit via dedicated pages: /letters/incoming/new, /letters/outgoing/new */}
+        {confirmModal}
+      </PageContainer>
     </PermissionGuard>
   );
 }

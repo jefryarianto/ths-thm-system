@@ -118,7 +118,9 @@ export default function KlaimPage() {
 
       setWilayahLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`);
+        const res = await fetch(
+          `${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`,
+        );
         const data = await res.json();
         setWilayahs(data?.data || []);
       } catch (err) {
@@ -144,7 +146,9 @@ export default function KlaimPage() {
 
       setRantingLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`);
+        const res = await fetch(
+          `${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`,
+        );
         const data = await res.json();
         setRantings(data?.data || []);
       } catch (err) {
@@ -157,8 +161,6 @@ export default function KlaimPage() {
 
     fetchRantings();
   }, [selectedWilayahId]);
-
-  
 
   const addBukti = (tipe: BuktiItem['tipe']) => {
     setBuktiDokumen((prev) => [...prev, { tipe, url: '' }]);
@@ -285,7 +287,8 @@ export default function KlaimPage() {
             Klaim Akun Anggota
           </h1>
           <p className="text-white/70 mt-3 max-w-2xl text-base">
-            Ajukan klaim untuk mengaktifkan akun digital Anda sebagai anggota THS-THM yang sudah terdaftar
+            Ajukan klaim untuk mengaktifkan akun digital Anda sebagai anggota THS-THM yang sudah
+            terdaftar
           </p>
           <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
@@ -314,7 +317,10 @@ export default function KlaimPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex items-center justify-center space-y-6 min-h-[400px]">
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center justify-center space-y-6 min-h-[400px]"
+        >
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg w-full">
             {/* Header */}
             <div className="text-center mb-6">
@@ -328,378 +334,389 @@ export default function KlaimPage() {
                 Isi formulir berikut untuk mengajukan klaim akun digital Anda
               </p>
             </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Nama Lengkap */}
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nama Lengkap <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={form.namaLengkap}
-                onChange={(e) => {
-                  updateField('namaLengkap', e.target.value);
-                  if (fieldErrors.namaLengkap) setFieldErrors((x) => ({ ...x, namaLengkap: '' }));
-                }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
-                  fieldErrors.namaLengkap
-                    ? 'border-red-400 dark:border-red-600'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="Masukkan nama lengkap"
-              />
-              {fieldErrors.namaLengkap && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                  {fieldErrors.namaLengkap}
-                </p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Nama Lengkap */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nama Lengkap <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.namaLengkap}
+                  onChange={(e) => {
+                    updateField('namaLengkap', e.target.value);
+                    if (fieldErrors.namaLengkap) setFieldErrors((x) => ({ ...x, namaLengkap: '' }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                    fieldErrors.namaLengkap
+                      ? 'border-red-400 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  placeholder="Masukkan nama lengkap"
+                />
+                {fieldErrors.namaLengkap && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.namaLengkap}
+                  </p>
+                )}
+              </div>
+
+              {/* Jenis Kelamin */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Jenis Kelamin <span className="text-red-500">*</span>
+                </label>
+                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                  {(['L', 'P'] as const).map((jk) => (
+                    <button
+                      key={jk}
+                      type="button"
+                      onClick={() => updateField('jenisKelamin', jk)}
+                      className={`flex-1 py-2.5 text-sm font-medium transition ${
+                        form.jenisKelamin === jk
+                          ? 'bg-navy-600 text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tempat Lahir */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tempat Lahir
+                </label>
+                <input
+                  type="text"
+                  value={form.tempatLahir}
+                  onChange={(e) => updateField('tempatLahir', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  placeholder="Kota lahir"
+                />
+              </div>
+
+              {/* Tanggal Lahir */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tanggal Lahir
+                </label>
+                <input
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  value={form.tanggalLahir}
+                  onChange={(e) => updateField('tanggalLahir', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                />
+              </div>
+
+              {/* Tempat Pendadaran (Dadar) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tempat Pendadaran (Dadar)
+                </label>
+                <input
+                  type="text"
+                  value={form.tempatDadar}
+                  onChange={(e) => updateField('tempatDadar', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  placeholder="Kota pendadaran"
+                />
+              </div>
+
+              {/* Tahun Pendadaran (Dadar) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tahun Pendadaran (Dadar)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{4}"
+                  maxLength={4}
+                  value={form.tahunDadar}
+                  onChange={(e) =>
+                    updateField('tahunDadar', e.target.value.replace(/\D/g, '').slice(0, 4))
+                  }
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  placeholder="2024"
+                />
+              </div>
+
+              {/* No HP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  No. HP
+                </label>
+                <input
+                  type="tel"
+                  value={form.noHp}
+                  onChange={(e) => {
+                    updateField('noHp', e.target.value);
+                    if (fieldErrors.noHp) setFieldErrors((x) => ({ ...x, noHp: '' }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                    fieldErrors.noHp
+                      ? 'border-red-400 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  placeholder="08123456789"
+                />
+                {fieldErrors.noHp && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.noHp}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => {
+                    updateField('email', e.target.value);
+                    if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: '' }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                    fieldErrors.email
+                      ? 'border-red-400 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  placeholder="email@contoh.com"
+                />
+                {fieldErrors.email && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.email}</p>
+                )}
+              </div>
+
+              {/* Alamat */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Alamat
+                </label>
+                <textarea
+                  value={form.alamat}
+                  onChange={(e) => updateField('alamat', e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
+                  placeholder="Alamat lengkap"
+                />
+              </div>
             </div>
 
-            {/* Jenis Kelamin */}
+            {/* Struktur Organisasi (Cascade: Distrik → Wilayah → Ranting) */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Distrik <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedDistrikId}
+                  onChange={(e) => {
+                    setSelectedDistrikId(e.target.value);
+                    setSelectedWilayahId('');
+                    setRantingId('');
+                    setWilayahs([]);
+                    setRantings([]);
+                    if (fieldErrors.distrikId || fieldErrors.wilayahId || fieldErrors.rantingId)
+                      setFieldErrors((x) => ({
+                        ...x,
+                        distrikId: '',
+                        wilayahId: '',
+                        rantingId: '',
+                      }));
+                  }}
+                  disabled={distrikLoading}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                >
+                  <option value="">{distrikLoading ? 'Memuat distrik...' : 'Pilih Distrik'}</option>
+                  {distriks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nama}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.distrikId && (
+                  <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.distrikId}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Wilayah <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedWilayahId}
+                  onChange={(e) => {
+                    setSelectedWilayahId(e.target.value);
+                    setRantingId('');
+                    setRantings([]);
+                    if (fieldErrors.wilayahId || fieldErrors.rantingId)
+                      setFieldErrors((x) => ({ ...x, wilayahId: '', rantingId: '' }));
+                  }}
+                  disabled={!selectedDistrikId || wilayahLoading}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                >
+                  <option value="">
+                    {!selectedDistrikId
+                      ? 'Pilih Distrik terlebih dahulu'
+                      : wilayahLoading
+                        ? 'Memuat wilayah...'
+                        : 'Pilih Wilayah'}
+                  </option>
+                  {wilayahs.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.nama}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.wilayahId && (
+                  <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.wilayahId}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Ranting Asal <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={rantingId}
+                  onChange={(e) => {
+                    setRantingId(e.target.value);
+                    if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
+                  }}
+                  disabled={!selectedWilayahId || rantingLoading}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                >
+                  <option value="">
+                    {!selectedWilayahId
+                      ? 'Pilih Wilayah terlebih dahulu'
+                      : rantingLoading
+                        ? 'Memuat ranting...'
+                        : 'Pilih Ranting'}
+                  </option>
+                  {rantings.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nama}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.rantingId && (
+                  <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.rantingId}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Bukti Keanggotaan */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Jenis Kelamin <span className="text-red-500">*</span>
-              </label>
-              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-                {(['L', 'P'] as const).map((jk) => (
+              <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Bukti Keanggotaan
+              </span>
+              <div className="flex gap-2">
+                {(['sertifikat', 'kartu_anggota'] as const).map((tipe) => (
                   <button
-                    key={jk}
+                    key={tipe}
                     type="button"
-                    onClick={() => updateField('jenisKelamin', jk)}
-                    className={`flex-1 py-2.5 text-sm font-medium transition ${
-                      form.jenisKelamin === jk
-                        ? 'bg-navy-600 text-white'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}
+                    onClick={() => addBukti(tipe)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-navy-700 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-900/20 transition"
                   >
-                    {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
+                    <PlusCircle size={16} />
+                    {tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Tempat Lahir */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tempat Lahir
-              </label>
-              <input
-                type="text"
-                value={form.tempatLahir}
-                onChange={(e) => updateField('tempatLahir', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                placeholder="Kota lahir"
-              />
-            </div>
-
-            {/* Tanggal Lahir */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tanggal Lahir
-              </label>
-              <input
-                type="date"
-                max={new Date().toISOString().split('T')[0]}
-                value={form.tanggalLahir}
-                onChange={(e) => updateField('tanggalLahir', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-              />
-            </div>
-
-            {/* Tempat Pendadaran (Dadar) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tempat Pendadaran (Dadar)
-              </label>
-              <input
-                type="text"
-                value={form.tempatDadar}
-                onChange={(e) => updateField('tempatDadar', e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                placeholder="Kota pendadaran"
-              />
-            </div>
-
-            {/* Tahun Pendadaran (Dadar) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tahun Pendadaran (Dadar)
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{4}"
-                maxLength={4}
-                value={form.tahunDadar}
-                onChange={(e) => updateField('tahunDadar', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                placeholder="2024"
-              />
-            </div>
-
-            {/* No HP */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                No. HP
-              </label>
-              <input
-                type="tel"
-                value={form.noHp}
-                onChange={(e) => {
-                  updateField('noHp', e.target.value);
-                  if (fieldErrors.noHp) setFieldErrors((x) => ({ ...x, noHp: '' }));
-                }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
-                  fieldErrors.noHp
-                    ? 'border-red-400 dark:border-red-600'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="08123456789"
-              />
-              {fieldErrors.noHp && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.noHp}</p>
+              {buktiDokumen.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {buktiDokumen.map((b, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-40 shrink-0">
+                        {BUKTI_LABEL[b.tipe]}
+                      </span>
+                      <input
+                        type="url"
+                        value={b.url}
+                        onChange={(e) => updateBukti(i, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                        placeholder="URL tautan dokumen (opsional)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeBukti(i)}
+                        className="text-gray-400 hover:text-red-500 transition"
+                        aria-label="Hapus bukti"
+                      >
+                        <XCircle size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Email */}
+            {/* Catatan */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => {
-                  updateField('email', e.target.value);
-                  if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: '' }));
-                }}
-                className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
-                  fieldErrors.email
-                    ? 'border-red-400 dark:border-red-600'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                placeholder="email@contoh.com"
-              />
-              {fieldErrors.email && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.email}</p>
-              )}
-            </div>
-
-            {/* Alamat */}
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Alamat
+                Catatan
               </label>
               <textarea
-                value={form.alamat}
-                onChange={(e) => updateField('alamat', e.target.value)}
+                value={form.catatan}
+                onChange={(e) => updateField('catatan', e.target.value)}
                 rows={2}
                 className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
-                placeholder="Alamat lengkap"
+                placeholder="Catatan tambahan (opsional)"
               />
             </div>
-          </div>
 
-          {/* Struktur Organisasi (Cascade: Distrik → Wilayah → Ranting) */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Distrik <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedDistrikId}
-                onChange={(e) => {
-                  setSelectedDistrikId(e.target.value);
-                  setSelectedWilayahId('');
-                  setRantingId('');
-                  setWilayahs([]);
-                  setRantings([]);
-                  if (fieldErrors.distrikId || fieldErrors.wilayahId || fieldErrors.rantingId)
-                    setFieldErrors((x) => ({ ...x, distrikId: '', wilayahId: '', rantingId: '' }));
-                }}
-                disabled={distrikLoading}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
-              >
-                <option value="">
-                  {distrikLoading ? 'Memuat distrik...' : 'Pilih Distrik'}
-                </option>
-                {distriks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.nama}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.distrikId && (
-                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.distrikId}</span>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-navy-600 hover:bg-navy-700 disabled:bg-navy-400 text-white font-medium rounded-lg transition flex items-center justify-center gap-2 text-sm"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Mengirim...
+                </>
+              ) : (
+                <>
+                  <IdCard size={18} />
+                  Ajukan Klaim
+                </>
               )}
-            </div>
+            </button>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Wilayah <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={selectedWilayahId}
-                onChange={(e) => {
-                  setSelectedWilayahId(e.target.value);
-                  setRantingId('');
-                  setRantings([]);
-                  if (fieldErrors.wilayahId || fieldErrors.rantingId)
-                    setFieldErrors((x) => ({ ...x, wilayahId: '', rantingId: '' }));
-                }}
-                disabled={!selectedDistrikId || wilayahLoading}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+            {/* Footer */}
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
+              Sudah punya akun?{' '}
+              <Link
+                href="/login"
+                className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
               >
-                <option value="">
-                  {!selectedDistrikId
-                    ? 'Pilih Distrik terlebih dahulu'
-                    : wilayahLoading
-                      ? 'Memuat wilayah...'
-                      : 'Pilih Wilayah'}
-                </option>
-                {wilayahs.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.nama}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.wilayahId && (
-                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.wilayahId}</span>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Ranting Asal <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={rantingId}
-                onChange={(e) => {
-                  setRantingId(e.target.value);
-                  if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
-                }}
-                disabled={!selectedWilayahId || rantingLoading}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                Masuk
+              </Link>{' '}
+              · Belum menjadi anggota?{' '}
+              <Link
+                href="/daftar"
+                className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
               >
-                <option value="">
-                  {!selectedWilayahId
-                    ? 'Pilih Wilayah terlebih dahulu'
-                    : rantingLoading
-                      ? 'Memuat ranting...'
-                      : 'Pilih Ranting'}
-                </option>
-                {rantings.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.nama}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.rantingId && (
-                <span className="mt-1 block text-xs text-red-600 dark:text-red-400">{fieldErrors.rantingId}</span>
-              )}
-            </div>
+                Daftar Calon Anggota
+              </Link>
+            </p>
           </div>
-
-          {/* Bukti Keanggotaan */}
-          <div>
-            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Bukti Keanggotaan
-            </span>
-            <div className="flex gap-2">
-              {(['sertifikat', 'kartu_anggota'] as const).map((tipe) => (
-                <button
-                  key={tipe}
-                  type="button"
-                  onClick={() => addBukti(tipe)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-navy-700 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-900/20 transition"
-                >
-                  <PlusCircle size={16} />
-                  {tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}
-                </button>
-              ))}
-            </div>
-            {buktiDokumen.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {buktiDokumen.map((b, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-40 shrink-0">
-                      {BUKTI_LABEL[b.tipe]}
-                    </span>
-                    <input
-                      type="url"
-                      value={b.url}
-                      onChange={(e) => updateBukti(i, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                      placeholder="URL tautan dokumen (opsional)"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeBukti(i)}
-                      className="text-gray-400 hover:text-red-500 transition"
-                      aria-label="Hapus bukti"
-                    >
-                      <XCircle size={20} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Catatan */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Catatan
-            </label>
-            <textarea
-              value={form.catatan}
-              onChange={(e) => updateField('catatan', e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
-              placeholder="Catatan tambahan (opsional)"
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-navy-600 hover:bg-navy-700 disabled:bg-navy-400 text-white font-medium rounded-lg transition flex items-center justify-center gap-2 text-sm"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Mengirim...
-              </>
-            ) : (
-              <>
-                <IdCard size={18} />
-                Ajukan Klaim
-              </>
-            )}
-          </button>
-
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
-          Sudah punya akun?{' '}
-          <Link
-            href="/login"
-            className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
-          >
-            Masuk
-          </Link>{' '}
-          · Belum menjadi anggota?{' '}
-          <Link
-            href="/daftar"
-            className="text-navy-600 dark:text-navy-400 hover:underline font-medium"
-          >
-            Daftar Calon Anggota
-          </Link>
-        </p>
+        </form>
       </div>
-    </form>
-    </div>
     </PublicLayout>
   );
 }

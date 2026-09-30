@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Optional, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Optional,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { registrationApprovedEmail, registrationRejectedEmail } from '../../mail/email-templates';
@@ -14,7 +20,10 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 @Injectable()
-export class RegistrationsService extends BaseCrudService<CreateRegistrationDto, UpdateRegistrationDto> {
+export class RegistrationsService extends BaseCrudService<
+  CreateRegistrationDto,
+  UpdateRegistrationDto
+> {
   constructor(
     prisma: PrismaService,
     scopeHelper: ScopeHelper,
@@ -22,12 +31,18 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     private readonly mailService: MailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'pendaftaran',
-      prefix: 'registrations:',
-      notFound: 'Pendaftaran tidak ditemukan',
-      // No scope strategy — registrations are not scoped to ranting
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'pendaftaran',
+        prefix: 'registrations:',
+        notFound: 'Pendaftaran tidak ditemukan',
+        // No scope strategy — registrations are not scoped to ranting
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hooks ──────────────────────────────────────────────
@@ -41,7 +56,10 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     };
   }
 
-  protected async beforeUpdate(_id: string, dto: UpdateRegistrationDto): Promise<Record<string, unknown>> {
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateRegistrationDto,
+  ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
     if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
     if (dto.jenisKelamin !== undefined) data.jenisKelamin = dto.jenisKelamin;

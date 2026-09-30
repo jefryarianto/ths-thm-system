@@ -36,7 +36,8 @@ export function buildCardWatermarkSvg(width: number, height: number, text: strin
   const fontSize = Math.max(22, Math.round(width / 34));
   const lineHeight = fontSize * 2.4;
   const approxCharWidth = fontSize * 0.62;
-  const repeats = Math.ceil((width + height * 1.4) / Math.max(1, text.length * approxCharWidth)) + 1;
+  const repeats =
+    Math.ceil((width + height * 1.4) / Math.max(1, text.length * approxCharWidth)) + 1;
   const full = Array.from({ length: repeats }, () => xmlEscape(text)).join('      ');
   const lines: string[] = [];
   for (let y = -height; y < height + lineHeight; y += lineHeight) {
@@ -104,7 +105,11 @@ export class MembersDigitalCardService {
 
       const ext = path.extname(targetPath).toLowerCase();
       const isPngOrWebp = ext === '.png' || ext === '.webp';
-      const mime = isPngOrWebp ? 'image/png' : ext === '.jpeg' || ext === '.jpg' ? 'image/jpeg' : 'image/jpeg';
+      const mime = isPngOrWebp
+        ? 'image/png'
+        : ext === '.jpeg' || ext === '.jpg'
+          ? 'image/jpeg'
+          : 'image/jpeg';
       let buffer: Buffer = fs.readFileSync(targetPath);
 
       // Perkecil gambar bila melebihi budget — dikecualikan pakai JPEG kecuali aslinya
@@ -191,15 +196,29 @@ export class MembersDigitalCardService {
     });
   }
 
-    /**
+  /**
    * Template kartu aktif untuk distrik anggota (desain upload per distrik) —
    * distrik dulu, lalu global, lalu null = desain bawaan. Cache 5 menit per scope.
    */
   private async resolveActiveTemplate(
     distrikId?: string,
-  ): Promise<{ id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } | null> {
+  ): Promise<{
+    id: string;
+    name: string;
+    label: string | null;
+    frontImage: string | null;
+    backImage: string | null;
+    overlayConfig: unknown;
+  } | null> {
     const cacheKey = `digital-card:template:active:${distrikId || 'global'}`;
-    const cached = this.cache.get<{ id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } | null>(cacheKey);
+    const cached = this.cache.get<{
+      id: string;
+      name: string;
+      label: string | null;
+      frontImage: string | null;
+      backImage: string | null;
+      overlayConfig: unknown;
+    } | null>(cacheKey);
     if (cached !== undefined) {
       return cached === null ? null : cached;
     }
@@ -221,7 +240,14 @@ export class MembersDigitalCardService {
         this.cache.set(cacheKey, null, 300_000);
         return null;
       }
-      const result: { id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } = {
+      const result: {
+        id: string;
+        name: string;
+        label: string | null;
+        frontImage: string | null;
+        backImage: string | null;
+        overlayConfig: unknown;
+      } = {
         id: template.id,
         name: template.name,
         label: template.label,
@@ -307,12 +333,7 @@ export class MembersDigitalCardService {
    * Cabut → semua QR (digital & fisik) dinonaktifkan + dokumen revoked.
    * Aktifkan → dokumen generated kembali + QR penerbitan terbaru diaktifkan.
    */
-  async setCardActive(
-    memberId: string,
-    active: boolean,
-    scope?: UserScope,
-    user?: SelfScopeUser,
-  ) {
+  async setCardActive(memberId: string, active: boolean, scope?: UserScope, user?: SelfScopeUser) {
     const { doc, qr } = await this.findKtaDocument(memberId, scope, user);
     const newStatus: 'generated' | 'revoked' = active ? 'generated' : 'revoked';
     if (active) {
@@ -389,7 +410,8 @@ export class MembersDigitalCardService {
   }
 
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
+    const { card, memberData, verificationUrl, levelVisual, distrikId } =
+      await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
     const template = await this.resolveActiveTemplate(distrikId);
@@ -433,7 +455,8 @@ export class MembersDigitalCardService {
   ): Promise<Buffer> {
     // PNG 2 sisi: render SVG (murni node) → sharp. SVG→PNG tak butuh binary eksternal
     // (poppler/pdf-poppler), jadi hasilnya selalu PNG valid — tidak pernah kosong.
-    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
+    const { card, memberData, verificationUrl, levelVisual, distrikId } =
+      await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const template = await this.resolveActiveTemplate(distrikId);
     const watermarkText = `KARTU DIGITAL - ${memberData.namaLengkap} - ${memberData.nomorAnggota}`;
@@ -466,11 +489,21 @@ export class MembersDigitalCardService {
           signers: card.signers,
           signerName: card.signerName,
           signerTitle: card.signerTitle,
-          photoDataUrl: minimal ? null : await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700),
-          signatureDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.signatureImage, false, 320),
-          stampDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.stampImage, false, 320),
-          frontImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.frontImage || null, false, 1800),
-          backImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.backImage || null, false, 1800),
+          photoDataUrl: minimal
+            ? null
+            : await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700),
+          signatureDataUrl: minimal
+            ? null
+            : await this.resolvePhotoDataUrl(card.signatureImage, false, 320),
+          stampDataUrl: minimal
+            ? null
+            : await this.resolvePhotoDataUrl(card.stampImage, false, 320),
+          frontImageDataUrl: minimal
+            ? null
+            : await this.resolvePhotoDataUrl(template?.frontImage || null, false, 1800),
+          backImageDataUrl: minimal
+            ? null
+            : await this.resolvePhotoDataUrl(template?.backImage || null, false, 1800),
           levelVisual,
           template: minimal ? null : template || null,
         });
@@ -480,7 +513,9 @@ export class MembersDigitalCardService {
       } catch (firstErr) {
         // Bila build SVG lengkap gagal (mis. data foto/template bermasalah), ulangi
         // tanpa gambar opsional — kartu tetap jadi PNG valid, bukan respons error.
-        this.logger.warn(`buildCardSvg lengkap gagal (${(firstErr as Error).message}), pakai SVG minimal tanpa foto/template/stempel`);
+        this.logger.warn(
+          `buildCardSvg lengkap gagal (${(firstErr as Error).message}), pakai SVG minimal tanpa foto/template/stempel`,
+        );
         svg = await buildSvg(true);
       }
       // density 300 → PNG ±3566×4500 (resolusi setara pdftoppm -r 300)
@@ -492,7 +527,10 @@ export class MembersDigitalCardService {
     }
 
     // Fallback lama (dipakai bila sharp bermasalah di deployment tertentu)
-    const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template }, { combined: true });
+    const pdfBuffer = await this.renderCardPdf(
+      { card, memberData, verificationUrl, levelVisual, qrDataUrl, template },
+      { combined: true },
+    );
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
     let fallbackPng = await pdfToPng(pdfBuffer);
     if (watermark) fallbackPng = await this.applyDownloadWatermark(fallbackPng, watermarkText);
@@ -549,8 +587,16 @@ export class MembersDigitalCardService {
       signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage, false, 320),
       stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage, false, 320),
       levelVisual: data.levelVisual,
-      frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null, false, 1800),
-      backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null, false, 1800),
+      frontImageDataUrl: await this.resolvePhotoDataUrl(
+        data.template?.frontImage || null,
+        false,
+        1800,
+      ),
+      backImageDataUrl: await this.resolvePhotoDataUrl(
+        data.template?.backImage || null,
+        false,
+        1800,
+      ),
     };
   }
 
@@ -579,16 +625,33 @@ export class MembersDigitalCardService {
 
       return await ReactPDF.renderToBuffer(pdfDoc);
     } catch (error) {
-      this.logger.error('PDF generation failed, returning JSON fallback:', (error as Error).message);
-      throw new Error('PDF generation requires react-pdf setup. Use /digital-card JSON endpoint instead.');
+      this.logger.error(
+        'PDF generation failed, returning JSON fallback:',
+        (error as Error).message,
+      );
+      throw new Error(
+        'PDF generation requires react-pdf setup. Use /digital-card JSON endpoint instead.',
+      );
     }
   }
 
-  async getDigitalCardPdf(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
-    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
+  async getDigitalCardPdf(
+    memberId: string,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ): Promise<Buffer> {
+    const { card, memberData, verificationUrl, levelVisual, distrikId } =
+      await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const template = await this.resolveActiveTemplate(distrikId);
-    return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template });
+    return this.renderCardPdf({
+      card,
+      memberData,
+      verificationUrl,
+      levelVisual,
+      qrDataUrl,
+      template,
+    });
   }
 
   // ── Cetak Fisik (Tahap 4) ─────────────────────────────────────────────────
@@ -685,7 +748,10 @@ export class MembersDigitalCardService {
     const member = await this.loadMemberForScope(memberId, scope, user);
     let doc = await this.ensureKtaDokumen(member);
     if (doc.status === 'revoked') {
-      doc = await this.prisma.dokumen.update({ where: { id: doc.id }, data: { status: 'generated' } });
+      doc = await this.prisma.dokumen.update({
+        where: { id: doc.id },
+        data: { status: 'generated' },
+      });
     }
 
     const replaceReason = ['replacement', 'hilang', 'rusak'].includes(opts.reason || '');
@@ -822,7 +888,9 @@ export class MembersDigitalCardService {
       include: {
         dokumen: {
           include: {
-            anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } },
+            anggota: {
+              include: { ranting: { include: { wilayah: { include: { distrik: true } } } } },
+            },
           },
         },
       },
@@ -850,7 +918,8 @@ export class MembersDigitalCardService {
 
       const propsArray: any[] = [];
       for (const qr of qrs) {
-        if (!qr.verificationUrl) throw new NotFoundException('Penerbitan kartu fisik tidak lengkap');
+        if (!qr.verificationUrl)
+          throw new NotFoundException('Penerbitan kartu fisik tidak lengkap');
         const member = qr.dokumen.anggota!;
         const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;
         const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);

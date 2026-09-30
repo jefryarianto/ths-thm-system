@@ -76,7 +76,8 @@ export class CardTemplatesController {
   )
   create(
     @Req() req: ScopedRequest,
-    @Body() body: { name?: string; label?: string; overlayConfig?: string; distrikId?: string | null },
+    @Body()
+    body: { name?: string; label?: string; overlayConfig?: string; distrikId?: string | null },
     @UploadedFiles() files?: { front?: Express.Multer.File[]; back?: Express.Multer.File[] },
   ) {
     return this.service.create(

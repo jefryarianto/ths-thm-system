@@ -369,7 +369,9 @@ async function main() {
   // ── Summary ──────────────────────────────────────────────
   const total = await prisma.kepengurusan.count();
   const distrikCount = await prisma.kepengurusan.count({ where: { distrikId: distrik.id } });
-  const wilayahCount = await prisma.kepengurusan.count({ where: { distrikId: null, wilayahId: { not: null } } });
+  const wilayahCount = await prisma.kepengurusan.count({
+    where: { distrikId: null, wilayahId: { not: null } },
+  });
   const rantingCount = await prisma.kepengurusan.count({ where: { rantingId: { not: null } } });
 
   console.log(`\n=== Seeding Complete! ===`);

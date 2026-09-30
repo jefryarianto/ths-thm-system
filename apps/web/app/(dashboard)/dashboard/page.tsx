@@ -82,10 +82,7 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
         <AlertCircle className="h-12 w-12 text-error-400 mx-auto mb-3" aria-hidden="true" />
         <p className="text-error font-medium">{message}</p>
         <p className="text-sm text-muted mt-1">Periksa koneksi ke server API</p>
-        <button
-          onClick={onRetry}
-          className="btn-primary mt-4"
-        >
+        <button onClick={onRetry} className="btn-primary mt-4">
           Coba Lagi
         </button>
       </div>
@@ -105,9 +102,7 @@ function GloriaGreeting({ className = '' }: { className?: string }) {
   return (
     <p className={`text-sm text-muted mt-1 ${className}`}>
       Gloria, Selamat Datang,{' '}
-      <span className="font-medium text-text">
-        {user?.namaLengkap || 'Anggota THS-THM'}
-      </span>
+      <span className="font-medium text-text">{user?.namaLengkap || 'Anggota THS-THM'}</span>
     </p>
   );
 }
@@ -147,7 +142,11 @@ function ActivityScopedDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-text flex items-center gap-2">
-          {isActivityAdmin ? <GraduationCap size={24} className="text-primary" /> : <ClipboardCheck size={24} className="text-primary" />}
+          {isActivityAdmin ? (
+            <GraduationCap size={24} className="text-primary" />
+          ) : (
+            <ClipboardCheck size={24} className="text-primary" />
+          )}
           {isActivityAdmin ? 'Kegiatan Saya' : 'Penilaian Saya'}
         </h1>
         <GloriaGreeting />
@@ -170,7 +169,9 @@ function ActivityScopedDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted">Aktif</p>
-              <p className="text-2xl font-bold text-success-700 mt-1">{kegiatan.filter(k => k.status === 'published' || k.status === 'draft').length}</p>
+              <p className="text-2xl font-bold text-success-700 mt-1">
+                {kegiatan.filter((k) => k.status === 'published' || k.status === 'draft').length}
+              </p>
             </div>
             <div className="p-3 rounded-xl ring-1 ring-success-200 bg-success-50">
               <GraduationCap size={22} className="text-success-700" />
@@ -181,7 +182,9 @@ function ActivityScopedDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted">Selesai</p>
-              <p className="text-2xl font-bold text-muted mt-1">{kegiatan.filter(k => k.status === 'closed').length}</p>
+              <p className="text-2xl font-bold text-muted mt-1">
+                {kegiatan.filter((k) => k.status === 'closed').length}
+              </p>
             </div>
             <div className="p-3 rounded-xl ring-1 ring-border bg-surface-variant">
               <CalendarCheck size={22} className="text-muted" />
@@ -213,17 +216,32 @@ function ActivityScopedDashboard() {
                   <div>
                     <p className="text-sm font-medium text-text">{k.nama}</p>
                     <p className="text-xs text-muted mt-0.5">
-                      {k.lokasi || 'Lokasi tidak ditentukan'} ? {new Date(k.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      {k.lokasi || 'Lokasi tidak ditentukan'} ?{' '}
+                      {new Date(k.tanggalMulai).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    k.status === 'published' ? 'bg-success-50 text-success-700 dark:bg-success-900 dark:text-success-300' :
-                    k.status === 'draft' ? 'bg-warning-50 text-warning-700 dark:bg-warning-900 dark:text-warning-300' :
-                    'bg-surface-variant text-muted'
-                  }`}>
-                    {k.status === 'published' ? 'Aktif' : k.status === 'draft' ? 'Draft' : k.status === 'closed' ? 'Selesai' : k.status}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      k.status === 'published'
+                        ? 'bg-success-50 text-success-700 dark:bg-success-900 dark:text-success-300'
+                        : k.status === 'draft'
+                          ? 'bg-warning-50 text-warning-700 dark:bg-warning-900 dark:text-warning-300'
+                          : 'bg-surface-variant text-muted'
+                    }`}
+                  >
+                    {k.status === 'published'
+                      ? 'Aktif'
+                      : k.status === 'draft'
+                        ? 'Draft'
+                        : k.status === 'closed'
+                          ? 'Selesai'
+                          : k.status}
                   </span>
                   <ChevronRight size={14} className="text-muted" />
                 </div>
@@ -364,9 +382,7 @@ export default function DashboardPage() {
             onClick={() => setAutoRefresh(!autoRefresh)}
             aria-pressed={autoRefresh}
             className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
-              autoRefresh
-                ? 'bg-success-50 text-success-700'
-                : 'bg-surface-variant text-muted'
+              autoRefresh ? 'bg-success-50 text-success-700' : 'bg-surface-variant text-muted'
             }`}
           >
             {autoRefresh ? (
@@ -396,9 +412,7 @@ export default function DashboardPage() {
             {ROLE_LABELS[user.role] || user.role.replace('_', ' ')}
           </span>
         )}
-        {user?.email && (
-          <span className="text-xs text-muted truncate">{user.email}</span>
-        )}
+        {user?.email && <span className="text-xs text-muted truncate">{user.email}</span>}
         <span className="ml-auto text-2xs text-muted">Sistem Informasi Manajemen THS-THM</span>
       </div>
 
@@ -468,27 +482,73 @@ export default function DashboardPage() {
           </div>
           {chartTab === 'dues' ? (
             data.monthlyDues && data.monthlyDues.length > 0 ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={data.monthlyDues}
+                  margin={{ top: 5, right: 12, left: 4, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
+                  <XAxis
+                    dataKey="bulan"
+                    tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
+                  />
+                  <YAxis
+                    width={76}
+                    tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => formatCompactRupiah(v)}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [formatRupiah(value), 'Iuran Terkumpul']}
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: '1px solid var(--tooltip-border)',
+                      background: 'var(--tooltip-bg)',
+                      color: 'var(--tooltip-color)',
+                      boxShadow: 'var(--tooltip-shadow)',
+                    }}
+                  />
+                  <Bar
+                    name="Iuran Terkumpul"
+                    dataKey="jumlah"
+                    fill="var(--primary, #2563EB)"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-56 text-sm text-muted">
+                Belum ada data iuran
+              </div>
+            )
+          ) : growthLoading ? (
+            <ChartSkeleton height={240} />
+          ) : growthData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart
-                data={data.monthlyDues}
-                margin={{ top: 5, right: 12, left: 4, bottom: 5 }}
-              >
+              <LineChart data={growthData} margin={{ top: 5, right: 12, left: 12, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
                 <XAxis
-                  dataKey="bulan"
+                  dataKey="label"
                   tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
                   tickLine={false}
                   axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
                 />
                 <YAxis
-                  width={76}
+                  width={48}
                   tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => formatCompactRupiah(v)}
+                  tickFormatter={(v) => Number(v).toLocaleString('id-ID')}
                 />
                 <Tooltip
-                  formatter={(value: number) => [formatRupiah(value), 'Iuran Terkumpul']}
+                  formatter={(value: number, name: string) => [
+                    `${value.toLocaleString('id-ID')} Anggota`,
+                    name,
+                  ]}
                   contentStyle={{
                     borderRadius: '8px',
                     border: '1px solid var(--tooltip-border)',
@@ -497,90 +557,39 @@ export default function DashboardPage() {
                     boxShadow: 'var(--tooltip-shadow)',
                   }}
                 />
-                <Bar
-                  name="Iuran Terkumpul"
-                  dataKey="jumlah"
-                  fill="var(--primary, #2563EB)"
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={40}
+                <Legend
+                  verticalAlign="bottom"
+                  height={28}
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => <span className="text-xs text-muted">{value}</span>}
                 />
-              </BarChart>
+                <Line
+                  type="monotone"
+                  name="Anggota Baru"
+                  dataKey="count"
+                  stroke="var(--primary, #2563EB)"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: 'var(--primary, #2563EB)' }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  name="Total Kumulatif"
+                  dataKey="total"
+                  stroke="var(--success, #1B7F4B)"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-56 text-sm text-muted">
-              Belum ada data iuran
+              Belum ada data pertumbuhan anggota
             </div>
-          )
-        ) : growthLoading ? (
-          <ChartSkeleton height={240} />
-        ) : growthData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart
-              data={growthData}
-              margin={{ top: 5, right: 12, left: 12, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
-                tickLine={false}
-                axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
-              />
-              <YAxis
-                width={48}
-                tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v) => Number(v).toLocaleString('id-ID')}
-              />
-              <Tooltip
-                formatter={(value: number, name: string) => [
-                  `${value.toLocaleString('id-ID')} Anggota`,
-                  name,
-                ]}
-                contentStyle={{
-                  borderRadius: '8px',
-                  border: '1px solid var(--tooltip-border)',
-                  background: 'var(--tooltip-bg)',
-                  color: 'var(--tooltip-color)',
-                  boxShadow: 'var(--tooltip-shadow)',
-                }}
-              />
-              <Legend
-                verticalAlign="bottom"
-                height={28}
-                iconType="circle"
-                iconSize={8}
-                formatter={(value) => (
-                  <span className="text-xs text-muted">{value}</span>
-                )}
-              />
-              <Line
-                type="monotone"
-                name="Anggota Baru"
-                dataKey="count"
-                stroke="var(--primary, #2563EB)"
-                strokeWidth={2}
-                dot={{ r: 3, fill: 'var(--primary, #2563EB)' }}
-                activeDot={{ r: 5 }}
-              />
-              <Line
-                type="monotone"
-                name="Total Kumulatif"
-                dataKey="total"
-                stroke="var(--success, #1B7F4B)"
-                strokeWidth={2}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-56 text-sm text-muted">
-            Belum ada data pertumbuhan anggota
-          </div>
-        )}
+          )}
         </div>
 
         {/* Right column - stacked */}
@@ -588,12 +597,8 @@ export default function DashboardPage() {
           {/* 5b. Status Keanggotaan (dari data.memberStatus API, tanpa persentase karangan) */}
           <div className="card-elegant p-5 sm:p-6">
             <div className="mb-3">
-              <h3 className="text-base font-semibold text-text">
-                Status Keanggotaan
-              </h3>
-              <p className="text-xs text-muted mt-0.5">
-                Distribusi status anggota
-              </p>
+              <h3 className="text-base font-semibold text-text">Status Keanggotaan</h3>
+              <p className="text-xs text-muted mt-0.5">Distribusi status anggota</p>
             </div>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={210}>
@@ -608,7 +613,12 @@ export default function DashboardPage() {
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} stroke="var(--surface, #fff)" strokeWidth={2} />
+                      <Cell
+                        key={index}
+                        fill={entry.color}
+                        stroke="var(--surface, #fff)"
+                        strokeWidth={2}
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -626,9 +636,7 @@ export default function DashboardPage() {
                     height={30}
                     iconType="circle"
                     iconSize={8}
-                    formatter={(value) => (
-                      <span className="text-xs text-muted">{value}</span>
-                    )}
+                    formatter={(value) => <span className="text-xs text-muted">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>

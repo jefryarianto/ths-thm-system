@@ -137,7 +137,7 @@ export default function DonasiPage() {
                   {programDonasi.map((prog) => {
                     const persen = Math.min(
                       100,
-                      Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100)
+                      Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100),
                     );
                     return (
                       <div
@@ -145,7 +145,9 @@ export default function DonasiPage() {
                         className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
                       >
                         <div className="flex justify-between items-start mb-3 gap-4">
-                          <h3 className="text-xl font-bold text-navy-800 dark:text-white">{prog.nama}</h3>
+                          <h3 className="text-xl font-bold text-navy-800 dark:text-white">
+                            {prog.nama}
+                          </h3>
                           <span className="text-sm font-bold text-navy-900 dark:text-gold-400 px-3 py-1 bg-gold-100 dark:bg-navy-900 rounded-full">
                             {persen}%
                           </span>
@@ -295,9 +297,7 @@ export default function DonasiPage() {
                 </div>
 
                 <div className="space-y-4 my-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {t.donasi.confirmDesc}
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{t.donasi.confirmDesc}</p>
 
                   {bankInfo.map((b) => (
                     <div
@@ -311,7 +311,9 @@ export default function DonasiPage() {
                         <div className="font-mono font-bold text-navy-900 dark:text-white text-base">
                           {b.accountNumber}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">a.n. {b.accountName}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          a.n. {b.accountName}
+                        </div>
                       </div>
                       <button
                         onClick={() => handleCopyAccount(b.id, b.accountNumber)}

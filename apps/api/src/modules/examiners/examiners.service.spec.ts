@@ -96,7 +96,11 @@ describe('ExaminersService', () => {
       await service.findAll({ search: 'Budi' });
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { role: 'penguji', isActive: true, namaLengkap: { contains: 'Budi', mode: 'insensitive' } },
+          where: {
+            role: 'penguji',
+            isActive: true,
+            namaLengkap: { contains: 'Budi', mode: 'insensitive' },
+          },
         }),
       );
     });
@@ -119,7 +123,11 @@ describe('ExaminersService', () => {
     it('membuat akun penguji baru bila email belum terdaftar', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.findFirst.mockResolvedValue(null);
-      mockPrisma.user.create.mockResolvedValue({ id: 'u1', role: 'penguji', email: 'penguji@test.com' });
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'u1',
+        role: 'penguji',
+        email: 'penguji@test.com',
+      });
       const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
       expect(result.data.role).toBe('penguji');
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
@@ -128,9 +136,18 @@ describe('ExaminersService', () => {
 
     it('promote akun anggota eksisting menjadi penguji (tanpa duplikat)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u9', role: 'anggota', isActive: true, email: 'a@test.com', namaLengkap: 'Ali',
+        id: 'u9',
+        role: 'anggota',
+        isActive: true,
+        email: 'a@test.com',
+        namaLengkap: 'Ali',
       });
-      mockPrisma.user.update.mockResolvedValue({ id: 'u9', role: 'penguji', email: 'a@test.com', namaLengkap: 'Ali' });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'u9',
+        role: 'penguji',
+        email: 'a@test.com',
+        namaLengkap: 'Ali',
+      });
       const result = await service.create({ email: 'a@test.com', namaLengkap: 'Ali' });
       expect(result.data.role).toBe('penguji');
       expect(result.message).toContain('dipromosikan');
@@ -143,7 +160,11 @@ describe('ExaminersService', () => {
 
     it('idempoten bila user sudah penguji aktif', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u1', role: 'penguji', isActive: true, email: 'penguji@test.com', namaLengkap: 'Budi',
+        id: 'u1',
+        role: 'penguji',
+        isActive: true,
+        email: 'penguji@test.com',
+        namaLengkap: 'Budi',
       });
       const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
       expect(result.message).toContain('sudah terdaftar');
@@ -152,7 +173,9 @@ describe('ExaminersService', () => {
     });
 
     it('menolak bila email kosong', async () => {
-      await expect(service.create({ email: '', namaLengkap: 'X' })).rejects.toThrow(BadRequestException);
+      await expect(service.create({ email: '', namaLengkap: 'X' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

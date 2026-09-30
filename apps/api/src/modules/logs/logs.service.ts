@@ -33,20 +33,14 @@ export class LogsService {
 
     try {
       await fs.mkdir(path.dirname(this.logFilePath), { recursive: true });
-      await fs.appendFile(
-        this.logFilePath,
-        JSON.stringify(entry) + '\n',
-        'utf8',
-      );
+      await fs.appendFile(this.logFilePath, JSON.stringify(entry) + '\n', 'utf8');
       this.logger.warn(
         `[client-error] ${entry.module || 'app'} (${entry.platform || 'unknown'}): ${entry.message}`,
       );
     } catch (err) {
       // Kegagalan menulis log tidak boleh menggagalkan request (best-effort.
 
-      this.logger.error(
-        `Failed to persist client error log: ${(err as Error).message}`,
-      );
+      this.logger.error(`Failed to persist client error log: ${(err as Error).message}`);
     }
   }
 }

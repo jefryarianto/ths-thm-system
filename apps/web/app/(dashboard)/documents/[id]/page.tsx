@@ -74,10 +74,13 @@ export default function DocumentDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    apiClient.get(`/documents/${id}`).then(({ data }) => {
-      setDoc(data.data);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    apiClient
+      .get(`/documents/${id}`)
+      .then(({ data }) => {
+        setDoc(data.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
   if (loading) return <div className="p-8 text-sm text-gray-500">Memuat...</div>;
@@ -90,7 +93,10 @@ export default function DocumentDetailPage() {
     <PermissionGuard module="documents" action="view">
       <Breadcrumbs suffix={{ href: '#', label: doc?.nomorDokumen || 'Detail' }} />
       <div className="max-w-2xl mx-auto space-y-6">
-        <Link href="/documents" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition">
+        <Link
+          href="/documents"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition"
+        >
           <ArrowLeft size={16} /> Kembali ke Dokumen
         </Link>
 
@@ -104,7 +110,9 @@ export default function DocumentDetailPage() {
               <h1 className="text-lg font-semibold font-mono">{doc.nomorDokumen}</h1>
               <p className="text-sm text-gray-500">{DOKUMEN_TIPE_LABEL[doc.tipe] || doc.tipe}</p>
             </div>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusMeta.className || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
+            <span
+              className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusMeta.className || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
+            >
               {statusMeta.label}
             </span>
           </div>
@@ -132,7 +140,9 @@ export default function DocumentDetailPage() {
                     <User size={14} /> Anggota
                   </span>
                   <p className="font-medium mt-0.5">{doc.anggota.namaLengkap}</p>
-                  <p className="text-xs text-gray-500 font-mono mt-0.5">No. Anggota: {doc.anggota.nomorAnggota}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                    No. Anggota: {doc.anggota.nomorAnggota}
+                  </p>
                 </div>
                 {(doc.anggota.email || doc.anggota.noHp) && (
                   <div className="sm:col-span-2 text-xs text-gray-500">

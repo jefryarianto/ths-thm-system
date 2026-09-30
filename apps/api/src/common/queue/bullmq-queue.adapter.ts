@@ -35,7 +35,9 @@ interface BullJob {
 /** Minimal local type for the BullMQ Queue object. */
 interface BullQueue {
   add(name: string, data: unknown, opts?: Record<string, unknown>): Promise<unknown>;
-  addBulk(entries: Array<{ name: string; data: unknown; opts?: Record<string, unknown> }>): Promise<unknown>;
+  addBulk(
+    entries: Array<{ name: string; data: unknown; opts?: Record<string, unknown> }>,
+  ): Promise<unknown>;
   getJobCounts(...types: string[]): Promise<Record<string, number>>;
   pause(): Promise<void>;
   resume(): Promise<void>;
@@ -69,10 +71,7 @@ export class BullMQQueueAdapter implements IJobQueue {
   private readonly queueName: string;
   private shutdownInitiated = false;
 
-  constructor(
-    callbacks: JobLifecycleCallbacks,
-    options?: QueueOptions,
-  ) {
+  constructor(callbacks: JobLifecycleCallbacks, options?: QueueOptions) {
     this.callbacks = callbacks;
     this.concurrency = options?.concurrency ?? 3;
     this.maxRetries = options?.maxRetries ?? 3;
@@ -93,7 +92,10 @@ export class BullMQQueueAdapter implements IJobQueue {
     try {
       // Dynamic require — bullmq may not be installed
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const BullMQ: { Queue: new (...a: unknown[]) => BullQueue; Worker: new (...a: unknown[]) => BullWorker } = require('bullmq');
+      const BullMQ: {
+        Queue: new (...a: unknown[]) => BullQueue;
+        Worker: new (...a: unknown[]) => BullWorker;
+      } = require('bullmq');
 
       const connection = this.connection;
 
@@ -163,13 +165,13 @@ export class BullMQQueueAdapter implements IJobQueue {
 
       this.logger.log(
         `BullMQ queue "${this.queueName}" initialized ` +
-        `(Redis ${this.connection.host}:${this.connection.port}, ` +
-        `concurrency: ${this.concurrency}, maxRetries: ${this.maxRetries})`,
+          `(Redis ${this.connection.host}:${this.connection.port}, ` +
+          `concurrency: ${this.concurrency}, maxRetries: ${this.maxRetries})`,
       );
     } catch (error) {
       this.logger.error(
         `Failed to initialize BullMQ queue: ${(error as Error).message}. ` +
-        'Make sure bullmq is installed and Redis is running.',
+          'Make sure bullmq is installed and Redis is running.',
       );
     }
   }
@@ -238,10 +240,18 @@ export class BullMQQueueAdapter implements IJobQueue {
     this.shutdownInitiated = true;
     const errors: string[] = [];
     if (this.worker) {
-      try { await this.worker.close(true); } catch (e) { errors.push(`worker: ${(e as Error).message}`); }
+      try {
+        await this.worker.close(true);
+      } catch (e) {
+        errors.push(`worker: ${(e as Error).message}`);
+      }
     }
     if (this.queue) {
-      try { await this.queue.close(); } catch (e) { errors.push(`queue: ${(e as Error).message}`); }
+      try {
+        await this.queue.close();
+      } catch (e) {
+        errors.push(`queue: ${(e as Error).message}`);
+      }
     }
     if (errors.length > 0) {
       this.logger.warn(`BullMQ shutdown completed with errors: ${errors.join('; ')}`);

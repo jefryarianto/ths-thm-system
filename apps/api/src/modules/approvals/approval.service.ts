@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -91,7 +97,9 @@ export class ApprovalService {
   async approve(requestId: string, userId: string, note?: string, scope?: UserScope) {
     const request = await this.prisma.approvalRequest.findUnique({
       where: { id: requestId },
-      include: { levels: { include: { approvalLevel: true }, orderBy: { approvalLevel: { order: 'asc' } } } },
+      include: {
+        levels: { include: { approvalLevel: true }, orderBy: { approvalLevel: { order: 'asc' } } },
+      },
     });
 
     if (!request) throw new NotFoundException('Pengajuan tidak ditemukan');
@@ -104,12 +112,16 @@ export class ApprovalService {
     // Approve current level + (bila final) set status request dalam satu transaksi
     await this.prisma.$transaction(async (tx) => {
       await tx.approvalRequestLevel.update({
-        where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
+        where: {
+          requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId },
+        },
         data: { status: 'approved', decidedBy: userId, decidedAt: new Date(), note: note || null },
       });
 
       // Check if all levels are approved
-      const remainingLevels = request.levels.filter((l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId);
+      const remainingLevels = request.levels.filter(
+        (l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId,
+      );
 
       if (remainingLevels.length === 0) {
         await tx.approvalRequest.update({
@@ -119,7 +131,9 @@ export class ApprovalService {
       }
     });
 
-    const remainingLevels = request.levels.filter((l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId);
+    const remainingLevels = request.levels.filter(
+      (l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId,
+    );
 
     if (remainingLevels.length === 0) {
       // All approved — finalize
@@ -132,15 +146,17 @@ export class ApprovalService {
           where: { id: request.itemId },
           select: { judul: true },
         });
-        this.notificationsService.send(request.submittedBy, {
-          judul: '✅ Berita Disetujui',
-          isi: `Berita Anda "${beritaTitle?.judul || ''}" telah disetujui dan kini tampil di publik.`,
-          tipe: 'approval_result',
-          data: {
-            screen: 'berita',
-            beritaId: request.itemId,
-          },
-        }).catch((err) => this.logger.error(`Failed to notify berita approval: ${err.message}`));
+        this.notificationsService
+          .send(request.submittedBy, {
+            judul: '✅ Berita Disetujui',
+            isi: `Berita Anda "${beritaTitle?.judul || ''}" telah disetujui dan kini tampil di publik.`,
+            tipe: 'approval_result',
+            data: {
+              screen: 'berita',
+              beritaId: request.itemId,
+            },
+          })
+          .catch((err) => this.logger.error(`Failed to notify berita approval: ${err.message}`));
       }
     } else {
       // Notify next level approvers
@@ -148,7 +164,6 @@ export class ApprovalService {
       await this.notifyApprovers(requestId, nextLevel.approvalLevelId, scope, request.requestType);
       this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: false, note });
     }
-
   }
 
   async reject(requestId: string, userId: string, note?: string) {
@@ -167,8 +182,15 @@ export class ApprovalService {
     await this.prisma.$transaction(async (tx) => {
       if (currentLevel) {
         await tx.approvalRequestLevel.update({
-          where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
-          data: { status: 'rejected', decidedBy: userId, decidedAt: new Date(), note: note || null },
+          where: {
+            requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId },
+          },
+          data: {
+            status: 'rejected',
+            decidedBy: userId,
+            decidedAt: new Date(),
+            note: note || null,
+          },
         });
       }
 
@@ -187,15 +209,17 @@ export class ApprovalService {
         where: { id: request.itemId },
         select: { judul: true },
       });
-      this.notificationsService.send(request.submittedBy, {
-        judul: '❌ Berita Ditolak',
-        isi: `Berita Anda "${beritaTitle?.judul || ''}" ditolak${note ? ` (alasan: ${note})` : ''}. Silakan perbaiki dan ajukan ulang.`,
-        tipe: 'approval_result',
-        data: {
-          screen: 'berita',
-          beritaId: request.itemId,
-        },
-      }).catch((err) => this.logger.error(`Failed to notify berita rejection: ${err.message}`));
+      this.notificationsService
+        .send(request.submittedBy, {
+          judul: '❌ Berita Ditolak',
+          isi: `Berita Anda "${beritaTitle?.judul || ''}" ditolak${note ? ` (alasan: ${note})` : ''}. Silakan perbaiki dan ajukan ulang.`,
+          tipe: 'approval_result',
+          data: {
+            screen: 'berita',
+            beritaId: request.itemId,
+          },
+        })
+        .catch((err) => this.logger.error(`Failed to notify berita rejection: ${err.message}`));
     }
   }
 
@@ -216,7 +240,7 @@ export class ApprovalService {
 
   async getPending(scope?: UserScope) {
     const where: Record<string, unknown> = { status: 'pending' };
-    
+
     const requests = await this.prisma.approvalRequest.findMany({
       where,
       include: {
@@ -232,7 +256,12 @@ export class ApprovalService {
     return requests;
   }
 
-  private async notifyApprovers(requestId: string, levelId: string, scope?: UserScope, requestType?: string) {
+  private async notifyApprovers(
+    requestId: string,
+    levelId: string,
+    scope?: UserScope,
+    requestType?: string,
+  ) {
     try {
       const level = await this.prisma.approvalLevel.findUnique({ where: { id: levelId } });
       if (!level) return;
@@ -247,16 +276,20 @@ export class ApprovalService {
       for (const approver of approvers) {
         // NotificationsService.send() handles: in-app notif, preference check,
         // socket.io events, email notification, FCM push, & cache invalidation — one call
-        this.notificationsService?.send(approver.id, {
-          judul: '✅ Persetujuan Dibutuhkan',
-          isi: `${level.name}: ${requestTypeLabel}`,
-          tipe: 'approval_request',
-          data: {
-            approvalId: requestId,
-            screen: 'approvals',
-            screenId: requestId,
-          },
-        }).catch((err) => this.logger.error(`Push notif failed for ${approver.id}: ${err.message}`));
+        this.notificationsService
+          ?.send(approver.id, {
+            judul: '✅ Persetujuan Dibutuhkan',
+            isi: `${level.name}: ${requestTypeLabel}`,
+            tipe: 'approval_request',
+            data: {
+              approvalId: requestId,
+              screen: 'approvals',
+              screenId: requestId,
+            },
+          })
+          .catch((err) =>
+            this.logger.error(`Push notif failed for ${approver.id}: ${err.message}`),
+          );
       }
     } catch (error) {
       this.logger.error(`Failed to notify approvers: ${(error as Error).message}`);
@@ -269,8 +302,8 @@ export class ApprovalService {
       member_update: 'Perubahan Data Anggota',
       claim: 'Klaim',
       letter: 'Surat',
-certificate: 'Sertifikat',
-       berita: 'Berita',
+      certificate: 'Sertifikat',
+      berita: 'Berita',
     };
     return labels[type] || type;
   }
@@ -336,28 +369,30 @@ certificate: 'Sertifikat',
       });
 
       if (user && this.notificationsService) {
-        this.notificationsService.send(user.id, {
-          judul: '✅ Data Anggota Disetujui',
-          isi: `Halo ${member.namaLengkap}, data keanggotaan Anda telah disetujui.`,
-          tipe: 'umum',
-          data: {
-            screen: 'members',
-            anggotaId,
-          },
-        }).catch((err) => this.logger.error(`Failed to notify member approval: ${err.message}`));
+        this.notificationsService
+          .send(user.id, {
+            judul: '✅ Data Anggota Disetujui',
+            isi: `Halo ${member.namaLengkap}, data keanggotaan Anda telah disetujui.`,
+            tipe: 'umum',
+            data: {
+              screen: 'members',
+              anggotaId,
+            },
+          })
+          .catch((err) => this.logger.error(`Failed to notify member approval: ${err.message}`));
       }
     } catch (error) {
       this.logger.error(`Failed to notify member ${anggotaId}: ${(error as Error).message}`);
     }
   }
 
-   async submitBeritaForApproval(beritaId: string, userId: string) {
-     return this.submit(
-       {
-         requestType: 'berita',
-         itemId: beritaId,
-       },
-       userId
-     );
-   }
+  async submitBeritaForApproval(beritaId: string, userId: string) {
+    return this.submit(
+      {
+        requestType: 'berita',
+        itemId: beritaId,
+      },
+      userId,
+    );
+  }
 }

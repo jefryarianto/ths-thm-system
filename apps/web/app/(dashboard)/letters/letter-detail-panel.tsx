@@ -14,12 +14,7 @@ interface Props {
   deleting: boolean;
 }
 
-export default function LetterDetailPanel({
-  selectedLetter,
-  onClose,
-  onDelete,
-  deleting,
-}: Props) {
+export default function LetterDetailPanel({ selectedLetter, onClose, onDelete, deleting }: Props) {
   const [detailData, setDetailData] = useState<LetterDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -153,18 +148,36 @@ export default function LetterDetailPanel({
 
           <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              Dibuat: {new Date(detailData.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              Dibuat:{' '}
+              {new Date(detailData.createdAt).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </p>
             {detailData.updatedAt && (
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Diperbarui: {new Date(detailData.updatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                Diperbarui:{' '}
+                {new Date(detailData.updatedAt).toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </p>
             )}
           </div>
 
           <div className="flex gap-2 pt-2">
             <Link
-              href={detailData.type === 'masuk' ? `/letters/incoming/${detailData.id}/edit` : `/letters/outgoing/${detailData.id}/edit`}
+              href={
+                detailData.type === 'masuk'
+                  ? `/letters/incoming/${detailData.id}/edit`
+                  : `/letters/outgoing/${detailData.id}/edit`
+              }
               title="Edit"
               aria-label="Edit"
               className="p-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"

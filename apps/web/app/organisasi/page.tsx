@@ -5,10 +5,32 @@ import Link from 'next/link';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import {
-  Landmark, ChevronRight, Shield, Heart, Award, Calendar, Users,
-  Cross, Sparkles, MapPin, CheckCircle2, ArrowRight, BookOpen,
-  Building2, Share2, Check, Flame, ScrollText, UserCheck, Layers,
-  Compass, Star, Scale, ShieldCheck, HeartHandshake, Eye
+  Landmark,
+  ChevronRight,
+  Shield,
+  Heart,
+  Award,
+  Calendar,
+  Users,
+  Cross,
+  Sparkles,
+  MapPin,
+  CheckCircle2,
+  ArrowRight,
+  BookOpen,
+  Building2,
+  Share2,
+  Check,
+  Flame,
+  ScrollText,
+  UserCheck,
+  Layers,
+  Compass,
+  Star,
+  Scale,
+  ShieldCheck,
+  HeartHandshake,
+  Eye,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import {
@@ -67,8 +89,11 @@ export default function OrganisasiPage() {
 
   const handleCopyJanji = () => {
     if (typeof window !== 'undefined') {
-      const fullJanji = `${JANJI_PRASETYA_DATA.pengantar}\n\n` +
-        JANJI_PRASETYA_DATA.butir.map((b) => `${b.number}. ${b.text}\n   ${b.penjelasan}`).join('\n\n') +
+      const fullJanji =
+        `${JANJI_PRASETYA_DATA.pengantar}\n\n` +
+        JANJI_PRASETYA_DATA.butir
+          .map((b) => `${b.number}. ${b.text}\n   ${b.penjelasan}`)
+          .join('\n\n') +
         `\n\n${JANJI_PRASETYA_DATA.penutup}`;
       navigator.clipboard.writeText(fullJanji);
       setCopiedJanji(true);
@@ -99,7 +124,9 @@ export default function OrganisasiPage() {
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs sm:text-sm font-semibold tracking-wider uppercase mb-4 shadow-sm">
               <Landmark size={14} className="text-gold-400" />
-              <span>{STATUTA_INFO.nomorTap} &bull; {STATUTA_INFO.sidangNasional}</span>
+              <span>
+                {STATUTA_INFO.nomorTap} &bull; {STATUTA_INFO.sidangNasional}
+              </span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white tracking-tight leading-tight mb-4 drop-shadow-md">
@@ -107,7 +134,8 @@ export default function OrganisasiPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-white/80 leading-relaxed font-light mb-6 max-w-3xl">
-              {t.organisasi.subtitle}. Berlandaskan Iman Katolik dan Kasih Kristus, melatih jasmani dan budi pekerti untuk menjadi kader militan bagi Gereja dan Bangsa.
+              {t.organisasi.subtitle}. Berlandaskan Iman Katolik dan Kasih Kristus, melatih jasmani
+              dan budi pekerti untuk menjadi kader militan bagi Gereja dan Bangsa.
             </p>
 
             <div className="inline-flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-white/5 border border-gold-400/25 backdrop-blur-md mb-8 shadow-sm">
@@ -175,7 +203,6 @@ export default function OrganisasiPage() {
             </div>
           </div>
         </div>
-
       </section>
 
       {/* ── 2. Interactive Navigation Tabs ── */}
@@ -306,7 +333,8 @@ export default function OrganisasiPage() {
                         Visi, Misi &amp; Arah Gerak Organisasi
                       </h2>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                        Sesuai Ketetapan Sidang Nasional IX THS-THM (Statuta Bab III Pasal 6 &amp; 7)
+                        Sesuai Ketetapan Sidang Nasional IX THS-THM (Statuta Bab III Pasal 6 &amp;
+                        7)
                       </p>
                     </div>
                   </div>
@@ -347,8 +375,8 @@ export default function OrganisasiPage() {
                   {/* 4 Pilar Misi */}
                   <div className="mb-8">
                     <h3 className="text-xl font-bold font-serif text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                      <Layers size={18} className="text-gold-500" />
-                      4 Butir Misi Pembinaan Integral (Pasal 7)
+                      <Layers size={18} className="text-gold-500" />4 Butir Misi Pembinaan Integral
+                      (Pasal 7)
                     </h3>
                     <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
                       {VISI_MISI_DATA.misi.map((m) => (
@@ -405,14 +433,16 @@ export default function OrganisasiPage() {
                       <ul className="space-y-2.5 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                         {VISI_MISI_DATA.tugasPokok.map((tp, idx) => (
                           <li key={idx} className="flex items-start gap-2">
-                            <CheckCircle2 size={15} className="text-navy-600 dark:text-gold-400 shrink-0 mt-0.5" />
+                            <CheckCircle2
+                              size={15}
+                              className="text-navy-600 dark:text-gold-400 shrink-0 mt-0.5"
+                            />
                             <span>{tp}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
-
                 </div>
               </section>
             )}
@@ -526,7 +556,8 @@ export default function OrganisasiPage() {
                         1 Landasan &amp; 3 Pilar Pembinaan Karakter
                       </h2>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                        Sanctitas (Kesucian), Sanitas (Kesehatan Fisik), dan Scientia (Kecerdasan &amp; Kepemimpinan)
+                        Sanctitas (Kesucian), Sanitas (Kesehatan Fisik), dan Scientia (Kecerdasan
+                        &amp; Kepemimpinan)
                       </p>
                     </div>
                   </div>
@@ -545,13 +576,24 @@ export default function OrganisasiPage() {
                           Iman Katolik &amp; Kasih Yesus Kristus
                         </h3>
                         <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed mb-4">
-                          Yesus Kristus diakui sebagai satu-satunya <strong>Guru Besar</strong> abadi. Seluruh karya, latihan fisik bela diri, dan dinamika keorganisasian THS-THM dipersembahkan seutuhnya bagi Gereja Katolik Roma di bawah naungan Hati Kudus Yesus dan Hati Tak Bernoda Maria.
+                          Yesus Kristus diakui sebagai satu-satunya <strong>Guru Besar</strong>{' '}
+                          abadi. Seluruh karya, latihan fisik bela diri, dan dinamika keorganisasian
+                          THS-THM dipersembahkan seutuhnya bagi Gereja Katolik Roma di bawah naungan
+                          Hati Kudus Yesus dan Hati Tak Bernoda Maria.
                         </p>
                         <div className="flex flex-wrap gap-3 text-xs text-gold-300">
-                          <span className="flex items-center gap-1.5"><CheckCircle2 size={13} /> Devosi Rosario</span>
-                          <span className="flex items-center gap-1.5"><CheckCircle2 size={13} /> Sakramen Ekaristi</span>
-                          <span className="flex items-center gap-1.5"><CheckCircle2 size={13} /> Retret Pendadaran</span>
-                          <span className="flex items-center gap-1.5"><CheckCircle2 size={13} /> Kesetiaan Magisterium Gereja</span>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 size={13} /> Devosi Rosario
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 size={13} /> Sakramen Ekaristi
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 size={13} /> Retret Pendadaran
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 size={13} /> Kesetiaan Magisterium Gereja
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -565,7 +607,13 @@ export default function OrganisasiPage() {
                       >
                         <div>
                           <div className="w-10 h-10 rounded-xl bg-gold-400/20 text-gold-600 dark:text-gold-400 flex items-center justify-center mb-3">
-                            {p.id === 'spiritualitas' ? <Heart size={20} /> : p.id === 'beladiri' ? <Shield size={20} /> : <Users size={20} />}
+                            {p.id === 'spiritualitas' ? (
+                              <Heart size={20} />
+                            ) : p.id === 'beladiri' ? (
+                              <Shield size={20} />
+                            ) : (
+                              <Users size={20} />
+                            )}
                           </div>
                           <span className="text-[11px] font-bold uppercase tracking-wider text-gold-600 dark:text-gold-400 block mb-1">
                             {p.latin}
@@ -579,8 +627,14 @@ export default function OrganisasiPage() {
                         </div>
                         <div className="space-y-1.5 pt-3 border-t border-gray-200 dark:border-gray-700">
                           {p.poinKunci.map((poin, idx) => (
-                            <div key={idx} className="flex items-start gap-1.5 text-xs text-gray-700 dark:text-gray-300">
-                              <CheckCircle2 size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+                            <div
+                              key={idx}
+                              className="flex items-start gap-1.5 text-xs text-gray-700 dark:text-gray-300"
+                            >
+                              <CheckCircle2
+                                size={13}
+                                className="text-emerald-500 shrink-0 mt-0.5"
+                              />
                               <span>{poin}</span>
                             </div>
                           ))}
@@ -593,14 +647,22 @@ export default function OrganisasiPage() {
                   <div className="p-6 rounded-2xl bg-gradient-to-r from-navy-900 to-navy-950 text-white border border-gold-400/30">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div>
-                        <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">Sesanti Luhur Pendekar</span>
-                        <h3 className="text-xl font-bold font-serif text-white">Fortiter in Re, Suaviter in Modo</h3>
-                        <p className="text-sm text-white/80 font-light">Kokoh kuat dalam memegang teguh prinsip kebenaran, luwes dan lemah-lembut dalam cara menyampaikannya.</p>
+                        <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">
+                          Sesanti Luhur Pendekar
+                        </span>
+                        <h3 className="text-xl font-bold font-serif text-white">
+                          Fortiter in Re, Suaviter in Modo
+                        </h3>
+                        <p className="text-sm text-white/80 font-light">
+                          Kokoh kuat dalam memegang teguh prinsip kebenaran, luwes dan lemah-lembut
+                          dalam cara menyampaikannya.
+                        </p>
                       </div>
-                      <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">Pilar Karakter</div>
+                      <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">
+                        Pilar Karakter
+                      </div>
                     </div>
                   </div>
-
                 </div>
               </section>
             )}
@@ -619,7 +681,8 @@ export default function OrganisasiPage() {
                           Hierarki &amp; Struktur Tata Kelola
                         </h2>
                         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          Berdasarkan Ketetapan Statuta Bab VII–XI (Nasional, Distrik, Wilayah, Ranting, Unit Latihan)
+                          Berdasarkan Ketetapan Statuta Bab VII–XI (Nasional, Distrik, Wilayah,
+                          Ranting, Unit Latihan)
                         </p>
                       </div>
                     </div>
@@ -719,7 +782,8 @@ export default function OrganisasiPage() {
                         Jenjang Tingkatan Sabuk &amp; Golongan Usia
                       </h2>
                       <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                        Kurikulum tingkatan pesilat dan klasifikasi anggota menurut Statuta Pasal 38 &amp; 48
+                        Kurikulum tingkatan pesilat dan klasifikasi anggota menurut Statuta Pasal 38
+                        &amp; 48
                       </p>
                     </div>
                   </div>
@@ -727,8 +791,8 @@ export default function OrganisasiPage() {
                   {/* Kategori Usia Keanggotaan */}
                   <div className="mb-8">
                     <h3 className="text-xl font-bold font-serif text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                      <UserCheck size={18} className="text-gold-500" />
-                      4 Kategori Golongan Usia Anggota (Pasal 38)
+                      <UserCheck size={18} className="text-gold-500" />4 Kategori Golongan Usia
+                      Anggota (Pasal 38)
                     </h3>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {KATEGORI_USIA_DATA.map((k, idx) => (
@@ -767,7 +831,9 @@ export default function OrganisasiPage() {
                           className="p-4 sm:p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 hover:border-gold-400/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                         >
                           <div className="flex items-start sm:items-center gap-3">
-                            <span className={`px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${s.warnaBadge}`}>
+                            <span
+                              className={`px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${s.warnaBadge}`}
+                            >
                               {s.sabuk}
                             </span>
                             <div>
@@ -809,7 +875,6 @@ export default function OrganisasiPage() {
                       </p>
                     </div>
                   </div>
-
                 </div>
               </section>
             )}
@@ -894,9 +959,15 @@ export default function OrganisasiPage() {
                               <Building2 size={18} className="text-gold-600 dark:text-gold-400" />
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-navy-900 dark:text-white">{item.jabatan}</h4>
-                              <p className="font-semibold text-xs sm:text-sm text-gold-600 dark:text-gold-400 mt-0.5 mb-1">{item.nama}</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{item.deskripsi}</p>
+                              <h4 className="text-sm font-bold text-navy-900 dark:text-white">
+                                {item.jabatan}
+                              </h4>
+                              <p className="font-semibold text-xs sm:text-sm text-gold-600 dark:text-gold-400 mt-0.5 mb-1">
+                                {item.nama}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                                {item.deskripsi}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -909,7 +980,8 @@ export default function OrganisasiPage() {
                         Belum Ada Data Personil Khusus di CMS
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-4">
-                        Tata kelola hierarki organisasi tetap merujuk pada ketentuan konstitusi Statuta TAP 02 / THS-THM / 2023 di tab Hierarki Tata Kelola.
+                        Tata kelola hierarki organisasi tetap merujuk pada ketentuan konstitusi
+                        Statuta TAP 02 / THS-THM / 2023 di tab Hierarki Tata Kelola.
                       </p>
                       <button
                         onClick={() => setActiveTab('struktur')}
@@ -923,7 +995,6 @@ export default function OrganisasiPage() {
                 </div>
               </section>
             )}
-
           </main>
           {/* ── 4. Sidebar Profil Organisasi ── */}
           <aside className="space-y-6">
@@ -979,10 +1050,34 @@ export default function OrganisasiPage() {
 
               <ul className="space-y-2">
                 {[
-                  { href: '/sejarah', label: t.nav.sejarah, desc: 'Kilas balik & linimasa berdirinya THS-THM', active: false, icon: BookOpen },
-                  { href: '/organisasi', label: t.nav.organisasi, desc: 'Visi, Misi, Janji Prasetya & AD/ART', active: true, icon: Landmark },
-                  { href: '/struktur-organisasi', label: t.nav.strukturOrganisasi || 'Struktur Organisasi', desc: 'Bagan interaktif Nasional hingga Ranting', active: false, icon: Building2 },
-                  { href: '/kepengurusan', label: t.nav.kepengurusan, desc: 'Jajaran dewan pengurus aktif', active: false, icon: Users },
+                  {
+                    href: '/sejarah',
+                    label: t.nav.sejarah,
+                    desc: 'Kilas balik & linimasa berdirinya THS-THM',
+                    active: false,
+                    icon: BookOpen,
+                  },
+                  {
+                    href: '/organisasi',
+                    label: t.nav.organisasi,
+                    desc: 'Visi, Misi, Janji Prasetya & AD/ART',
+                    active: true,
+                    icon: Landmark,
+                  },
+                  {
+                    href: '/struktur-organisasi',
+                    label: t.nav.strukturOrganisasi || 'Struktur Organisasi',
+                    desc: 'Bagan interaktif Nasional hingga Ranting',
+                    active: false,
+                    icon: Building2,
+                  },
+                  {
+                    href: '/kepengurusan',
+                    label: t.nav.kepengurusan,
+                    desc: 'Jajaran dewan pengurus aktif',
+                    active: false,
+                    icon: Users,
+                  },
                 ].map((link) => (
                   <li key={link.href}>
                     <Link
@@ -995,8 +1090,12 @@ export default function OrganisasiPage() {
                     >
                       <link.icon size={18} className="shrink-0 mt-0.5" />
                       <div>
-                        <div className="text-xs sm:text-sm font-semibold leading-tight">{link.label}</div>
-                        <div className={`text-[11px] leading-tight mt-0.5 ${link.active ? 'text-white/80 dark:text-navy-950/80' : 'text-gray-400 dark:text-gray-400'}`}>
+                        <div className="text-xs sm:text-sm font-semibold leading-tight">
+                          {link.label}
+                        </div>
+                        <div
+                          className={`text-[11px] leading-tight mt-0.5 ${link.active ? 'text-white/80 dark:text-navy-950/80' : 'text-gray-400 dark:text-gray-400'}`}
+                        >
                           {link.desc}
                         </div>
                       </div>
@@ -1013,7 +1112,8 @@ export default function OrganisasiPage() {
                 Bergabung Bersama Kami
               </h3>
               <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-light mb-4">
-                Jadilah bagian dari generasi pendekar Katolik yang tangguh, beriman, dan berbakti bagi Gereja serta Tanah Air.
+                Jadilah bagian dari generasi pendekar Katolik yang tangguh, beriman, dan berbakti
+                bagi Gereja serta Tanah Air.
               </p>
               <Link
                 href="/daftar"
@@ -1024,10 +1124,8 @@ export default function OrganisasiPage() {
               </Link>
             </div>
           </aside>
-
         </div>
       </div>
-
     </PublicLayout>
   );
 }

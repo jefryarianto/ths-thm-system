@@ -81,8 +81,14 @@ export class RoleBasedThrottlerGuard extends ThrottlerGuard {
     const throttlerName = requestProps.throttler.name;
     // Nama metadata internal @nestjs/throttler (nilai constant paket):
     // 'THROTTLER:LIMIT' / 'THROTTLER:TTL' — tidak diekspor dari index publik.
-    const routeLimit = this.reflector.getAllAndOverride('THROTTLER:LIMIT' + throttlerName, [handler, classRef]);
-    const routeTtl = this.reflector.getAllAndOverride('THROTTLER:TTL' + throttlerName, [handler, classRef]);
+    const routeLimit = this.reflector.getAllAndOverride('THROTTLER:LIMIT' + throttlerName, [
+      handler,
+      classRef,
+    ]);
+    const routeTtl = this.reflector.getAllAndOverride('THROTTLER:TTL' + throttlerName, [
+      handler,
+      classRef,
+    ]);
     if (routeLimit != null) {
       requestProps.limit = routeLimit as number;
       if (routeTtl != null) requestProps.ttl = routeTtl as number;

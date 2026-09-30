@@ -59,7 +59,8 @@ export interface KategoriUsiaItem {
 
 export const STATUTA_INFO = {
   nomorTap: 'TAP 02 / THS-THM / 2023',
-  namaStatuta: 'Statuta Organisasi Pencak Silat Pendidikan Tunggal Hati Seminari - Tunggal Hati Maria',
+  namaStatuta:
+    'Statuta Organisasi Pencak Silat Pendidikan Tunggal Hati Seminari - Tunggal Hati Maria',
   sidangNasional: 'Sidang Nasional IX THS-THM, Bogor 18–20 Agustus 2023',
   guruBesar: 'Yesus Kristus (Satu-satunya Guru Besar)',
   pelindungThs: 'Hati Kudus Yesus',
@@ -158,21 +159,24 @@ export const JANJI_PRASETYA_DATA = {
       text: 'Taat dan setia sampai mati bagi Gereja Katolik Roma.',
       penjelasan:
         'Keberadaan THS-THM seutuhnya dipersembahkan kepada Gereja Katolik Roma. Anggota berjanji senantiasa taat pada Magisterium, hierarki Gereja, dan menghidupi sakramen-sakramen kudus.',
-      dasarIman: 'Kesetiaan pada Tubuh Mistik Kristus dan persatuan dengan Bapa Suci serta para Uskup.',
+      dasarIman:
+        'Kesetiaan pada Tubuh Mistik Kristus dan persatuan dengan Bapa Suci serta para Uskup.',
     },
     {
       number: 4,
       text: 'Bersedia taat dan patuh kepada orangtua.',
       penjelasan:
         'Menghormati ayah dan ibu sebagai wakil Allah di dunia, membahagiakan keluarga, serta menunjukkan bakti seorang anak yang berbudi luhur dalam keseharian hidup.',
-      dasarIman: 'Hukum Taurat ke-4: “Hormatilah ayahmu dan ibumu, supaya lanjut umurmu” (Kel 20:12)',
+      dasarIman:
+        'Hukum Taurat ke-4: “Hormatilah ayahmu dan ibumu, supaya lanjut umurmu” (Kel 20:12)',
     },
     {
       number: 5,
       text: 'Menghayati dan mengamalkan Pancasila dan Undang-Undang Dasar 1945.',
       penjelasan:
         'Sebagai warga negara Indonesia yang setia 100% Katolik dan 100% Indonesia, anggota THS-THM mengamalkan nilai-nilai Pancasila serta menjaga keutuhan Negara Kesatuan Republik Indonesia (NKRI).',
-      dasarIman: 'Sesanti Pro Patria et Ecclesia — pengabdian seimbang bagi nusa, bangsa, dan Gereja.',
+      dasarIman:
+        'Sesanti Pro Patria et Ecclesia — pengabdian seimbang bagi nusa, bangsa, dan Gereja.',
     },
   ],
   penutup: 'Semoga Tuhan Yesus dan Bunda Maria berkenan memberkati Janji Prasetya saya ini. Amin.',
@@ -228,7 +232,6 @@ export const TIGA_PILAR_DATA: PilarPembinaanItem[] = [
   },
 ];
 
-
 export const STRUKTUR_HIERARKI_DATA: StrukturHierarkiItem[] = [
   {
     level: 'Nasional',
@@ -274,7 +277,12 @@ export const STRUKTUR_HIERARKI_DATA: StrukturHierarkiItem[] = [
     deskripsi:
       'Struktur koordinatif penghubung antara Distrik dan Ranting pada wilayah keuskupan yang luas dan memiliki lebih dari 5 ranting aktif guna memperlancar komunikasi dan pembinaan teritorial.',
     masaJabatan: '2 Tahun per Periode',
-    bph: ['Koordinator Wilayah', 'Sekretaris Wilayah', 'Bendahara Wilayah', 'Seksi Bidang Sesuai Kebutuhan'],
+    bph: [
+      'Koordinator Wilayah',
+      'Sekretaris Wilayah',
+      'Bendahara Wilayah',
+      'Seksi Bidang Sesuai Kebutuhan',
+    ],
   },
   {
     level: 'Ranting',
@@ -302,49 +310,137 @@ export const STRUKTUR_HIERARKI_DATA: StrukturHierarkiItem[] = [
   },
 ];
 
-
 export const DEWAN_PENDIRI_DATA: DewanPendiriItem[] = [
-  { no: 1, nama: 'RD. Martinus Hadiwijoyo', gelarRole: 'Inisiator Utama & Pendiri Rohani', keterangan: 'Imam Praja KAJ, perintis awal latihan pencak silat rohani di Mertoyudan & Tanjung Priok.' },
-  { no: 2, nama: 'RD. Aloysius Gonzaga Luhur Prihadi', gelarRole: 'Pendiri (Seminaris Perintis)', keterangan: 'Turut serta merintis pembinaan angkatan pertama di Mertoyudan.' },
-  { no: 3, nama: 'RD. Richardus Heru Subyakto', gelarRole: 'Pendiri (Seminaris Perintis)', keterangan: 'Imam dan perintis latihan rohani beladiri masa awal.' },
-  { no: 4, nama: 'Dra. Margriet Emmy Putraningrum, M.Psi', gelarRole: 'Pendiri Tunggal Hati Maria (THM)', keterangan: 'Tokoh utama perintis dan pembina rohani puteri THM.' },
-  { no: 5, nama: 'DR. RMS Haripurnomo Kushadiwijoyo, MPh', gelarRole: 'Pendiri & Penyusun Kurikulum Awal', keterangan: 'Merumuskan integrasi olah fisik pencak silat dengan nilai-nilai kesehatan dan moral.' },
-  { no: 6, nama: 'Brigjen TNI (Purn) Ignatius Imam Kuseno Miharjo', gelarRole: 'Pendiri & Penasehat Keorganisasian', keterangan: 'Memberikan dasar-dasar kedisiplinan dan kepemimpinan nasional.' },
-  { no: 7, nama: 'Ibu Saparti Kuseno Miharjo', gelarRole: 'Pendiri & Tokoh Pembina', keterangan: 'Mendampingi pembinaan keluarga besar dan kemasyarakatan.' },
-  { no: 8, nama: 'Drs. Fransiskus Krisdaryadi Hadisubroto', gelarRole: 'Pendiri & Tokoh Senior', keterangan: 'Penyusun kurikulum latihan dan penggerak organisasi lintas generasi.' },
-  { no: 9, nama: 'Benedictus Wiharto, SH', gelarRole: 'Pendiri & Pakar Hukum Organisasi', keterangan: 'Perumus konstitusi dan dasar-dasar statuta hukum THS-THM.' },
-  { no: 10, nama: 'Yohanes Lilik Subiyanto Dwijosusanto, SPd', gelarRole: 'Pendiri & Tokoh Kepelatihan', keterangan: 'Pengembang teknik bela diri silat dan pembinaan teknis pesilat.' },
-  { no: 11, nama: 'Drs. Y. B. Prasetyo Yudono, MSBA', gelarRole: 'Pendiri & Konseptor', keterangan: 'Turut menyusun tata kelola manajemen organisasi modern.' },
-  { no: 12, nama: 'Stanislaus Kostka R. Adi Satriyo Nugroho, SPd', gelarRole: 'Pendiri & Pendidik', keterangan: 'Pionir kaderisasi dan pelatihan rohani seminaris.' },
-  { no: 13, nama: 'Aloysius Bambang Wahjudi, SIP', gelarRole: 'Pendiri & Tokoh Pergerakan', keterangan: 'Pengembang jejaring cabang dan keorganisasian pemuda.' },
-  { no: 14, nama: 'Drs. Petrus Agus Salim', gelarRole: 'Pendiri & Tokoh Pendukung', keterangan: 'Penggerak administrasi dan relasi awal di wilayah Tanjung Priok.' },
-  { no: 15, nama: 'Dra. C. Sri Wahyu Dramastuti', gelarRole: 'Pendiri THM & Pembina Puteri', keterangan: 'Pilar pendampingan spiritualitas dan karakter puteri THM.' },
-  { no: 16, nama: 'Maria Sri Selastiningsih, SE', gelarRole: 'Pendiri THM & Tokoh Manajemen', keterangan: 'Penggerak tata kelola kepengurusan awal kaum puteri THM.' },
+  {
+    no: 1,
+    nama: 'RD. Martinus Hadiwijoyo',
+    gelarRole: 'Inisiator Utama & Pendiri Rohani',
+    keterangan:
+      'Imam Praja KAJ, perintis awal latihan pencak silat rohani di Mertoyudan & Tanjung Priok.',
+  },
+  {
+    no: 2,
+    nama: 'RD. Aloysius Gonzaga Luhur Prihadi',
+    gelarRole: 'Pendiri (Seminaris Perintis)',
+    keterangan: 'Turut serta merintis pembinaan angkatan pertama di Mertoyudan.',
+  },
+  {
+    no: 3,
+    nama: 'RD. Richardus Heru Subyakto',
+    gelarRole: 'Pendiri (Seminaris Perintis)',
+    keterangan: 'Imam dan perintis latihan rohani beladiri masa awal.',
+  },
+  {
+    no: 4,
+    nama: 'Dra. Margriet Emmy Putraningrum, M.Psi',
+    gelarRole: 'Pendiri Tunggal Hati Maria (THM)',
+    keterangan: 'Tokoh utama perintis dan pembina rohani puteri THM.',
+  },
+  {
+    no: 5,
+    nama: 'DR. RMS Haripurnomo Kushadiwijoyo, MPh',
+    gelarRole: 'Pendiri & Penyusun Kurikulum Awal',
+    keterangan:
+      'Merumuskan integrasi olah fisik pencak silat dengan nilai-nilai kesehatan dan moral.',
+  },
+  {
+    no: 6,
+    nama: 'Brigjen TNI (Purn) Ignatius Imam Kuseno Miharjo',
+    gelarRole: 'Pendiri & Penasehat Keorganisasian',
+    keterangan: 'Memberikan dasar-dasar kedisiplinan dan kepemimpinan nasional.',
+  },
+  {
+    no: 7,
+    nama: 'Ibu Saparti Kuseno Miharjo',
+    gelarRole: 'Pendiri & Tokoh Pembina',
+    keterangan: 'Mendampingi pembinaan keluarga besar dan kemasyarakatan.',
+  },
+  {
+    no: 8,
+    nama: 'Drs. Fransiskus Krisdaryadi Hadisubroto',
+    gelarRole: 'Pendiri & Tokoh Senior',
+    keterangan: 'Penyusun kurikulum latihan dan penggerak organisasi lintas generasi.',
+  },
+  {
+    no: 9,
+    nama: 'Benedictus Wiharto, SH',
+    gelarRole: 'Pendiri & Pakar Hukum Organisasi',
+    keterangan: 'Perumus konstitusi dan dasar-dasar statuta hukum THS-THM.',
+  },
+  {
+    no: 10,
+    nama: 'Yohanes Lilik Subiyanto Dwijosusanto, SPd',
+    gelarRole: 'Pendiri & Tokoh Kepelatihan',
+    keterangan: 'Pengembang teknik bela diri silat dan pembinaan teknis pesilat.',
+  },
+  {
+    no: 11,
+    nama: 'Drs. Y. B. Prasetyo Yudono, MSBA',
+    gelarRole: 'Pendiri & Konseptor',
+    keterangan: 'Turut menyusun tata kelola manajemen organisasi modern.',
+  },
+  {
+    no: 12,
+    nama: 'Stanislaus Kostka R. Adi Satriyo Nugroho, SPd',
+    gelarRole: 'Pendiri & Pendidik',
+    keterangan: 'Pionir kaderisasi dan pelatihan rohani seminaris.',
+  },
+  {
+    no: 13,
+    nama: 'Aloysius Bambang Wahjudi, SIP',
+    gelarRole: 'Pendiri & Tokoh Pergerakan',
+    keterangan: 'Pengembang jejaring cabang dan keorganisasian pemuda.',
+  },
+  {
+    no: 14,
+    nama: 'Drs. Petrus Agus Salim',
+    gelarRole: 'Pendiri & Tokoh Pendukung',
+    keterangan: 'Penggerak administrasi dan relasi awal di wilayah Tanjung Priok.',
+  },
+  {
+    no: 15,
+    nama: 'Dra. C. Sri Wahyu Dramastuti',
+    gelarRole: 'Pendiri THM & Pembina Puteri',
+    keterangan: 'Pilar pendampingan spiritualitas dan karakter puteri THM.',
+  },
+  {
+    no: 16,
+    nama: 'Maria Sri Selastiningsih, SE',
+    gelarRole: 'Pendiri THM & Tokoh Manajemen',
+    keterangan: 'Penggerak tata kelola kepengurusan awal kaum puteri THM.',
+  },
 ];
 
 export const KATEGORI_USIA_DATA: KategoriUsiaItem[] = [
   {
     kategori: 'Pra-Bina',
     rentangUsia: '9 – 12 Tahun',
-    fokusPembinaan: 'Pengenalan gerak dasar motorik, kedisiplinan doa anak, kepatuhan pada orangtua, dan kegembiraan persaudaraan.',
-    keterangan: 'Kelompok anak-anak sekolah dasar untuk menanamkan benih karakter iman dan cinta olahraga.',
+    fokusPembinaan:
+      'Pengenalan gerak dasar motorik, kedisiplinan doa anak, kepatuhan pada orangtua, dan kegembiraan persaudaraan.',
+    keterangan:
+      'Kelompok anak-anak sekolah dasar untuk menanamkan benih karakter iman dan cinta olahraga.',
   },
   {
     kategori: 'Anggota Subjek Bina',
     rentangUsia: '13 – 35 Tahun',
-    fokusPembinaan: 'Kaderisasi inti, pendadaran fisik-mental mendalam, penguasaan jurus lengkap, kepemimpinan organisasi, dan kerasulan muda.',
-    keterangan: 'Tulang punggung gerak organisasi di tingkat sekolah, universitas, paroki, dan keuskupan.',
+    fokusPembinaan:
+      'Kaderisasi inti, pendadaran fisik-mental mendalam, penguasaan jurus lengkap, kepemimpinan organisasi, dan kerasulan muda.',
+    keterangan:
+      'Tulang punggung gerak organisasi di tingkat sekolah, universitas, paroki, dan keuskupan.',
   },
   {
     kategori: 'Anggota Medior',
     rentangUsia: '36 – 55 Tahun',
-    fokusPembinaan: 'Pelatih senior, dewan penasehat ranting/distrik, pembinaan keluarga Katolik, dan penopang karya sosial paroki.',
-    keterangan: 'Kader matang yang mengawal regenerasi dan mendukung pendanaan serta stabilitas organisasi.',
+    fokusPembinaan:
+      'Pelatih senior, dewan penasehat ranting/distrik, pembinaan keluarga Katolik, dan penopang karya sosial paroki.',
+    keterangan:
+      'Kader matang yang mengawal regenerasi dan mendukung pendanaan serta stabilitas organisasi.',
   },
   {
     kategori: 'Anggota Senior',
     rentangUsia: '56 Tahun ke Atas',
-    fokusPembinaan: 'Keteladanan rohani, dewan kehormatan, penjaga kemurnian tradisi dan konstitusi luhur THS-THM.',
+    fokusPembinaan:
+      'Keteladanan rohani, dewan kehormatan, penjaga kemurnian tradisi dan konstitusi luhur THS-THM.',
     keterangan: 'Para sesepuh dan tokoh panutan spiritual bagi seluruh generasi muda pesilat.',
   },
 ];
@@ -354,49 +450,60 @@ export const JENJANG_SABUK_DATA = [
     tingkat: 'Calon Anggota',
     sabuk: 'Tanpa Sabuk / Seragam Latihan Putih',
     durasi: '6 Bulan Pembinaan Dasar',
-    makna: 'Masa pencarian, pengenalan disiplin organisasi, dan persiapan batin menjelang Retret Pendadaran.',
+    makna:
+      'Masa pencarian, pengenalan disiplin organisasi, dan persiapan batin menjelang Retret Pendadaran.',
     warnaBadge: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-200',
   },
   {
     tingkat: 'Tingkat Dasar (Sabuk Putih)',
     sabuk: 'Sabuk Putih Polos',
     durasi: '1 Tahun Masa Latihan',
-    makna: 'Melambangkan kesucian niat, kerendahan hati untuk belajar, dan pembersihan diri dari kesombongan duniawi.',
-    warnaBadge: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-100',
+    makna:
+      'Melambangkan kesucian niat, kerendahan hati untuk belajar, dan pembersihan diri dari kesombongan duniawi.',
+    warnaBadge:
+      'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-100',
   },
   {
     tingkat: 'Tingkat Lanjut I (Sabuk Kuning)',
     sabuk: 'Sabuk Kuning Emas',
     durasi: '1 – 2 Tahun Masa Latihan',
-    makna: 'Melambangkan fajar iman yang mulai bersinar, kematangan teknik dasar pencak silat, dan komitmen pelayanan.',
-    warnaBadge: 'bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200',
+    makna:
+      'Melambangkan fajar iman yang mulai bersinar, kematangan teknik dasar pencak silat, dan komitmen pelayanan.',
+    warnaBadge:
+      'bg-yellow-50 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200',
   },
   {
     tingkat: 'Tingkat Lanjut II (Sabuk Hijau)',
     sabuk: 'Sabuk Hijau',
     durasi: '2 Tahun Masa Latihan',
-    makna: 'Melambangkan pertumbuhan iman yang subur, kesiapan menjadi teladan bagi adik tingkat, dan penguasaan jurus menengah.',
-    warnaBadge: 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200',
+    makna:
+      'Melambangkan pertumbuhan iman yang subur, kesiapan menjadi teladan bagi adik tingkat, dan penguasaan jurus menengah.',
+    warnaBadge:
+      'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200',
   },
   {
     tingkat: 'Tingkat Madya (Sabuk Biru)',
     sabuk: 'Sabuk Biru Laut',
     durasi: '2 – 3 Tahun Pengabdian',
-    makna: 'Melambangkan kedalaman batin, ketenangan jiwa, kesetiaan pada Bunda Maria, dan peran sebagai asisten pelatih.',
+    makna:
+      'Melambangkan kedalaman batin, ketenangan jiwa, kesetiaan pada Bunda Maria, dan peran sebagai asisten pelatih.',
     warnaBadge: 'bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-200',
   },
   {
     tingkat: 'Tingkat Utama (Sabuk Coklat)',
     sabuk: 'Sabuk Coklat',
     durasi: '3 Tahun Pengabdian Khusus',
-    makna: 'Melambangkan kerendahan hati yang menapak tanah bumi, kematangan teknik tingkat tinggi, dan kepemimpinan wilayah.',
-    warnaBadge: 'bg-amber-900/10 text-amber-900 border-amber-400 dark:bg-amber-950 dark:text-amber-200',
+    makna:
+      'Melambangkan kerendahan hati yang menapak tanah bumi, kematangan teknik tingkat tinggi, dan kepemimpinan wilayah.',
+    warnaBadge:
+      'bg-amber-900/10 text-amber-900 border-amber-400 dark:bg-amber-950 dark:text-amber-200',
   },
   {
     tingkat: 'Tingkat Pendekar (Sabuk Hitam)',
     sabuk: 'Sabuk Hitam / Dewan Guru',
     durasi: 'Pengabdian Seumur Hidup',
-    makna: 'Melambangkan kesempurnaan penguasaan diri, keteguhan iman yang tak tergoyahkan, dan pengabdian total bagi Gereja dan Tanah Air.',
+    makna:
+      'Melambangkan kesempurnaan penguasaan diri, keteguhan iman yang tak tergoyahkan, dan pengabdian total bagi Gereja dan Tanah Air.',
     warnaBadge: 'bg-navy-950 text-gold-300 border-gold-500 dark:bg-black dark:text-gold-400',
   },
 ];
@@ -413,5 +520,3 @@ export const MAKNA_LAMBANG_DATA = {
       'Berbentuk hati dengan warna merah di atas dan putih di bawah yang dirangkai dari untaian rosario biru dengan salib di bagian bawah. Di tengah hati terdapat persilangan tangan Chi memegang bunga melati putih (kesucian) dan kuning (keanggunan rohani) di atas huruf Rho emas, melambangkan kelemahlembutan dan perlindungan keibuan Bunda Maria.',
   },
 };
-
-

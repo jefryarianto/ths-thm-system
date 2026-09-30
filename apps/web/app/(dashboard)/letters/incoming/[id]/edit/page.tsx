@@ -63,7 +63,9 @@ export default function EditIncomingLetterPage() {
     }
   }, [id]);
 
-  useEffect(() => { fetchLetter(); }, [fetchLetter]);
+  useEffect(() => {
+    fetchLetter();
+  }, [fetchLetter]);
 
   const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -95,9 +97,8 @@ export default function EditIncomingLetterPage() {
       await apiClient.patch(`/letters/incoming/${id}`, payload);
       router.push(`/letters/incoming/${id}`);
     } catch (err: unknown) {
-      const apiErr = (
-        err as { response?: { data?: { message?: string } } }
-      )?.response?.data?.message;
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       setFormError(apiErr || 'Gagal menyimpan perubahan');
     } finally {
       setSaving(false);
@@ -105,81 +106,88 @@ export default function EditIncomingLetterPage() {
   };
 
   if (loading) return <DetailSkeleton rows={4} />;
-  if (error || !original) return <ErrorPage message={error || 'Surat tidak ditemukan'} backHref="/letters" onRetry={fetchLetter} />;
+  if (error || !original)
+    return (
+      <ErrorPage
+        message={error || 'Surat tidak ditemukan'}
+        backHref="/letters"
+        onRetry={fetchLetter}
+      />
+    );
 
   return (
-      <PermissionGuard module="letters" action="edit">
-        <FormLayout
-              backHref={`/letters/incoming/${id}`}
-              title="Edit Surat Masuk"
-              subtitle={`${original.nomorSurat} - ${original.pengirim}`}
-              error={formError}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={() => router.push(`/letters/incoming/${id}`)}
-              submitLabel="Simpan Perubahan"
-              savingLabel="Menyimpan..."
+    <PermissionGuard module="letters" action="edit">
+      <FormLayout
+        backHref={`/letters/incoming/${id}`}
+        title="Edit Surat Masuk"
+        subtitle={`${original.nomorSurat} - ${original.pengirim}`}
+        error={formError}
+        saving={saving}
+        onSubmit={handleSubmit}
+        onCancel={() => router.push(`/letters/incoming/${id}`)}
+        submitLabel="Simpan Perubahan"
+        savingLabel="Menyimpan..."
+      >
+        <Field label="Nomor Surat" required>
+          <input
+            type="text"
+            value={form.nomorSurat}
+            onChange={(e) => handleChange('nomorSurat', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <Field label="Pengirim" required>
+          <input
+            type="text"
+            value={form.pengirim}
+            onChange={(e) => handleChange('pengirim', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <Field label="Perihal" required>
+          <input
+            type="text"
+            value={form.perihal}
+            onChange={(e) => handleChange('perihal', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Tanggal Surat">
+            <input
+              type="date"
+              value={form.tanggalSurat}
+              onChange={(e) => handleChange('tanggalSurat', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </Field>
+
+          <Field label="Status">
+            <select
+              value={form.status}
+              onChange={(e) => handleChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
             >
-              <Field label="Nomor Surat" required>
-                <input
-                  type="text"
-                  value={form.nomorSurat}
-                  onChange={(e) => handleChange('nomorSurat', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <Field label="Pengirim" required>
-                <input
-                  type="text"
-                  value={form.pengirim}
-                  onChange={(e) => handleChange('pengirim', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <Field label="Perihal" required>
-                <input
-                  type="text"
-                  value={form.perihal}
-                  onChange={(e) => handleChange('perihal', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-        
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Tanggal Surat">
-                  <input
-                    type="date"
-                    value={form.tanggalSurat}
-                    onChange={(e) => handleChange('tanggalSurat', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </Field>
-        
-                <Field label="Status">
-                  <select
-                    value={form.status}
-                    onChange={(e) => handleChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  >
-                    <option value="diterima">Diterima</option>
-                    <option value="diproses">Diproses</option>
-                    <option value="ditolak">Ditolak</option>
-                  </select>
-                </Field>
-              </div>
-        
-              <Field label="File Scan (URL)">
-                <input
-                  type="url"
-                  value={form.fileScanPath}
-                  onChange={(e) => handleChange('fileScanPath', e.target.value)}
-                  placeholder="URL file scan surat"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </Field>
-            </FormLayout>
-      </PermissionGuard>
-    );
+              <option value="diterima">Diterima</option>
+              <option value="diproses">Diproses</option>
+              <option value="ditolak">Ditolak</option>
+            </select>
+          </Field>
+        </div>
+
+        <Field label="File Scan (URL)">
+          <input
+            type="url"
+            value={form.fileScanPath}
+            onChange={(e) => handleChange('fileScanPath', e.target.value)}
+            placeholder="URL file scan surat"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          />
+        </Field>
+      </FormLayout>
+    </PermissionGuard>
+  );
 }

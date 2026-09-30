@@ -41,11 +41,33 @@ describe('MutationsService', () => {
       nomorAnggota: '0114-0101-001-2026',
       rantingId: 'r-asal',
     },
-    fromRanting: { id: 'r-asal', wilayahId: 'w-asal', wilayah: { id: 'w-asal', distrikId: 'd1', distrik: { id: 'd1' } } },
-    toRanting: { id: 'r-tujuan', wilayahId: 'w-tujuan2', wilayah: { id: 'w-tujuan2', distrikId: 'd1', distrik: { id: 'd1' } } },
+    fromRanting: {
+      id: 'r-asal',
+      wilayahId: 'w-asal',
+      wilayah: { id: 'w-asal', distrikId: 'd1', distrik: { id: 'd1' } },
+    },
+    toRanting: {
+      id: 'r-tujuan',
+      wilayahId: 'w-tujuan2',
+      wilayah: { id: 'w-tujuan2', distrikId: 'd1', distrik: { id: 'd1' } },
+    },
     approvals: [
-      { id: 'a1', transferRequestId: 'tr1', side: 'asal', level: 'wilayah', status: 'pending', order: 1 },
-      { id: 'a2', transferRequestId: 'tr1', side: 'asal', level: 'distrik', status: 'pending', order: 2 },
+      {
+        id: 'a1',
+        transferRequestId: 'tr1',
+        side: 'asal',
+        level: 'wilayah',
+        status: 'pending',
+        order: 1,
+      },
+      {
+        id: 'a2',
+        transferRequestId: 'tr1',
+        side: 'asal',
+        level: 'distrik',
+        status: 'pending',
+        order: 2,
+      },
     ],
   };
 
@@ -107,7 +129,11 @@ describe('MutationsService', () => {
       ...transferRequestMock.anggota,
       rantingId: 'r-asal',
       statusKeanggotaan: 'aktif',
-      ranting: { id: 'r-asal', wilayahId: 'w-asal', wilayah: { id: 'w-asal', distrikId: 'd1', distrik: { id: 'd1' } } },
+      ranting: {
+        id: 'r-asal',
+        wilayahId: 'w-asal',
+        wilayah: { id: 'w-asal', distrikId: 'd1', distrik: { id: 'd1' } },
+      },
     });
     mockPrisma.ranting.findUnique.mockImplementation(({ where, include }) => {
       if (where.id === 'r-asal') {
@@ -148,14 +174,21 @@ describe('MutationsService', () => {
 
     it('should reject when target ranting equals current ranting', async () => {
       await expect(
-        service.create({ anggotaId: 'm1', toRantingId: 'r-asal' }, 'u-requester', 'admin_ranting', { rantingId: 'r-asal' }),
+        service.create({ anggotaId: 'm1', toRantingId: 'r-asal' }, 'u-requester', 'admin_ranting', {
+          rantingId: 'r-asal',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject when scope does not cover origin ranting', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
-        service.create({ anggotaId: 'm1', toRantingId: 'r-tujuan' }, 'u-requester', 'admin_ranting', { rantingId: 'r-lain' }),
+        service.create(
+          { anggotaId: 'm1', toRantingId: 'r-tujuan' },
+          'u-requester',
+          'admin_ranting',
+          { rantingId: 'r-lain' },
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -171,7 +204,9 @@ describe('MutationsService', () => {
         ],
       });
 
-      await service.approve('tr1', 'u-wilayah', undefined, 'admin_wilayah', { rantingId: 'r-asal' });
+      await service.approve('tr1', 'u-wilayah', undefined, 'admin_wilayah', {
+        rantingId: 'r-asal',
+      });
       expect(mockPrisma.transferApproval.update).toHaveBeenCalled();
       expect(mockNotifications.send).toHaveBeenCalled();
     });
@@ -186,7 +221,9 @@ describe('MutationsService', () => {
         ],
       });
 
-      const result = await service.approve('tr1', 'u-distrik', undefined, 'admin_distrik', { rantingId: 'r-asal' });
+      const result = await service.approve('tr1', 'u-distrik', undefined, 'admin_distrik', {
+        rantingId: 'r-asal',
+      });
       expect(mockPrisma.anggota.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { rantingId: orgDistrik.toRantingId },
@@ -225,7 +262,12 @@ describe('MutationsService', () => {
   describe('findAll', () => {
     it('should return requests visible to scope', async () => {
       mockPrisma.transferRequest.findMany.mockResolvedValue([transferRequestMock]);
-      const result = await service.findAll(undefined, { rantingId: 'r-asal' }, 'u-wilayah', 'admin_wilayah');
+      const result = await service.findAll(
+        undefined,
+        { rantingId: 'r-asal' },
+        'u-wilayah',
+        'admin_wilayah',
+      );
       expect(Array.isArray(result)).toBe(true);
       expect(result[0].currentStep.level).toBe('wilayah');
     });

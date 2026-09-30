@@ -1,6 +1,6 @@
 /**
  * API Contract for Members Page Endpoints
- * 
+ *
  * Use this to ensure type-safe API calls.
  */
 
@@ -26,7 +26,7 @@ export interface GetMembersParams {
   page?: number;
   limit?: number;
   search?: string;
-  
+
   // Filters
   statusKeanggotaan?: MemberStatus;
   statusData?: DataStatus;
@@ -34,11 +34,11 @@ export interface GetMembersParams {
   distrikId?: string;
   wilayahId?: string;
   rantingId?: string;
-  
+
   // Sort
   sort?: string;
   order?: 'asc' | 'desc';
-  
+
   // Date range
   dadarFrom?: string;
   dadarTo?: string;
@@ -93,7 +93,7 @@ export async function getMembers(params: GetMembersParams): Promise<{
   });
 
   const response = await fetch(`/api/members?${searchParams.toString()}`);
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to fetch members');
@@ -158,7 +158,7 @@ export async function exportMembersCSV(ids?: string[]): Promise<void> {
     type: 'members',
     exportType: 'csv',
   };
-  
+
   if (ids && ids.length > 0) {
     params.ids = ids.join(',');
   }
@@ -175,7 +175,7 @@ export async function exportMembersExcel(ids?: string[]): Promise<void> {
     type: 'members',
     exportType: 'xlsx',
   };
-  
+
   if (ids && ids.length > 0) {
     params.ids = ids.join(',');
   }
@@ -192,7 +192,7 @@ export async function exportMembersPDF(ids?: string[]): Promise<void> {
     type: 'members',
     exportType: 'pdf',
   };
-  
+
   if (ids && ids.length > 0) {
     params.ids = ids.join(',');
   }

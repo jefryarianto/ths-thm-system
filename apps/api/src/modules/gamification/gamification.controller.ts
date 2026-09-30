@@ -80,10 +80,7 @@ export class GamificationController {
     @Req() req?: ScopedRequest,
   ) {
     await this.gamificationService.assertSelfMember(req?.user, anggotaId);
-    return this.gamificationService.getRecentEvents(
-      anggotaId,
-      limit ? parseInt(limit) : 20,
-    );
+    return this.gamificationService.getRecentEvents(anggotaId, limit ? parseInt(limit) : 20);
   }
 
   /**
@@ -102,9 +99,7 @@ export class GamificationController {
   @RequireScope('self')
   @ApiOperation({ summary: 'Get global recent point events (activity feed)' })
   async getGlobalRecentEvents(@Query('limit') limit?: string) {
-    return this.gamificationService.getGlobalRecentEvents(
-      limit ? parseInt(limit) : 20,
-    );
+    return this.gamificationService.getGlobalRecentEvents(limit ? parseInt(limit) : 20);
   }
 
   /**
@@ -202,11 +197,11 @@ export class GamificationController {
     @Query('skip') skip?: string,
   ) {
     const scope =
-      (rantingId || scopeFilter === 'ranting' || scopeFilter === 'self')
+      rantingId || scopeFilter === 'ranting' || scopeFilter === 'self'
         ? { rantingId: rantingId ?? req.scope?.rantingId }
-        : (wilayahId || scopeFilter === 'wilayah')
+        : wilayahId || scopeFilter === 'wilayah'
           ? { wilayahId: wilayahId ?? req.scope?.wilayahId }
-          : (distrikId || scopeFilter === 'distrik')
+          : distrikId || scopeFilter === 'distrik'
             ? { distrikId: distrikId ?? req.scope?.distrikId }
             : undefined;
     const leaderboard = await this.gamificationService.getLeaderboard(

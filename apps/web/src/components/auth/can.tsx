@@ -38,46 +38,67 @@ const DEFAULT_MODULE: ModulePermission = {
 };
 
 export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
-  members:          { ...DEFAULT_MODULE },
+  members: { ...DEFAULT_MODULE },
   // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
-  candidates:       { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
-  registrations:    { ...DEFAULT_MODULE },
+  candidates: { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
+  registrations: { ...DEFAULT_MODULE },
   // API POST /trainings mengizinkan admin_kegiatan (hierarki: di bawah admin_ranting)
-  trainings:        { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
+  trainings: { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
   // Activity-scoped: admin_kegiatan can manage kegiatan they're assigned to
-  graduations:      { ...DEFAULT_MODULE, view: 'admin_kegiatan', create: 'admin_kegiatan', edit: 'admin_kegiatan', delete: 'admin_kegiatan' },
-  examiners:        { ...DEFAULT_MODULE, create: 'penguji', edit: 'penguji', delete: 'admin_ranting' },
+  graduations: {
+    ...DEFAULT_MODULE,
+    view: 'admin_kegiatan',
+    create: 'admin_kegiatan',
+    edit: 'admin_kegiatan',
+    delete: 'admin_kegiatan',
+  },
+  examiners: { ...DEFAULT_MODULE, create: 'penguji', edit: 'penguji', delete: 'admin_ranting' },
   // API POST /activities mengizinkan admin_kegiatan (hierarki: di bawah admin_ranting)
-  activities:       { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
-  dues:             { ...DEFAULT_MODULE, view: 'anggota' },
-  payments:         { ...DEFAULT_MODULE, admin: 'admin_distrik' },
-  claims:           { ...DEFAULT_MODULE },
-  approvals:        { ...DEFAULT_MODULE },
-  documents:        { ...DEFAULT_MODULE, view: 'anggota' },
-  letters:          { ...DEFAULT_MODULE },
+  activities: { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
+  dues: { ...DEFAULT_MODULE, view: 'anggota' },
+  payments: { ...DEFAULT_MODULE, admin: 'admin_distrik' },
+  claims: { ...DEFAULT_MODULE },
+  approvals: { ...DEFAULT_MODULE },
+  documents: { ...DEFAULT_MODULE, view: 'anggota' },
+  letters: { ...DEFAULT_MODULE },
   // Activity-scoped: penguji can manage assessments for kegiatan they're assigned to
-  assessments:      { ...DEFAULT_MODULE, view: 'penguji', create: 'penguji', edit: 'penguji' },
-  notifications:    { ...DEFAULT_MODULE, export: 'admin_ranting' },
-  reports:          { ...DEFAULT_MODULE, admin: 'admin_ranting' },
-  'org-chart':      { view: 'anggota', admin: 'admin_ranting' },
-  'org-documents':  { view: 'anggota', create: 'admin_ranting', edit: 'admin_ranting' },
-  calendar:         { ...DEFAULT_MODULE, view: 'anggota' },
-  chat:             { ...DEFAULT_MODULE, view: 'anggota' },
-  forum:            { ...DEFAULT_MODULE, view: 'anggota', admin: 'admin_distrik' },
-  'scan-stats':     { ...DEFAULT_MODULE, admin: 'admin_ranting' },
+  assessments: { ...DEFAULT_MODULE, view: 'penguji', create: 'penguji', edit: 'penguji' },
+  notifications: { ...DEFAULT_MODULE, export: 'admin_ranting' },
+  reports: { ...DEFAULT_MODULE, admin: 'admin_ranting' },
+  'org-chart': { view: 'anggota', admin: 'admin_ranting' },
+  'org-documents': { view: 'anggota', create: 'admin_ranting', edit: 'admin_ranting' },
+  calendar: { ...DEFAULT_MODULE, view: 'anggota' },
+  chat: { ...DEFAULT_MODULE, view: 'anggota' },
+  forum: { ...DEFAULT_MODULE, view: 'anggota', admin: 'admin_distrik' },
+  'scan-stats': { ...DEFAULT_MODULE, admin: 'admin_ranting' },
   // Konten publik nasional — sejajar dengan role API content/berita
   // (superadmin, admin_distrik, admin_wilayah).
-  berita:           { view: 'admin_wilayah', create: 'admin_wilayah', edit: 'admin_wilayah', delete: 'admin_wilayah' },
-   // Pengajuan berita oleh anggota (butuh approval sebelum visible)
-   beritaSubmit:     { view: 'anggota', create: 'anggota' },
-  users:            { view: 'admin_ranting', create: 'superadmin', edit: 'superadmin', delete: 'superadmin' },
-  settings:         { view: 'admin_ranting', create: 'admin_ranting', edit: 'admin_ranting', delete: 'admin_ranting' },
-  auditLogs:        { view: 'superadmin', admin: 'superadmin' },
-  gamification:     { view: 'anggota', create: 'admin_kegiatan', edit: 'admin_kegiatan', delete: 'admin_ranting' },
-  wsMonitor:        { view: 'superadmin', admin: 'superadmin' },
-  queues:           { view: 'superadmin', admin: 'superadmin' },
-  monitoring:       { view: 'admin_ranting', admin: 'admin_ranting' },
-  admin:            { view: 'superadmin', admin: 'superadmin' },
+  berita: {
+    view: 'admin_wilayah',
+    create: 'admin_wilayah',
+    edit: 'admin_wilayah',
+    delete: 'admin_wilayah',
+  },
+  // Pengajuan berita oleh anggota (butuh approval sebelum visible)
+  beritaSubmit: { view: 'anggota', create: 'anggota' },
+  users: { view: 'admin_ranting', create: 'superadmin', edit: 'superadmin', delete: 'superadmin' },
+  settings: {
+    view: 'admin_ranting',
+    create: 'admin_ranting',
+    edit: 'admin_ranting',
+    delete: 'admin_ranting',
+  },
+  auditLogs: { view: 'superadmin', admin: 'superadmin' },
+  gamification: {
+    view: 'anggota',
+    create: 'admin_kegiatan',
+    edit: 'admin_kegiatan',
+    delete: 'admin_ranting',
+  },
+  wsMonitor: { view: 'superadmin', admin: 'superadmin' },
+  queues: { view: 'superadmin', admin: 'superadmin' },
+  monitoring: { view: 'admin_ranting', admin: 'admin_ranting' },
+  admin: { view: 'superadmin', admin: 'superadmin' },
 };
 
 // ─── Can Component ───
@@ -134,7 +155,15 @@ interface CanProps {
  * </Can>
  * ```
  */
-export function Can({ module, action = 'view', minRole, roles, negate = false, fallback = null, children }: CanProps) {
+export function Can({
+  module,
+  action = 'view',
+  minRole,
+  roles,
+  negate = false,
+  fallback = null,
+  children,
+}: CanProps) {
   const { hasMinRole, hasRole } = useAuth();
   const [mounted, setMounted] = useState(false);
 
@@ -187,21 +216,41 @@ interface CanButtonProps {
  * Shorthand for Can with a specific module + action.
  */
 export function CanCreate({ module, children, fallback }: CanButtonProps) {
-  return <Can module={module} action="create" fallback={fallback}>{children}</Can>;
+  return (
+    <Can module={module} action="create" fallback={fallback}>
+      {children}
+    </Can>
+  );
 }
 
 export function CanEdit({ module, children, fallback }: CanButtonProps) {
-  return <Can module={module} action="edit" fallback={fallback}>{children}</Can>;
+  return (
+    <Can module={module} action="edit" fallback={fallback}>
+      {children}
+    </Can>
+  );
 }
 
 export function CanDelete({ module, children, fallback }: CanButtonProps) {
-  return <Can module={module} action="delete" fallback={fallback}>{children}</Can>;
+  return (
+    <Can module={module} action="delete" fallback={fallback}>
+      {children}
+    </Can>
+  );
 }
 
 export function CanExport({ module, children, fallback }: CanButtonProps) {
-  return <Can module={module} action="export" fallback={fallback}>{children}</Can>;
+  return (
+    <Can module={module} action="export" fallback={fallback}>
+      {children}
+    </Can>
+  );
 }
 
 export function CanAdmin({ module, children, fallback }: CanButtonProps) {
-  return <Can module={module} action="admin" fallback={fallback}>{children}</Can>;
+  return (
+    <Can module={module} action="admin" fallback={fallback}>
+      {children}
+    </Can>
+  );
 }

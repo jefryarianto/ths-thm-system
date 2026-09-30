@@ -102,9 +102,15 @@ export default function BeritaListPage() {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Judul</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 hidden md:table-cell">Ringkasan</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 hidden lg:table-cell">Tanggal</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600">Status</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 hidden md:table-cell">
+                    Ringkasan
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-600 hidden lg:table-cell">
+                    Tanggal
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-600">
+                    Status
+                  </th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-600">Aksi</th>
                 </tr>
               </thead>
@@ -113,7 +119,9 @@ export default function BeritaListPage() {
                   <tr key={berita.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{berita.judul}</div>
-                      <div className="text-xs text-gray-500 mt-1 md:hidden">{formatDate(berita.tanggal)}</div>
+                      <div className="text-xs text-gray-500 mt-1 md:hidden">
+                        {formatDate(berita.tanggal)}
+                      </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <p className="text-sm text-gray-600 line-clamp-2">{berita.ringkasan}</p>

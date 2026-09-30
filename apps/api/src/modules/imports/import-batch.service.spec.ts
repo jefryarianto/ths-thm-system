@@ -62,25 +62,20 @@ describe('ImportBatchService', () => {
 
   describe('createBatch', () => {
     it('should reject unknown module', async () => {
-      await expect(
-        service.createBatch('ghost', [{ nama: 'A' }]),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.createBatch('ghost', [{ nama: 'A' }])).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject empty rows', async () => {
       service.registerProcessor('members', jest.fn());
-      await expect(service.createBatch('members', [])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createBatch('members', [])).rejects.toThrow(BadRequestException);
     });
 
     it('should create batch + items and enqueue jobs', async () => {
       service.registerProcessor('members', jest.fn());
       prisma.importBatch.create.mockResolvedValue({ id: 'b1' });
-      prisma.importBatchItem.createManyAndReturn.mockResolvedValue([
-        { id: 'i1' },
-        { id: 'i2' },
-      ]);
+      prisma.importBatchItem.createManyAndReturn.mockResolvedValue([{ id: 'i1' }, { id: 'i2' }]);
 
       const result = await service.createBatch(
         'members',
@@ -102,9 +97,7 @@ describe('ImportBatchService', () => {
         }),
       });
       expect(fakeQueue.addBulk).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ jobId: 'i1', type: 'members' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ jobId: 'i1', type: 'members' })]),
       );
     });
   });
@@ -125,7 +118,9 @@ describe('ImportBatchService', () => {
         status: 'processing',
         fileName: null,
       });
-      prisma.importBatchItem.findMany.mockResolvedValue([{ id: 'i1', rowIndex: 0, status: 'success' }]);
+      prisma.importBatchItem.findMany.mockResolvedValue([
+        { id: 'i1', rowIndex: 0, status: 'success' },
+      ]);
       prisma.importBatchItem.count.mockResolvedValue(4);
 
       const result = await service.getBatchProgress('b1');
@@ -161,9 +156,9 @@ describe('ImportBatchService', () => {
 
       const result = await service.retryFailed('b1');
       expect(result).toEqual({ retried: 2 });
-      expect(fakeQueue.addBulk).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ jobId: 'i1' }),
-      ]));
+      expect(fakeQueue.addBulk).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ jobId: 'i1' })]),
+      );
     });
   });
 

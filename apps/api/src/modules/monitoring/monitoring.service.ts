@@ -18,7 +18,10 @@ interface HealthSnapshot {
 }
 
 @Injectable()
-export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto, UpdateMonitoringAlertDto> {
+export class MonitoringService extends BaseCrudService<
+  CreateMonitoringAlertDto,
+  UpdateMonitoringAlertDto
+> {
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly scopeHelper: ScopeHelper,
@@ -26,19 +29,23 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
     private readonly mailService: MailService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'monitoringAlert',
-      prefix: 'monitoring:',
-      notFound: 'Alert tidak ditemukan',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'monitoringAlert',
+        prefix: 'monitoring:',
+        notFound: 'Alert tidak ditemukan',
+      },
+      persistentAudit,
+    );
   }
 
   // ── Hooks: transform DTO before create/update ───────
   // Eliminates the 3 `as never` casts for metric and channels
 
-  protected async beforeCreate(
-    dto: CreateMonitoringAlertDto,
-  ): Promise<Record<string, unknown>> {
+  protected async beforeCreate(dto: CreateMonitoringAlertDto): Promise<Record<string, unknown>> {
     return {
       name: dto.name,
       metric: dto.metric,
@@ -202,11 +209,16 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
 
   private compareThreshold(value: number, threshold: number, operator: string): boolean {
     switch (operator) {
-      case 'gt': return value > threshold;
-      case 'gte': return value >= threshold;
-      case 'lt': return value < threshold;
-      case 'lte': return value <= threshold;
-      default: return false;
+      case 'gt':
+        return value > threshold;
+      case 'gte':
+        return value >= threshold;
+      case 'lt':
+        return value < threshold;
+      case 'lte':
+        return value <= threshold;
+      default:
+        return false;
     }
   }
 
@@ -236,7 +248,11 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
     }
   }
 
-  private async sendTelegram(botToken?: string | null, chatId?: string | null, message?: string): Promise<void> {
+  private async sendTelegram(
+    botToken?: string | null,
+    chatId?: string | null,
+    message?: string,
+  ): Promise<void> {
     if (!botToken || !chatId) return;
     try {
       const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -254,8 +270,15 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
     }
   }
 
-  private async sendEmailAlert(recipients: string, alertName: string, message: string): Promise<void> {
-    const emails = recipients.split(',').map((e) => e.trim()).filter(Boolean);
+  private async sendEmailAlert(
+    recipients: string,
+    alertName: string,
+    message: string,
+  ): Promise<void> {
+    const emails = recipients
+      .split(',')
+      .map((e) => e.trim())
+      .filter(Boolean);
     for (const email of emails) {
       try {
         const tpl = monitoringAlertEmail(alertName, message);

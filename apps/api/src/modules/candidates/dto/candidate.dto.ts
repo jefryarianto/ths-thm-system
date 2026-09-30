@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min, MinLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsEmail,
+  IsInt,
+  Min,
+  MinLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { JenisKelamin, StatusCalon } from '@prisma/client';

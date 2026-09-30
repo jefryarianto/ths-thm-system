@@ -53,8 +53,14 @@ export default function PeriodePage() {
 
   // ─── Per-unit activation state ─────────────────────────
   const [showUnitModal, setShowUnitModal] = useState(false);
-  const [unitForm, setUnitForm] = useState<{ level: PeriodeLevel; unitId: string; periodeId: string }>({
-    level: 'nasional', unitId: '', periodeId: '',
+  const [unitForm, setUnitForm] = useState<{
+    level: PeriodeLevel;
+    unitId: string;
+    periodeId: string;
+  }>({
+    level: 'nasional',
+    unitId: '',
+    periodeId: '',
   });
   const [unitOptions, setUnitOptions] = useState<UnitOption[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(false);
@@ -64,11 +70,15 @@ export default function PeriodePage() {
     try {
       const { data: res } = await apiClient.get('/periode');
       setData(res.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   // ─── Fetch units when level changes ──────────────────────
   const fetchUnits = useCallback(async (level: PeriodeLevel) => {
@@ -81,7 +91,9 @@ export default function PeriodePage() {
         const { data: res } = await apiClient.get(`/org-structure/${level}`);
         setUnitOptions(res.data || []);
       }
-    } catch { setUnitOptions([]); }
+    } catch {
+      setUnitOptions([]);
+    }
     setLoadingUnits(false);
   }, []);
 
@@ -97,7 +109,12 @@ export default function PeriodePage() {
     if (!form.nama.trim()) return toast('error', 'Nama wajib diisi');
     if (!form.tglMulai || !form.tglSelesai) return toast('error', 'Tanggal wajib diisi');
     try {
-      const payload = { nama: form.nama.trim(), tglMulai: form.tglMulai, tglSelesai: form.tglSelesai, isActive: form.isActive };
+      const payload = {
+        nama: form.nama.trim(),
+        tglMulai: form.tglMulai,
+        tglSelesai: form.tglSelesai,
+        isActive: form.isActive,
+      };
       if (editData) {
         await apiClient.patch(`/periode/${editData.id}`, payload);
         toast('success', 'Periode berhasil diupdate');
@@ -115,7 +132,11 @@ export default function PeriodePage() {
   };
 
   const handleDelete = async (item: Periode) => {
-    const ok = await confirm({ title: `Hapus "${item.nama}"?`, message: item._count.pengurus > 0 ? `Masih digunakan oleh ${item._count.pengurus} pengurus` : '' });
+    const ok = await confirm({
+      title: `Hapus "${item.nama}"?`,
+      message:
+        item._count.pengurus > 0 ? `Masih digunakan oleh ${item._count.pengurus} pengurus` : '',
+    });
     if (!ok) return;
     try {
       await apiClient.delete(`/periode/${item.id}`);
@@ -129,7 +150,10 @@ export default function PeriodePage() {
   const handleToggleGlobal = async (item: Periode) => {
     try {
       await apiClient.patch(`/periode/${item.id}`, { isActive: !item.isActive });
-      toast('success', `Periode ${item.nama} ${!item.isActive ? 'diaktifkan' : 'dinonaktifkan'} (global)`);
+      toast(
+        'success',
+        `Periode ${item.nama} ${!item.isActive ? 'diaktifkan' : 'dinonaktifkan'} (global)`,
+      );
       fetchData();
     } catch (e: any) {
       toast('error', e?.response?.data?.message || 'Gagal update');
@@ -138,9 +162,13 @@ export default function PeriodePage() {
 
   const handleActivateUnit = async () => {
     if (!unitForm.periodeId) return toast('error', 'Pilih periode terlebih dahulu');
-    if (!unitForm.unitId && unitForm.level !== 'nasional') return toast('error', 'Pilih unit terlebih dahulu');
+    if (!unitForm.unitId && unitForm.level !== 'nasional')
+      return toast('error', 'Pilih unit terlebih dahulu');
     try {
-      await apiClient.post(`/periode/${unitForm.periodeId}/activate-unit`, { level: unitForm.level, unitId: unitForm.unitId });
+      await apiClient.post(`/periode/${unitForm.periodeId}/activate-unit`, {
+        level: unitForm.level,
+        unitId: unitForm.unitId,
+      });
       toast('success', 'Periode aktif per unit berhasil disimpan');
       setShowUnitModal(false);
       fetchData();
@@ -150,7 +178,10 @@ export default function PeriodePage() {
   };
 
   const handleDeactivateUnit = async (level: string, unitId: string) => {
-    const ok = await confirm({ title: 'Nonaktifkan periode untuk unit ini?', message: 'Unit akan kembali menggunakan periode global sebagai fallback.' });
+    const ok = await confirm({
+      title: 'Nonaktifkan periode untuk unit ini?',
+      message: 'Unit akan kembali menggunakan periode global sebagai fallback.',
+    });
     if (!ok) return;
     try {
       await apiClient.delete(`/periode/active-unit/${level}/${unitId}`);
@@ -162,7 +193,13 @@ export default function PeriodePage() {
   };
 
   const activeUnitRows = data
-    .flatMap((p) => (p.aktifUnits || []).map((au) => ({ ...au, periodeNama: p.nama, levelLabel: LEVEL_OPTIONS.find((l) => l.value === au.level)?.label || au.level })))
+    .flatMap((p) =>
+      (p.aktifUnits || []).map((au) => ({
+        ...au,
+        periodeNama: p.nama,
+        levelLabel: LEVEL_OPTIONS.find((l) => l.value === au.level)?.label || au.level,
+      })),
+    )
     .sort((a, b) => a.level.localeCompare(b.level));
 
   return (
@@ -174,13 +211,23 @@ export default function PeriodePage() {
         children={
           <div className="flex gap-2">
             <button
-              onClick={() => { setUnitForm((prev) => ({ ...prev, periodeId: data.find((p) => p.isActive)?.id || data[0]?.id || '' })); setShowUnitModal(true); }}
+              onClick={() => {
+                setUnitForm((prev) => ({
+                  ...prev,
+                  periodeId: data.find((p) => p.isActive)?.id || data[0]?.id || '',
+                }));
+                setShowUnitModal(true);
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
             >
               <Plus size={16} /> Atur Per Unit
             </button>
             <button
-              onClick={() => { setEditData(null); setForm({ nama: '', tglMulai: '', tglSelesai: '', isActive: false }); setShowModal(true); }}
+              onClick={() => {
+                setEditData(null);
+                setForm({ nama: '', tglMulai: '', tglSelesai: '', isActive: false });
+                setShowModal(true);
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <Plus size={16} /> Tambah Periode
@@ -190,11 +237,16 @@ export default function PeriodePage() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-20"><RefreshCw className="animate-spin text-gray-400" size={24} /></div>
+        <div className="flex justify-center py-20">
+          <RefreshCw className="animate-spin text-gray-400" size={24} />
+        </div>
       ) : (
         <div className="grid gap-4 mb-8">
           {data.map((item) => (
-            <div key={item.id} className={`bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center justify-between ${item.isActive ? 'border-green-300 dark:border-green-700' : 'border-gray-200 dark:border-gray-700'}`}>
+            <div
+              key={item.id}
+              className={`bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center justify-between ${item.isActive ? 'border-green-300 dark:border-green-700' : 'border-gray-200 dark:border-gray-700'}`}
+            >
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-900 dark:text-white">{item.nama}</span>
@@ -205,7 +257,17 @@ export default function PeriodePage() {
                   )}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
-                  {new Date(item.tglMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} — {new Date(item.tglSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  {new Date(item.tglMulai).toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}{' '}
+                  —{' '}
+                  {new Date(item.tglSelesai).toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                   <span className="ml-2">• {item._count.pengurus} pengurus</span>
                   {(item.aktifUnits?.length || 0) > 0 && (
                     <span className="ml-2">• {item.aktifUnits.length} unit aktif</span>
@@ -213,11 +275,33 @@ export default function PeriodePage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => handleToggleGlobal(item)} className={`px-3 py-1.5 text-xs rounded-lg font-medium ${item.isActive ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
+                <button
+                  onClick={() => handleToggleGlobal(item)}
+                  className={`px-3 py-1.5 text-xs rounded-lg font-medium ${item.isActive ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                >
                   {item.isActive ? 'Nonaktif Global' : 'Aktifkan Global'}
                 </button>
-                <button onClick={() => { setEditData(item); setForm({ nama: item.nama, tglMulai: item.tglMulai.split('T')[0], tglSelesai: item.tglSelesai.split('T')[0], isActive: item.isActive }); setShowModal(true); }} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><Edit3 size={14} className="text-gray-500" /></button>
-                <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={14} className="text-red-500" /></button>
+                <button
+                  onClick={() => {
+                    setEditData(item);
+                    setForm({
+                      nama: item.nama,
+                      tglMulai: item.tglMulai.split('T')[0],
+                      tglSelesai: item.tglSelesai.split('T')[0],
+                      isActive: item.isActive,
+                    });
+                    setShowModal(true);
+                  }}
+                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <Edit3 size={14} className="text-gray-500" />
+                </button>
+                <button
+                  onClick={() => handleDelete(item)}
+                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 size={14} className="text-red-500" />
+                </button>
               </div>
             </div>
           ))}
@@ -230,7 +314,8 @@ export default function PeriodePage() {
         <div className="mb-6">
           <h2 className="text-lg font-semibold dark:text-white mb-1">Periode Aktif per Unit</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Atur periode aktif untuk masing-masing level organisasi. Unit yang belum diatur akan menggunakan periode global.
+            Atur periode aktif untuk masing-masing level organisasi. Unit yang belum diatur akan
+            menggunakan periode global.
           </p>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
             <table className="min-w-full text-sm">
@@ -249,64 +334,131 @@ export default function PeriodePage() {
                     message="Belum ada periode aktif per unit. Semua unit menggunakan periode global (isActive)."
                     colSpan={4}
                   />
-                ) : activeUnitRows.map((row) => (
-                  <tr key={`${row.level}-${row.unitId}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300">
-                        {row.levelLabel}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{row.unitId}</td>
-                    <td className="px-4 py-3 font-medium">{row.periodeNama}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleDeactivateUnit(row.level, row.unitId)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600" title="Nonaktifkan">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                ) : (
+                  activeUnitRows.map((row) => (
+                    <tr
+                      key={`${row.level}-${row.unitId}`}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                    >
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300">
+                          {row.levelLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-mono text-xs">
+                        {row.unitId}
+                      </td>
+                      <td className="px-4 py-3 font-medium">{row.periodeNama}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeactivateUnit(row.level, row.unitId)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600"
+                          title="Nonaktifkan"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editData ? 'Edit Periode' : 'Tambah Periode'}>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editData ? 'Edit Periode' : 'Tambah Periode'}
+      >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Periode *</label>
-            <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Contoh: 2025-2028" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nama Periode *
+            </label>
+            <input
+              value={form.nama}
+              onChange={(e) => setForm({ ...form, nama: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Contoh: 2025-2028"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Mulai *</label>
-              <input type="date" value={form.tglMulai} onChange={(e) => setForm({ ...form, tglMulai: e.target.value })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Tanggal Mulai *
+              </label>
+              <input
+                type="date"
+                value={form.tglMulai}
+                onChange={(e) => setForm({ ...form, tglMulai: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Selesai *</label>
-              <input type="date" value={form.tglSelesai} onChange={(e) => setForm({ ...form, tglSelesai: e.target.value })} className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Tanggal Selesai *
+              </label>
+              <input
+                type="date"
+                value={form.tglSelesai}
+                onChange={(e) => setForm({ ...form, tglSelesai: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
-            <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">Aktif Global (fallback jika unit belum punya periode aktif sendiri)</label>
+            <input
+              type="checkbox"
+              id="isActive"
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="rounded"
+            />
+            <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">
+              Aktif Global (fallback jika unit belum punya periode aktif sendiri)
+            </label>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm border rounded-lg">Batal</button>
-            <button onClick={handleSave} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Simpan</button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 text-sm border rounded-lg"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Simpan
+            </button>
           </div>
         </div>
       </Modal>
 
       {/* ── Modal: Atur Per Unit ─────────────────────── */}
-      <Modal open={showUnitModal} onClose={() => setShowUnitModal(false)} title="Atur Periode Aktif per Unit">
+      <Modal
+        open={showUnitModal}
+        onClose={() => setShowUnitModal(false)}
+        title="Atur Periode Aktif per Unit"
+      >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level *</label>
-            <select value={unitForm.level} onChange={(e) => setUnitForm({ ...unitForm, level: e.target.value as PeriodeLevel, unitId: '' })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Level *
+            </label>
+            <select
+              value={unitForm.level}
+              onChange={(e) =>
+                setUnitForm({ ...unitForm, level: e.target.value as PeriodeLevel, unitId: '' })
+              }
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            >
               {LEVEL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -315,32 +467,57 @@ export default function PeriodePage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {LEVEL_OPTIONS.find((l) => l.value === unitForm.level)?.label} *
               </label>
-              <select value={unitForm.unitId} onChange={(e) => setUnitForm({ ...unitForm, unitId: e.target.value })}
+              <select
+                value={unitForm.unitId}
+                onChange={(e) => setUnitForm({ ...unitForm, unitId: e.target.value })}
                 disabled={loadingUnits}
-                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50">
+                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50"
+              >
                 <option value="">{loadingUnits ? 'Memuat...' : `Pilih ${unitForm.level}`}</option>
                 {unitOptions.map((u) => (
-                  <option key={u.id} value={u.id}>{u.nama}{u.kode ? ` (${u.kode})` : ''}</option>
+                  <option key={u.id} value={u.id}>
+                    {u.nama}
+                    {u.kode ? ` (${u.kode})` : ''}
+                  </option>
                 ))}
               </select>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periode Aktif *</label>
-            <select value={unitForm.periodeId} onChange={(e) => setUnitForm({ ...unitForm, periodeId: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Periode Aktif *
+            </label>
+            <select
+              value={unitForm.periodeId}
+              onChange={(e) => setUnitForm({ ...unitForm, periodeId: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            >
               <option value="">Pilih Periode</option>
               {data.map((p) => (
-                <option key={p.id} value={p.id}>{p.nama} ({new Date(p.tglMulai).getFullYear()} – {new Date(p.tglSelesai).getFullYear()})</option>
+                <option key={p.id} value={p.id}>
+                  {p.nama} ({new Date(p.tglMulai).getFullYear()} –{' '}
+                  {new Date(p.tglSelesai).getFullYear()})
+                </option>
               ))}
             </select>
           </div>
           <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-amber-700 dark:text-amber-400">
-            ⚠️ Mengatur periode aktif untuk unit ini tidak akan mempengaruhi unit lain. Setiap unit bisa memiliki periode aktif yang berbeda.
+            ⚠️ Mengatur periode aktif untuk unit ini tidak akan mempengaruhi unit lain. Setiap unit
+            bisa memiliki periode aktif yang berbeda.
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setShowUnitModal(false)} className="px-4 py-2 text-sm border rounded-lg">Batal</button>
-            <button onClick={handleActivateUnit} className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Simpan</button>
+            <button
+              onClick={() => setShowUnitModal(false)}
+              className="px-4 py-2 text-sm border rounded-lg"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleActivateUnit}
+              className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+            >
+              Simpan
+            </button>
           </div>
         </div>
       </Modal>

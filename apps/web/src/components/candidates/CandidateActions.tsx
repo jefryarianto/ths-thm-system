@@ -94,20 +94,24 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
       disabled: false,
     },
     ...(candidate.status === 'diusulkan'
-      ? [{
-          label: 'Setujui',
-          icon: CheckCircle2,
-          action: () => setShowApproveModal(true),
-          disabled: actionLoading === 'approve',
-        }]
+      ? [
+          {
+            label: 'Setujui',
+            icon: CheckCircle2,
+            action: () => setShowApproveModal(true),
+            disabled: actionLoading === 'approve',
+          },
+        ]
       : []),
     ...(candidate.status === 'diusulkan'
-      ? [{
-          label: 'Minta Perbaikan',
-          icon: ThumbsDown,
-          action: () => setShowRequestCorrectionModal(true),
-          disabled: actionLoading === 'requestCorrection',
-        }]
+      ? [
+          {
+            label: 'Minta Perbaikan',
+            icon: ThumbsDown,
+            action: () => setShowRequestCorrectionModal(true),
+            disabled: actionLoading === 'requestCorrection',
+          },
+        ]
       : []),
     {
       label: 'Hapus',
@@ -120,17 +124,17 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
 
   return (
     <>
-        <div className="flex items-center justify-end gap-1">
-          {candidate.status === 'diusulkan' && (
-            <button
-              onClick={() => setShowApproveModal(true)}
-              disabled={actionLoading === 'approve'}
-              className="p-1.5 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950 transition disabled:opacity-30"
-              title="Setujui"
-            >
-              <UserCheck size={14} className="text-emerald-600" />
-            </button>
-          )}
+      <div className="flex items-center justify-end gap-1">
+        {candidate.status === 'diusulkan' && (
+          <button
+            onClick={() => setShowApproveModal(true)}
+            disabled={actionLoading === 'approve'}
+            className="p-1.5 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950 transition disabled:opacity-30"
+            title="Setujui"
+          >
+            <UserCheck size={14} className="text-emerald-600" />
+          </button>
+        )}
         <button
           onClick={() => router.push(`/candidates/${candidate.id}`)}
           className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
@@ -151,7 +155,11 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
           </button>
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} aria-hidden="true" />
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowMenu(false)}
+                aria-hidden="true"
+              />
               <div
                 style={menuStyle}
                 className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
@@ -160,10 +168,17 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
                 {menuItems.map((item, i) => (
                   <button
                     key={i}
-                    onClick={() => { if (!item.disabled) { setShowMenu(false); item.action(); } }}
+                    onClick={() => {
+                      if (!item.disabled) {
+                        setShowMenu(false);
+                        item.action();
+                      }
+                    }}
                     disabled={item.disabled}
                     className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                      item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+                      item.danger
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-700 dark:text-gray-300'
                     } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     role="menuitem"
                   >

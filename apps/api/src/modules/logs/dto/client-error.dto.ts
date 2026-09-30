@@ -1,12 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsIn,
-  IsObject,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsIn, IsObject, MaxLength } from 'class-validator';
 
 /**
  * Laporan error dari aplikasi klien (mobile) untuk monitoring terpusat.

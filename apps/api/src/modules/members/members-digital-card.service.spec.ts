@@ -45,9 +45,7 @@ describe('MembersDigitalCardService', () => {
   };
 
   // ── Signer dari tabel penandatangan (multi-signer) ──
-  const mockSigners = [
-    { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' },
-  ];
+  const mockSigners = [{ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockPrisma: any = {
@@ -72,9 +70,7 @@ describe('MembersDigitalCardService', () => {
     qrScan: {
       findMany: jest.fn(),
     },
-    $transaction: jest.fn((arg: any) =>
-      Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma),
-    ),
+    $transaction: jest.fn((arg: any) => (Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma))),
   };
 
   const mockScopeHelper = {
@@ -149,7 +145,10 @@ describe('MembersDigitalCardService', () => {
     it('should include signer dari tabel penandatangan (multi-signer)', async () => {
       const result = await service.getDigitalCard('m-lrt-1');
 
-      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith('kartu_anggota', 'd-lrt');
+      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith(
+        'kartu_anggota',
+        'd-lrt',
+      );
       expect(result.data.card.signers).toEqual(mockSigners);
       // Backward-compat: signer pertama di signerName/signerTitle
       expect(result.data.card.signerName).toBe('Yoseph Pehan Betan');
@@ -160,7 +159,11 @@ describe('MembersDigitalCardService', () => {
       const result = await service.getDigitalCard('m-lrt-1');
 
       expect(mockTingkatanService.resolveLevelVisual).toHaveBeenCalledWith('Muda');
-      expect(result.data.levelVisual).toEqual({ stripCount: 1, color: '#ca8a04', label: 'Kuning 1' });
+      expect(result.data.levelVisual).toEqual({
+        stripCount: 1,
+        color: '#ca8a04',
+        label: 'Kuning 1',
+      });
     });
 
     it('should generate new card dokumen + QR validation when none exists', async () => {
@@ -247,7 +250,7 @@ describe('MembersDigitalCardService', () => {
       await expect(service.getDigitalCard('missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw ForbiddenException when anggota tries another member\'s card', async () => {
+    it("should throw ForbiddenException when anggota tries another member's card", async () => {
       // Akun login terhubung ke anggota m-lrt-1, tapi mencoba akses kartu m-lain
       mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm-lrt-1' });
       mockPrisma.anggota.findMany.mockResolvedValue([]);
@@ -274,9 +277,9 @@ describe('MembersDigitalCardService', () => {
 
     it('should throw ForbiddenException when scope has no access to ranting', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
-      await expect(service.getDigitalCard('m-lrt-1', { rantingId: 'r-lain' } as any)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.getDigitalCard('m-lrt-1', { rantingId: 'r-lain' } as any),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should allow access when scope matches ranting', async () => {
@@ -295,7 +298,11 @@ describe('MembersDigitalCardService', () => {
     it('buildCardWatermarkSvg mengembalikan tile diagonal berisi teks kartu', () => {
       // @ts-ignore
       const { buildCardWatermarkSvg } = require('./members-digital-card.service');
-      const svg = buildCardWatermarkSvg(3566, 4500, 'KARTU DIGITAL - Jefry Arianto Baba - LRT-0103-001-1994');
+      const svg = buildCardWatermarkSvg(
+        3566,
+        4500,
+        'KARTU DIGITAL - Jefry Arianto Baba - LRT-0103-001-1994',
+      );
 
       expect(svg).toContain('width="3566"');
       expect(svg).toContain('height="4500"');
@@ -377,7 +384,10 @@ describe('MembersDigitalCardService', () => {
     });
 
     beforeEach(() => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'm-lrt-1', rantingId: 'r-sanjuan' } as any);
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'm-lrt-1',
+        rantingId: 'r-sanjuan',
+      } as any);
       mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc());
     });
 
@@ -395,7 +405,9 @@ describe('MembersDigitalCardService', () => {
     });
 
     it('aktifkan kembali: status generated + QR aktif', async () => {
-      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc({ status: 'generated', qrValidations: [{ id: 'qr-1', isValid: true }] }));
+      mockPrisma.dokumen.findFirst.mockResolvedValue(
+        ktaDoc({ status: 'generated', qrValidations: [{ id: 'qr-1', isValid: true }] }),
+      );
       const result = await service.setCardActive('m-lrt-1', true);
 
       expect(result.data.status).toBe('generated');
@@ -433,7 +445,9 @@ describe('MembersDigitalCardService', () => {
 
       expect(mockPrisma.dokumen.create).toHaveBeenCalled();
       expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ source: 'printed', isValid: true }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ source: 'printed', isValid: true }),
+        }),
       );
       expect(result.data.pdfUrl).toContain('printed/pdf?issuanceId=qr-p1');
     });
@@ -454,7 +468,9 @@ describe('MembersDigitalCardService', () => {
         }),
       );
       expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ reason: 'hilang', source: 'printed' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ reason: 'hilang', source: 'printed' }),
+        }),
       );
     });
 

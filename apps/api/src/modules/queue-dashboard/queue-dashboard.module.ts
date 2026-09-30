@@ -83,9 +83,8 @@ export class QueueDashboardModule implements OnModuleInit, OnModuleDestroy {
         // Attach user info for downstream use          (req as unknown as Record<string, unknown>).user = decoded;
         next();
       } catch (err) {
-        const message = (err as Error).name === 'TokenExpiredError'
-          ? 'Token expired'
-          : 'Invalid token';
+        const message =
+          (err as Error).name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
         res.status(401).json({ message });
       }
     };
@@ -102,14 +101,15 @@ export class QueueDashboardModule implements OnModuleInit, OnModuleDestroy {
       );
     } else {
       expressApp.use('/api/admin/queues', (_req: Request, res: Response) => {
-        const reason = process.env.USE_BULLMQ !== 'true'
-          ? 'USE_BULLMQ is not set to true. Enable BullMQ to use the dashboard.'
-          : 'BullMQ packages could not be loaded. Make sure bullmq is installed and Redis is running.';
+        const reason =
+          process.env.USE_BULLMQ !== 'true'
+            ? 'USE_BULLMQ is not set to true. Enable BullMQ to use the dashboard.'
+            : 'BullMQ packages could not be loaded. Make sure bullmq is installed and Redis is running.';
         res.json({ message: 'Bull Board dashboard is not available.', reason, queues: [] });
       });
       QueueDashboardModule.logger.log(
         'Bull Board dashboard skipped (USE_BULLMQ != true or BullMQ unavailable). ' +
-        'Set USE_BULLMQ=true and ensure Redis is running to enable queue monitoring.',
+          'Set USE_BULLMQ=true and ensure Redis is running to enable queue monitoring.',
       );
     }
   }
@@ -144,12 +144,12 @@ export class QueueDashboardModule implements OnModuleInit, OnModuleDestroy {
 
       QueueDashboardModule.logger.log(
         `Bull Board dashboard initialized for queue "document-generation" ` +
-        `(Redis ${connection.host}:${connection.port})`,
+          `(Redis ${connection.host}:${connection.port})`,
       );
     } catch (error) {
       QueueDashboardModule.logger.warn(
         `Bull Board initialization failed: ${(error as Error).message}. ` +
-        'Dashboard route will show an informational message.',
+          'Dashboard route will show an informational message.',
       );
     }
   }

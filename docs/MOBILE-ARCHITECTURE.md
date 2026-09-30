@@ -4,7 +4,7 @@
 
 ## Overview
 
-The mobile app (`apps/mobile/`) uses a shared component library in `src/components/ui/shared.tsx` to eliminate code duplication across 13 detail/reference screens. All shared components live in a single file, making them easy to discover and maintain.
+The mobile app (`apps/mobile/`) uses a shared component library in `lib/src/widgets/shared.dart` to eliminate code duplication across 13 detail/reference screens. All shared components live in a single file, making them easy to discover and maintain.
 
 ---
 

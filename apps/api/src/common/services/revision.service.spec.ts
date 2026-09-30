@@ -23,7 +23,10 @@ describe('RevisionService', () => {
 
   describe('diffObjects', () => {
     it('should return only changed fields', () => {
-      const diff = diffObjects({ nama: 'A', alamat: 'X', umur: 1 }, { nama: 'A', alamat: 'Y', umur: 1 });
+      const diff = diffObjects(
+        { nama: 'A', alamat: 'X', umur: 1 },
+        { nama: 'A', alamat: 'Y', umur: 1 },
+      );
       expect(diff).toEqual([{ field: 'alamat', before: 'X', after: 'Y' }]);
     });
 
@@ -104,8 +107,18 @@ describe('RevisionService', () => {
   describe('compareRevisions', () => {
     it('should compute diff between two revisions of same entity', async () => {
       prisma.dataRevision.findUnique
-        .mockResolvedValueOnce({ id: 'r1', entity: 'anggota', entityId: 'a1', after: { nama: 'A' } })
-        .mockResolvedValueOnce({ id: 'r2', entity: 'anggota', entityId: 'a1', after: { nama: 'B' } });
+        .mockResolvedValueOnce({
+          id: 'r1',
+          entity: 'anggota',
+          entityId: 'a1',
+          after: { nama: 'A' },
+        })
+        .mockResolvedValueOnce({
+          id: 'r2',
+          entity: 'anggota',
+          entityId: 'a1',
+          after: { nama: 'B' },
+        });
       const result = await service.compareRevisions('anggota', 'a1', 'r1', 'r2');
       expect(result.diff).toEqual([{ field: 'nama', before: 'A', after: 'B' }]);
     });
@@ -155,7 +168,11 @@ describe('RevisionService', () => {
     });
 
     it('should throw NotFound when revision mismatches entity', async () => {
-      prisma.dataRevision.findUnique.mockResolvedValue({ id: 'r1', entity: 'klaim', entityId: 'k1' });
+      prisma.dataRevision.findUnique.mockResolvedValue({
+        id: 'r1',
+        entity: 'klaim',
+        entityId: 'k1',
+      });
       await expect(service.restore('anggota', 'a1', 'r1')).rejects.toThrow(NotFoundException);
     });
   });

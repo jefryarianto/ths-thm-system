@@ -100,14 +100,17 @@ export default function ChatRoomPage() {
           if (mounted) setRealtimeConnected(false);
         });
 
-        socket.on('chat:message', (msg: Message & { userId: string; email: string; role: string; roomId: string }) => {
-          if (mounted && msg.roomId === roomId) {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === msg.id)) return prev;
-              return [...prev, msg];
-            });
-          }
-        });
+        socket.on(
+          'chat:message',
+          (msg: Message & { userId: string; email: string; role: string; roomId: string }) => {
+            if (mounted && msg.roomId === roomId) {
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === msg.id)) return prev;
+                return [...prev, msg];
+              });
+            }
+          },
+        );
 
         socket.emit('joinRoom', { roomId });
       } catch {
@@ -151,7 +154,11 @@ export default function ChatRoomPage() {
       });
       setContent('');
     } catch (err: unknown) {
-      toast('error', (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Gagal mengirim pesan');
+      toast(
+        'error',
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Gagal mengirim pesan',
+      );
     }
     setSending(false);
   };
@@ -235,9 +242,7 @@ export default function ChatRoomPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="text-xs font-medium opacity-80">
-                        {msg.sender.namaLengkap}
-                      </div>
+                      <div className="text-xs font-medium opacity-80">{msg.sender.namaLengkap}</div>
                       {msg.sender.id === currentUserId && (
                         <button
                           onClick={() => handleDeleteMessage(msg.id)}
@@ -292,9 +297,7 @@ export default function ChatRoomPage() {
                   <span className="text-yellow-600 dark:text-yellow-400">○ Menghubungkan...</span>
                 )}
               </span>
-              {markingRead && (
-                <span className="text-[10px] text-blue-500">Menandai dibaca...</span>
-              )}
+              {markingRead && <span className="text-[10px] text-blue-500">Menandai dibaca...</span>}
             </div>
           </div>
         </div>

@@ -7,7 +7,6 @@ import apiClient, { unwrap } from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { logError } from '@/lib/error-logger';
 import {
-
   BarChart,
   Bar,
   XAxis,
@@ -136,7 +135,9 @@ export default function ScoreboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scoreboard Gamifikasi</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Scoreboard Gamifikasi
+          </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Breakdown poin per modul dan peringkat anggota
           </p>
@@ -185,7 +186,9 @@ export default function ScoreboardPage() {
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp size={20} className="text-blue-500" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Breakdown Poin per Modul</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Breakdown Poin per Modul
+            </h3>
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={breakdownData}>
@@ -194,7 +197,12 @@ export default function ScoreboardPage() {
               <YAxis tick={{ fontSize: 12 }} tickLine={false} />
               <Tooltip
                 formatter={(value: number) => [value.toLocaleString('id-ID'), 'Poin']}
-                contentStyle={{ borderRadius: '8px', border: '1px solid var(--tooltip-border)', background: 'var(--tooltip-bg)', color: 'var(--tooltip-color)' }}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid var(--tooltip-border)',
+                  background: 'var(--tooltip-bg)',
+                  color: 'var(--tooltip-color)',
+                }}
               />
               <Bar dataKey="points" radius={[6, 6, 0, 0]}>
                 {breakdownData.map((entry, idx) => (
@@ -222,7 +230,9 @@ export default function ScoreboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4 flex items-center gap-2">
             <Target size={20} className="text-purple-500" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Distribusi Level</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Distribusi Level
+            </h3>
           </div>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -242,14 +252,21 @@ export default function ScoreboardPage() {
                 </Pie>
                 <Tooltip
                   formatter={(value: number) => [value.toLocaleString('id-ID'), 'Anggota']}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid var(--tooltip-border)', background: 'var(--tooltip-bg)', color: 'var(--tooltip-color)' }}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: '1px solid var(--tooltip-border)',
+                    background: 'var(--tooltip-bg)',
+                    color: 'var(--tooltip-color)',
+                  }}
                 />
                 <Legend
                   verticalAlign="bottom"
                   height={36}
                   iconType="circle"
                   iconSize={8}
-                  formatter={(value) => <span className="text-xs text-gray-600 dark:text-gray-400">{value}</span>}
+                  formatter={(value) => (
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{value}</span>
+                  )}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -276,7 +293,9 @@ export default function ScoreboardPage() {
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy size={20} className="text-yellow-500" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Top Earners</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Top Earners
+            </h3>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -310,7 +329,9 @@ export default function ScoreboardPage() {
               key: 'rank',
               label: 'Rank',
               render: (e: PointsReportEntry) => (
-                <span className={`text-base font-bold ${e.rank <= 3 ? '' : 'text-gray-700 dark:text-gray-300'}`}>
+                <span
+                  className={`text-base font-bold ${e.rank <= 3 ? '' : 'text-gray-700 dark:text-gray-300'}`}
+                >
                   {e.rank <= 3 ? ['🥇', '🥈', '🥉'][e.rank - 1] : `#${e.rank}`}
                 </span>
               ),
@@ -319,7 +340,9 @@ export default function ScoreboardPage() {
               key: 'namaLengkap',
               label: 'Nama',
               render: (e: PointsReportEntry) => (
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{e.namaLengkap}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {e.namaLengkap}
+                </span>
               ),
             },
             {
@@ -346,7 +369,9 @@ export default function ScoreboardPage() {
               label: 'Events',
               align: 'right' as const,
               render: (e: PointsReportEntry) => (
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{e.events}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {e.events}
+                </span>
               ),
             },
             {
@@ -411,8 +436,12 @@ export default function ScoreboardPage() {
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: mod.color }} />
               </div>
             </div>
-            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{mod.points.toLocaleString('id-ID')}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{mod.percentage}% dari total</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {mod.points.toLocaleString('id-ID')}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {mod.percentage}% dari total
+            </p>
           </div>
         ))}
       </div>
@@ -432,26 +461,44 @@ function StatCard({
   color: 'blue' | 'yellow' | 'green' | 'purple';
 }) {
   const colorMap = {
-    blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', icon: 'text-blue-600 dark:text-blue-400', ring: 'ring-blue-100 dark:ring-blue-800' },
-    green: { bg: 'bg-green-50 dark:bg-green-900/30', icon: 'text-green-600 dark:text-green-400', ring: 'ring-green-100 dark:ring-green-800' },
-    yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/30', icon: 'text-yellow-600 dark:text-yellow-400', ring: 'ring-yellow-100 dark:ring-yellow-800' },
-    purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', icon: 'text-purple-600 dark:text-purple-400', ring: 'ring-purple-100 dark:ring-purple-800' },
+    blue: {
+      bg: 'bg-blue-50 dark:bg-blue-900/30',
+      icon: 'text-blue-600 dark:text-blue-400',
+      ring: 'ring-blue-100 dark:ring-blue-800',
+    },
+    green: {
+      bg: 'bg-green-50 dark:bg-green-900/30',
+      icon: 'text-green-600 dark:text-green-400',
+      ring: 'ring-green-100 dark:ring-green-800',
+    },
+    yellow: {
+      bg: 'bg-yellow-50 dark:bg-yellow-900/30',
+      icon: 'text-yellow-600 dark:text-yellow-400',
+      ring: 'ring-yellow-100 dark:ring-yellow-800',
+    },
+    purple: {
+      bg: 'bg-purple-50 dark:bg-purple-900/30',
+      icon: 'text-purple-600 dark:text-purple-400',
+      ring: 'ring-purple-100 dark:ring-purple-800',
+    },
   };
   const s = colorMap[color];
 
   return (
-      <PermissionGuard module="gamification" action="view">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value.toLocaleString('id-ID')}</p>
-                </div>
-                <div className={`p-3 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
-                  <Icon size={22} className={s.icon} />
-                </div>
-              </div>
-            </div>
-      </PermissionGuard>
-    );
+    <PermissionGuard module="gamification" action="view">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+              {value.toLocaleString('id-ID')}
+            </p>
+          </div>
+          <div className={`p-3 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
+            <Icon size={22} className={s.icon} />
+          </div>
+        </div>
+      </div>
+    </PermissionGuard>
+  );
 }

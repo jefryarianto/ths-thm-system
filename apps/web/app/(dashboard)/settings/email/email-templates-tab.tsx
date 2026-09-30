@@ -120,7 +120,8 @@ export default function EmailTemplatesTab() {
   };
 
   const deleteCustomTemplate = async (name: string) => {
-    if (!(await confirm(`Hapus custom template "${name}"? Template akan kembali ke default.`))) return;
+    if (!(await confirm(`Hapus custom template "${name}"? Template akan kembali ke default.`)))
+      return;
     try {
       await apiClient.delete(`/mail/templates/${name}`);
       toast('success', 'Custom template dihapus, kembali ke default');
@@ -137,13 +138,19 @@ export default function EmailTemplatesTab() {
     let renderedHtml = editForm.htmlBody;
 
     for (const [key, value] of Object.entries(sampleValues)) {
-      renderedSubject = renderedSubject.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'), value);
+      renderedSubject = renderedSubject.replace(
+        new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'),
+        value,
+      );
       renderedHtml = renderedHtml.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'), value);
     }
 
     // Replace any remaining {{...}} placeholders with highlighted placeholder text
     renderedSubject = renderedSubject.replace(/\{\{[^}]+\}\}/g, '[{{$&}}]');
-    renderedHtml = renderedHtml.replace(/\{\{[^}]+\}\}/g, '<span style="color:#f59e0b;font-weight:bold;">$&</span>');
+    renderedHtml = renderedHtml.replace(
+      /\{\{[^}]+\}\}/g,
+      '<span style="color:#f59e0b;font-weight:bold;">$&</span>',
+    );
 
     setPreviewSubject(renderedSubject);
     setPreviewHtml(renderedHtml);
@@ -169,7 +176,9 @@ export default function EmailTemplatesTab() {
         </p>
         <p className="text-blue-600 dark:text-blue-300 text-xs">
           Klik template untuk mengedit subject dan konten HTML. Gunakan{' '}
-          <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded text-xs">{'{{variable}}'}</code>{' '}
+          <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded text-xs">
+            {'{{variable}}'}
+          </code>{' '}
           sebagai placeholder untuk data dinamis. Template custom akan menggantikan template default
           saat dikirim.
         </p>
@@ -209,9 +218,7 @@ export default function EmailTemplatesTab() {
                   >
                     <div
                       className={`p-1.5 rounded-lg flex-shrink-0 ${
-                        custom
-                          ? 'bg-green-100 dark:bg-green-900'
-                          : 'bg-blue-50 dark:bg-blue-950'
+                        custom ? 'bg-green-100 dark:bg-green-900' : 'bg-blue-50 dark:bg-blue-950'
                       }`}
                     >
                       <FileText
@@ -283,8 +290,9 @@ export default function EmailTemplatesTab() {
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-sm">
               <p className="text-gray-600 dark:text-gray-400">
                 <strong>Trigger:</strong> {editingTemplate.label} -{' '}
-                {EMAIL_TEMPLATES.flatMap((g) => g.items).find((t) => t.name === editingTemplate.name)
-                  ?.trigger || ''}
+                {EMAIL_TEMPLATES.flatMap((g) => g.items).find(
+                  (t) => t.name === editingTemplate.name,
+                )?.trigger || ''}
               </p>
               <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
                 Parameter: <code className="font-mono">{editingTemplate.params}</code>
@@ -367,7 +375,9 @@ export default function EmailTemplatesTab() {
                       {Object.entries(sampleValues).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-2 text-xs">
                           <span className="text-gray-500 dark:text-gray-400 font-mono">
-                            {'{{'}{key}{'}}'}
+                            {'{{'}
+                            {key}
+                            {'}}'}
                           </span>
                           <input
                             type="text"
@@ -392,7 +402,10 @@ export default function EmailTemplatesTab() {
                       </div>
                       <div
                         className="p-4 max-h-96 overflow-y-auto"
-                        dangerouslySetInnerHTML={{ __html: previewHtml || '<p class="text-gray-400">Preview tidak tersedia</p>' }}
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            previewHtml || '<p class="text-gray-400">Preview tidak tersedia</p>',
+                        }}
                       />
                     </div>
                   )}
@@ -422,7 +435,8 @@ export default function EmailTemplatesTab() {
               {showTestForm && (
                 <div className="mt-3 space-y-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
                   <p className="text-xs text-green-700 dark:text-green-400 font-medium">
-                    Kirim email test menggunakan subject &amp; konten HTML di atas. Placeholder akan diganti dengan sample values.
+                    Kirim email test menggunakan subject &amp; konten HTML di atas. Placeholder akan
+                    diganti dengan sample values.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
@@ -453,10 +467,12 @@ export default function EmailTemplatesTab() {
                           });
                           setTestResult({
                             success: data.success,
-                            message: data.message || (data.success ? 'Berhasil dikirim' : 'Gagal dikirim'),
+                            message:
+                              data.message || (data.success ? 'Berhasil dikirim' : 'Gagal dikirim'),
                           });
                         } catch (err: unknown) {
-                          const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                          const apiErr = (err as { response?: { data?: { message?: string } } })
+                            ?.response?.data?.message;
                           setTestResult({
                             success: false,
                             message: apiErr || 'Gagal terhubung ke server',

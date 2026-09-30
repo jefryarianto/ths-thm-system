@@ -22,20 +22,20 @@ CRUD anggota THS-THM. Data utama anggota meliputi biodata, status keanggotaan, r
 
 ## Kartu Digital & Fisik (KTA)
 
-| Method | Path                                        | Deskripsi                                           |
-| ------ | ------------------------------------------- | --------------------------------------------------- |
-| GET    | /api/members/:id/digital-card               | Data kartu digital (JSON) + URL verifikasi           |
-| GET    | /api/members/:id/digital-card/image         | Gambar kartu PNG (pakai `?watermark=1` utk download) |
-| GET    | /api/members/:id/digital-card/pdf           | PDF kartu digital (2 sisi)                           |
-| GET    | /api/members/:id/digital-card/security      | Status QR + statistik & riwayat pemindaian           |
-| PATCH  | /api/members/:id/digital-card/activate      | Aktifkan kembali kartu (QR)                          |
-| PATCH  | /api/members/:id/digital-card/revoke        | Cabut kartu (semua QR dinonaktifkan)                 |
-| POST   | /api/members/:id/digital-card/printed       | Terbitkan kartu fisik (QR statis per-penerbitan)     |
-| GET    | /api/members/:id/digital-card/printed/pdf   | PDF cetak kartu fisik (856×1080, `?issuanceId=`)     |
-| GET    | /api/members/:id/digital-card/issuances     | Riwayat penerbitan (edisi, source, alasan, scan)     |
-| POST   | /api/members/print-batch                    | Terbitkan kartu fisik massal (`{ memberIds, reason }`) |
-| GET    | /api/members/printed/batch/pdf              | PDF gabungan batch (`?issuanceIds=a,b,c`)            |
-| GET    | /api/documents/verify/:token                | Validasi QR publik (digital maupun printed)          |
+| Method | Path                                      | Deskripsi                                              |
+| ------ | ----------------------------------------- | ------------------------------------------------------ |
+| GET    | /api/members/:id/digital-card             | Data kartu digital (JSON) + URL verifikasi             |
+| GET    | /api/members/:id/digital-card/image       | Gambar kartu PNG (pakai `?watermark=1` utk download)   |
+| GET    | /api/members/:id/digital-card/pdf         | PDF kartu digital (2 sisi)                             |
+| GET    | /api/members/:id/digital-card/security    | Status QR + statistik & riwayat pemindaian             |
+| PATCH  | /api/members/:id/digital-card/activate    | Aktifkan kembali kartu (QR)                            |
+| PATCH  | /api/members/:id/digital-card/revoke      | Cabut kartu (semua QR dinonaktifkan)                   |
+| POST   | /api/members/:id/digital-card/printed     | Terbitkan kartu fisik (QR statis per-penerbitan)       |
+| GET    | /api/members/:id/digital-card/printed/pdf | PDF cetak kartu fisik (856×1080, `?issuanceId=`)       |
+| GET    | /api/members/:id/digital-card/issuances   | Riwayat penerbitan (edisi, source, alasan, scan)       |
+| POST   | /api/members/print-batch                  | Terbitkan kartu fisik massal (`{ memberIds, reason }`) |
+| GET    | /api/members/printed/batch/pdf            | PDF gabungan batch (`?issuanceIds=a,b,c`)              |
+| GET    | /api/documents/verify/:token              | Validasi QR publik (digital maupun printed)            |
 
 ### Alur penerbitan kartu fisik
 

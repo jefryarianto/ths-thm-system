@@ -170,7 +170,10 @@ describe('TrainingsService', () => {
 
     it('should still pass through non-empty values and undefined-safe nullable fields', async () => {
       mockPrisma.latihan.update.mockResolvedValue({ id: '1' });
-      await service.update('1', { hasilLatihanGlobal: undefined, rekomendasiBerikutnya: 'Fokus kuda-kuda' });
+      await service.update('1', {
+        hasilLatihanGlobal: undefined,
+        rekomendasiBerikutnya: 'Fokus kuda-kuda',
+      });
       const call = mockPrisma.latihan.update.mock.calls[0][0];
       expect(call.data).not.toHaveProperty('hasilLatihanGlobal');
       expect(call.data.rekomendasiBerikutnya).toBe('Fokus kuda-kuda');

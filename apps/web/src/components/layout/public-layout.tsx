@@ -187,7 +187,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
               className="flex items-center gap-1 hover:text-gold-400 transition-colors"
-              aria-label={locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'}
+              aria-label={
+                locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'
+              }
             >
               <Globe size={12} aria-hidden="true" className="text-gold-400" />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
@@ -365,7 +367,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <Link
                 href="/"
                 className={`flex items-center gap-2.5 px-4 py-3 rounded-xl font-semibold transition-colors ${
-                  pathname === '/' ? 'bg-gold-400 text-navy-950 font-bold' : 'text-white hover:bg-white/10'
+                  pathname === '/'
+                    ? 'bg-gold-400 text-navy-950 font-bold'
+                    : 'text-white hover:bg-white/10'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -379,14 +383,19 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 const isGroupActive = group.items.some((item) => pathname === item.href);
 
                 return (
-                  <div key={group.id} className="rounded-xl border border-white/10 overflow-hidden bg-white/5">
+                  <div
+                    key={group.id}
+                    className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
+                  >
                     <button
                       type="button"
                       onClick={() => toggleMobileAccordion(group.id)}
                       className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white/90 hover:text-white"
                       aria-expanded={isOpen}
                     >
-                      <span className={isGroupActive ? 'text-gold-300 font-bold' : ''}>{group.label}</span>
+                      <span className={isGroupActive ? 'text-gold-300 font-bold' : ''}>
+                        {group.label}
+                      </span>
                       <ChevronDown
                         size={16}
                         className={`text-gold-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -409,7 +418,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                                   : 'text-white/80 hover:bg-white/10 hover:text-white'
                               }`}
                             >
-                              <Icon size={16} className={isItemActive ? 'text-navy-950' : 'text-gold-400'} />
+                              <Icon
+                                size={16}
+                                className={isItemActive ? 'text-navy-950' : 'text-gold-400'}
+                              />
                               <span>{item.label}</span>
                             </Link>
                           );
@@ -424,7 +436,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <Link
                 href="/donasi"
                 className={`flex items-center gap-2.5 px-4 py-3 rounded-xl font-semibold transition-colors ${
-                  pathname === '/donasi' ? 'bg-gold-400 text-navy-950 font-bold' : 'text-white hover:bg-white/10'
+                  pathname === '/donasi'
+                    ? 'bg-gold-400 text-navy-950 font-bold'
+                    : 'text-white hover:bg-white/10'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -466,49 +480,73 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             {/* Column 1: About */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain bg-white p-1" />
+                <img
+                  src="/logo.svg"
+                  alt="THS-THM Logo"
+                  className="w-10 h-10 rounded-lg object-contain bg-white p-1"
+                />
                 <div>
-                  <span className="font-bold text-white text-lg leading-tight block font-serif">THS-THM</span>
+                  <span className="font-bold text-white text-lg leading-tight block font-serif">
+                    THS-THM
+                  </span>
                   <span className="text-[10px] text-white/60 leading-tight">
                     Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                   </span>
                 </div>
               </div>
               <p className="text-white/70 text-sm leading-relaxed">
-                Sistem Manajemen Organisasi THS-THM &mdash; Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
+                Sistem Manajemen Organisasi THS-THM &mdash; Kelola anggota, iuran, latihan,
+                pendadaran, dan dokumentasi secara digital.
               </p>
             </div>
 
             {/* Column 2: Profil & Navigasi */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Tentang Organisasi</h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
+                Tentang Organisasi
+              </h4>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/sejarah" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <Link
+                    href="/sejarah"
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                  >
                     <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
                     <span>Sejarah Pendirian</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/organisasi" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <Link
+                    href="/organisasi"
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                  >
                     <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
                     <span>Visi & AD/ART</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/struktur-organisasi" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <Link
+                    href="/struktur-organisasi"
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                  >
                     <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
                     <span>Struktur Organisasi</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/kepengurusan" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <Link
+                    href="/kepengurusan"
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                  >
                     <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
                     <span>Dewan Kepengurusan</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/berita" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <Link
+                    href="/berita"
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+                  >
                     <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
                     <span>Warta & Berita</span>
                   </Link>
@@ -518,7 +556,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 3: Akses Cepat */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Akses Cepat</h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
+                Akses Cepat
+              </h4>
               <ul className="space-y-2">
                 <li>
                   <Link
@@ -552,7 +592,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 4: Kontak */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Kontak</h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
+                Kontak
+              </h4>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2 text-sm text-white/70">
                   <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400" aria-hidden="true" />
@@ -560,7 +602,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
                   <Mail size={14} className="shrink-0 mt-0.5 text-gold-400" aria-hidden="true" />
-                  <a href="mailto:info@ths-thm.cloud" className="hover:text-gold-400 transition-colors">
+                  <a
+                    href="mailto:info@ths-thm.cloud"
+                    className="hover:text-gold-400 transition-colors"
+                  >
                     info@ths-thm.cloud
                   </a>
                 </li>

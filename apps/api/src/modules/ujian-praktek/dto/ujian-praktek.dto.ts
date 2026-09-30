@@ -16,7 +16,6 @@ import { Type } from 'class-transformer';
 // ─── Create Ujian Praktek ─────────────────────────────
 
 export class CreateUjianPraktekDto {
-
   @ApiProperty()
   @IsString()
   nama: string;

@@ -119,9 +119,7 @@ function AccessDenied({
         <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-950 rounded-full flex items-center justify-center mb-4">
           <ShieldAlert size={32} className="text-red-500" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Akses Ditolak
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Akses Ditolak</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           {!isAuthenticated
             ? 'Silakan login untuk mengakses halaman ini.'

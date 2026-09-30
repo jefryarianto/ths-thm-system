@@ -165,7 +165,10 @@ describe('DocumentBatchService', () => {
       service.initQueue(processCallback);
       mockPrisma.documentBatchJob.create.mockResolvedValue(batchRecord);
       mockPrisma.documentJob.createManyAndReturn.mockResolvedValue(jobRecords);
-      mockPrisma.documentBatchJob.update.mockResolvedValue({ ...batchRecord, status: 'processing' });
+      mockPrisma.documentBatchJob.update.mockResolvedValue({
+        ...batchRecord,
+        status: 'processing',
+      });
     });
 
     it('should create batch and job records, update status, and enqueue jobs', async () => {
@@ -213,9 +216,9 @@ describe('DocumentBatchService', () => {
 
       const uninitService = module.get<DocumentBatchService>(DocumentBatchService);
 
-      await expect(
-        uninitService.createBatch('kta', ['m1'], 'user-1'),
-      ).rejects.toThrow('Queue not initialized');
+      await expect(uninitService.createBatch('kta', ['m1'], 'user-1')).rejects.toThrow(
+        'Queue not initialized',
+      );
     });
 
     it('should still create the batch record even when no creator is given', async () => {
@@ -238,10 +241,31 @@ describe('DocumentBatchService', () => {
   describe('getBatchProgress', () => {
     it('should return formatted batch progress with job details', async () => {
       mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
-        id: 'b1', type: 'kta', totalJobs: 10, completed: 4, failed: 1, status: 'processing',
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 10,
+        completed: 4,
+        failed: 1,
+        status: 'processing',
         jobs: [
-          { id: 'j1', memberId: 'm1', status: 'completed', error: null, nomorDokumen: 'DOC-001', startedAt: new Date(), completedAt: new Date() },
-          { id: 'j2', memberId: 'm2', status: 'failed', error: 'Render error', nomorDokumen: null, startedAt: new Date(), completedAt: new Date() },
+          {
+            id: 'j1',
+            memberId: 'm1',
+            status: 'completed',
+            error: null,
+            nomorDokumen: 'DOC-001',
+            startedAt: new Date(),
+            completedAt: new Date(),
+          },
+          {
+            id: 'j2',
+            memberId: 'm2',
+            status: 'failed',
+            error: 'Render error',
+            nomorDokumen: null,
+            startedAt: new Date(),
+            completedAt: new Date(),
+          },
         ],
       });
 
@@ -262,7 +286,13 @@ describe('DocumentBatchService', () => {
 
     it('should return progress 0 for batch with 0 total jobs', async () => {
       mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
-        id: 'b1', type: 'kta', totalJobs: 0, completed: 0, failed: 0, status: 'completed', jobs: [],
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 0,
+        completed: 0,
+        failed: 0,
+        status: 'completed',
+        jobs: [],
       });
 
       const progress = await service.getBatchProgress('b1');
@@ -275,8 +305,26 @@ describe('DocumentBatchService', () => {
   describe('getBatchList', () => {
     it('should return paginated batch list with progress', async () => {
       mockPrisma.documentBatchJob.findMany.mockResolvedValue([
-        { id: 'b1', type: 'kta', totalJobs: 10, completed: 8, failed: 1, status: 'completed_with_errors', createdBy: 'u1', createdAt: new Date() },
-        { id: 'b2', type: 'sertifikat_pendadaran', totalJobs: 5, completed: 5, failed: 0, status: 'completed', createdBy: 'u1', createdAt: new Date() },
+        {
+          id: 'b1',
+          type: 'kta',
+          totalJobs: 10,
+          completed: 8,
+          failed: 1,
+          status: 'completed_with_errors',
+          createdBy: 'u1',
+          createdAt: new Date(),
+        },
+        {
+          id: 'b2',
+          type: 'sertifikat_pendadaran',
+          totalJobs: 5,
+          completed: 5,
+          failed: 0,
+          status: 'completed',
+          createdBy: 'u1',
+          createdAt: new Date(),
+        },
       ]);
       mockPrisma.documentBatchJob.count.mockResolvedValue(2);
 
@@ -303,7 +351,8 @@ describe('DocumentBatchService', () => {
   describe('cancelBatch', () => {
     it('should cancel a processing batch and mark pending jobs as failed', async () => {
       mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
-        id: 'b1', status: 'processing',
+        id: 'b1',
+        status: 'processing',
       });
       mockPrisma.documentBatchJob.update.mockResolvedValue({});
       mockPrisma.documentJob.updateMany.mockResolvedValue({ count: 3 });
@@ -329,7 +378,8 @@ describe('DocumentBatchService', () => {
 
     it('should return false for batch that is not in processing status', async () => {
       mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
-        id: 'b1', status: 'completed',
+        id: 'b1',
+        status: 'completed',
       });
       const result = await service.cancelBatch('b1');
       expect(result).toBe(false);
@@ -374,7 +424,14 @@ describe('DocumentBatchService', () => {
   // ── retryBatch ─────────────────────────────────────────
 
   describe('retryBatch', () => {
-    const batchRecord = { id: 'b1', type: 'kta', totalJobs: 3, completed: 0, failed: 2, status: 'completed_with_errors' };
+    const batchRecord = {
+      id: 'b1',
+      type: 'kta',
+      totalJobs: 3,
+      completed: 0,
+      failed: 2,
+      status: 'completed_with_errors',
+    };
     const failedJobs = [
       { id: 'j1', memberId: 'm1', status: 'failed', batchId: 'b1' },
       { id: 'j2', memberId: 'm2', status: 'failed', batchId: 'b1' },
@@ -435,11 +492,29 @@ describe('DocumentBatchService', () => {
   describe('exportCsv', () => {
     beforeEach(() => {
       mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
-        id: 'b1', type: 'kta', totalJobs: 2,
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 2,
       });
       mockPrisma.documentJob.findMany.mockResolvedValue([
-        { id: 'j1', memberId: 'm1', nomorDokumen: 'DOC-001', status: 'completed', error: null, createdAt: new Date('2026-01-01'), completedAt: new Date('2026-01-01T00:01:00Z') },
-        { id: 'j2', memberId: 'm2', nomorDokumen: null, status: 'failed', error: 'Render error', createdAt: new Date('2026-01-01'), completedAt: new Date('2026-01-01T00:02:00Z') },
+        {
+          id: 'j1',
+          memberId: 'm1',
+          nomorDokumen: 'DOC-001',
+          status: 'completed',
+          error: null,
+          createdAt: new Date('2026-01-01'),
+          completedAt: new Date('2026-01-01T00:01:00Z'),
+        },
+        {
+          id: 'j2',
+          memberId: 'm2',
+          nomorDokumen: null,
+          status: 'failed',
+          error: 'Render error',
+          createdAt: new Date('2026-01-01'),
+          completedAt: new Date('2026-01-01T00:02:00Z'),
+        },
       ]);
       mockPrisma.anggota.findMany.mockResolvedValue([
         { id: 'm1', namaLengkap: 'Budi Santoso' },
@@ -451,7 +526,9 @@ describe('DocumentBatchService', () => {
       const { csv, filename } = await service.exportCsv('b1');
 
       expect(csv.startsWith('\uFEFF')).toBe(true); // BOM for Excel
-      expect(csv).toContain('Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At');
+      expect(csv).toContain(
+        'Member ID,Nama Anggota,Nomor Dokumen,Status,Error,Created At,Completed At',
+      );
       expect(csv).toContain('m1,Budi Santoso,DOC-001,completed,,2026-01-01');
       expect(csv).toContain('m2,"Siti, A.Md",,failed,Render error,2026-01-01');
       expect(filename).toMatch(/^batch-kta-/);
@@ -500,12 +577,19 @@ describe('DocumentBatchService', () => {
   // ── handleJobComplete (via private method call) ────────
 
   describe('handleJobComplete', () => {
-    const result = { jobId: 'j1', success: true, data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' } };
+    const result = {
+      jobId: 'j1',
+      success: true,
+      data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
+    };
 
     it('should update job as completed and increment batch completed counter', async () => {
       mockPrisma.documentJob.update.mockResolvedValue({});
       mockPrisma.documentBatchJob.update.mockResolvedValue({
-        id: 'b1', totalJobs: 5, completed: 1, failed: 0,
+        id: 'b1',
+        totalJobs: 5,
+        completed: 1,
+        failed: 0,
       });
 
       await service['handleJobComplete']('b1', 'j1', result);
@@ -525,16 +609,33 @@ describe('DocumentBatchService', () => {
       // The 5th and final completed job — Prisma.update returns the full record
       // including createdBy, so the mock must include it for the notification
       // guard check (!batch.createdBy) to pass.
-      mockPrisma.documentBatchJob.update
-        .mockResolvedValueOnce({ id: 'b1', totalJobs: 5, completed: 5, failed: 0, createdBy: 'u1', type: 'kta' });
+      mockPrisma.documentBatchJob.update.mockResolvedValueOnce({
+        id: 'b1',
+        totalJobs: 5,
+        completed: 5,
+        failed: 0,
+        createdBy: 'u1',
+        type: 'kta',
+      });
       mockPrisma.documentBatchJob.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.notifikasi.create.mockResolvedValue({});
       mockPrisma.notifikasi.count.mockResolvedValue(0);
       // getBatchProgress inside sendBatchCompletionNotifications
-      mockPrisma.documentBatchJob.findUnique
-        .mockResolvedValue({ id: 'b1', type: 'kta', totalJobs: 5, completed: 5, failed: 0, status: 'completed', progress: 100, jobs: [] });
+      mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 5,
+        completed: 5,
+        failed: 0,
+        status: 'completed',
+        progress: 100,
+        jobs: [],
+      });
       // sendBatchCompletionEmail — user lookup
-      mockPrisma.user.findUnique.mockResolvedValue({ email: 'user@test.com', namaLengkap: 'Admin' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        email: 'user@test.com',
+        namaLengkap: 'Admin',
+      });
 
       await service['handleJobComplete']('b1', 'j1', result);
 
@@ -546,7 +647,9 @@ describe('DocumentBatchService', () => {
         data: { status: 'completed' },
       });
       expect(mockEventsGateway.sendToUser).toHaveBeenCalledWith(
-        'u1', 'batch:complete', expect.any(Object),
+        'u1',
+        'batch:complete',
+        expect.any(Object),
       );
     });
 
@@ -554,14 +657,28 @@ describe('DocumentBatchService', () => {
       mockPrisma.documentJob.update.mockResolvedValue({});
       // The last job completes but there are already failures — full record
       // must include createdBy so notifications proceed.
-      mockPrisma.documentBatchJob.update
-        .mockResolvedValueOnce({ id: 'b1', totalJobs: 5, completed: 4, failed: 1, createdBy: 'u1', type: 'kta' });
+      mockPrisma.documentBatchJob.update.mockResolvedValueOnce({
+        id: 'b1',
+        totalJobs: 5,
+        completed: 4,
+        failed: 1,
+        createdBy: 'u1',
+        type: 'kta',
+      });
       mockPrisma.documentBatchJob.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.notifikasi.create.mockResolvedValue({});
       mockPrisma.notifikasi.count.mockResolvedValue(0);
       // getBatchProgress inside sendBatchCompletionNotifications
-      mockPrisma.documentBatchJob.findUnique
-        .mockResolvedValue({ id: 'b1', type: 'kta', totalJobs: 5, completed: 4, failed: 1, status: 'completed_with_errors', progress: 80, jobs: [] });
+      mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 5,
+        completed: 4,
+        failed: 1,
+        status: 'completed_with_errors',
+        progress: 80,
+        jobs: [],
+      });
 
       await service['handleJobComplete']('b1', 'j1', result);
 
@@ -575,12 +692,20 @@ describe('DocumentBatchService', () => {
   // ── handleJobFailed (via private method call) ─────────
 
   describe('handleJobFailed', () => {
-    const result = { jobId: 'j1', success: false, error: 'Render timeout', data: { batchId: 'b1', documentJobId: 'j1' } };
+    const result = {
+      jobId: 'j1',
+      success: false,
+      error: 'Render timeout',
+      data: { batchId: 'b1', documentJobId: 'j1' },
+    };
 
     it('should mark job as failed with error message', async () => {
       mockPrisma.documentJob.update.mockResolvedValue({});
       mockPrisma.documentBatchJob.update.mockResolvedValue({
-        id: 'b1', totalJobs: 5, completed: 0, failed: 1,
+        id: 'b1',
+        totalJobs: 5,
+        completed: 0,
+        failed: 1,
       });
 
       await service['handleJobFailed']('b1', 'j1', result);
@@ -600,7 +725,14 @@ describe('DocumentBatchService', () => {
       // Final job fails — totalJobs=5, completed=3, failed was 1, now becomes 2 → 3+2 = 5
       mockPrisma.documentBatchJob.update
         .mockResolvedValueOnce({ id: 'b1', totalJobs: 5, completed: 3, failed: 2 })
-        .mockResolvedValueOnce({ id: 'b1', totalJobs: 5, completed: 3, failed: 2, type: 'kta', createdBy: 'u1' });
+        .mockResolvedValueOnce({
+          id: 'b1',
+          totalJobs: 5,
+          completed: 3,
+          failed: 2,
+          type: 'kta',
+          createdBy: 'u1',
+        });
       mockPrisma.documentBatchJob.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.notifikasi.create.mockResolvedValue({});
       mockPrisma.notifikasi.count.mockResolvedValue(0);
@@ -620,26 +752,46 @@ describe('DocumentBatchService', () => {
     it('should send socket event, create in-app notification, and broadcast queue update', async () => {
       // Use completely fresh mocks to avoid any lingering state across tests
       mockPrisma.documentJob.update = jest.fn().mockResolvedValue({});
-      mockPrisma.documentBatchJob.update = jest.fn().mockResolvedValue(
-        { id: 'b1', totalJobs: 1, completed: 1, failed: 0, createdBy: 'u1', type: 'kta' },
-      );
+      mockPrisma.documentBatchJob.update = jest
+        .fn()
+        .mockResolvedValue({
+          id: 'b1',
+          totalJobs: 1,
+          completed: 1,
+          failed: 0,
+          createdBy: 'u1',
+          type: 'kta',
+        });
       mockPrisma.documentBatchJob.updateMany = jest.fn().mockResolvedValue({ count: 1 });
-      mockPrisma.documentBatchJob.findUnique = jest.fn().mockResolvedValue(
-        { id: 'b1', type: 'kta', totalJobs: 1, completed: 1, failed: 0, status: 'completed', progress: 100, jobs: [] },
-      );
+      mockPrisma.documentBatchJob.findUnique = jest
+        .fn()
+        .mockResolvedValue({
+          id: 'b1',
+          type: 'kta',
+          totalJobs: 1,
+          completed: 1,
+          failed: 0,
+          status: 'completed',
+          progress: 100,
+          jobs: [],
+        });
       mockPrisma.notifikasi.create = jest.fn().mockResolvedValue({});
       mockPrisma.notifikasi.count = jest.fn().mockResolvedValue(3);
-      mockPrisma.user.findUnique = jest.fn().mockResolvedValue(
-        { email: 'user@test.com', namaLengkap: 'Admin' },
-      );
+      mockPrisma.user.findUnique = jest
+        .fn()
+        .mockResolvedValue({ email: 'user@test.com', namaLengkap: 'Admin' });
 
       await service['handleJobComplete']('b1', 'j1', {
-        jobId: 'j1', success: true, data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
+        jobId: 'j1',
+        success: true,
+        data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
       });
 
       // Socket.IO real-time event
       expect(mockEventsGateway.sendToUser).toHaveBeenCalledWith(
-        'u1', 'batch:complete', expect.objectContaining({ batchId: 'b1', status: 'completed' }),
+        'u1',
+        'batch:complete',
+        expect.objectContaining({ batchId: 'b1', status: 'completed' }),
       );
 
       // In-app notification — should be a success notification
@@ -657,9 +809,9 @@ describe('DocumentBatchService', () => {
       expect(mockEventsGateway.sendUnreadCount).toHaveBeenCalledWith('u1', 3);
 
       // Queue stats broadcast
-      expect(mockEventsGateway.broadcast).toHaveBeenCalledWith(
-        'queue:updated', { timestamp: expect.any(Number) },
-      );
+      expect(mockEventsGateway.broadcast).toHaveBeenCalledWith('queue:updated', {
+        timestamp: expect.any(Number),
+      });
     });
   });
 
@@ -670,11 +822,27 @@ describe('DocumentBatchService', () => {
       mockPrisma.documentJob.update.mockResolvedValue({});
       // failed=1 so finalStatus becomes completed_with_errors & email subject mentions Gagal
       mockPrisma.documentBatchJob.update.mockImplementation(() =>
-        Promise.resolve({ id: 'b1', totalJobs: 1, completed: 0, failed: 1, createdBy: 'u1', type: 'kta' }),
+        Promise.resolve({
+          id: 'b1',
+          totalJobs: 1,
+          completed: 0,
+          failed: 1,
+          createdBy: 'u1',
+          type: 'kta',
+        }),
       );
       mockPrisma.documentBatchJob.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.documentBatchJob.findUnique.mockImplementation(() =>
-        Promise.resolve({ id: 'b1', type: 'kta', totalJobs: 1, completed: 0, failed: 1, status: 'completed_with_errors', progress: 0, jobs: [] }),
+        Promise.resolve({
+          id: 'b1',
+          type: 'kta',
+          totalJobs: 1,
+          completed: 0,
+          failed: 1,
+          status: 'completed_with_errors',
+          progress: 0,
+          jobs: [],
+        }),
       );
       mockPrisma.user.findUnique.mockImplementation(() =>
         Promise.resolve({ email: 'user@test.com', namaLengkap: 'Admin' }),
@@ -683,7 +851,9 @@ describe('DocumentBatchService', () => {
       mockPrisma.notifikasi.count.mockResolvedValue(0);
 
       await service['handleJobComplete']('b1', 'j1', {
-        jobId: 'j1', success: true, data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
+        jobId: 'j1',
+        success: true,
+        data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
       });
 
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
@@ -697,18 +867,34 @@ describe('DocumentBatchService', () => {
     it('should skip email when user has no email', async () => {
       mockPrisma.documentJob.update.mockResolvedValue({});
       // Full record with createdBy
-      mockPrisma.documentBatchJob.update
-        .mockResolvedValueOnce({ id: 'b1', totalJobs: 1, completed: 1, failed: 0, createdBy: 'u1', type: 'kta' });
+      mockPrisma.documentBatchJob.update.mockResolvedValueOnce({
+        id: 'b1',
+        totalJobs: 1,
+        completed: 1,
+        failed: 0,
+        createdBy: 'u1',
+        type: 'kta',
+      });
       mockPrisma.documentBatchJob.updateMany.mockResolvedValue({ count: 1 });
       // getBatchProgress
-      mockPrisma.documentBatchJob.findUnique
-        .mockResolvedValue({ id: 'b1', type: 'kta', totalJobs: 1, completed: 1, failed: 0, status: 'completed', progress: 100, jobs: [] });
+      mockPrisma.documentBatchJob.findUnique.mockResolvedValue({
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 1,
+        completed: 1,
+        failed: 0,
+        status: 'completed',
+        progress: 100,
+        jobs: [],
+      });
       mockPrisma.user.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Admin' });
       mockPrisma.notifikasi.create.mockResolvedValue({});
       mockPrisma.notifikasi.count.mockResolvedValue(0);
 
       await service['handleJobComplete']('b1', 'j1', {
-        jobId: 'j1', success: true, data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
+        jobId: 'j1',
+        success: true,
+        data: { nomorDokumen: 'DOC-001', batchId: 'b1', documentJobId: 'j1' },
       });
 
       expect(mockMailService.sendMail).not.toHaveBeenCalled();

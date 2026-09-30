@@ -47,9 +47,7 @@ describe('AuthController metrics instrumentation', () => {
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    metrics = module.get(MetricsService) as jest.Mocked<
-      Pick<MetricsService, 'recordAuth'>
-    >;
+    metrics = module.get(MetricsService) as jest.Mocked<Pick<MetricsService, 'recordAuth'>>;
     jest.clearAllMocks();
   });
 
@@ -117,18 +115,10 @@ describe('AuthController metrics instrumentation', () => {
       const req = makeReq('refreshToken=abc');
       const res: Record<string, unknown> = {};
 
-      const result = await controller.refresh(
-        req as never,
-        {} as never,
-        res as never,
-      );
+      const result = await controller.refresh(req as never, {} as never, res as never);
 
       expect(result).toBeDefined();
-      expect(metrics.recordAuth).toHaveBeenCalledWith(
-        'refresh',
-        'success',
-        expect.any(Number),
-      );
+      expect(metrics.recordAuth).toHaveBeenCalledWith('refresh', 'success', expect.any(Number));
     });
 
     it('records unauthorized when refresh token is missing', async () => {
@@ -152,18 +142,10 @@ describe('AuthController metrics instrumentation', () => {
       const req = makeReq('refreshToken=abc');
       const res: Record<string, unknown> = {};
 
-      const result = await controller.logout(
-        { id: 'user-1' },
-        req as never,
-        res as never,
-      );
+      const result = await controller.logout({ id: 'user-1' }, req as never, res as never);
 
       expect(result).toEqual({ success: true, message: expect.any(String) });
-      expect(metrics.recordAuth).toHaveBeenCalledWith(
-        'logout',
-        'success',
-        expect.any(Number),
-      );
+      expect(metrics.recordAuth).toHaveBeenCalledWith('logout', 'success', expect.any(Number));
     });
   });
 });

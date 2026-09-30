@@ -27,12 +27,12 @@ function makeRequest(opts: {
   const url = opts.url ?? `http://localhost:3002${pathname}`;
   const cookies = {
     get: vi.fn((name: string) =>
-      name === 'refreshToken' && opts.cookieValue ? { value: opts.cookieValue } : undefined
+      name === 'refreshToken' && opts.cookieValue ? { value: opts.cookieValue } : undefined,
     ),
     toString: vi.fn(() => (opts.cookieValue ? `refreshToken=${opts.cookieValue}` : '')),
   };
   const headers = {
-    get: vi.fn((name: string) => (name === 'x-e2e-bypass' ? opts.e2eBypass ?? null : null)),
+    get: vi.fn((name: string) => (name === 'x-e2e-bypass' ? (opts.e2eBypass ?? null) : null)),
   };
   return {
     nextUrl: { pathname },
@@ -78,7 +78,8 @@ describe('proxy (auth gate)', () => {
 
   it('excludes static assets via the config.matcher regex (not the function body)', () => {
     // RegExp yang sama dengan `export const config.matcher` di proxy.ts.
-    const matcher = '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|bmp|woff|woff2|ttf|otf|eot|css|js|map|json|webmanifest|txt|pdf|doc|docx|xls|xlsx|zip|mp4|webm|mp3|wav)).*)';
+    const matcher =
+      '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|bmp|woff|woff2|ttf|otf|eot|css|js|map|json|webmanifest|txt|pdf|doc|docx|xls|xlsx|zip|mp4|webm|mp3|wav)).*)';
     const re = new RegExp(matcher);
     // Aset statis tidak dicocokkan → tidak dicegat proxy.
     expect('/logo.svg'.match(re)).toBeNull();

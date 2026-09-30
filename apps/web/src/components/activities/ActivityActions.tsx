@@ -82,7 +82,11 @@ export default function ActivityActions({ activity, onSuccess }: ActivityActions
           </button>
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} aria-hidden="true" />
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowMenu(false)}
+                aria-hidden="true"
+              />
               <div
                 style={menuStyle}
                 className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
@@ -91,10 +95,17 @@ export default function ActivityActions({ activity, onSuccess }: ActivityActions
                 {menuItems.map((item, i) => (
                   <button
                     key={i}
-                    onClick={() => { if (!item.disabled) { setShowMenu(false); item.action(); } }}
+                    onClick={() => {
+                      if (!item.disabled) {
+                        setShowMenu(false);
+                        item.action();
+                      }
+                    }}
                     disabled={item.disabled}
                     className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                      item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+                      item.danger
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-700 dark:text-gray-300'
                     } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     role="menuitem"
                   >

@@ -106,44 +106,45 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
-  },  "jest": {
-   "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-   ],
-   "rootDir": "src",
-   "testRegex": ".*\\.spec\\.ts$",
-   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-   },
-   "transformIgnorePatterns": [
-    "/node_modules/(?!uuid)"
-   ],
-   "collectCoverageFrom": [
-    "**/*.(t|j)s",
-    "!**/*.spec.ts",
-    "!**/*.module.ts",
-    "!**/main.ts",
-    "!**/migrations/**",
-    "!**/seed*.ts"
-   ],
-   "coverageDirectory": "../coverage",
-   "coverageThreshold": {
-    "global": {
-     "statements": 35,
-     "branches": 34,
-     "functions": 33,
-     "lines": 36
-    }
-   },
-   "coverageReporters": [
-    "text",
-    "text-summary",
-    "lcov",
-    "json-summary"
-   ],
-   "testTimeout": 15000,
-   "testEnvironment": "node"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid)"
+    ],
+    "collectCoverageFrom": [
+      "**/*.(t|j)s",
+      "!**/*.spec.ts",
+      "!**/*.module.ts",
+      "!**/main.ts",
+      "!**/migrations/**",
+      "!**/seed*.ts"
+    ],
+    "coverageDirectory": "../coverage",
+    "coverageThreshold": {
+      "global": {
+        "statements": 35,
+        "branches": 34,
+        "functions": 33,
+        "lines": 36
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "lcov",
+      "json-summary"
+    ],
+    "testTimeout": 15000,
+    "testEnvironment": "node"
   }
 }

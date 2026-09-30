@@ -89,7 +89,9 @@ export default function SejarahPage() {
               <div>
                 <p className="font-medium text-gray-900">Status Tampil</p>
                 <p className="text-sm text-gray-500">
-                  {isVisible ? 'Konten ditampilkan di halaman public' : 'Konten tersembunyi dari halaman public'}
+                  {isVisible
+                    ? 'Konten ditampilkan di halaman public'
+                    : 'Konten tersembunyi dari halaman public'}
                 </p>
               </div>
             </div>

@@ -15,18 +15,12 @@ interface LoggerLike {
   warn: (message: string) => unknown;
 }
 
-export type OverlapGuard = <T>(
-  name: string,
-  fn: () => Promise<T>,
-) => Promise<T | undefined>;
+export type OverlapGuard = <T>(name: string, fn: () => Promise<T>) => Promise<T | undefined>;
 
 export function createOverlapGuard(logger: LoggerLike): OverlapGuard {
   const running = new Set<string>();
 
-  return async function guard<T>(
-    name: string,
-    fn: () => Promise<T>,
-  ): Promise<T | undefined> {
+  return async function guard<T>(name: string, fn: () => Promise<T>): Promise<T | undefined> {
     if (running.has(name)) {
       logger.warn(`[overlap-guard] "${name}" masih berjalan — eksekusi baru dilewati`);
       return undefined;

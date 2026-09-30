@@ -90,8 +90,14 @@ describe('RewardsService', () => {
       providers: [
         RewardsService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
-        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: { buildScopeFilter: jest.fn(), hasAccessToResourceAsync: jest.fn() } },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: { getOrSet: jest.fn(), invalidatePrefix: jest.fn() } },
+        {
+          provide: require('../../common/utils/scope-helpers').ScopeHelper,
+          useValue: { buildScopeFilter: jest.fn(), hasAccessToResourceAsync: jest.fn() },
+        },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: { getOrSet: jest.fn(), invalidatePrefix: jest.fn() },
+        },
         {
           provide: require('../notifications/notifications.service').NotificationsService,
           useValue: { send: jest.fn() },
@@ -331,8 +337,14 @@ describe('RewardsService', () => {
         providers: [
           RewardsService,
           { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
-          { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: { buildScopeFilter: jest.fn(), hasAccessToResourceAsync: jest.fn() } },
-          { provide: require('../../common/services/cache.service').CacheService, useValue: { getOrSet: jest.fn(), invalidatePrefix: jest.fn() } },
+          {
+            provide: require('../../common/utils/scope-helpers').ScopeHelper,
+            useValue: { buildScopeFilter: jest.fn(), hasAccessToResourceAsync: jest.fn() },
+          },
+          {
+            provide: require('../../common/services/cache.service').CacheService,
+            useValue: { getOrSet: jest.fn(), invalidatePrefix: jest.fn() },
+          },
           {
             provide: require('../notifications/notifications.service').NotificationsService,
             useValue: { send: jest.fn() },

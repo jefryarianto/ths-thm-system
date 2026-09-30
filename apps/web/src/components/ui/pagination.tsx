@@ -11,7 +11,13 @@ interface PaginationProps {
   pageSize?: number;
 }
 
-export default function Pagination({ page, totalPages, total, onPageChange, pageSize = 15 }: PaginationProps) {
+export default function Pagination({
+  page,
+  totalPages,
+  total,
+  onPageChange,
+  pageSize = 15,
+}: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const start = (page - 1) * pageSize + 1;
@@ -36,9 +42,7 @@ export default function Pagination({ page, totalPages, total, onPageChange, page
         onClick={() => onPageChange(p)}
         aria-current={p === page ? 'page' : undefined}
         className={`px-2.5 py-1 text-sm rounded-md ${
-          p === page
-            ? 'bg-primary text-white'
-            : 'text-muted hover:bg-surface-variant'
+          p === page ? 'bg-primary text-white' : 'text-muted hover:bg-surface-variant'
         }`}
       >
         {p}
@@ -49,7 +53,11 @@ export default function Pagination({ page, totalPages, total, onPageChange, page
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-border">
       <p className="text-sm text-muted">
-        Showing <strong className="text-text">{start}-{end}</strong> of <strong className="text-text">{total}</strong>
+        Showing{' '}
+        <strong className="text-text">
+          {start}-{end}
+        </strong>{' '}
+        of <strong className="text-text">{total}</strong>
       </p>
       <div className="flex items-center gap-1">
         <button

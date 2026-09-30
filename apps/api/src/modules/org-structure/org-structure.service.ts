@@ -170,7 +170,9 @@ export class OrgStructureService {
           where,
           orderBy: { nama: 'asc' },
           include: {
-            wilayah: { select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } } },
+            wilayah: {
+              select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } },
+            },
             _count: { select: { anggota: true } },
           },
         });
@@ -184,7 +186,9 @@ export class OrgStructureService {
     const data = await this.prisma.ranting.findUnique({
       where: { id },
       include: {
-        wilayah: { select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } } },
+        wilayah: {
+          select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } },
+        },
         _count: { select: { anggota: true, calonAnggotas: true } },
       },
     });
@@ -234,11 +238,15 @@ export class OrgStructureService {
       distrikMap.set(d.nama.toLowerCase(), d.id);
     }
     const wilayahMap = new Map<string, string>(); // `${distrikId}:${nama.toLowerCase()}` -> id
-    for (const w of await this.prisma.wilayah.findMany({ select: { id: true, nama: true, distrikId: true } })) {
+    for (const w of await this.prisma.wilayah.findMany({
+      select: { id: true, nama: true, distrikId: true },
+    })) {
       wilayahMap.set(`${w.distrikId}:${w.nama.toLowerCase()}`, w.id);
     }
     const rantingMap = new Map<string, string>(); // `${wilayahId}:${nama.toLowerCase()}` -> id
-    for (const r of await this.prisma.ranting.findMany({ select: { id: true, nama: true, wilayahId: true } })) {
+    for (const r of await this.prisma.ranting.findMany({
+      select: { id: true, nama: true, wilayahId: true },
+    })) {
       rantingMap.set(`${r.wilayahId}:${r.nama.toLowerCase()}`, r.id);
     }
 

@@ -38,8 +38,12 @@ export function structuredLog(
 }
 
 export const log = {
-  debug: (msg: string, opts?: Parameters<typeof structuredLog>[2]) => structuredLog('debug', msg, opts),
-  info: (msg: string, opts?: Parameters<typeof structuredLog>[2]) => structuredLog('info', msg, opts),
-  warn: (msg: string, opts?: Parameters<typeof structuredLog>[2]) => structuredLog('warn', msg, opts),
-  error: (msg: string, opts?: Parameters<typeof structuredLog>[2]) => structuredLog('error', msg, opts),
+  debug: (msg: string, opts?: Parameters<typeof structuredLog>[2]) =>
+    structuredLog('debug', msg, opts),
+  info: (msg: string, opts?: Parameters<typeof structuredLog>[2]) =>
+    structuredLog('info', msg, opts),
+  warn: (msg: string, opts?: Parameters<typeof structuredLog>[2]) =>
+    structuredLog('warn', msg, opts),
+  error: (msg: string, opts?: Parameters<typeof structuredLog>[2]) =>
+    structuredLog('error', msg, opts),
 };

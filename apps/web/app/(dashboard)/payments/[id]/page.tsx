@@ -9,9 +9,19 @@ import apiClient from '@/lib/api-client';
 import { formatRupiah } from '@/lib/format';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
-  ArrowLeft, CreditCard, CheckCircle, Clock, XCircle, User, Building2,
-  AlertCircle, RefreshCw, Download, FileText, Ban, Eye,
+  ArrowLeft,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  XCircle,
+  User,
+  Building2,
+  AlertCircle,
+  RefreshCw,
+  Download,
+  FileText,
+  Ban,
+  Eye,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import BuktiPreviewModal from '@/components/bukti-preview-modal';
@@ -43,9 +53,24 @@ interface PaymentDetail {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  lunas: { label: 'Lunas', color: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-200 dark:border-green-800', icon: <CheckCircle size={14} /> },
-  menunggu_verifikasi: { label: 'Menunggu Verifikasi', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800', icon: <Clock size={14} /> },
-  belum_dibayar: { label: 'Belum Dibayar', color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-600', icon: <XCircle size={14} /> },
+  lunas: {
+    label: 'Lunas',
+    color:
+      'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-200 dark:border-green-800',
+    icon: <CheckCircle size={14} />,
+  },
+  menunggu_verifikasi: {
+    label: 'Menunggu Verifikasi',
+    color:
+      'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
+    icon: <Clock size={14} />,
+  },
+  belum_dibayar: {
+    label: 'Belum Dibayar',
+    color:
+      'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-600',
+    icon: <XCircle size={14} />,
+  },
 };
 
 export default function PaymentDetailPage() {
@@ -75,27 +100,49 @@ export default function PaymentDetailPage() {
     }
   }, [id]);
 
-  useEffect(() => { fetchPayment(); }, [fetchPayment]);
+  useEffect(() => {
+    fetchPayment();
+  }, [fetchPayment]);
 
   const handleVerify = async () => {
     if (!payment) return;
-    if (!(await confirm({ title: 'Verifikasi Pembayaran', message: 'Verifikasi pembayaran ini? Status akan berubah menjadi LUNAS.', confirmLabel: 'Ya, Verifikasi', variant: 'info' }))) return;
+    if (
+      !(await confirm({
+        title: 'Verifikasi Pembayaran',
+        message: 'Verifikasi pembayaran ini? Status akan berubah menjadi LUNAS.',
+        confirmLabel: 'Ya, Verifikasi',
+        variant: 'info',
+      }))
+    )
+      return;
     setActionLoading('verify');
     try {
       await apiClient.patch(`/payments/${payment.id}/verify`);
       await fetchPayment();
-     } catch { toast('error', 'Gagal memverifikasi pembayaran'); }
+    } catch {
+      toast('error', 'Gagal memverifikasi pembayaran');
+    }
     setActionLoading(null);
   };
 
   const handleReject = async () => {
     if (!payment) return;
-    if (!(await confirm({ title: 'Tolak Pembayaran', message: 'Tolak pembayaran ini? Status akan dikembalikan ke Belum Dibayar.', confirmLabel: 'Ya, Tolak', variant: 'warning' }))) return;
+    if (
+      !(await confirm({
+        title: 'Tolak Pembayaran',
+        message: 'Tolak pembayaran ini? Status akan dikembalikan ke Belum Dibayar.',
+        confirmLabel: 'Ya, Tolak',
+        variant: 'warning',
+      }))
+    )
+      return;
     setActionLoading('reject');
     try {
       await apiClient.patch(`/payments/${payment.id}/reject`);
       await fetchPayment();
-     } catch { toast('error', 'Gagal menolak pembayaran'); }
+    } catch {
+      toast('error', 'Gagal menolak pembayaran');
+    }
     setActionLoading(null);
   };
 
@@ -116,9 +163,14 @@ export default function PaymentDetailPage() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center max-w-md">
           <AlertCircle size={40} className="mx-auto text-red-400 mb-3" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Pembayaran Tidak Ditemukan</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Pembayaran Tidak Ditemukan
+          </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>
-          <button onClick={() => router.push('/payments')} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+          <button
+            onClick={() => router.push('/payments')}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
             ← Kembali ke Pembayaran
           </button>
         </div>
@@ -131,39 +183,56 @@ export default function PaymentDetailPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Breadcrumbs suffix={{ href: '#', label: payment?.anggota?.namaLengkap || 'Detail' }} />
-      <Link href="/payments" className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group">
+      <Link
+        href="/payments"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+      >
         <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
         Kembali ke Pembayaran
       </Link>
 
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className={`h-2 ${payment.status === 'lunas' ? 'bg-green-500' : payment.status === 'menunggu_verifikasi' ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+        <div
+          className={`h-2 ${payment.status === 'lunas' ? 'bg-green-500' : payment.status === 'menunggu_verifikasi' ? 'bg-yellow-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+        />
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg ${
-                payment.status === 'lunas' ? 'bg-gradient-to-br from-green-500 to-emerald-600' :
-                payment.status === 'menunggu_verifikasi' ? 'bg-gradient-to-br from-yellow-500 to-amber-600' :
-                'bg-gradient-to-br from-gray-400 to-gray-500'
-              }`}>
+              <div
+                className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg ${
+                  payment.status === 'lunas'
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                    : payment.status === 'menunggu_verifikasi'
+                      ? 'bg-gradient-to-br from-yellow-500 to-amber-600'
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                }`}
+              >
                 <CreditCard size={24} className="text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Detail Pembayaran</h1>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusInfo.color}`}>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Detail Pembayaran
+                  </h1>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusInfo.color}`}
+                  >
                     {statusInfo.icon}
                     {statusInfo.label}
                   </span>
                 </div>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{formatRupiah(payment.jumlah)}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  ID: {payment.id}
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  {formatRupiah(payment.jumlah)}
                 </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">ID: {payment.id}</p>
               </div>
             </div>
-            <button onClick={fetchPayment} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Refresh">
+            <button
+              onClick={fetchPayment}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400"
+              title="Refresh"
+            >
               <RefreshCw size={16} />
             </button>
           </div>
@@ -173,12 +242,28 @@ export default function PaymentDetailPage() {
       {/* Actions */}
       {payment.status === 'menunggu_verifikasi' && (
         <div className="flex gap-3">
-          <button onClick={handleVerify} disabled={actionLoading !== null} className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center">
-            {actionLoading === 'verify' ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <CheckCircle size={16} />}
+          <button
+            onClick={handleVerify}
+            disabled={actionLoading !== null}
+            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center"
+          >
+            {actionLoading === 'verify' ? (
+              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <CheckCircle size={16} />
+            )}
             Verifikasi Pembayaran
           </button>
-          <button onClick={handleReject} disabled={actionLoading !== null} className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center">
-            {actionLoading === 'reject' ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <Ban size={16} />}
+          <button
+            onClick={handleReject}
+            disabled={actionLoading !== null}
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center"
+          >
+            {actionLoading === 'reject' ? (
+              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <Ban size={16} />
+            )}
             Tolak Pembayaran
           </button>
         </div>
@@ -209,7 +294,11 @@ export default function PaymentDetailPage() {
             <div className="space-y-3">
               <InfoRow icon={User} label="Nama" value={payment.anggota.namaLengkap} />
               <InfoRow icon={FileText} label="No. Anggota" value={payment.anggota.nomorAnggota} />
-              <InfoRow icon={Building2} label="Ranting" value={payment.anggota.ranting?.nama || '-'} />
+              <InfoRow
+                icon={Building2}
+                label="Ranting"
+                value={payment.anggota.ranting?.nama || '-'}
+              />
               <div className="pt-2">
                 <Link
                   href={`/members/${payment.anggotaId}`}
@@ -251,23 +340,19 @@ export default function PaymentDetailPage() {
               icon={CheckCircle}
               title="Diverifikasi"
               date={payment.diverifikasiAt}
-              subtitle={payment.verifikator?.namaLengkap ? `Oleh: ${payment.verifikator.namaLengkap}` : undefined}
+              subtitle={
+                payment.verifikator?.namaLengkap
+                  ? `Oleh: ${payment.verifikator.namaLengkap}`
+                  : undefined
+              }
               status="completed"
             />
           )}
           {payment.status === 'belum_dibayar' && !payment.tanggalBayar && (
-            <TimelineItem
-              icon={XCircle}
-              title="Menunggu Pembayaran"
-              status="pending"
-            />
+            <TimelineItem icon={XCircle} title="Menunggu Pembayaran" status="pending" />
           )}
           {payment.status === 'menunggu_verifikasi' && (
-            <TimelineItem
-              icon={Clock}
-              title="Menunggu Verifikasi Admin"
-              status="pending"
-            />
+            <TimelineItem icon={Clock} title="Menunggu Verifikasi Admin" status="pending" />
           )}
         </div>
       </div>
@@ -298,7 +383,9 @@ export default function PaymentDetailPage() {
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800/50 p-4">
-            <p className="text-xs font-mono text-gray-500 dark:text-gray-400 break-all">{payment.buktiBayarPath}</p>
+            <p className="text-xs font-mono text-gray-500 dark:text-gray-400 break-all">
+              {payment.buktiBayarPath}
+            </p>
           </div>
         </div>
       )}
@@ -313,7 +400,15 @@ export default function PaymentDetailPage() {
   );
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-start gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
       <Icon size={16} className="text-gray-400 mt-0.5" />
@@ -325,7 +420,13 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
   );
 }
 
-function TimelineItem({ icon: Icon, title, date, subtitle, status }: {
+function TimelineItem({
+  icon: Icon,
+  title,
+  date,
+  subtitle,
+  status,
+}: {
   icon: React.ElementType;
   title: string;
   date?: string;
@@ -335,16 +436,37 @@ function TimelineItem({ icon: Icon, title, date, subtitle, status }: {
   return (
     <div className="flex gap-3">
       <div className={`flex flex-col items-center`}>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-          status === 'completed' ? 'bg-green-100 dark:bg-green-950' : 'bg-yellow-100 dark:bg-yellow-950'
-        }`}>
-          <Icon size={14} className={status === 'completed' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'} />
+        <div
+          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            status === 'completed'
+              ? 'bg-green-100 dark:bg-green-950'
+              : 'bg-yellow-100 dark:bg-yellow-950'
+          }`}
+        >
+          <Icon
+            size={14}
+            className={
+              status === 'completed'
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-yellow-600 dark:text-yellow-400'
+            }
+          />
         </div>
         <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-1" />
       </div>
       <div className="pb-4">
         <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
-        {date && <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
+        {date && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {new Date(date).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </p>
+        )}
         {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
       </div>
     </div>

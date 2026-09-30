@@ -5,10 +5,38 @@ import { mockAuth } from './helpers/auth';
  * Mock data untuk halaman Jabatan (superadmin): preset global + preset distrik.
  */
 const JABATAN_ROWS = [
-  { id: 'j1', nama: 'Pastor Moderator', urutan: 0, distrikId: null, distrik: null, _count: { pengurus: 2 } },
-  { id: 'j2', nama: 'Koordinator Distrik', urutan: 1, distrikId: null, distrik: null, _count: { pengurus: 0 } },
-  { id: 'j3', nama: 'Sekretaris', urutan: 2, distrikId: null, distrik: null, _count: { pengurus: 1 } },
-  { id: 'j4', nama: 'Sekretaris', urutan: 0, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' }, _count: { pengurus: 0 } },
+  {
+    id: 'j1',
+    nama: 'Pastor Moderator',
+    urutan: 0,
+    distrikId: null,
+    distrik: null,
+    _count: { pengurus: 2 },
+  },
+  {
+    id: 'j2',
+    nama: 'Koordinator Distrik',
+    urutan: 1,
+    distrikId: null,
+    distrik: null,
+    _count: { pengurus: 0 },
+  },
+  {
+    id: 'j3',
+    nama: 'Sekretaris',
+    urutan: 2,
+    distrikId: null,
+    distrik: null,
+    _count: { pengurus: 1 },
+  },
+  {
+    id: 'j4',
+    nama: 'Sekretaris',
+    urutan: 0,
+    distrikId: 'distrik-1',
+    distrik: { id: 'distrik-1', nama: 'Distrik A' },
+    _count: { pengurus: 0 },
+  },
 ];
 
 async function setup(page: Page, opts?: { role?: string; distrikId?: string | null }) {
@@ -36,7 +64,12 @@ async function setup(page: Page, opts?: { role?: string; distrikId?: string | nu
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { role: opts.role, distrikId: opts.distrikId ?? null, wilayahId: null, rantingId: null },
+          data: {
+            role: opts.role,
+            distrikId: opts.distrikId ?? null,
+            wilayahId: null,
+            rantingId: null,
+          },
         }),
       });
     });
@@ -50,7 +83,9 @@ test.describe('Jabatan (district-scoped)', () => {
     await setup(page);
   });
 
-  test('superadmin sees the scope selector with Global default and global presets only', async ({ page }) => {
+  test('superadmin sees the scope selector with Global default and global presets only', async ({
+    page,
+  }) => {
     const scopeSelect = page.locator('select').first();
     await expect(scopeSelect).toBeVisible();
     await expect(scopeSelect).toHaveValue('');
@@ -85,7 +120,11 @@ test.describe('Jabatan (district-scoped)', () => {
     await page.route(/\/api\/jabatan(\?|$)/, async (route) => {
       if (route.request().method() === 'POST') {
         created.push(route.request().postDataJSON());
-        await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ success: true, data: {} }) });
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: {} }),
+        });
         return;
       }
       await route.continue();
@@ -104,14 +143,22 @@ test.describe('Jabatan (district-scoped)', () => {
     await page.route(/\/api\/jabatan\/j2/, async (route) => {
       if (route.request().method() === 'DELETE') {
         deleted.push('j2');
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { deleted: true } }) });
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { deleted: true } }),
+        });
         return;
       }
       await route.continue();
     });
 
     // useConfirm memakai modal in-app (bukan window.confirm) — tombol "Ya"
-    await page.getByRole('row', { name: /Koordinator Distrik/ }).getByRole('button').nth(1).click();
+    await page
+      .getByRole('row', { name: /Koordinator Distrik/ })
+      .getByRole('button')
+      .nth(1)
+      .click();
     await page.getByRole('button', { name: 'Ya', exact: true }).click();
     await expect.poll(() => deleted).toHaveLength(1);
   });

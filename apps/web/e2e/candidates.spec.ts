@@ -5,13 +5,19 @@ test.describe('Candidates — /candidates', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockCandidates: true, mockDashboardPages: true });
     await page.goto('/candidates');
-    await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota', { timeout: 10000 });
+    await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota', {
+      timeout: 10000,
+    });
   });
 
   test('renders page title and action buttons', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota');
-    await expect(page.getByRole('button', { name: /tambah/i }).first()).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: /import/i }).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: /tambah/i }).first()).toBeVisible({
+      timeout: 8000,
+    });
+    await expect(page.getByRole('button', { name: /import/i }).first()).toBeVisible({
+      timeout: 8000,
+    });
   });
 
   test('renders SummaryBar with candidate count', async ({ page }) => {
@@ -34,12 +40,18 @@ test.describe('Candidates — /candidates', () => {
   });
 
   test('Tambah button navigates to /candidates/new', async ({ page }) => {
-    await page.getByRole('button', { name: /tambah/i }).first().click();
+    await page
+      .getByRole('button', { name: /tambah/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/candidates\/new/);
   });
 
   test('Import button navigates to /candidates/import', async ({ page }) => {
-    await page.getByRole('button', { name: /import/i }).first().click();
+    await page
+      .getByRole('button', { name: /import/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/candidates\/import/);
   });
 

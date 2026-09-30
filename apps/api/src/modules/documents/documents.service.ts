@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TipeDokumen } from '@prisma/client';
 import { documentReadyEmail } from '../../mail/email-templates';
@@ -116,7 +123,7 @@ export class DocumentsService {
     });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
     if (
-      scope &&    
+      scope &&
       !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, doc.anggota?.rantingId))
     ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
@@ -261,10 +268,7 @@ export class DocumentsService {
       throw new BadRequestException('Tidak ada anggota yang dipilih untuk generate dokumen');
     }
 
-    const { batchId, totalJobs } = await this.batchService.createBatch(
-      dto.type,
-      memberIds,
-    );
+    const { batchId, totalJobs } = await this.batchService.createBatch(dto.type, memberIds);
 
     return {
       success: true,
@@ -339,10 +343,15 @@ export class DocumentsService {
    * Validasi scope + pastikan path aman (hanya basename di dalam outputDir).
    * Status dokumen di-update ke `downloaded` saat file diminta.
    */
-  async getDocumentFile(id: string, scope?: UserScope): Promise<{ filePath: string; nomorDokumen: string; tipe: string }> {
+  async getDocumentFile(
+    id: string,
+    scope?: UserScope,
+  ): Promise<{ filePath: string; nomorDokumen: string; tipe: string }> {
     const doc = await this.findOne(id, scope);
     if (!doc.filePath) {
-      throw new NotFoundException('File dokumen belum tersedia. Generate ulang dokumen terlebih dahulu.');
+      throw new NotFoundException(
+        'File dokumen belum tersedia. Generate ulang dokumen terlebih dahulu.',
+      );
     }
 
     // Keamanan: abaikan path absolut dari DB, hanya ambil nama file lalu gabung ke outputDir.
@@ -407,26 +416,26 @@ export class DocumentsService {
 
   async getTypes() {
     return [
-        {
-          type: 'kartu_anggota',
-          label: 'Kartu Anggota',
-          description: 'Kartu identitas anggota THS-THM',
-        },
-        {
-          type: 'sertifikat_pendadaran',
-          label: 'Sertifikat Pendadaran',
-          description: 'Sertifikat kelulusan pendadaran',
-        },
-        {
-          type: 'sertifikat_pelatihan',
-          label: 'Sertifikat Pelatihan',
-          description: 'Sertifikat keikutsertaan pelatihan',
-        },
-        {
-          type: 'piagam_prestasi',
-          label: 'Piagam Prestasi',
-          description: 'Piagam penghargaan prestasi',
-        },
+      {
+        type: 'kartu_anggota',
+        label: 'Kartu Anggota',
+        description: 'Kartu identitas anggota THS-THM',
+      },
+      {
+        type: 'sertifikat_pendadaran',
+        label: 'Sertifikat Pendadaran',
+        description: 'Sertifikat kelulusan pendadaran',
+      },
+      {
+        type: 'sertifikat_pelatihan',
+        label: 'Sertifikat Pelatihan',
+        description: 'Sertifikat keikutsertaan pelatihan',
+      },
+      {
+        type: 'piagam_prestasi',
+        label: 'Piagam Prestasi',
+        description: 'Piagam penghargaan prestasi',
+      },
     ];
   }
 
@@ -535,7 +544,10 @@ export class DocumentsService {
 
       const signer = await this.resolveSigner();
       const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
-      const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran', distrikId);
+      const hasMapping = await this.penandatanganService.hasDocSigners(
+        'sertifikat_pendadaran',
+        distrikId,
+      );
       const signers = hasMapping
         ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran', distrikId)
         : [
@@ -543,7 +555,10 @@ export class DocumentsService {
               signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
               signerTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
             },
-            { signerName: dto.signerName || signer.signerName, signerTitle: dto.signerTitle || signer.signerTitle },
+            {
+              signerName: dto.signerName || signer.signerName,
+              signerTitle: dto.signerTitle || signer.signerTitle,
+            },
           ];
       const pdfDoc = buildCertificatePdf({
         recipientName: member.namaLengkap,
@@ -587,7 +602,11 @@ export class DocumentsService {
     return doc;
   }
 
-  async getCertificatePdf(memberId: string, dto: GenerateCertificateDto, scope?: UserScope): Promise<Buffer> {
+  async getCertificatePdf(
+    memberId: string,
+    dto: GenerateCertificateDto,
+    scope?: UserScope,
+  ): Promise<Buffer> {
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId },
       include: { ranting: { include: { wilayah: { include: { distrik: true } } } } },
@@ -606,7 +625,10 @@ export class DocumentsService {
 
     const signer = await this.resolveSigner();
     const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
-    const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran', distrikId);
+    const hasMapping = await this.penandatanganService.hasDocSigners(
+      'sertifikat_pendadaran',
+      distrikId,
+    );
     const signers = hasMapping
       ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran', distrikId)
       : [
@@ -614,7 +636,10 @@ export class DocumentsService {
             signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
             signerTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
           },
-          { signerName: dto.signerName || signer.signerName, signerTitle: dto.signerTitle || signer.signerTitle },
+          {
+            signerName: dto.signerName || signer.signerName,
+            signerTitle: dto.signerTitle || signer.signerTitle,
+          },
         ];
     const pdfDoc = buildCertificatePdf({
       recipientName: member.namaLengkap,
@@ -628,7 +653,9 @@ export class DocumentsService {
       predicate: dto.predicate,
       status: 'Lulus',
       issuedDate: new Date().toLocaleDateString('id-ID', {
-        day: '2-digit', month: 'long', year: 'numeric',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
       }),
       signers,
       aspects: dto.aspects,
@@ -639,7 +666,11 @@ export class DocumentsService {
     return ReactPDF.renderToBuffer(pdfDoc);
   }
 
-  async getCertificateImage(memberId: string, dto: GenerateCertificateDto, scope?: UserScope): Promise<Buffer> {
+  async getCertificateImage(
+    memberId: string,
+    dto: GenerateCertificateDto,
+    scope?: UserScope,
+  ): Promise<Buffer> {
     const pdfBuffer = await this.getCertificatePdf(memberId, dto, scope);
     const { pdfToPng } = require('./pdf-templates/pdf-to-image');
     return pdfToPng(pdfBuffer);

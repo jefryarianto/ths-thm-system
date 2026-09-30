@@ -14,23 +14,28 @@ export class ForumCategoryService extends BaseCrudService<CreateCategoryDto, Upd
     cache: CacheService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, {
-      model: 'forumCategory',
-      prefix: 'forum:categories:',
-      notFound: 'Kategori tidak ditemukan',
-      scopeStrategy: 'ranting',
-    }, persistentAudit);
+    super(
+      prisma,
+      scopeHelper,
+      cache,
+      {
+        model: 'forumCategory',
+        prefix: 'forum:categories:',
+        notFound: 'Kategori tidak ditemukan',
+        scopeStrategy: 'ranting',
+      },
+      persistentAudit,
+    );
   }
 
   /** Default include (thread count) + ordering for listing */
   protected readonly DEFAULT_INCLUDE = { _count: { select: { threads: true } } };
 
   async findAll() {
-    return this.baseFindAll(
-      'forum:categories',
-      () => ({}),
-      { include: this.DEFAULT_INCLUDE, orderBy: { order: 'asc' as const } },
-    );
+    return this.baseFindAll('forum:categories', () => ({}), {
+      include: this.DEFAULT_INCLUDE,
+      orderBy: { order: 'asc' as const },
+    });
   }
 
   async findOne(id: string) {

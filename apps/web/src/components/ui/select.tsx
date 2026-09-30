@@ -15,11 +15,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, options, placeholder, className = '', ...props }, ref) => (
     <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-text mb-1">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-text mb-1">{label}</label>}
       <select
         ref={ref}
         aria-invalid={!!error}

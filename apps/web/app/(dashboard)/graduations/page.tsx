@@ -20,7 +20,6 @@ import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { ACTIVITY_STATUS_COLORS, ACTIVITY_STATUS_OPTIONS } from '@/components/activities/constants';
 
-
 interface GraduationRow {
   id: string;
   nama: string;
@@ -61,7 +60,12 @@ export default function GraduationsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nama: string) => {
-    const ok = await confirm({ title: 'Hapus Pendadaran', message: 'Yakin ingin menghapus "' + nama + '"? Data tidak dapat dikembalikan.', confirmLabel: 'Hapus', variant: 'danger' });
+    const ok = await confirm({
+      title: 'Hapus Pendadaran',
+      message: 'Yakin ingin menghapus "' + nama + '"? Data tidak dapat dikembalikan.',
+      confirmLabel: 'Hapus',
+      variant: 'danger',
+    });
     if (!ok) return;
     setDeletingId(id);
     try {
@@ -85,126 +89,132 @@ export default function GraduationsPage() {
 
   return (
     <PermissionGuard module="graduations" action="view">
-    <PageContainer>
-      <PageHeader title="Manajemen Pendadaran" onRefresh={refetch}>
-        <CanExport module="graduations">
-          <ExportMenu serverType="graduations" filename="pendadaran-export" />
-        </CanExport>
-        <CanCreate module="graduations">
-          <button
-            onClick={() => router.push('/graduations/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={14} /> Jadwal Pendadaran
-          </button>
-        </CanCreate>
-      </PageHeader>
+      <PageContainer>
+        <PageHeader title="Manajemen Pendadaran" onRefresh={refetch}>
+          <CanExport module="graduations">
+            <ExportMenu serverType="graduations" filename="pendadaran-export" />
+          </CanExport>
+          <CanCreate module="graduations">
+            <button
+              onClick={() => router.push('/graduations/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Jadwal Pendadaran
+            </button>
+          </CanCreate>
+        </PageHeader>
 
-      <SummaryBar icon={GraduationCap} label="Total Pendadaran" total={meta.total} />
+        <SummaryBar icon={GraduationCap} label="Total Pendadaran" total={meta.total} />
 
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari pendadaran..."
-        debounceMs={300}
-      >
-        <FilterSelect
-          value={filters.status}
-          onChange={(v) => setFilter('status', v)}
-          options={ACTIVITY_STATUS_OPTIONS}
-          placeholder="Semua Status"
-        />
-      </SearchBar>
+        <SearchBar
+          search={search}
+          onSearchChange={setSearch}
+          onReset={resetFilters}
+          placeholder="Cari pendadaran..."
+          debounceMs={300}
+        >
+          <FilterSelect
+            value={filters.status}
+            onChange={(v) => setFilter('status', v)}
+            options={ACTIVITY_STATUS_OPTIONS}
+            placeholder="Semua Status"
+          />
+        </SearchBar>
 
-      <DataTable
-        columns={[
-          { label: 'Nama Kegiatan' },
-          { label: 'Tanggal', hidden: 'hidden sm:table-cell' },
-          { label: 'Lokasi', hidden: 'hidden md:table-cell' },
-          { label: 'Peserta', align: 'center', hidden: 'hidden lg:table-cell' },
-          { label: 'Status' },
-          { label: 'Aksi', align: 'right' },
-        ]}
-        data={data}
-        loading={loading}
-        empty={{
-          icon: GraduationCap,
-          ...buildEmptyMessage('jadwal pendadaran', hasActiveFilters, resetFilters),
-        }}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={handlePageChange}
-        colSpan={6}
-        renderRow={(row: GraduationRow) => (
-          <tr
-            key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <td className="px-4 py-3">
-              <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell whitespace-nowrap">
-              <div className="flex items-center gap-1">
-                <Calendar size={12} className="text-gray-400" />
-                {new Date(row.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                {row.tanggalSelesai &&
-                  ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
-              </div>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
-              <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-gray-400" />
-                {row.lokasi || '-'}
-              </div>
-            </td>
-            <td className="px-4 py-3 text-center hidden lg:table-cell">
-              <div className="flex items-center justify-center gap-1">
-                <Users size={12} className="text-gray-400" />
-                <span className="text-gray-600 dark:text-gray-400">{row.pesertaCount ?? '-'}</span>
-              </div>
-            </td>
-            <td className="px-4 py-3">
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTIVITY_STATUS_COLORS[row.status] || ''}`}
-              >
-                {row.status}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-right">
-              <div className="flex items-center justify-end gap-1">
-                <button
-                  onClick={() => router.push(`/graduations/${row.id}`)}
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  title="Detail"
+        <DataTable
+          columns={[
+            { label: 'Nama Kegiatan' },
+            { label: 'Tanggal', hidden: 'hidden sm:table-cell' },
+            { label: 'Lokasi', hidden: 'hidden md:table-cell' },
+            { label: 'Peserta', align: 'center', hidden: 'hidden lg:table-cell' },
+            { label: 'Status' },
+            { label: 'Aksi', align: 'right' },
+          ]}
+          data={data}
+          loading={loading}
+          empty={{
+            icon: GraduationCap,
+            ...buildEmptyMessage('jadwal pendadaran', hasActiveFilters, resetFilters),
+          }}
+          page={page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          onPageChange={handlePageChange}
+          colSpan={6}
+          renderRow={(row: GraduationRow) => (
+            <tr
+              key={row.id}
+              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <td className="px-4 py-3">
+                <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell whitespace-nowrap">
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} className="text-gray-400" />
+                  {new Date(row.tanggalMulai).toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                  {row.tanggalSelesai &&
+                    ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
+                </div>
+              </td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                <div className="flex items-center gap-1">
+                  <MapPin size={12} className="text-gray-400" />
+                  {row.lokasi || '-'}
+                </div>
+              </td>
+              <td className="px-4 py-3 text-center hidden lg:table-cell">
+                <div className="flex items-center justify-center gap-1">
+                  <Users size={12} className="text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {row.pesertaCount ?? '-'}
+                  </span>
+                </div>
+              </td>
+              <td className="px-4 py-3">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTIVITY_STATUS_COLORS[row.status] || ''}`}
                 >
-                  <Eye size={15} />
-                </button>
-                <button
-                  onClick={() => router.push(`/graduations/${row.id}/edit`)}
-                  className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                  title="Edit / Ubah Status"
-                >
-                  <Pencil size={15} />
-                </button>
-                {['draft', 'cancelled'].includes(row.status) && (
+                  {row.status}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <div className="flex items-center justify-end gap-1">
                   <button
-                    onClick={() => handleDelete(row.id, row.nama)}
-                    disabled={deletingId === row.id}
-                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors disabled:opacity-50"
-                    title="Hapus"
+                    onClick={() => router.push(`/graduations/${row.id}`)}
+                    className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                    title="Detail"
                   >
-                    <Trash2 size={15} />
+                    <Eye size={15} />
                   </button>
-                )}
-              </div>
-            </td>
-          </tr>
-        )}
-      />
-    </PageContainer>
-    {confirmModal}
+                  <button
+                    onClick={() => router.push(`/graduations/${row.id}/edit`)}
+                    className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                    title="Edit / Ubah Status"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  {['draft', 'cancelled'].includes(row.status) && (
+                    <button
+                      onClick={() => handleDelete(row.id, row.nama)}
+                      disabled={deletingId === row.id}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors disabled:opacity-50"
+                      title="Hapus"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          )}
+        />
+      </PageContainer>
+      {confirmModal}
     </PermissionGuard>
   );
 }
