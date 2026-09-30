@@ -78,23 +78,84 @@ export class PenandatanganService {
   }
 
   /**
-   * Resolve penandatangan untuk satu tipe dokumen + distrik anggota.
+   * Resolve penandatangan untuk satu tipe dokumen + distrik anggota,
+   * diperkaya dengan asset tanda tangan digital & stempel resmi jika tersedia.
    * Rantai: penugasan distrik → penugasan global → penandatangan aktif
    * (distrik → global, via resolveActive) → fallback env SIGNER_*.
    * Mengembalikan array berurutan 1-3 orang.
    */
-  async resolveSigners(dokumenType: string, distrikId?: string): Promise<{ signerName: string; signerTitle: string }[]> {
+  async resolveSigners(
+    dokumenType: string,
+    distrikId?: string,
+  ): Promise<{ signerName: string; signerTitle: string; signatureUrl?: string; stampUrl?: string }[]> {
+    let signers: { signerName: string; signerTitle: string; signatureUrl?: string; stampUrl?: string }[] = [];
     try {
       if (distrikId) {
         const distrikSet = await this.getDocSignerRows(dokumenType, distrikId);
-        if (distrikSet.length > 0) return distrikSet;
+        if (distrikSet.length > 0) signers = distrikSet;
       }
-      const globalSet = await this.getDocSignerRows(dokumenType);
-      if (globalSet.length > 0) return globalSet;
+      if (signers.length === 0) {
+        const globalSet = await this.getDocSignerRows(dokumenType);
+        if (globalSet.length > 0) signers = globalSet;
+      }
     } catch {
       // tabel belum ada / belum migrate — lanjut ke fallback
     }
-    return [await this.resolveActive(distrikId)];
+
+    if (signers.length === 0) {
+      signers = [await this.resolveActive(distrikId)];
+    }
+
+    // Resolusi asset tanda tangan & stempel per distrik / global
+    const assets = await this.resolveAssets(distrikId);
+    if (assets.stampUrl) {
+      // Pasang stempel resmi pada penandatangan pertama (atau utama)
+      if (signers.length > 0 && !signers[0].stampUrl) {
+        signers[0].stampUrl = assets.stampUrl;
+      }
+    }
+
+    return signers;
+  }
+
+  /**
+   * Resolve asset tanda tangan digital & stempel aktif berdasarkan cakupan distrik (prioritas distrik, fallback global).
+   */
+  async resolveAssets(distrikId?: string): Promise<{ signatureUrl?: string; stampUrl?: string }> {
+    let signatureUrl: string | undefined;
+    let stampUrl: string | undefined;
+
+    try {
+      const stamp = await this.prisma.stempel.findFirst({
+        where: {
+          isActive: true,
+          ...(distrikId ? { OR: [{ distrikId }, { distrikId: null }] } : { distrikId: null }),
+        },
+        orderBy: [{ distrikId: 'desc' }, { updatedAt: 'desc' }],
+      });
+      if (stamp?.imagePath) {
+        stampUrl = stamp.imagePath;
+      }
+    } catch {
+      // Abaikan jika tabel stempel belum siap
+    }
+
+    try {
+      const ttd = await this.prisma.tandaTangan.findFirst({
+        where: {
+          isActive: true,
+          ...(distrikId ? { OR: [{ distrikId }, { distrikId: null }] } : { distrikId: null }),
+        },
+        orderBy: [{ distrikId: 'desc' }, { updatedAt: 'desc' }],
+      });
+      if (ttd?.imagePath) {
+        signatureUrl = ttd.imagePath;
+      }
+    } catch {
+      // Abaikan jika tabel tanda tangan belum siap
+    }
+
+    return { signatureUrl, stampUrl };
   }
 
   /** Struktur lengkap penugasan per tipe dokumen untuk halaman admin (per scope). */

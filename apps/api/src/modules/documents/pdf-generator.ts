@@ -3,7 +3,7 @@ const React = require('react');
 const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 12, fontFamily: 'Helvetica' },
+  page: { padding: 40, fontSize: 12, fontFamily: 'Helvetica', position: 'relative' as const },
   header: { marginBottom: 20, textAlign: 'center' as const },
   title: { fontSize: 18, fontWeight: 'bold' as const, marginBottom: 8 },
   subtitle: { fontSize: 14, marginBottom: 4, color: '#555' },
@@ -13,6 +13,38 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, marginBottom: 4 },
   qrContainer: { alignItems: 'center' as const, marginTop: 20 },
   qrImage: { width: 100, height: 100 },
+  signerBlock: {
+    alignItems: 'center' as const,
+    minWidth: 160,
+    position: 'relative' as const,
+  },
+  signatureImage: {
+    height: 40,
+    marginBottom: 4,
+    objectFit: 'contain' as const,
+  },
+  stampImage: {
+    position: 'absolute' as const,
+    top: -10,
+    right: -15,
+    width: 60,
+    height: 60,
+    opacity: 0.8,
+    objectFit: 'contain' as const,
+  },
+  watermark: {
+    position: 'absolute' as const,
+    top: 250,
+    left: 0,
+    right: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  watermarkText: {
+    fontSize: 60,
+    fontWeight: 'bold' as const,
+    color: '#1e3a5f',
+  },
   footer: {
     position: 'absolute' as const,
     bottom: 30,
@@ -41,8 +73,16 @@ interface PdfDocProps {
     ranting?: { nama: string } | null;
   } | null;
   qrDataUrl: string;
-  /** Penandatangan dokumen (1-3 orang, dari penugasan per tipe) — opsional. */
-  signers?: Array<{ signerName?: string; signerTitle?: string }>;
+  /** Penandatangan dokumen (1-3 orang, dari penugasan per tipe) dengan opsional signatureUrl & stampUrl. */
+  signers?: Array<{
+    signerName?: string;
+    signerTitle?: string;
+    signatureUrl?: string;
+    stampUrl?: string;
+  }>;
+  stampUrl?: string;
+  watermarkText?: string;
+  watermarkOpacity?: number;
   /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
   template?: {
     orgNama?: string;
@@ -60,6 +100,9 @@ export function buildPdfDocument({
   member,
   qrDataUrl,
   signers,
+  stampUrl,
+  watermarkText,
+  watermarkOpacity,
   template,
 }: PdfDocProps) {
   const orgNama = template?.orgNama || 'THS-THM System Manajemen';
@@ -68,6 +111,8 @@ export function buildPdfDocument({
   const footer =
     template?.footer ||
     'Dokumen ini valid dan terverifikasi. Diterbitkan oleh THS-THM System Manajemen.';
+  const watermarkLabel = watermarkText || 'THS-THM';
+  const watermarkAlpha = watermarkOpacity ?? 0.04;
 
   return h(
     Document,
@@ -75,6 +120,12 @@ export function buildPdfDocument({
     h(
       Page,
       { size: 'A4', style: styles.page },
+      // Security Watermark
+      h(
+        View,
+        { style: { ...styles.watermark, opacity: watermarkAlpha } },
+        h(Text, { style: styles.watermarkText }, watermarkLabel),
+      ),
       // Header
       h(
         View,
@@ -156,7 +207,13 @@ export function buildPdfDocument({
                 .map((s, i) =>
                   h(
                     View,
-                    { key: `signer-${i}`, style: { alignItems: 'center', minWidth: 160 } },
+                    { key: `signer-${i}`, style: styles.signerBlock },
+                    s.signatureUrl
+                      ? h(Image, { src: s.signatureUrl, style: styles.signatureImage })
+                      : null,
+                    s.stampUrl || stampUrl
+                      ? h(Image, { src: s.stampUrl || stampUrl, style: styles.stampImage })
+                      : null,
                     h(Text, { style: { fontSize: 12, fontWeight: 'bold' } }, s.signerName),
                     s.signerTitle
                       ? h(Text, { style: { fontSize: 10, color: '#555', marginTop: 2 } }, s.signerTitle)

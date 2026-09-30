@@ -188,6 +188,21 @@ const styles = StyleSheet.create({
   signerBlock: {
     width: 250,
     alignItems: 'center',
+    position: 'relative',
+  },
+  signatureImage: {
+    height: 48,
+    marginBottom: 4,
+    objectFit: 'contain',
+  },
+  stampImage: {
+    position: 'absolute',
+    top: -15,
+    right: -25,
+    width: 75,
+    height: 75,
+    opacity: 0.85,
+    objectFit: 'contain',
   },
   signerLine: {
     borderTopWidth: 1,
@@ -347,11 +362,18 @@ interface CertificatePdfProps {
   predicate: string;
   status: string;
   issuedDate: string;
-  /** Penandatangan sertifikat (1-3 orang). */
-  signers: Array<{ signerName: string; signerTitle: string }>;
+  /** Penandatangan sertifikat (1-3 orang) dengan opsional signatureUrl & stampUrl. */
+  signers: Array<{
+    signerName: string;
+    signerTitle: string;
+    signatureUrl?: string;
+    stampUrl?: string;
+  }>;
   aspects: AspectScore[];
   qrDataUrl?: string;
   hideBack?: boolean;
+  watermarkText?: string;
+  watermarkOpacity?: number;
   /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
   template?: {
     orgNama?: string;
@@ -366,16 +388,23 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
   const {
     recipientName, certificateNumber, eventTitle, location,
     ranting, wilayah, distrik, finalScore, predicate, status,
-    issuedDate, signers, aspects, qrDataUrl, template,
+    issuedDate, signers, aspects, qrDataUrl, watermarkText, watermarkOpacity, template,
   } = props;
 
   const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const judulText = template?.judul || 'SERTIFIKAT';
   const subJudulText = template?.subJudul || 'PENDADARAN';
+  const watermarkLabel = watermarkText || 'THS';
+  const watermarkAlpha = watermarkOpacity ?? 0.045;
 
   const signerBlocks = (signers || []).map((s, i) =>
     h(View, { key: `signer-${i}`, style: styles.signerBlock },
-      h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
+      s.signatureUrl
+        ? h(Image, { src: s.signatureUrl, style: styles.signatureImage })
+        : h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
+      s.stampUrl
+        ? h(Image, { src: s.stampUrl, style: styles.stampImage })
+        : null,
       h(View, { style: styles.signerLine },
         h(Text, { style: styles.signerName }, s.signerName),
         h(Text, { style: styles.signerTitle }, s.signerTitle))),
@@ -398,9 +427,9 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
   const pages = [
     // Front side
     h(Page, { size: [1188, 840], style: styles.page, key: 'front' },
-      h(View, { style: styles.watermark },
+      h(View, { style: { ...styles.watermark, opacity: watermarkAlpha } },
         h(View, { style: styles.watermarkCircle },
-          h(Text, { style: styles.watermarkText }, 'THS'))),
+          h(Text, { style: styles.watermarkText }, watermarkLabel))),
       h(View, { style: styles.innerBorder1 }),
       h(View, { style: styles.innerBorder2 }),
       // Header
@@ -459,9 +488,9 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     ),
     // Back side
     h(Page, { size: [1188, 840], style: styles.page, key: 'back' },
-      h(View, { style: styles.watermark },
+      h(View, { style: { ...styles.watermark, opacity: watermarkAlpha } },
         h(View, { style: styles.watermarkCircle },
-          h(Text, { style: styles.watermarkText }, 'THS'))),
+          h(Text, { style: styles.watermarkText }, watermarkLabel))),
       h(View, { style: styles.innerBorder1 }),
       h(View, { style: styles.innerBorder2 }),
       h(Text, { style: styles.backTitle }, 'RINCIAN PENILAIAN PENDADARAN'),
