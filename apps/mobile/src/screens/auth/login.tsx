@@ -227,7 +227,7 @@ export default function LoginScreen() {
                 <View style={styles.dividerLine} />
               </View>
               <View style={styles.onboardButtons}>
-                <TouchableOpacity style={styles.onboardButton} activeOpacity={0.8} onPress={() => router.push('/claim')}>
+                <TouchableOpacity style={styles.onboardButton} activeOpacity={0.8} onPress={() => router.push('/claim' as any)}>
                   <View style={[styles.onboardIconWrap, { backgroundColor: theme.colors.primaryLight }]}>
                     <Ionicons name="id-card-outline" size={18} color={theme.colors.primaryDark} />
                   </View>
@@ -238,7 +238,7 @@ export default function LoginScreen() {
                   <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.onboardButton} activeOpacity={0.8} onPress={() => router.push('/register-candidate')}>
+                <TouchableOpacity style={styles.onboardButton} activeOpacity={0.8} onPress={() => router.push('/register-candidate' as any)}>
                   <View style={[styles.onboardIconWrap, { backgroundColor: theme.colors.warningLight }]}>
                     <Ionicons name="person-add-outline" size={18} color={theme.colors.warning} />
                   </View>
