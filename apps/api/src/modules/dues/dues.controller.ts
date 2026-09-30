@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { Idempotent } from '../../common/decorators/idempotent.decorator';
+import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 import {
   CreateDueDto,
   UpdateDueDto,
@@ -14,6 +16,7 @@ import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 @ApiTags('Dues')
 @Controller('dues')
 @ApiBearerAuth()
+@UseInterceptors(IdempotencyInterceptor)
 export class DuesController {
   constructor(private readonly service: DuesService) {}
 
@@ -24,6 +27,7 @@ export class DuesController {
   }
 
   @Post()
+  @Idempotent({ ttl: 300_000 })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Buat iuran baru' })
   create(@Body() dto: CreateDueDto, @Req() req: ScopedRequest) {
     return this.service.create(dto, req.scope);
@@ -78,6 +82,7 @@ export class DuesController {
   }
 
   @Patch('batch')
+  @Idempotent({ ttl: 300_000 })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Batch payment untuk banyak anggota' })
   batchPayment(@Body() dto: BatchPaymentDto, @Req() req: ScopedRequest) {
     return this.service.batchPayment(dto, req.scope);
@@ -96,6 +101,7 @@ export class DuesController {
   }
 
   @Post(':id/payments')
+  @Idempotent({ ttl: 300_000 })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Konfirmasi pembayaran manual' })
   submitPaymentConfirmation(@Param('id') id: string, @Body() dto: PaymentConfirmationDto) {
     return this.service.submitPaymentConfirmation(id, dto);

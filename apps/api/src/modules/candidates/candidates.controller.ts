@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
@@ -27,6 +28,7 @@ export class CandidatesController {
 
   @Post()
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @ApiOperation({ summary: 'Tambah kandidat baru (publik — pendaftaran mandiri calon anggota)' })
   create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
     return this.candidatesService.create(dto, req.scope, req.user?.id);

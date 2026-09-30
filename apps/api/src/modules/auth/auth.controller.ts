@@ -73,6 +73,7 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @ApiOperation({ summary: 'Login pengguna' })
   async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // Pass `res` so the service sets the HttpOnly cookie internally
@@ -85,6 +86,7 @@ export class AuthController {
 
   @Post('register')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Registrasi pengguna baru' })
   register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.register(dto, res);
@@ -113,6 +115,7 @@ export class AuthController {
 
   @Post('forgot')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Lupa kata sandi' })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
@@ -120,6 +123,7 @@ export class AuthController {
 
   @Post('reset')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Reset kata sandi' })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
@@ -127,6 +131,7 @@ export class AuthController {
 
   @Post('force-change-password')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Ubah kata sandi saat login pertama kali (mustChangePassword)' })
   forceChangePassword(@Body() dto: ForceChangePasswordDto, @Req() req: Request) {
     return this.authService.forceChangePassword(dto, {

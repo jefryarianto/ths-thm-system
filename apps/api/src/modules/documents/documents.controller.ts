@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { DocumentsService, GenerateCertificateDto, GenerateAwardDto } from './documents.service';
 import { DocumentBatchService } from './document-batch.service';
 import { Public } from '../../common/decorators/public.decorator';
@@ -26,6 +27,7 @@ export class DocumentsController {
 
   @Get('verify/:token')
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60 } })
   @ApiOperation({ summary: 'Verifikasi dokumen dengan token' })
   verifyByToken(@Param('token') token: string, @Req() req: Request) {
     return this.service.verifyByToken(token, {
