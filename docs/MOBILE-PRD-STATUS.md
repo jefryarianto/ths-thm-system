@@ -3,6 +3,8 @@
 > **Last updated:** 28 Juli 2026
 > **Total PRDs:** 4 (2 implemented ✅, 2 documented 📄)
 
+> ⚠️ **Snapshot historis (28 Juli 2026).** Status mobile pada dokumen ini mengacu aplikasi React Native/Expo di `apps/mobile/` yang **sudah dihapus**; keempat fitur terkait kini tersedia di aplikasi **Flutter** `apps/mobile_flutter/`.
+
 ---
 
 ## 🏆 Ringkasan

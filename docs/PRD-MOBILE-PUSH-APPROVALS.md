@@ -4,6 +4,8 @@
 > **Target release:** Sprint 4
 > **Effort estimate:** 2–3 hari
 
+> ℹ️ **Catatan implementasi (2026-10-01):** Fitur ini sudah dibangun pada aplikasi **Flutter** di `apps/mobile_flutter/` (`firebase_messaging`, deep link notifikasi). Referensi `expo-notifications` di dokumen ini bersifat historis.
+
 ---
 
 ## 1. Latar Belakang

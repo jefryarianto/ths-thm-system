@@ -4,6 +4,8 @@
 > **Target release:** Sprint 2
 > **Effort estimate:** 3–5 hari
 
+> ℹ️ **Catatan implementasi (2026-10-01):** Fitur ini sudah dibangun pada aplikasi **Flutter** di `apps/mobile_flutter/` (termasuk antrian offline `assessment_outbox`). Referensi path `apps/mobile/**` (React Native/Expo) bersifat historis.
+
 ---
 
 ## 1. Latar Belakang

@@ -2,6 +2,8 @@
 
 > Last updated: 2026-07-28
 
+> ⚠️ **Arsip historis.** Dokumen ini mendeskripsikan aplikasi React Native/Expo di `apps/mobile/` yang **sudah dihapus**. Aplikasi mobile saat ini adalah **Flutter** di `apps/mobile_flutter/` (lihat `apps/mobile_flutter/README.md` dan `docs/FCM_SETUP.md`).
+
 ## Overview
 
 The mobile app (`apps/mobile/`) uses a shared component library in `lib/src/widgets/shared.dart` to eliminate code duplication across 13 detail/reference screens. All shared components live in a single file, making them easy to discover and maintain.

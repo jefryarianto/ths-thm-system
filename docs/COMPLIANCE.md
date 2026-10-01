@@ -2,6 +2,8 @@
 
 > Dokumen ini memetakan setiap requirement dari PRD, BRD, SPEC FINAL, dan API Documentation ke implementasi aktual di codebase. Format: **Requirement → Module → File → Status**.
 
+> ⚠️ **Catatan (2026-10-01):** Bagian Mobile (§14 dan baris "Mobile App (Expo/RN)" pada Ringkasan) merujuk aplikasi React Native/Expo lama di `apps/mobile/` yang **sudah dihapus** dan digantikan aplikasi Flutter di `apps/mobile_flutter/`. Status compliance untuk mobile Flutter belum diaudit ulang.
+
 ---
 
 ## 📋 Ringkasan

@@ -4,6 +4,8 @@ Audit redundansi & efisiensi seluruh workflow di `.github/workflows/`
 (7 file), dipicu optimasi E2E (konsolidasi → cache → build-once).
 Durasi diukur dari run push `cc6f60bb` (2026-09-15).
 
+> ⚠️ **Snapshot historis (2026-09-15).** Sejak tanggal ini, beberapa workflow berubah: `eas-build.yml` (Expo) sudah dihapus, job `test-mobile`/`e2e-mobile`/`e2e-web` tidak lagi ada di `ci.yml`. E2E web dikonsolidasi ke `.github/workflows/e2e.yml`; build mobile kini `.github/workflows/flutter-apk-build.yml`. Lihat `docs/TESTING.md` untuk status terkini.
+
 ## Snapshot 5 workflow aktif per push `master`
 
 | Workflow                             | Durasi | Trigger              | Isi inti                                                    |

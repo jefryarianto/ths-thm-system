@@ -4,6 +4,8 @@
 > **Target release:** Sprint 3 Enhancement
 > **Effort estimate:** 2–3 hari
 
+> ℹ️ **Catatan implementasi (2026-10-01):** Fitur ini sudah dibangun pada aplikasi **Flutter** di `apps/mobile_flutter/`. Referensi path `apps/mobile/**` (React Native/Expo) di dokumen ini bersifat historis.
+
 ---
 
 ## 1. Latar Belakang
