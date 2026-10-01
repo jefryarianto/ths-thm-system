@@ -111,8 +111,12 @@ tetap hidup dan Playwright config lokal (non-CI) memakai
 Fix satu baris: probe `/login`. Juga tanpa cache browser/`.next`.
 
 > ✅ **Diterapkan** — probe kini `/login` (200) dan mencetak kode HTTP per percobaan.
-> Runner tetap `ubuntu-latest`: workflow ini menghasilkan baseline untuk disalin
-> manual (baris 6-13 header), bukan commit otomatis, jadi platform tidak berubah.
+> Akar masalah sesungguhnya bukan cuma probe: workflow menyalakan `next start`
+> manual di :3002, padahal Playwright webServer (cabang isCI) sudah menjalankan
+> server yang sama dengan `reuseExistingServer: false` — semua snapshot gagal
+> "port is already used". Langkah start/wait/stop manual dihapus (2dd03036).
+> Runner juga dipindah ke `windows-latest` agar nama baseline bawaan
+> (`-chromium-win32.png`) cocok dengan snapshot yang di-commit.
 
 ### R8 — Squandered artifacts / retention
 
@@ -132,13 +136,16 @@ retensi 30 hari untuk laporan shard yang sudah digabung bisa dipangkas
 | 3   | ✅ **DITERAPKAN** — Job `scan-images` di production.yml memindai image produksi langsung dari GHCR (paralel dengan deploy); build Docker di job trivy security-scan dihapus. Rescan image mingguan via job `scan-images-weekly` (schedule) di security-scan.yml | −2 build Docker penuh per push (±17.5 menit) | 30 menit |
 | 4   | ✅ **DITERAPKAN** (`7b539308`) — Cache registry BuildKit (`type=registry,mode=max`, tag `:buildcache`) di kedua build production; builder `docker-container` dipertahankan. Usulan awal `type=gha` **tidak valid** (backend gha/registry tak didukung driver default Docker 28 + overlay2 di runner). Terukur pada run ke-2: **API 3m05s → 4s, Web 3m45s → 4s**; blob cache gratis (image publik) dan tak makan kuota GHA | build Docker deploy −30-60% | 10 menit |
 | 5   | ✅ **DITERAPKAN** (`99ddf0a3`) — `concurrency` di ci.yml | hemat runner saat push beruntun | 5 menit |
-| 6   | ✅ **DITERAPKAN** — `safety-check` dipangkas jadi guard `.only`/`.skip` (grep murni, PR-only); probe `/login` dipakai di `e2e-visual-baselines.yml` (tetap ubuntu: workflow ini menghasilkan baseline untuk disalin manual, bukan commit langsung) | PR lebih cepat, workflow manual berfungsi | 20 menit |
+| 6   | ✅ **DITERAPKAN** — `safety-check` dipangkas jadi guard `.only`/`.skip` (grep murni, PR-only); probe `/login` dipakai di `e2e-visual-baselines.yml`; server manual yang bentrok port dihapus dan runner dipindah ke `windows-latest` (cocokkan nama baseline `-chromium-win32`) | PR lebih cepat, workflow baseline berfungsi | 20 menit |
 | 7   | ✅ **DITERAPKAN** — Retensi blob-report shard + fallback raw 30 → 7 hari (merged 7 hari, test-results 14 hari, HTML 60 hari tetap) | storage | 2 menit |
 
 Estimasi total hemat bila 1-6 diterapkan: **±18-20 menit-runner per push
 master** (dari ±32), plus jalur PR yang jujur. Semua aksi 1-7 kini **DITERAPKAN**.
 (2026-10-02: sisa R7 probe `/login` dan R8 retensi blob ditutup bersama job
-rescan image mingguan di security-scan.yml).
+rescan image mingguan di security-scan.yml. R7 dilanjutkan: server manual
+yang bentrok port dihapus + runner `windows-latest` — verifikasi
+workflow_dispatch `36938528179` hijau, snapshot baru tersedia di artifact
+`visual-snapshots-updated`.)
 
 ## Yang sudah baik (tidak perlu diubah)
 
