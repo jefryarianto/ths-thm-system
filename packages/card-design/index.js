@@ -1,12 +1,13 @@
 /**
  * SPEC DESAIN KARTU KTA (CR80 landscape 856×540) — SUMBER TUNGGAL.
  *
- * Seluruh renderer kartu — mobile (React Native), web (live tab + print preview),
- * PDF (react-pdf), dan preview HTML (`_scripts/build-card-preview.mjs`) — memakai
+ * Seluruh renderer kartu — web (live tab + print preview), PDF (react-pdf),
+ * dan preview HTML (`_scripts/build-card-preview.mjs`) — memakai
  * konstanta & helper dari file ini supaya layout tidak bisa melenceng satu sama lain.
+ * (Aplikasi mobile kini Flutter di `apps/mobile_flutter` dan mereplikasi konstanta ini di Dart.)
  *
  * Ditulis CommonJS murni (tanpa JSX/build step) agar bisa di-`require` dari node
- * script, Metro (mobile), Next bundler (web), dan NestJS (API) tanpa instalasi.
+ * script, Next bundler (web), dan NestJS (API) tanpa instalasi.
  */
 
 'use strict';

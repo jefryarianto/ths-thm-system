@@ -13,8 +13,7 @@ import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
-/// Layar edit profil anggota -- paritas dengan
-/// `apps/mobile/src/screens/profile/edit.tsx` (aplikasi Expo).
+/// Layar edit profil anggota.
 ///
 /// Email sengaja read-only: perubahan email harus melalui admin (info box
 /// ditampilkan di bawah field). Endpoint: `PATCH /auth/me` (namaLengkap,

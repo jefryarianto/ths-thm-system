@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Kerangka utama aplikasi setelah login — bottom navigation 5 tab seperti
-/// aplikasi React Native (Beranda, Iuran, Scan QR, Dokumen, Profil).
+/// Kerangka utama aplikasi setelah login — bottom navigation 5 tab
+/// (Beranda, Iuran, Scan QR, Dokumen, Profil).
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 

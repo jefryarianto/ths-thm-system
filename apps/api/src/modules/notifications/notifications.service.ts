@@ -1032,14 +1032,14 @@ export class NotificationsService {
   }
 
   /**
-   * URL layanan push resmi Expo (digunakan untuk token Expo: `ExponentPushToken[...]`).
-   * App mobile memakai `expo-notifications` + `Notifications.getExpoPushTokenAsync()`
-   * yang menghasilkan TOKEN EXPO (bukan raw FCM token). firebase-admin TIDAK bisa
-   * mengirim ke token Expo — jadi token tersebut harus dikirim lewat API HTTP Expo.
+   * URL layanan push resmi Expo (untuk token berawalan `ExponentPushToken[...]`).
+   * App mobile saat ini (Flutter, `firebase_messaging`) menghasilkan raw FCM token,
+   * sehingga jalur utama memakai FCM directly. Jalur Expo ini dipertahankan hanya
+   * untuk kompatibilitas token lama yang masih tersimpan di database.
    */
   private static readonly EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
-  /** Deteksi token Expo (`ExponentPushToken[xxxxxxxx]`). Token FCM asli tidak memakai awalan ini. */
+  /** Deteksi token Expo warisan (`ExponentPushToken[xxxxxxxx]`). Token FCM asli (Flutter) tidak memakai awalan ini. */
   private isExpoToken(token: string): boolean {
     return token.startsWith('ExponentPushToken[');
   }
