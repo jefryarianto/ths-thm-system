@@ -10,11 +10,6 @@ on:
       - 'packages/**'
       - 'docker-compose*.yml'
       - '.github/workflows/production.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
   workflow_dispatch:
     inputs:
       image_tag:
