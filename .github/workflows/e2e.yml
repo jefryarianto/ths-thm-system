@@ -54,10 +54,6 @@ on:
         description: 'Number of parallel shards (default: 4)'
         required: false
         default: '4'
-      update_snapshots:
-        description: 'Update visual regression snapshots (--update-snapshots)'
-        type: boolean
-        default: false
 
 env:
   NODE_VERSION: '22'

@@ -3,6 +3,17 @@
 # Separate workflow to update visual regression screenshot baselines.
 # Run this when UI changes intentionally alter component appearance.
 #
+# Visual regression tests are EXCLUDED from normal CI runs (see e2e.yml:
+# test:e2e:web:ci uses --grep-invert "Visual Regression"), so baselines are
+# only ever regenerated here. The job runs on windows-latest because
+# Playwright bakes {platform} into snapshot filenames (…-chromium-win32.png)
+# and text rendering differs per OS; the committed baselines come from
+# developer Windows machines.
+#
+# Server handling: Playwright's webServer (playwright.config.ts, isCI branch)
+# starts and stops `next start -p 3002` itself. Do not add a manual
+# `next start` step — the port clash makes every test fail.
+#
 # Usage:
 #   1. Go to Actions → E2E Visual Baselines → "Run workflow"
 #   2. Select the branch
@@ -31,7 +42,13 @@ env:
 jobs:
   update-baselines:
     name: 📸 Update Visual Baselines
-    runs-on: ubuntu-latest
+    # Windows, bukan Linux: nama baseline Playwright memakai {platform}
+    # (…-chromium-win32.png) dan font/anti-aliasing berbeda antar-OS. Baseline
+    # yang di-commit dibuat di mesin Windows pengembang, jadi generatornya
+    # harus jalan di Windows agar artefaknya langsung cocok dipakai.
+    # Runner Windows gratis untuk repo publik; lebih lambat → timeout lebih besar.
+    runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -65,38 +82,26 @@ jobs:
 
       - name: Install Playwright browsers (Chromium only)
         working-directory: apps/web
-        run: npx playwright install chromium --with-deps
+        # --with-deps hanya didukung Debian/Ubuntu; di Windows dependensi
+        # browser sudah dibundel oleh installer Chromium.
+        run: npx playwright install chromium
 
       - name: Build Next.js app (production)
         run: pnpm --filter @ths-thm/web build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
-          NEXT_PUBLIC_ENABLE_REALTIME: false
+          # Realtime sengaja dimatikan agar sama dengan kondisi pembandingan
+          # lokal (next dev tanpa flag ini), sehingga baseline yang dihasilkan
+          # di sini cocok dengan snapshot yang dibandingkan developer.
+          NEXT_PUBLIC_ENABLE_REALTIME: 'false'
           NODE_ENV: production
 
-      - name: Start Next.js server in background
-        shell: bash
-        run: |
-          cd apps/web
-          npx next start -p 3002 &
-          echo "NEXT_PID=$!" >> $GITHUB_ENV
-
-      - name: Wait for Next.js to be ready
-        shell: bash
-        run: |
-          for i in $(seq 1 30); do
-            # Probe /login (public, always 200).  `/` is middleware-redirected
-            # (307 to /login for anonymous users) and is NOT a readiness signal.
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/login 2>/dev/null || true)
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ Next.js server is ready"
-              exit 0
-            fi
-            echo "   Waiting... (attempt $i/30) HTTP $HTTP_CODE"
-            sleep 3
-          done
-          echo "❌ Next.js server failed to start"
-          exit 1
+      # Server Next.js dikelola oleh Playwright webServer (branch isCI pada
+      # playwright.config.ts): `next start -p 3002` + tunggu /login sendiri
+      # (timeout 120s). Menyalakan server kedua di port yang sama membuat
+      # playwright gagal dengan "port is already used" (reuseExistingServer:
+      # false), dan server manual tidak mendapat env fail-open API yang
+      # dibutuhkan mockAuth.
 
       - name: Generate new visual regression snapshots
         working-directory: apps/web
@@ -113,13 +118,6 @@ jobs:
           name: visual-snapshots-updated
           path: apps/web/e2e/style-guide-visual.spec.ts-snapshots/
           retention-days: 7
-
-      - name: Stop Next.js server
-        if: always()
-        shell: bash
-        run: |
-          kill $NEXT_PID 2>/dev/null || true
-          pkill -f "next start" 2>/dev/null || true
 
       - name: Show snapshot summary
         shell: bash
