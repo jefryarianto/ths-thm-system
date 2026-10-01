@@ -44,17 +44,20 @@ const { data, error } = await client.GET('/users', {
 });
 ```
 
-#### Mobile (React Native)
+#### Mobile (Flutter)
 
-```typescript
-import createClient from 'openapi-fetch';
-import type { paths } from '@ths-thm/api-client';
+```dart
+import 'package:dio/dio.dart';
+import '../../core/api/api_client.dart';
+import '../../core/constants/app_constants.dart';
 
-const client = createClient<paths>({ baseUrl: 'http://localhost:3001/api' });
+final api = ApiClient(); // singleton, lihat apps/mobile_flutter/lib/core/api/api_client.dart
 
-const { data } = await client.POST('/auth/login', {
-  body: { identifier: 'user@example.com', password: 'secret' },
-});
+final response = await api.dio.post(
+  '${AppConstants.baseUrl}/auth/login',
+  data: {'identifier': 'user@example.com', 'password': 'secret'},
+);
+final data = response.data['data'];
 ```
 
 ## CI/CD Integration

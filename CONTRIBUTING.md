@@ -121,8 +121,7 @@ pnpm typecheck
 apps/
 ├── api/          # NestJS backend
 ├── web/          # Next.js admin dashboard
-├── mobile/       # Expo React Native app
-└── mobile-flutter/ # Flutter rewrite (scaffold)
+├── mobile_flutter/ # Flutter app (Kartu digital, QR scan, FCM)
 packages/
 ├── templates/    # Document templates
 ├── csv_templates/ # CSV import templates (+ contoh data)

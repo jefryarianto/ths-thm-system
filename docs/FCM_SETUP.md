@@ -32,11 +32,11 @@ FCM_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 
 > **Note:** `FCM_PRIVATE_KEY` harus di-escape dengan `\n` untuk newline.
 
-### 4. Setup Mobile App
+### 4. Setup Mobile App (Flutter)
 
 1. Download `google-services.json` dari Firebase Console
-2. Taruh di `apps/mobile/google-services.json` (sudah ada di .gitignore)
-3. Install expo-notifications: sudah ada di `package.json`
+2. Taruh di `apps/mobile_flutter/android/app/google-services.json` (sudah ada di .gitignore)
+3. Paket `firebase_core` + `firebase_messaging` sudah ada di `apps/mobile_flutter/pubspec.yaml`
 
 ## Flow
 

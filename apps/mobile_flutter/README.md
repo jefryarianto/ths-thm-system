@@ -1,6 +1,6 @@
 # THS-THM Mobile App (Flutter Version)
 
-Aplikasi Flutter paralel dari aplikasi mobile React Native (Expo) untuk THS-THM,
+Aplikasi Flutter untuk THS-THM (Kartu digital, QR scan, FCM push notification),
 memakai backend API yang sama (NestJS di `apps/api`) tanpa perubahan backend.
 
 ## Prasyarat
@@ -74,7 +74,7 @@ flutter test
 ## Catatan Platform
 
 - `android/` & `ios/` di-generate dengan `flutter create --platforms=android,ios .`
-- Package ID paralel: `org.thsthm.mobile.flutter` (tidak bentrok dengan Expo `org.thsthm.mobile`).
+- Package ID aplikasi: `org.thsthm.mobile.flutter` (Android) — sinkronkan dengan project Firebase.
 - Android `minSdk 23` (kebutuhan `flutter_secure_storage` v9 & `mobile_scanner`).
 - Notifikasi push memakai `firebase_messaging`; tambahkan `google-services.json` dari
   project Firebase Anda bila push aktif. Tanpa file tersebut, fitur lainnya tetap berjalan.

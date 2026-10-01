@@ -57,12 +57,12 @@ if ($?) {
     Write-Host "  apps/web dependencies installed" -ForegroundColor Green
 }
 
-# Install Mobile dependencies
-Write-Host "`n[6/6] Installing apps/mobile dependencies..." -ForegroundColor Yellow
-Set-Location (Join-Path $root "apps\mobile")
+# Install Flutter mobile dependencies
+Write-Host "`n[6/6] Installing apps/mobile_flutter dependencies..." -ForegroundColor Yellow
+Set-Location (Join-Path $root "apps\mobile_flutter")
 pnpm install
 if ($?) {
-    Write-Host "  apps/mobile dependencies installed" -ForegroundColor Green
+    Write-Host "  apps/mobile_flutter dependencies installed" -ForegroundColor Green
 }
 
 # Done
@@ -76,14 +76,12 @@ Write-Host "  1. Edit .env with your database credentials" -ForegroundColor Whit
 Write-Host "  2. cd apps/api && npx prisma migrate dev" -ForegroundColor White
 Write-Host "  3. cd apps/api && pnpm run start:dev" -ForegroundColor White
 Write-Host "  4. cd apps/web && pnpm run dev" -ForegroundColor White
-Write-Host "  5. cd apps/mobile && npx expo start" -ForegroundColor White
+Write-Host "  5. cd apps/mobile_flutter && flutter run" -ForegroundColor White
 Write-Host ""
-Write-Host "  Production Deployment (Render):" -ForegroundColor White
-Write-Host "  1. Set environment variables in Render dashboard" -ForegroundColor White
-Write-Host "  2. Database: Render PostgreSQL (auto-provisioned)" -ForegroundColor White
-Write-Host "  3. Backend: Render Web Service (apps/api)" -ForegroundColor White
-Write-Host "  4. Frontend: Render Static Site (apps/web)" -ForegroundColor White
-Write-Host "  5. Run: npx prisma migrate deploy (in Render build command)" -ForegroundColor White
+Write-Host "  Production Deployment (VPS):" -ForegroundColor White
+Write-Host "  1. Push ke branch master — GitHub Actions build & deploy otomatis" -ForegroundColor White
+Write-Host "  2. Workflow: .github/workflows/production.yml (GHCR + Docker Compose + Trivy)" -ForegroundColor White
+Write-Host "  3. Prisma migration dijalankan otomatis saat deploy (migrate deploy)" -ForegroundColor White
 Write-Host ""
 Write-Host "  WARNING: 'migrate dev' is for DEVELOPMENT only." -ForegroundColor Red
 Write-Host "  Use 'migrate deploy' in production!" -ForegroundColor Red

@@ -9,8 +9,7 @@ ths-thm-system/
 ├─ apps/
 │   ├─ api/                # Backend NestJS + Prisma (47+ modul REST API)
 │   ├─ web/                # Frontend Next.js 16 + Tailwind (Dashboard Admin role-based)
-│   ├─ mobile/             # React Native Expo (Kartu digital, QR scan, FCM)
-│   └─ mobile_flutter/     # Flutter App (alternatif mobile)
+│   └─ mobile_flutter/     # Flutter App (Kartu digital, QR scan, FCM)
 ├─ packages/
 │   ├─ shared-types/       # Shared TypeScript types
 │   ├─ templates/          # JSX template dokumen (kartu, sertifikat, piagam, QR, signature, stamp)
@@ -24,14 +23,13 @@ ths-thm-system/
 
 ## Tech Stack
 
-| Layer    | Teknologi                                                |
-| -------- | -------------------------------------------------------- | ---------------------------------------------------- |
-| Backend  | NestJS 10, Prisma 5, PostgreSQL 16, JWT, FCM, BullMQ     |
-| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui            |
-| Mobile   | Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC | React Native 0.74 (Expo SDK 51), NativeWind, FCM, QR |
-| Mobile   | Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC | Flutter 3.44.0, Firebase, QR Scanner (alternatif)    |
-| Package  | @react-pdf/renderer, PapaParse, SheetJS                  |
-| Manager  | pnpm 11 (monorepo workspace)                             |
+| Layer    | Teknologi                                            |
+| -------- | ---------------------------------------------------- |
+| Backend  | NestJS 10, Prisma 5, PostgreSQL 16, JWT, FCM, BullMQ |
+| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui        |
+| Mobile   | Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC |
+| Package  | @react-pdf/renderer, PapaParse, SheetJS              |
+| Manager  | pnpm 11 (monorepo workspace)                         |
 
 ## Module List (47 Modul Backend)
 
@@ -111,33 +109,21 @@ ths-thm-system/
 pnpm install
 cd apps/api   && npx prisma generate && npx prisma migrate dev && pnpm run start:dev
 cd apps/web   && pnpm run dev
-cd apps/mobile && npx expo start
+cd apps/mobile_flutter && flutter run
 ```
 
 ### Mobile Development
 
-Proyek ini memiliki **dua aplikasi mobile** yang dikembangkan secara paralel:
-
-**React Native (utama - Expo SDK 51):**
-
-- Lebih matang, fitur lebih lengkap
-- Fokus development saat ini
-- Build & release via EAS
-- Jalankan: `cd apps/mobile && npx expo start`
-
-**Flutter (alternatif - Flutter 3.44.0):**
+Aplikasi mobile dikembangkan dengan Flutter (3.44.0):
 
 - Development aktif dengan fitur parity
 - Keamanan KTA dengan FLAG_SECURE
 - Build & release via CI (GitHub Actions)
 - Jalankan: `cd apps/mobile_flutter && flutter run`
 
-**Catatan:** Kedua platform menunjukkan aktivitas development yang seimbang. Jika tujuan adalah konsolidasi, perlu keputusan strategis apakah akan memfokuskan semua effort ke satu platform atau mempertahankan parity.
-
 Teknologi:
 
-- **RN:** React Native 0.74, Expo SDK 51, NativeWind, FCM, QR Scanner
-- **Flutter:** Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC
+- Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC
 
 ### Development Workflow
 
@@ -150,33 +136,11 @@ pnpm install
 cd apps/api   && npx prisma generate && npx prisma migrate dev && pnpm run start:dev
 cd apps/web   && pnpm run dev
 
-# Manual - Mobile (pilih satu)
-cd apps/mobile && npx expo start           # React Native
-cd apps/mobile_flutter && flutter run       # Flutter
+# Manual - Mobile
+cd apps/mobile_flutter && flutter run
 ```
 
 ## Deployment
-
-### Render (Cloud)
-
-| Service      | Type        | Directory  |
-| ------------ | ----------- | ---------- |
-| Backend API  | Web Service | `apps/api` |
-| Frontend Web | Static Site | `apps/web` |
-| Database     | PostgreSQL  | Managed    |
-
-### Production Commands:
-
-```bash
-# Build: pnpm install && npx prisma generate && npx prisma migrate deploy
-# Start: node dist/main.js
-```
-
-### Docker
-
-```bash
-docker compose up -d
-```
 
 ### VPS Deployment
 
