@@ -72,6 +72,10 @@ docs/item.txt
 # Package node_modules (for monorepo packages that may accidentally have them)
 packages/templates/node_modules/
 
+# Node binaries accidentally exposed in package dirs (npm bin leak)
+packages/api-client/tsc*
+packages/api-client/tsserver*
+
 # Debug / log files
 ci-lint-log.html
 lint-output.txt
