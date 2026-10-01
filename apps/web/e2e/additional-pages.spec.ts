@@ -77,7 +77,7 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('switches between tabs', async ({ page }) => {
       // Click Anggota tab (scoped to main content — sidebar group header "Keanggotaan" also matches substring "Anggota")
-      await page.locator('main').getByRole('button', { name: 'Anggota' }).click();
+      await page.locator('main').getByRole('button', { name: 'Anggota', exact: true }).click();
       const searchVisible = await page
         .locator('input[placeholder="Cari anggota..."]')
         .first()
