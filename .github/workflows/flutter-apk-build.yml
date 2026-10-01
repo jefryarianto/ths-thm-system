@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      APK_PATH: build/app/outputs/flutter-apk/app-release.apk
+      APK_PATH: apps/mobile_flutter/build/app/outputs/flutter-apk/app-release.apk
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -49,6 +49,10 @@ jobs:
           fi
       - name: Install Flutter dependencies
         run: flutter pub get
+      - name: Analyze Dart code
+        run: flutter analyze --no-pub
+      - name: Run Flutter tests
+        run: flutter test
       - name: Build release APK
         run: flutter build apk --release -t lib/main.dart
       - name: Upload APK as artifact
@@ -65,3 +69,7 @@ jobs:
           name: Release ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up signing artifacts
+        if: always()
+        run: rm -f /tmp/upload-keystore.jks android/key.properties
