@@ -25,6 +25,7 @@ import Modal from '@/components/ui/modal';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
+import ExportTab from '@/components/reports/ExportTab';
 
 interface Distrik {
   id: string;
@@ -257,14 +258,56 @@ export default function OrgStructureSettingsPage() {
   // Import state
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
+  // Export state
+  const [exportType, setExportType] = useState('distrik');
+  const [exportLoading, setExportLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
     importedDistrik: number;
     importedWilayah: number;
     importedRanting: number;
+
     skipped: number;
     total: number;
   } | null>(null);
+  // Export handler
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      const { data: res } = await apiClient.get(`/reports/export/${exportType}`);
+      const rows = res.data || [];
+      if (rows.length === 0) {
+        setExportLoading(false);
+        return;
+      }
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(','),
+        ...rows.map((r: Record<string, unknown>) =>
+          headers
+            .map((h) => {
+              const v = String(r[h] ?? '');
+              return v.includes(',') || v.includes('"')
+                ? `"${v.replace(/"/g, '""')}"`
+                : v;
+            })
+            .join(','),
+        ),
+      ].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `data-${exportType}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      toast?.('error', 'Export gagal');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -435,6 +478,12 @@ export default function OrgStructureSettingsPage() {
     { key: 'wilayah', label: 'Wilayah', icon: MapIcon },
     { key: 'ranting', label: 'Ranting', icon: Home },
   ];
+        <ExportTab
+          exportType={exportType}
+          onExportTypeChange={setExportType}
+          exportLoading={exportLoading}
+          onExport={handleExport}
+        />
 
   const currentList =
     activeTab === 'distrik' ? distriks : activeTab === 'wilayah' ? wilayahs : rantings;

@@ -32,6 +32,9 @@ export default function ExportTab({
           <option value="members">Data Anggota</option>
           <option value="dues">Data Iuran</option>
           <option value="graduates">Data Lulusan</option>
+          <option value="distrik">Data Distrik</option>
+          <option value="wilayah">Data Wilayah</option>
+          <option value="ranting">Data Ranting</option>
         </select>
         <button
           onClick={onExport}

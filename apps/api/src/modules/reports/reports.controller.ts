@@ -16,6 +16,9 @@ const VALID_EXPORT_TYPES = new Set([
   'graduations',
   'assessments',
   'audit_logs',
+  'distrik',
+  'wilayah',
+  'ranting',
 ]);
 
 @ApiTags('Reports')

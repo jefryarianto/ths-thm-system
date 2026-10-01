@@ -62,6 +62,12 @@ export class ExportService {
         return this.getAssessmentData(scope);
       case 'audit_logs':
         return this.getAuditLogData(scope);
+      case 'distrik':
+        return this.getDistrikData(scope);
+      case 'wilayah':
+        return this.getWilayahData(scope);
+      case 'ranting':
+        return this.getRantingData(scope);
       default:
         throw new Error(`Unknown export type: ${type}`);
     }
@@ -233,6 +239,111 @@ export class ExportService {
       'USER ID': l.userId || '-',
       IP: l.ipAddress || '-',
       DETAIL: l.details ? JSON.stringify(l.details) : '-',
+    }));
+
+    return { data, headers };
+  }
+  private async getDistrikData(scope?: UserScope) {
+    const where: Record<string, unknown> = {};
+    if (scope?.distrikId) {
+      where.id = scope.distrikId;
+    }
+
+    const distrik = await this.prisma.distrik.findMany({
+      where,
+      include: { nasional: { select: { nama: true } } },
+      orderBy: { nama: 'asc' },
+    });
+
+    const headers = [
+      'NO',
+      'KODE DISTRIK',
+      'NAMA DISTRIK',
+      'ALAMAT',
+      'NASIONAL',
+      'DIBUAT PADA',
+      'DIUPDATE PADA',
+    ];
+    const data = distrik.map((d, i) => ({
+      NO: i + 1,
+      'KODE DISTRIK': d.kodeDistrik,
+      'NAMA DISTRIK': d.nama,
+      ALAMAT: d.alamat || '-',
+      NASIONAL: d.nasional?.nama || '-',
+      'DIBUAT PADA': d.createdAt.toISOString(),
+      'DIUPDATE PADA': d.updatedAt.toISOString(),
+    }));
+
+    return { data, headers };
+  }
+
+  private async getWilayahData(scope?: UserScope) {
+    const where: Record<string, unknown> = {};
+    if (scope?.wilayahId) {
+      where.id = scope.wilayahId;
+    } else if (scope?.distrikId) {
+      where.distrikId = scope.distrikId;
+    }
+
+    const wilayah = await this.prisma.wilayah.findMany({
+      where,
+      include: { distrik: { select: { nama: true } } },
+      orderBy: { nama: 'asc' },
+    });
+
+    const headers = [
+      'NO',
+      'KODE WILAYAH',
+      'NAMA WILAYAH',
+      'DISTRIK',
+      'DIBUAT PADA',
+      'DIUPDATE PADA',
+    ];
+    const data = wilayah.map((w, i) => ({
+      NO: i + 1,
+      'KODE WILAYAH': w.kodeWilayah,
+      'NAMA WILAYAH': w.nama,
+      DISTRIK: w.distrik?.nama || '-',
+      'DIBUAT PADA': w.createdAt.toISOString(),
+      'DIUPDATE PADA': w.updatedAt.toISOString(),
+    }));
+
+    return { data, headers };
+  }
+
+  private async getRantingData(scope?: UserScope) {
+    const where: Record<string, unknown> = {};
+    if (scope?.rantingId) {
+      where.id = scope.rantingId;
+    } else if (scope?.wilayahId) {
+      where.wilayahId = scope.wilayahId;
+    } else if (scope?.distrikId) {
+      where.wilayah = { distrikId: scope.distrikId };
+    }
+
+    const ranting = await this.prisma.ranting.findMany({
+      where,
+      include: { wilayah: { select: { nama: true } } },
+      orderBy: { nama: 'asc' },
+    });
+
+    const headers = [
+      'NO',
+      'KODE RANTING',
+      'NAMA RANTING',
+      'LOKASI LATIHAN',
+      'WILAYAH',
+      'DIBUAT PADA',
+      'DIUPDATE PADA',
+    ];
+    const data = ranting.map((r, i) => ({
+      NO: i + 1,
+      'KODE RANTING': r.kodeRanting,
+      'NAMA RANTING': r.nama,
+      'LOKASI LATIHAN': r.lokasiLatihan || '-',
+      WILAYAH: r.wilayah?.nama || '-',
+      'DIBUAT PADA': r.createdAt.toISOString(),
+      'DIUPDATE PADA': r.updatedAt.toISOString(),
     }));
 
     return { data, headers };
