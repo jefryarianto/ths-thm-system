@@ -277,7 +277,7 @@ jobs:
         with:
           name: blob-report-${{ matrix.shard }}
           path: apps/web/blob-report/
-          retention-days: 30
+          retention-days: 7
           compression-level: 0
 
       - name: Upload test results (traces, screenshots on failure)
@@ -376,7 +376,7 @@ jobs:
         with:
           name: blob-report-raw
           path: apps/web/blob-report/
-          retention-days: 30
+          retention-days: 7
           compression-level: 0
 
       - name: Upload merged blob report archive

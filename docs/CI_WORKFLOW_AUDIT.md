@@ -110,6 +110,10 @@ tetap hidup dan Playwright config lokal (non-CI) memakai
 `reuseExistingServer: true` — jalan tapi dengan dev-server semantics.
 Fix satu baris: probe `/login`. Juga tanpa cache browser/`.next`.
 
+> ✅ **Diterapkan** — probe kini `/login` (200) dan mencetak kode HTTP per percobaan.
+> Runner tetap `ubuntu-latest`: workflow ini menghasilkan baseline untuk disalin
+> manual (baris 6-13 header), bukan commit otomatis, jadi platform tidak berubah.
+
 ### R8 — Squandered artifacts / retention
 
 Blob report tiap shard (4 file kecil) di-upload per push dengan retensi
@@ -117,19 +121,24 @@ Blob report tiap shard (4 file kecil) di-upload per push dengan retensi
 retensi 30 hari untuk laporan shard yang sudah digabung bisa dipangkas
 7 hari tanpa kehilangan utilitas. Prioritas rendah.
 
+> ✅ **Diterapkan** — retensi blob shard + raw fallback dipangkas ke 7 hari.
+
 ## Rekomendasi berurutan (dampak / effort)
 
-| #   | Aksi                                                                                                                                                                                                                                                                                                                                                                                                                                   | Dampak                                    | Effort   |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------- | --- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------- |
-| 1   | ✅ **DITERAPKAN** (`99ddf0a3`) — Path filter EAS (`apps/mobile/**`, packages, lockfile)                                                                                                                                                                                                                                                                                                                                                | −15 menit-runner per push non-mobile      | 5 menit  |
-| 2   | ✅ **DITERAPKAN** (`99ddf0a3`) — Hapus build Docker duplikat di job snyk; install setelah cek token (31s, dari ±10 menit)                                                                                                                                                                                                                                                                                                              | −2 build Docker + install                 | 10 menit |     | 3   | ✅ **DITERAPKAN** — Job `scan-images` di production.yml: Trivy memindai image produksi langsung dari GHCR, paralel dengan deploy; build Docker di job trivy security-scan dihapus. Sisa: rescan image mingguan (schedule) belum ada | −2 build Docker penuh per push (±17.5 menit) | 30 menit |
-| 4   | ✅ **DITERAPKAN** (`7b539308`) — cache registry BuildKit (`type=registry,mode=max`, tag `:buildcache`) di kedua build production, dengan builder `docker-container` dipertahankan. Catatan: usulan awal `type=gha` **tidak valid** — backend gha/registry tak didukung driver default (Docker 28 + overlay2 di runner); build run-2 terukur **API 3m05s → 4s, Web 3m45s → 4s**, blob cache gratis (image publik) & tak makan kuota GHA | build Docker deploy −30-60%               | 10 menit |
-| 5   | ✅ **DITERAPKAN** (`99ddf0a3`) — `concurrency` di ci.yml                                                                                                                                                                                                                                                                                                                                                                               | hemat runner saat push beruntun           | 5 menit  |
-| 6   | ✅ **safety-check dipangkas** (guard `.only`/`.skip` murni grep, PR-only) — sisa: perbaiki probe `/login` di visual-baselines                                                                                                                                                                                                                                                                                                          | PR lebih cepat, workflow manual berfungsi | 20 menit |
-| 7   | (Opsional) Kurangi retensi blob-report shard                                                                                                                                                                                                                                                                                                                                                                                           | storage                                   | 2 menit  |
+| #   | Aksi | Dampak | Effort |
+| --- | --- | --- | --- |
+| 1   | ✅ **DITERAPKAN** (`99ddf0a3`) — Path filter EAS (`apps/mobile/**`, packages, lockfile) | −15 menit-runner per push non-mobile | 5 menit |
+| 2   | ✅ **DITERAPKAN** (`99ddf0a3`) — Hapus build Docker duplikat di job snyk; install setelah cek token (31s, dari ±10 menit) | −2 build Docker + install | 10 menit |
+| 3   | ✅ **DITERAPKAN** — Job `scan-images` di production.yml memindai image produksi langsung dari GHCR (paralel dengan deploy); build Docker di job trivy security-scan dihapus. Rescan image mingguan via job `scan-images-weekly` (schedule) di security-scan.yml | −2 build Docker penuh per push (±17.5 menit) | 30 menit |
+| 4   | ✅ **DITERAPKAN** (`7b539308`) — Cache registry BuildKit (`type=registry,mode=max`, tag `:buildcache`) di kedua build production; builder `docker-container` dipertahankan. Usulan awal `type=gha` **tidak valid** (backend gha/registry tak didukung driver default Docker 28 + overlay2 di runner). Terukur pada run ke-2: **API 3m05s → 4s, Web 3m45s → 4s**; blob cache gratis (image publik) dan tak makan kuota GHA | build Docker deploy −30-60% | 10 menit |
+| 5   | ✅ **DITERAPKAN** (`99ddf0a3`) — `concurrency` di ci.yml | hemat runner saat push beruntun | 5 menit |
+| 6   | ✅ **DITERAPKAN** — `safety-check` dipangkas jadi guard `.only`/`.skip` (grep murni, PR-only); probe `/login` dipakai di `e2e-visual-baselines.yml` (tetap ubuntu: workflow ini menghasilkan baseline untuk disalin manual, bukan commit langsung) | PR lebih cepat, workflow manual berfungsi | 20 menit |
+| 7   | ✅ **DITERAPKAN** — Retensi blob-report shard + fallback raw 30 → 7 hari (merged 7 hari, test-results 14 hari, HTML 60 hari tetap) | storage | 2 menit |
 
 Estimasi total hemat bila 1-6 diterapkan: **±18-20 menit-runner per push
-master** (dari ±32), plus jalur PR yang jujur.
+master** (dari ±32), plus jalur PR yang jujur. Semua aksi 1-7 kini **DITERAPKAN**.
+(2026-10-02: sisa R7 probe `/login` dan R8 retensi blob ditutup bersama job
+rescan image mingguan di security-scan.yml).
 
 ## Yang sudah baik (tidak perlu diubah)
 

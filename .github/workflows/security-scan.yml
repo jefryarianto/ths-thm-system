@@ -4,7 +4,9 @@
 #   trivy     — Trivy filesystem scan (SARIF → GitHub Security tab)
 #   gitleaks  — secret scanning (CI full history)
 #   Docker images — dipindai di workflow Production Deploy (job scan-images)
-#                   dari GHCR langsung (R1, docs/CI_WORKFLOW_AUDIT.md).
+#                   dari GHCR langsung (R1, docs/CI_WORKFLOW_AUDIT.md), lalu
+#                   dipindai ulang tiap Minggu (job scan-images-weekly) supaya
+#                   CVE baru di image :latest tetap tertangkap.
 # Snyk dihapus (R2) — tanpa SNYK_TOKEN hanya membayar install penuh.
 #
 # ── Secrets (optional) ────────────────────────────────────────────────
@@ -166,3 +168,83 @@ jobs:
             exit 1
           fi
           echo "✅ Tidak ada secret terdeteksi."
+
+  # ─── 4. Weekly Rescan Production Images (GHCR :latest) ───────────────
+  # Sisa temuan R1 / aksi #3 (docs/CI_WORKFLOW_AUDIT.md): scan-images di
+  # production.yml hanya jalan saat ada deploy. Image lama yang sudah di-push
+  # bisa punya CVE baru di DB Trivy minggu depan — job ini memindai ulang
+  # :latest tiap Minggu dan mengirim SARIF baru ke Security tab.
+  scan-images-weekly:
+    name: 🐳 Weekly Image Rescan (GHCR)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      packages: read # pull image GHCR
+      security-events: write # upload SARIF ke Security tab
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull production images (latest)
+        shell: bash
+        run: |
+          docker pull ghcr.io/jefryarianto/ths-thm-system/api:latest
+          docker pull ghcr.io/jefryarianto/ths-thm-system/web:latest
+
+      - name: Trivy — scan image API (latest CVE DB)
+        id: trivy-api
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/jefryarianto/ths-thm-system/api:latest
+          format: sarif
+          output: trivy-api-weekly.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Trivy — scan image Web (latest CVE DB)
+        id: trivy-web
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/jefryarianto/ths-thm-system/web:latest
+          format: sarif
+          output: trivy-web-weekly.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Upload Trivy SARIF (API)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-weekly.sarif
+          category: trivy-image-api-weekly
+
+      - name: Upload Trivy SARIF (Web)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-weekly.sarif
+          category: trivy-image-web-weekly
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🐳 Weekly Image Rescan (GHCR :latest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | Trivy status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|:------|:-------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| api:latest | ${{ steps.trivy-api.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| web:latest | ${{ steps.trivy-web.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status \`success\` berarti tidak ada CRITICAL/HIGH pada CVE DB terbaru." >> "$GITHUB_STEP_SUMMARY"
