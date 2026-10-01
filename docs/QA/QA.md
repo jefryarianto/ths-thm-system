@@ -41,6 +41,6 @@
 
 - Backend: Node.js + NestJS + Prisma + PostgreSQL
 - Frontend: Next.js + Tailwind
-- Mobile: React Native
+- Mobile: Flutter (`apps/mobile_flutter`)
 - Notifikasi: Firebase Cloud Messaging (FCM)
 - Testing: Postman / Insomnia untuk API, Cypress / Jest untuk UI

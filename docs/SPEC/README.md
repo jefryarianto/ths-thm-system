@@ -4,7 +4,7 @@
 
 - **Backend**: NestJS 10+, Prisma ORM, PostgreSQL 15+
 - **Frontend**: Next.js 14+ (App Router), Tailwind CSS 3+, shadcn/ui
-- **Mobile**: React Native 0.74+, Expo SDK 50+
+- **Mobile**: Flutter 3.x (`apps/mobile_flutter`), `firebase_messaging` untuk FCM
 - **Auth**: JWT + Refresh Token Rotation
 - **Push**: Firebase Cloud Messaging (FCM)
 - **Package Manager**: pnpm (monorepo)

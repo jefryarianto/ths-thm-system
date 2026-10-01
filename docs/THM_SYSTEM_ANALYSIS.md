@@ -8,7 +8,7 @@
 | --------------- | ------------- | ---------------------- |
 | Backend         | `apps/api`    | NestJS + Prisma ORM    |
 | Frontend Web    | `apps/web`    | Next.js + Tailwind CSS |
-| Mobile          | `apps/mobile` | React Native + Expo    |
+| Mobile          | `apps/mobile_flutter` | Flutter (Dart)  |
 | Shared Packages | `packages/`   | Template dokumen & CSV |
 
 ## 2. Audit Hasil & Temuan
@@ -17,7 +17,7 @@ Setelah melakukan audit menyeluruh pada struktur proyek, berikut temuan utama:
 
 ### 2.1 Arsitektur Monorepo
 
-- ✅ **Baik**: Struktur monorepo dengan pnpm workspaces sudah benar (`apps/api`, `apps/web`, `apps/mobile`, `packages/*`)
+- ✅ **Baik**: Struktur monorepo dengan pnpm workspaces sudah benar (`apps/api`, `apps/web`, `apps/mobile_flutter`, `packages/*`)
 - ⚠️ **Perlu perbaikan**: Tidak ada `setup.ps1` yang terlihat di listing root, perlu dibuat
 
 ### 2.2 Backend (NestJS)

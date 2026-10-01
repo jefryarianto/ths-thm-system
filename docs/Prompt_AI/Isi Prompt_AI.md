@@ -15,7 +15,7 @@ Tugas AI:
    - Modul latihan, pendadaran, kegiatan
    - Preview dokumen & kartu anggota
 3. Mobile App:
-   - React Native
+   - Flutter (apps/mobile_flutter/)
    - Kartu digital, sertifikat, piagam
    - QR code validation
    - Notifikasi FCM
@@ -31,4 +31,4 @@ Tugas AI:
    - Role menentukan menu dan endpoint
 7. Deployment:
    - Lokal: pnpm install, prisma migrate dev, run backend/web/mobile
-   - Production: Render Web Service / Static Site, PostgreSQL, environment variables, FCM
+   - Production: VPS + Docker Compose (nginx, api, web, PostgreSQL), environment variables, FCM

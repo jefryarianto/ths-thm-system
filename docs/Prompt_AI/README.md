@@ -2,20 +2,24 @@
 
 Kumpulan prompt untuk membantu pengembangan dengan AI (Claude, GPT, GitHub Copilot).
 
-## Kategori Prompt
+## Isi Folder
 
-| File                     | Deskripsi                                |
-| ------------------------ | ---------------------------------------- |
-| `nestjs-module.md`       | Prompt generate NestJS module + Prisma   |
-| `nextjs-page.md`         | Prompt generate Next.js page + component |
-| `react-native-screen.md` | Prompt generate React Native screen      |
-| `prisma-schema.md`       | Prompt generate Prisma schema            |
-| `jsx-template.md`        | Prompt generate JSX template dokumen     |
-| `csv-template.md`        | Prompt generate CSV template             |
-| `unit-test.md`           | Prompt generate unit test                |
-| `erd-dfd.md`             | Prompt generate ERD & DFD diagram        |
+| File               | Deskripsi                                                                 |
+| ------------------ | ------------------------------------------------------------------------- |
+| `Isi Prompt_AI.md` | Prompt induk: backend, web, mobile, template dokumen/CSV, role, deployment |
+| `README.md`        | Panduan folder ini                                                        |
 
-## Format Prompt
+Catatan:
+
+- Folder ini hanya berisi satu prompt induk. Prompt per-kategori
+  (`nestjs-module.md`, `nextjs-page.md`, `prisma-schema.md`, dsb.) pernah
+  direncanakan tetapi tidak pernah dibuat, jadi rujukannya dihapus dari tabel.
+  Bila butuh prompt khusus, buat file barunya lalu daftarkan di tabel di atas.
+- Aplikasi mobile kini **Flutter** (`apps/mobile_flutter/`) dan deploy produksi
+  memakai VPS + Docker Compose (lihat `docs/DEPLOY-ths-thm.md`). `Isi
+  Prompt_AI.md` sudah disesuaikan dengan kenyataan tersebut.
+
+## Format Prompt (konvensi bila menambah file baru)
 
 Setiap prompt mengikuti format:
 

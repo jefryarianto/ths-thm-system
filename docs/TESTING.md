@@ -9,33 +9,33 @@
 ## Test Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    CI Pipeline (GitHub Actions)              │
-├──────────┬──────────┬──────────┬───────────┬───────────────┤
-│ typecheck│   lint   │ test (API)│ e2e (API) │ e2e-web       │
-│ + mobile │          │ unit+cov │ NestJS    │ Playwright    │
-│   tests  │          │ +mobile  │           │               │
-├──────────┴──────────┴──────────┴───────────┴───────────────┤
-│                    Deploy Stages                             │
-│         build-api → smoke-test → deploy-production          │
-│         build-web → deploy-staging                          │
-└─────────────────────────────────────────────────────────────┘
+.github/workflows/ci.yml          .github/workflows/e2e.yml
+┌───────────────────────────┐     ┌──────────────────────┐
+│ lint      typecheck       │     │ e2e (Playwright/Web) │
+│ contract  test-api (cov)  │     └──────────────────────┘
+│ test-web  repo-hygiene    │     .github/workflows/flutter-apk-build.yml
+└───────────────────────────┘     ┌──────────────────────┐
+                                  │ build (APK debug)    │
+.github/workflows/production.yml  └──────────────────────┘
+build-and-push → deploy → scan-images
 ```
 
 ## Test Layers
 
 ### 1. Unit Tests
 
-| App    | Framework | Location           | Run Command                       |
-| ------ | --------- | ------------------ | --------------------------------- |
-| API    | Jest      | `apps/api/src/`    | `pnpm --filter @ths-thm/api test` |
-| Web    | Vitest    | `apps/web/src/`    | `pnpm --filter @ths-thm/web test` |
-| Mobile | Jest      | `apps/mobile/src/` | `cd apps/mobile && npx jest`      |
+| App    | Framework | Location                  | Run Command                                        |
+| ------ | --------- | ------------------------- | -------------------------------------------------- |
+| API    | Jest      | `apps/api/src/`           | `pnpm --filter @ths-thm/api test`                  |
+| Web    | Vitest    | `apps/web/src/`           | `pnpm --filter @ths-thm/web test`                  |
+| Mobile | Flutter   | `apps/mobile_flutter/test/` | `pnpm test:mobile` or `cd apps/mobile_flutter && flutter test` |
 
-**Mobile tests (15 total):**
+**Mobile tests (`apps/mobile_flutter/test/`):**
 
-- `use-gamification.test.ts` — 9 tests for gamification hooks
-- `use-screen.test.ts` — 6 tests for screen hooks (activities, candidates, documents)
+- `api_client_test.dart` — token refresh, header auth, error mapping
+- `assessment_outbox_test.dart` — antrian/offline assessment
+- `org_structure_fields_test.dart` — pemetaan field struktur organisasi
+- `widget_test.dart` — smoke test widget
 
 **Web tests (133 total):**
 
@@ -99,35 +99,23 @@ npx playwright install chromium
 E2E_BASE_URL=http://localhost:3002 npx playwright test
 ```
 
-**CI Configuration:** See `.github/workflows/ci.yml` → `e2e-web` job.
+**CI Configuration:** See `.github/workflows/e2e.yml` → `e2e` job.
 
-#### Mobile (Maestro)
+#### Mobile (Flutter)
 
-| Aspect          | Detail                                                                                    |
-| --------------- | ----------------------------------------------------------------------------------------- |
-| **Framework**   | Maestro                                                                                   |
-| **Location**    | `apps/mobile/e2e/`                                                                        |
-| **Run command** | `maestro test apps/mobile/e2e/`                                                           |
-| **Flows**       | `login.yaml`, `full-flow.yaml`, `home-screen.yaml`, `gamification.yaml`, `documents.yaml` |
-| **Selectors**   | Prefer `testID` props in React Native + `tapOn: { id: "..." }` in Maestro                 |
+| Aspect          | Detail                                                          |
+| --------------- | --------------------------------------------------------------- |
+| **Framework**   | Flutter test (`flutter_test`)                                    |
+| **Location**    | `apps/mobile_flutter/test/`                                      |
+| **Unit tests**  | `cd apps/mobile_flutter && flutter test` (or `pnpm test:mobile`) |
+| **Static check**| `cd apps/mobile_flutter && flutter analyze`                      |
+| **APK build**   | `flutter build apk --release -t lib/main.dart`                   |
 
-**Running locally:**
+**CI Configuration:**
 
-```bash
-# Install Maestro
-curl -Ls "https://get.maestro.mobile.dev" | bash
-
-# Build APK via EAS
-eas build --platform android --profile preview
-
-# Install on emulator/device
-maestro install app-release.apk
-
-# Run tests
-maestro test apps/mobile/e2e/
-```
-
-**CI Configuration:** See `.github/workflows/ci.yml` → `e2e-mobile` job (syntax validation only; full execution requires device/emulator).
+- Build APK: `.github/workflows/flutter-apk-build.yml` → `build` job
+- Unit test + analyze: `pnpm test:mobile` / `pnpm lint:mobile` (belum ada job CI khusus; jalankan lokal)
+- E2E mobile: belum otomatis — verifikasi manual di emulator/device
 
 ### 4. Type Checking
 
@@ -136,7 +124,7 @@ maestro test apps/mobile/e2e/
 | All    | `pnpm run typecheck`                 |
 | API    | `cd apps/api && npx tsc --noEmit`    |
 | Web    | `cd apps/web && npx tsc --noEmit`    |
-| Mobile | `cd apps/mobile && npx tsc --noEmit` |
+| Mobile | `cd apps/mobile_flutter && flutter analyze` |
 
 ### 5. Linting
 
@@ -147,27 +135,34 @@ maestro test apps/mobile/e2e/
 
 ## CI Pipeline Dependencies
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) has the following job dependency graph:
+Testing runs across several independent workflows. Job dependency graph:
 
 ```
-typecheck ──┬── lint
-            ├── test-mobile
-            ├── test (API) ──┬── e2e (API)
-            │                ├── e2e-web (Playwright)
-            │                └── build-api ──┬── smoke-test ──┬── deploy-production
-            └── build-web ──────────────────┘                └── deploy-staging
-                  (deploy-staging runs from develop branch)
-                  (deploy-production runs from main branch)
+.github/workflows/ci.yml  (jobs run in parallel, no `needs:`)
+├── lint
+├── typecheck
+├── contract
+├── test-api      # Jest unit + integration (coverage)
+├── test-web      # Vitest + next build
+└── repo-hygiene  # guard artefak/junk (lihat .github/ISSUE_TEMPLATE)
+
+.github/workflows/e2e.yml
+└── e2e           # Playwright (Web), trigger: push/PR + schedule + workflow_dispatch
+
+.github/workflows/flutter-apk-build.yml
+└── build         # flutter build apk (debug)
+
+.github/workflows/production.yml  (push ke master)
+build-and-push ──→ deploy ──→ scan-images
 ```
 
 **Key dependencies:**
 
-- `e2e (API)` waits for `test (API)` — ensures API unit tests pass before E2E
-- `e2e-web` waits for `test (API)` — ensures API is working before web E2E
-- `build-api` waits for `typecheck` + `test (API)` — only build if tests pass
-- `smoke-test` waits for `build-api` + `e2e (API)` — only smoke-test if build + E2E pass
-- `deploy-production` waits for `typecheck`, `test`, `e2e`, `smoke-test`, `build-api`, `build-web`
-- `test-mobile` and `e2e-mobile` run independently (no blocking dependency on other jobs)
+- Job pada `ci.yml` berjalan **paralel** (tidak ada `needs:`) — failure salah satu tidak memblokir yang lain
+- `e2e` (`.github/workflows/e2e.yml`) berdiri sendiri; boot API + Web via Docker sebelum Playwright
+- `deploy` menunggu `build-and-push` (image harus ada di registry)
+- `scan-images` menunggu `build-and-push` + `deploy` (image scanning pasca-deploy)
+- Mobile Flutter (`flutter test` / `flutter analyze`) **belum** punya job CI — jalankan via `pnpm test:mobile` / `pnpm lint:mobile`
 
 ## Environment Variables for Testing
 

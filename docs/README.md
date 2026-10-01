@@ -33,13 +33,13 @@ Kumpulan dokumen perencanaan, spesifikasi, dan referensi pengembangan.
 | `TENANT-ISOLATION.md`         | Isolasi data multi-tenant (distrik/wilayah/ranting)      |
 | `COOKBOOK-BaseCrudService.md` | Pola service CRUD berbasis BaseCrudService               |
 | `REFACTOR_MIGRATION.md`       | Catatan migrasi refactor                                 |
-| `MOBILE-ARCHITECTURE.md`      | Arsitektur aplikasi mobile                               |
-| `MOBILE-PRD-STATUS.md`        | Status PRD mobile                                        |
-| `PRD-MOBILE-*.md`             | PRD fitur mobile (approvals, push, scoring, reference)   |
+| `MOBILE-ARCHITECTURE.md`      | ⚠️ Arsip — arsitektur app mobile RN/Expo lama (kini Flutter) |
+| `MOBILE-PRD-STATUS.md`        | ⚠️ Snapshot historis — status PRD mobile (app RN/Expo lama)  |
+| `PRD-MOBILE-*.md`             | PRD fitur mobile (approvals, push, scoring, reference) — kini diimplementasikan di `apps/mobile_flutter` |
 | `THM_SYSTEM_ANALYSIS.md`      | Analisis sistem THM                                      |
-| `COMPLIANCE.md`               | Catatan kepatuhan                                        |
+| `COMPLIANCE.md`               | Catatan kepatuhan (bagian mobile = arsip RN/Expo lama)   |
 | `SECURITY.md`                 | Keamanan repo: secret scanning gitleaks (hook + CI)      |
-| `CI_WORKFLOW_AUDIT.md`        | Audit redundansi & efisiensi workflow CI (.github)       |
+| `CI_WORKFLOW_AUDIT.md`        | ⚠️ Snapshot audit workflow CI per 2026-09-15             |
 
 ## Arsip
 
