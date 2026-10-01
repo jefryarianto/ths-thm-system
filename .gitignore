@@ -144,3 +144,7 @@ apps/api/Dockerfile.font
 tmp_*.png
 tmp_screencap_*.png
 tmp_statuta.txt
+
+# Config tool agen lokal (per-user, jangan di-commit)
+.claude/settings.local.json
+.claude/settings.json
