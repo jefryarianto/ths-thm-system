@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../widgets/app_bar_icon_title.dart';
 import '../../widgets/app_loading_spinner.dart';
@@ -49,7 +51,15 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
     if (status == 'rejected') return 'Ditolak';
     return 'Menunggu Persetujuan';
   }
-  // ignore: unused_element
+
+  /// Format tanggal ISO dari API menjadi "dd MMM yyyy HH:mm".
+  /// Nilai null/kosong/invalid tampil sebagai "-" agar tidak menyesatkan.
+  String _formatDate(Object? value) {
+    if (value == null || value.toString().isEmpty) return '-';
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return value.toString();
+    return DateFormat('dd MMM yyyy HH:mm').format(parsed.toLocal());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +70,7 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadSubmissions,
+            tooltip: 'Muat ulang',
           ),
         ],
       ),
@@ -67,13 +78,18 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
           ? const Center(child: AppLoadingSpinner())
           : _error != null
               ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Error: '),
-                      const SizedBox(height: 8),
-                      ElevatedButton(onPressed: _loadSubmissions, child: const Text('Coba Lagi')),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                        const SizedBox(height: 8),
+                        Text('Gagal memuat pengajuan: $_error', textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton(onPressed: _loadSubmissions, child: const Text('Coba Lagi')),
+                      ],
+                    ),
                   ),
                 )
               : _submissions.isEmpty
@@ -86,9 +102,6 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
                           final s = _submissions[index];
                           final status = (s['status'] ?? 'unknown').toString();
                           final berita = s['berita'];
-                          // ignore: unused_local_variable
-                          final submittedAt = (s['submittedAt'] ?? '').toString();
-                          final completedAt = s['completedAt'];
                           final note = s['note'];
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -104,17 +117,11 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
                                     'Status: ${_statusLabel(status)}',
                                     style: TextStyle(color: _statusColor(status)),
                                   ),
+                                  Text('Diajukan: ${_formatDate(s['submittedAt'])}'),
+                                  if (s['completedAt'] != null)
+                                    Text('Selesai: ${_formatDate(s['completedAt'])}'),
                                   if (note != null && note.toString().isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'Catatan admin: ',
-                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                      ),
-                                    ),
-                                  Text('Diajukan: ', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                  if (completedAt != null)
-                                    Text('Selesai: ', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                    Text('Catatan admin: $note'),
                                 ],
                               ),
                             ),
@@ -125,9 +132,3 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
     );
   }
 }
-
-
-
-
-
-
