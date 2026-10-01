@@ -20,3 +20,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Commit pesan PR Dependabot memenuhi syarat conventional-commit
+    # (lint repo memerlukan scope dalam tanda kurung).
+    commit-message:
+      prefix: 'chore(deps)'
+      include: 'scope'
