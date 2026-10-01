@@ -111,12 +111,12 @@ This checklist outlines the verification steps that should be completed before m
 
 ### Backup System
 
-Backups run automatically via **systemd timer** (`ths-thm-backup.timer`) daily at 02:00 AM.
+Backups run automatically via a cron job in `/etc/cron.d/ths-thm-backup` (installed by `scripts/setup-vps.sh`) daily at 02:00 AM.
 
 | Component        | Detail                                                                        |
 | :--------------- | :---------------------------------------------------------------------------- |
 | **Script**       | `scripts/backup-database.sh`                                                  |
-| **Schedule**     | `systemd timer` — daily @ 02:00 + 10 min after boot                           |
+| **Schedule**     | cron.d — daily @ 02:00 as user `ths-thm`                                      |
 | **Format**       | `pg_dump --format=custom --compress=9` (compressed, parallel-restore capable) |
 | **Location**     | `/opt/backups/ths-thm/{production,staging}/`                                  |
 | **Retention**    | 30 days (auto-cleaned)                                                        |

@@ -371,30 +371,23 @@ jobs:
                   chmod +x /opt/ths-thm/scripts/backup-database.sh || \
                   echo "   ⚠️ Failed to download backup script"
               fi
-              # Install systemd timer (idempotent — only if not already active)
-              # Uses sudo — may fail if deploy user lacks passwordless sudo.
-              if ! systemctl is-active --quiet ths-thm-backup.timer 2>/dev/null; then
-                curl -sf -o /tmp/ths-thm-backup.service "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.service" 2>/dev/null && \
-                  curl -sf -o /tmp/ths-thm-backup.timer "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.timer" 2>/dev/null && \
-                  sudo -n cp /tmp/ths-thm-backup.service /etc/systemd/system/ && \
-                  sudo -n cp /tmp/ths-thm-backup.timer /etc/systemd/system/ && \
-                  sudo -n systemctl daemon-reload && \
-                  sudo -n systemctl enable ths-thm-backup.timer && \
-                  sudo -n systemctl start ths-thm-backup.timer && \
-                  echo "   ✅ Backup timer installed and started (daily at 02:00)" || \
-                  echo "   ⚠️ Backup timer setup skipped (sudo unavailable — run manually on VPS)"
+              # Jadwalkan backup lewat /etc/cron.d yang dipasang scripts/setup-vps.sh.
+              # User deploy biasanya tidak punya passwordless sudo, jadi dari sini
+              # hanya diverifikasi (jangan pasang systemd timer saat deploy).
+              if [ -f /etc/cron.d/ths-thm-backup ]; then
+                echo "   OK: backup terjadwal via /etc/cron.d/ths-thm-backup"
+              elif systemctl is-active --quiet ths-thm-backup.timer 2>/dev/null; then
+                echo "   OK: backup terjadwal via systemd timer"
               else
-                echo "   ✅ Backup timer already active"
+                echo "   WARNING: backup TIDAK terjadwal. Jalankan scripts/setup-vps.sh"
+                echo "   atau pasang /etc/cron.d/ths-thm-backup manual (docs/DEPLOYMENT_SAFETY.md)"
               fi
-              # Ensure backup directory exists
-              mkdir -p /opt/backups/ths-thm/production 2>/dev/null || \
-                sudo -n mkdir -p /opt/backups/ths-thm/production 2>/dev/null || true
-              chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || \
-                sudo -n chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || true
-              # Run initial backup if directory is empty
-              if [ ! -f /opt/backups/ths-thm/production/*.sql.gz ] 2>/dev/null; then
-                echo "   Running initial database backup..."
-                /opt/ths-thm/scripts/backup-database.sh 2>&1 | tail -5 || echo "   ⚠️ Initial backup skipped"
+              mkdir -p /opt/backups/ths-thm/production 2>/dev/null || true
+              if [ ! -x /opt/ths-thm/scripts/backup-database.sh ]; then
+                echo "   WARNING: /opt/ths-thm/scripts/backup-database.sh belum terpasang"
+              elif [ -z "$(find /opt/backups/ths-thm/production -name '*.sql.gz' -mtime -7 2>/dev/null)" ]; then
+                echo "   Belum ada backup < 7 hari — menjalankan backup awal..."
+                /opt/ths-thm/scripts/backup-database.sh 2>&1 | tail -5 || echo "   Initial backup dilewati"
               fi
             ) || echo "   ⚠️ Backup setup skipped (non-critical)"
 

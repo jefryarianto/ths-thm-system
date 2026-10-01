@@ -231,6 +231,33 @@ EOF
 
 log "Database backup cron configured (daily at 2 AM)"
 
+# Pasang skrip operasional yang dipakai cron di atas (backup, disk-check, restore).
+# setup-vps.sh bisa dijalankan dari checkout repo ATAU hasil curl mandiri,
+# jadi penyalinan bersifat best-effort.
+SCRIPT_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+sudo mkdir -p /opt/ths-thm/scripts
+RAW_BASE="https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts"
+for s in backup-database.sh check-disk.sh restore-database.sh rollback-deployment.sh; do
+  src="$SCRIPT_SRC_DIR/$s"
+  if [ ! -f "$src" ]; then
+    # setup-vps.sh dijalankan standalone (curl)? Ambil versi master dari GitHub.
+    curl -sf -o "/tmp/$s" "$RAW_BASE/$s" && src="/tmp/$s"
+  fi
+  if [ -f "$src" ]; then
+    sudo install -m 0755 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$src" "/opt/ths-thm/scripts/$s"
+  else
+    warn "Gagal menyiapkan /opt/ths-thm/scripts/$s — pasang manual sebelum cron jalan"
+  fi
+done
+log "Operational scripts synced to /opt/ths-thm/scripts (best-effort)"
+
+# Pantau pemakaian disk tiap 6 jam (alert email via Resend, lihat check-disk.sh)
+sudo tee /etc/cron.d/ths-thm-disk-check > /dev/null << 'DISKEOF'
+# THS-THM Disk Space Check — every 6 hours
+0 */6 * * * ths-thm /opt/ths-thm/scripts/check-disk.sh >> /var/log/ths-thm-disk-check.log 2>&1
+DISKEOF
+log "Disk check cron configured (every 6 hours)"
+
 # ═══════════════════════════════════════════════════════════════
 # Install Certbot (Let's Encrypt)
 # ═══════════════════════════════════════════════════════════════
@@ -240,7 +267,7 @@ if ! command -v certbot &> /dev/null; then
     sudo apt-get install -y certbot
     
     # Add certbot renewal cron job
-    echo "0 0,12 * * * certbot renew --quiet --post-hook 'docker compose -f ${PRODUCTION_DIR}/docker-compose.production.yml exec -T nginx nginx -s reload'" | sudo tee /etc/cron.d/certbot-renew > /dev/null
+    echo "0 0,12 * * * root certbot renew --quiet --post-hook 'docker compose -f ${PRODUCTION_DIR}/docker-compose.production.yml exec -T nginx nginx -s reload'" | sudo tee /etc/cron.d/certbot-renew > /dev/null
     
     log "Certbot installed with auto-renewal cron"
 else
