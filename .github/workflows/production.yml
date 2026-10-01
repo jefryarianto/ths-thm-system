@@ -1,20 +1,500 @@
-name: Production Deploy
+name: 🚀 Production Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - master
     paths:
       - 'apps/api/**'
       - 'apps/web/**'
       - 'packages/**'
       - 'docker-compose*.yml'
       - '.github/workflows/production.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+      api_url:
+        description: 'Production API URL for web build'
+        required: false
+        default: 'https://ths-thm.cloud'
+
+# Deploy produksi menulis ke VPS yang sama (docker compose, migrasi DB) —
+# dua deploy paralel saling menabrak di server. Push beruntun: deploy baru
+# membatalkan yang lama yang ter-supersede (dibuktikan saat dua deploy
+# paralel jam 07:22/07:29 membuat salah satunya macet >50 menit).
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: jefryarianto/ths-thm-system
+  IMAGE_TAG: ${{ inputs.image_tag || 'latest' }}
+  NEXT_PUBLIC_API_URL: ${{ inputs.api_url || 'https://ths-thm.cloud' }}
 
 jobs:
-  deploy:
+  build-and-push:
+    name: Build & Push Docker Images
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Echo placeholder
-        run: echo "Production workflow placeholder"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm (version from package.json packageManager)
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared-types
+        run: pnpm --filter @ths-thm/shared-types build
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
+      # ── Verifikasi kontrak API segar (defense-in-depth) ──
+      # Job `contract` di ci.yml sudah men-gate PR, tapi kontrak bisa basi
+      # sampai di master lewat jalur lain (push langsung, merge darurat,
+      # bypass CI). Gagal di sini MURAH — sebelum dua build image yang mahal —
+      # sehingga deploy produksi tak pernah lewat tanpa kontrak segar.
+      # Regenerasi deterministik & environment-independent (tanpa .env/DB/Redis).
+      - name: Verify swagger.json in sync before building images
+        env:
+          # swagger:export mem-boot AppModule → env.validation (zod) butuh env
+          # meski export tidak menyentuh DB/Redis. Dummy cukup: URL valid +
+          # secret ≥32 karakter; refinement "production" tidak aktif karena
+          # NODE_ENV tidak diset di runner.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
+          JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+          JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+        run: |
+          pnpm --filter @ths-thm/api swagger:export
+          pnpm --filter @ths-thm/api generate:client
+          git diff --exit-code -- apps/api/swagger.json apps/web/src/types/api.d.ts \
+            || (echo "::error::Kontrak API basi saat deploy produksi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
+          echo "✅ Kontrak API sinkron — aman build image"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Builder docker-container DIPERTAHANKAN (jangan `use default`):
+      # backend cache `registry` mode=max (R4) hanya didukung driver
+      # docker-container — driver default (Docker 28 + overlay2) tidak
+      # mendukung backend registry/gha apa adanya.
+      # Catatan sejarah: step lama "use default" tidak pernah mencegah pull
+      # moby/buildkit — setup-buildx-action selalu pull + bootstrap lebih dulu,
+      # lalu step ini cuma membuang builder yang sudah siap.
+      - name: Keep docker-container builder (required for registry cache)
+        shell: bash
+        run: docker buildx inspect --bootstrap
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate metadata (tags, labels)
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}/api
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=,suffix=,format=short
+            type=raw,value=${{ env.IMAGE_TAG }}
+
+      - name: Generate metadata (web)
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}/web
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=,suffix=,format=short
+            type=raw,value=${{ env.IMAGE_TAG }}
+
+      - name: TypeScript cache-busting check (tsc --noEmit)
+        run: pnpm --filter @ths-thm/api tsc:check
+        env:
+          NODE_ENV: production
+
+      - name: Build and push API image (with retry)
+        shell: bash
+        run: |
+          retry() {
+            local max_attempts=3 wait_seconds=15 attempt=1
+            while [ $attempt -le $max_attempts ]; do
+              if "$@"; then echo "   ✅ API image pushed"; return 0; fi
+              echo "   ⚠️ Attempt $attempt/$max_attempts failed, retrying in ${wait_seconds}s..."
+              sleep $wait_seconds
+              attempt=$((attempt + 1))
+            done
+            echo "   ❌ API build failed after $max_attempts attempts"
+            return 1
+          }
+
+          # Split multi-line metadata-action output into individual flags
+          TAG_FLAGS=(); while IFS= read -r tag; do [ -n "$tag" ] && TAG_FLAGS+=(--tag "$tag"); done <<< "${{ steps.meta-api.outputs.tags }}"
+          LABEL_FLAGS=(); while IFS= read -r label; do [ -n "$label" ] && LABEL_FLAGS+=(--label "$label"); done <<< "${{ steps.meta-api.outputs.labels }}"
+
+          retry docker buildx build \
+            "${TAG_FLAGS[@]}" \
+            "${LABEL_FLAGS[@]}" \
+            --file apps/api/Dockerfile \
+            --cache-from type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/api:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/api:buildcache,mode=max \
+            --push \
+            .
+
+      - name: Build and push Web image (with retry)
+        shell: bash
+        run: |
+          retry() {
+            local max_attempts=3 wait_seconds=15 attempt=1
+            while [ $attempt -le $max_attempts ]; do
+              if "$@"; then echo "   ✅ Web image pushed"; return 0; fi
+              echo "   ⚠️ Attempt $attempt/$max_attempts failed, retrying in ${wait_seconds}s..."
+              sleep $wait_seconds
+              attempt=$((attempt + 1))
+            done
+            echo "   ❌ Web build failed after $max_attempts attempts"
+            return 1
+          }
+
+          # Split multi-line metadata-action output into individual flags
+          TAG_FLAGS=(); while IFS= read -r tag; do [ -n "$tag" ] && TAG_FLAGS+=(--tag "$tag"); done <<< "${{ steps.meta-web.outputs.tags }}"
+          LABEL_FLAGS=(); while IFS= read -r label; do [ -n "$label" ] && LABEL_FLAGS+=(--label "$label"); done <<< "${{ steps.meta-web.outputs.labels }}"
+
+          retry docker buildx build \
+            "${TAG_FLAGS[@]}" \
+            "${LABEL_FLAGS[@]}" \
+            --build-arg NEXT_PUBLIC_API_URL="${{ env.NEXT_PUBLIC_API_URL }}" \
+            --file apps/web/Dockerfile \
+            --cache-from type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/web:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}/web:buildcache,mode=max \
+            --push \
+            .
+
+  deploy:
+    name: Deploy to VPS (ths-thm.cloud)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    # Deploy script on the VPS (docker prune + pull + migrate + restart + health check)
+    # can be slow: pull dua image terbukti menggantung >24 menit di koneksi
+    # VPS hingga job timeout 25m membunuh deploy (run 35365663713). Beri
+    # headroom 60m — komposisi terburuk: 3x12m pull + migrasi/health.
+    timeout-minutes: 60
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || '22' }} ${{ secrets.VPS_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Check VPS SSH connectivity
+        run: |
+          HOST="${{ secrets.VPS_SSH_HOST }}"
+          PORT="${{ secrets.VPS_SSH_PORT || '22' }}"
+          USER="${{ secrets.VPS_SSH_USERNAME }}"
+          if [ -z "$HOST" ]; then
+            echo "   ❌ FAILURE: 'VPS_SSH_HOST' GitHub secret is empty."
+            echo "   Set it in repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "   Pre-flight: SSH auth test to ${USER}@${HOST}:${PORT} ..."
+          ok=0
+          last_err=""
+          for attempt in 1 2 3; do
+            set +e
+            out=$(ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key -p "$PORT" "$USER@$HOST" 'echo _OK_' 2>&1)
+            rc=$?
+            set -e
+            if [ $rc -eq 0 ] && [ "$out" = "_OK_" ]; then ok=1; break; fi
+            last_err="$out"
+            echo "   ⚠️ Attempt ${attempt}/3: ${last_err} | retrying in 10s..."
+            sleep 10
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "   ❌ FAILURE: cannot SSH to ${USER}@${HOST}:${PORT}."
+            echo "   ${last_err}"
+            echo ""
+            echo "   Most likely causes:"
+            echo "   1. VPS is powered off / crashed — check your cloud provider dashboard (restart may be needed)."
+            echo "   2. VPS IP changed — expected 202.10.34.209; run 'ping 202.10.34.209' from a reachable machine."
+            echo "   3. Firewall/security-group blocking port ${PORT} — allow inbound SSH (UFW + cloud SG)."
+            echo "   4. sshd not running — run 'sudo systemctl status ssh' on the VPS (via console/VNC)."
+            echo "   5. 'Permission denied (publickey)' means wrong/expired 'VPS_SSH_PRIVATE_KEY' or user; verify it is in ~/.ssh/authorized_keys on the VPS."
+            echo "   6. Stale 'VPS_SSH_HOST'/'VPS_SSH_PORT'/'VPS_SSH_USERNAME' secrets — verify in repo Settings > Secrets."
+            exit 1
+          fi
+          echo "   ✅ SSH connected to ${USER}@${HOST}:${PORT} — ready to deploy."
+
+      - name: Pass GHCR token to VPS and cleanup old images
+        run: |
+          # SSH hardening: faster fail on dead hosts, retry transient blips,
+          # keep long-running commands alive.
+          SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ConnectionAttempts=2 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o BatchMode=yes)
+          # Cleanup old images on VPS
+          ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+            ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
+            'echo "   Disk before cleanup:" && df -h / | tail -1 && \
+             docker image prune -af 2>/dev/null || true && \
+             docker builder prune -af 2>/dev/null || true && \
+             docker container prune -f 2>/dev/null || true && \
+             echo "   Disk after cleanup:" && df -h / | tail -1'
+          # Pipe GHCR token to VPS docker login (token never in command string).
+          # PENTING: pakai github.token langsung — `gh auth token` tanpa env
+          # GH_TOKEN selalu gagal di runner, sehingga login kosong dan pull
+          # berikutnya selalu "error from registry: denied".
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+            ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
+            'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+          rm -f ~/.ssh/deploy_key
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          envs: IMAGE_TAG
+          command_timeout: 50m
+          script: |
+            set -e
+
+            echo "🚀 Deploying ths-thm.cloud (tag: ${IMAGE_TAG:-latest})..."
+
+            cd /opt/ths-thm
+
+            # Download latest config files from GitHub (VPS might have stale versions)
+            # Write to .tmp first then mv — prevents partial file corruption on timeout
+            curl -sf -o docker-compose.production.yml.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/docker-compose.production.yml" && mv docker-compose.production.yml.tmp docker-compose.production.yml || { rm -f docker-compose.production.yml.tmp; echo "   ⚠️ Using existing compose file"; }
+            curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || { rm -f nginx/production.conf.tmp; echo "   ⚠️ Using existing nginx/production.conf"; }
+
+            # Export image tag so docker-compose picks it up
+            export IMAGE_TAG=${IMAGE_TAG:-latest}
+
+            # Pull images from GHCR (authenticated via token from previous step).
+            # FATAL sengaja: bila pull gagal, deploy berhenti di sini —
+            # jangan lanjut migrasi/restart dengan image lama lalu gagal
+            # samar di health check.
+            echo "   Pulling Docker images from GHCR (maks 3 percobaan x 12 menit)..."
+            # Pull bisa sangat lambat/hang di koneksi VPS. Batasi tiap
+            # percobaan 12 menit agar hang tidak memakan seluruh budget job;
+            # layer yang sudah ter-download ter-cache sehingga retry efektif.
+            # Gagal semua → FATAL sebelum migrasi/restart: kontainer lama
+            # tetap berjalan (pull terjadi sebelum down, jadi zero downtime).
+            PULL_OK=0
+            for i in 1 2 3; do
+              if timeout 720 docker compose -f docker-compose.production.yml pull --quiet api web; then
+                PULL_OK=1; break
+              fi
+              echo "   ⚠️ Pull percobaan $i/3 gagal/timeout, mencoba lagi dalam 15s..."
+              sleep 15
+            done
+            if [ "$PULL_OK" -ne 1 ]; then
+              echo "   ❌ Pull image gagal setelah 3 percobaan — deploy dibatalkan, kontainer lama tetap berjalan."
+              exit 1
+            fi
+
+            # Resolve any stuck migrations from previous failed deploys
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "npx prisma migrate resolve --rolled-back 20260820103000_cleanup_stale_notifications || true" 2>&1 || true
+            # Run database migrations before restarting
+            # Production image flattens API to /app/ — prisma/ is at /app/prisma/
+            echo "   Running database migrations..."
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+            # Seed kepengurusan data (only if table is empty)
+            echo "   Seeding kepengurusan data..."
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "npx ts-node prisma/seed-kepengurusan.ts" 2>&1 || echo "   ⚠️ Seed skipped (data may already exist)"
+
+            # Stop & remove old containers, then restart with latest config
+            echo "   Restarting Docker services..."
+            docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
+            docker compose -f docker-compose.production.yml up -d --remove-orphans --force-recreate
+
+            # Wait for health check (via docker compose exec — api port is internal, not exposed on host)
+            echo "   Waiting for API health check..."
+            for i in $(seq 1 20); do
+              if docker compose -f docker-compose.production.yml exec -T api wget --no-verbose --tries=1 --spider http://localhost:3001/api/health > /dev/null 2>&1; then
+                echo "   ✅ API is healthy!"
+                break
+              fi
+              if [ "$i" -eq 20 ]; then
+                echo "   ❌ Health check FAILED. Container logs:"
+                docker compose -f docker-compose.production.yml logs api --tail=60
+                exit 1
+              fi
+              echo "   Attempt $i/20..."
+              sleep 6
+            done
+
+            # Aggressive cleanup after deploy (save disk space on 40GB VPS)
+            echo "   Pruning old Docker resources..."
+            docker image prune -af 2>/dev/null || true
+            docker builder prune -af 2>/dev/null || true
+            docker container prune -f 2>/dev/null || true
+            echo "   Disk after deploy:"
+            df -h / | tail -1
+
+            # ── Setup automated database backup (best-effort, non-blocking) ──
+            # This section is wrapped in a subshell so sudo failures don't abort deploy.
+            (
+              echo "   Setting up automated database backup..."
+              # Install backup scripts if not present
+              if [ ! -f /opt/ths-thm/scripts/backup-database.sh ]; then
+                curl -sf -o /tmp/backup-database.sh "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/backup-database.sh" 2>/dev/null && \
+                  mkdir -p /opt/ths-thm/scripts && \
+                  mv /tmp/backup-database.sh /opt/ths-thm/scripts/backup-database.sh && \
+                  chmod +x /opt/ths-thm/scripts/backup-database.sh || \
+                  echo "   ⚠️ Failed to download backup script"
+              fi
+              # Install systemd timer (idempotent — only if not already active)
+              # Uses sudo — may fail if deploy user lacks passwordless sudo.
+              if ! systemctl is-active --quiet ths-thm-backup.timer 2>/dev/null; then
+                curl -sf -o /tmp/ths-thm-backup.service "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.service" 2>/dev/null && \
+                  curl -sf -o /tmp/ths-thm-backup.timer "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.timer" 2>/dev/null && \
+                  sudo -n cp /tmp/ths-thm-backup.service /etc/systemd/system/ && \
+                  sudo -n cp /tmp/ths-thm-backup.timer /etc/systemd/system/ && \
+                  sudo -n systemctl daemon-reload && \
+                  sudo -n systemctl enable ths-thm-backup.timer && \
+                  sudo -n systemctl start ths-thm-backup.timer && \
+                  echo "   ✅ Backup timer installed and started (daily at 02:00)" || \
+                  echo "   ⚠️ Backup timer setup skipped (sudo unavailable — run manually on VPS)"
+              else
+                echo "   ✅ Backup timer already active"
+              fi
+              # Ensure backup directory exists
+              mkdir -p /opt/backups/ths-thm/production 2>/dev/null || \
+                sudo -n mkdir -p /opt/backups/ths-thm/production 2>/dev/null || true
+              chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || \
+                sudo -n chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || true
+              # Run initial backup if directory is empty
+              if [ ! -f /opt/backups/ths-thm/production/*.sql.gz ] 2>/dev/null; then
+                echo "   Running initial database backup..."
+                /opt/ths-thm/scripts/backup-database.sh 2>&1 | tail -5 || echo "   ⚠️ Initial backup skipped"
+              fi
+            ) || echo "   ⚠️ Backup setup skipped (non-critical)"
+
+            echo "✅ Deployment complete!"
+            echo "   URL: https://ths-thm.cloud"
+            echo "   Backup: daily at 02:00 → /opt/backups/ths-thm/production/"
+
+  # ─── Scan image produksi dari GHCR (R1) ─────────────────────────
+  # Sebelumnya Trivy membangun ulang 2 image Docker per push di
+  # security-scan.yml hanya untuk dipindai (±17.5 menit — R1 di
+  # docs/CI_WORKFLOW_AUDIT.md). Kini image yang SUDAH di-push job
+  # build-and-push di atas ditarik dari GHCR dan dipindai di sini,
+  # paralel dengan deploy VPS — nol build tambahan per push.
+  # Tetap jalan walau deploy gagal (kualitas image tak tergantung deploy).
+  scan-images:
+    name: 🐳 Scan Production Images (GHCR)
+    needs: [build-and-push, deploy]
+    if: always() && needs.build-and-push.result == 'success'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read # pull image GHCR privat
+      security-events: write # upload SARIF ke Security tab
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull production images
+        run: |
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+
+      - name: Trivy — scan image API
+        id: trivy-api
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-api-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Trivy — scan image Web
+        id: trivy-web
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-web-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Upload Trivy SARIF (API)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-results.sarif
+          category: trivy-docker-api
+
+      - name: Upload Trivy SARIF (Web)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-results.sarif
+          category: trivy-docker-web
+
+      - name: Upload Trivy raw artifacts
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-results
+          path: trivy-*.sarif
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Trivy summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🐳 Trivy — Image Produksi (GHCR)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|:------|:-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| api:${{ env.IMAGE_TAG }} | ${{ steps.trivy-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| web:${{ env.IMAGE_TAG }} | ${{ steps.trivy-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "SARIF diunggah ke **GitHub Security tab** → https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY

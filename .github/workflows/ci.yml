@@ -157,4 +157,4 @@ jobs:
   # Dikonsolidasikan ke .github/workflows/e2e.yml (4 shard Playwright +
   # blob report + Smoke Test + Slack). Job e2e-web lama di sini menjalankan
   # suite yang sama untuk kedua kalinya pada setiap push — lihat
-  # docs/CONTRIBUTING bila perlu menambah pemicu E2E baru.
+  # CONTRIBUTING.md bila perlu menambah pemicu E2E baru.
