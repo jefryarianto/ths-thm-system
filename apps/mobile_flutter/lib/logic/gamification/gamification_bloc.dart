@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/api_cache.dart';
 import '../../data/models/gamification.dart';
 
 part 'gamification_event.dart';
@@ -31,7 +32,23 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
     final previousLeaderboard = state is GamificationLoaded
         ? (state as GamificationLoaded).leaderboard
         : null;
-    emit(GamificationLoading());
+
+    // Sajikan cache profil gamifikasi segera bila tersedia.
+    CachedPayload<Map<String, dynamic>>? cached;
+    try {
+      cached = await ApiCache.instance.get<Map<String, dynamic>>(
+        CacheKeys.gamification,
+      );
+      if (cached != null) {
+        emit(_stateFromCache(cached.data,
+            leaderboard: previousLeaderboard, isStale: cached.isStale));
+      } else {
+        emit(GamificationLoading());
+      }
+    } catch (_) {
+      emit(GamificationLoading());
+    }
+
     try {
       final profileRes = await _apiClient.dio.get(
         '/gamification/profile/${event.anggotaId}',
@@ -80,15 +97,63 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
         pointsHistory: history,
         leaderboard: leaderboard,
       ));
+      // Persistensi cache best-effort.
+      await ApiCache.instance.set(CacheKeys.gamification, {
+        'profile': _unwrap(profileRes.data),
+        'events': _listForCache(eventsRes.data),
+        'history': _listForCache(historyRes.data),
+      });
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(GamificationInitial());
+      } else if (cached != null) {
+        emit(_stateFromCache(cached.data,
+            leaderboard: previousLeaderboard,
+            isStale: true,
+            errorMessage: _message(e)));
       } else {
         emit(GamificationError(message: _message(e)));
       }
     } catch (e) {
       emit(GamificationError(message: e.toString()));
     }
+  }
+
+  List<dynamic> _listForCache(dynamic responseData) {
+    final unwrapped = _unwrap(responseData);
+    if (unwrapped is List) return unwrapped;
+    if (unwrapped is Map<String, dynamic>) {
+      final data = unwrapped['data'];
+      if (data is List) return data;
+    }
+    return const <dynamic>[];
+  }
+
+  GamificationLoaded _stateFromCache(
+    Map<String, dynamic> cache, {
+    List<LeaderboardEntry>? leaderboard,
+    bool isStale = false,
+    String? errorMessage,
+  }) {
+    final profile = GamificationProfile.fromJson(
+      (cache['profile'] as Map?)?.cast<String, dynamic>() ?? {},
+    );
+    final events = (cache['events'] as List? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(PointEvent.fromJson)
+        .toList();
+    final history = (cache['history'] as List? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(PointHistory.fromJson)
+        .toList();
+    return GamificationLoaded(
+      profile: profile,
+      events: events,
+      pointsHistory: history,
+      leaderboard: leaderboard,
+      isStale: isStale,
+      errorMessage: errorMessage,
+    );
   }
 
   Future<void> _onRefresh(

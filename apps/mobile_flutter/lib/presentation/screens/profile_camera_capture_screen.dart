@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -143,7 +144,7 @@ class _ProfileCameraCaptureScreenState
               child: Center(
                 child: _error != null
                     ? Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(AppTheme.space24),
                         child: Text(
                           _error!,
                           textAlign: TextAlign.center,

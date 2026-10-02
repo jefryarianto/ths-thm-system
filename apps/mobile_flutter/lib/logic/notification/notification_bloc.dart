@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/api_cache.dart';
 import '../../data/models/notification_item.dart';
 
 part 'notification_event.dart';
@@ -30,7 +31,28 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       emit(NotificationInitial());
       return;
     }
-    emit(NotificationLoading());
+
+    // Sajikan cache segera (jika ada) agar UI tidak kosong saat jaringan
+    // lambat — permintaan API tetap dijalankan untuk memvalidasi data.
+    final cached = await ApiCache.instance.get<List<dynamic>>(
+      CacheKeys.notifications,
+    );
+    if (cached != null) {
+      try {
+        final cachedItems = cached.data
+            .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        emit(NotificationLoaded(
+          notifications: cachedItems,
+          isStale: cached.isStale,
+        ));
+      } catch (_) {
+        emit(NotificationLoading());
+      }
+    } else {
+      emit(NotificationLoading());
+    }
+
     try {
       final response = await _apiClient.dio.get(
         '/notifications',
@@ -42,10 +64,22 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final items = list
           .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
           .toList();
+      // Persistensi cache best-effort untuk pemulihan offline berikutnya.
+      await ApiCache.instance.set(CacheKeys.notifications, list);
       emit(NotificationLoaded(notifications: items));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(NotificationInitial());
+      } else if (cached != null) {
+        // Offline: tetap di cache, bertandai sebagai data lama.
+        final cachedItems = cached.data
+            .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        emit(NotificationLoaded(
+          notifications: cachedItems,
+          isStale: true,
+          errorMessage: _message(e),
+        ));
       } else {
         emit(NotificationError(message: _message(e)));
       }

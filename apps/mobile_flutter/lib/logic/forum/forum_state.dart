@@ -14,10 +14,20 @@ class ForumLoading extends ForumState {}
 class ForumCategoriesLoaded extends ForumState {
   final List<ForumCategory> categories;
 
-  const ForumCategoriesLoaded({required this.categories});
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
+  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
+  final String? errorMessage;
+
+  const ForumCategoriesLoaded({
+    required this.categories,
+    this.isStale = false,
+    this.errorMessage,
+  });
 
   @override
-  List<Object> get props => [categories];
+  List<Object> get props => [categories, isStale, errorMessage ?? ''];
 }
 
 class ForumThreadsLoaded extends ForumState {

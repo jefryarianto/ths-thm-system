@@ -72,7 +72,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: namaCtrl,
                     decoration: const InputDecoration(
@@ -82,7 +82,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: skorCtrl,
                     keyboardType:
@@ -96,7 +96,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: bobotCtrl,
                     keyboardType:
@@ -108,7 +108,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                       labelText: 'Bobot (poin)',
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: urutanCtrl,
                     keyboardType: TextInputType.number,
@@ -179,7 +179,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: namaCtrl,
                     decoration: const InputDecoration(
@@ -188,7 +188,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: skorCtrl,
                     keyboardType:
@@ -202,7 +202,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: bobotCtrl,
                     keyboardType:
@@ -214,7 +214,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                       labelText: 'Bobot (poin)',
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   TextFormField(
                     controller: urutanCtrl,
                     keyboardType: TextInputType.number,
@@ -305,17 +305,17 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
           if (state is AssessmentError) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppTheme.space24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.error_outline,
                         size: 48, color: AppTheme.danger),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTheme.space12),
                     Text(state.message,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTheme.space12),
                     FilledButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(Icons.refresh),
@@ -332,13 +332,13 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
           if (items.isEmpty) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppTheme.space24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.notes_outlined,
                         size: 56, color: AppTheme.primary),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTheme.space12),
                     const Text(
                       'Belum ada item penilaian.',
                       style:
@@ -351,7 +351,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.space16),
                     FilledButton.icon(
                       onPressed: _openCreate,
                       icon: const Icon(Icons.add),
@@ -365,11 +365,11 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.space16),
               itemCount: items.length + 1,
               separatorBuilder: (context, index) => (index == items.length - 1)
-                  ? const SizedBox(height: 16)
-                  : const SizedBox(height: 12),
+                  ? const SizedBox(height: AppTheme.space16)
+                  : const SizedBox(height: AppTheme.space12),
               itemBuilder: (context, index) {
                 if (index == items.length) {
                   return OutlinedButton.icon(

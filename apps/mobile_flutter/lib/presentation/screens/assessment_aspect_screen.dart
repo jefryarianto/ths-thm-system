@@ -65,7 +65,7 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
                     hintText: 'contoh: A1',
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.space12),
                 TextField(
                   controller: namaCtrl,
                   decoration: const InputDecoration(
@@ -73,7 +73,7 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
                     hintText: 'contoh: Penulisan Karya Ilmiah',
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.space12),
                 TextField(
                   controller: deskripsiCtrl,
                   maxLines: 2,
@@ -81,7 +81,7 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
                     labelText: 'Deskripsi',
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.space12),
                 TextField(
                   controller: bobotCtrl,
                   keyboardType:
@@ -214,12 +214,12 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
               onRefresh: _refresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTheme.space16),
                 itemCount: aspects.length + 1,
                 separatorBuilder: (context, index) =>
                     (index == aspects.length - 1)
-                        ? const SizedBox(height: 16)
-                        : const SizedBox(height: 12),
+                        ? const SizedBox(height: AppTheme.space16)
+                        : const SizedBox(height: AppTheme.space12),
                 itemBuilder: (context, index) {
                   if (index == aspects.length) {
                     return OutlinedButton.icon(
@@ -268,7 +268,7 @@ class _AspectCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.space16),
           child: Row(
             children: [
               Container(
@@ -281,7 +281,7 @@ class _AspectCard extends StatelessWidget {
                 child: const Icon(Icons.category_outlined,
                     color: AppTheme.primary, size: 22),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppTheme.space12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,13 +328,13 @@ class _EmptyAspects extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.category_outlined,
                 size: 56, color: AppTheme.primary),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             const Text(
               'Belum ada aspek penilaian.',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -346,7 +346,7 @@ class _EmptyAspects extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.space16),
             FilledButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add),

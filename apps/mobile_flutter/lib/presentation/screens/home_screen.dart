@@ -16,6 +16,7 @@ import '../widgets/home_app_bar.dart';
 import '../widgets/home_feed_sections.dart';
 import '../widgets/kta_card_widget.dart';
 import '../widgets/secure_kta_container.dart';
+import '../widgets/stale_data_banner.dart';
 import '../../data/models/member.dart';
 
 /// Beranda utama — chip shortcut scroll horizontal,
@@ -119,28 +120,49 @@ class _HomeScreenState extends State<HomeScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space12)),
+              SliverToBoxAdapter(child: _StaleFeedBanner(onRefresh: _refresh)),
               // Konten beranda diberi padding horizontal 16 agar judul section
               // (mis. "Kartu Anggota (KTA)") dan kartu tidak menempel ke tepi
               // layar. Baris chip shortcut dipindah jadi FAB menu di kanan-bawah.
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: AppTheme.screenPaddingH,
                 sliver: SliverToBoxAdapter(child: _GamificationTip()),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space16)),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: AppTheme.screenPaddingH,
                 sliver: SliverToBoxAdapter(child: _KtaSection()),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space16)),
               const SliverToBoxAdapter(child: AgendaSection()),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space20)),
               const SliverToBoxAdapter(child: BeritaFeedSection()),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space24)),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StaleFeedBanner extends StatelessWidget {
+  final VoidCallback onRefresh;
+  const _StaleFeedBanner({required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<HomeFeedBloc, HomeFeedState>(
+      builder: (context, state) {
+        if (state is! HomeFeedLoaded || !state.isStale) {
+          return const SizedBox.shrink();
+        }
+        return StaleDataBanner(
+          errorMessage: state.errorMessage,
+          onRefresh: onRefresh,
+        );
+      },
     );
   }
 }
@@ -211,7 +233,7 @@ class _KtaSection extends StatelessWidget {
             if (state is! MemberLoaded) {
               return const Card(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: EdgeInsets.all(AppTheme.space24),
                   child: Center(
                     child: Text('Data kartu belum tersedia.',
                         style: TextStyle(color: AppTheme.textMuted)),
@@ -285,7 +307,7 @@ class _GamificationTip extends StatelessWidget {
             onTap: () => context.push<void>('/gamification'),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.space16),
               decoration: BoxDecoration(
                 color: _bronzeBg,
                 borderRadius: BorderRadius.circular(20),
@@ -316,7 +338,7 @@ class _GamificationTip extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 26, color: AppTheme.navy)),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppTheme.space12),
                 Expanded(
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +352,7 @@ class _GamificationTip extends StatelessWidget {
                       Text('${p.points} poin • ${p.level.name} member',
                           style: const TextStyle(
                               fontSize: 13, color: AppTheme.textMuted)),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppTheme.space8),
                       // Progress sederhana menuju level berikutnya (bronze→silver)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),

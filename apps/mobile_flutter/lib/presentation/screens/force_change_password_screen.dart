@@ -73,39 +73,39 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Ubah Password')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(Icons.shield_outlined,
                 size: 64, color: AppTheme.warning),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.space16),
             const Text(
               'Untuk keamanan, Anda harus mengubah password sebelum melanjutkan.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, height: 1.4),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.space24),
             TextField(
               controller: _newPassword,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password Baru'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             TextField(
               controller: _confirmPassword,
               obscureText: true,
               decoration:
                   const InputDecoration(labelText: 'Konfirmasi Password Baru'),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.space24),
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
                   ? const AppLoadingSpinner.small()
                   : const Text('Simpan Password Baru'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             TextButton(
               onPressed: () => context.go('/login'),
               child: const Text('Kembali ke Login'),

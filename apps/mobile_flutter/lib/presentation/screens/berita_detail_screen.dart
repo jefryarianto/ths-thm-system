@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -94,7 +95,7 @@ class _BeritaDetailScreenState extends State<BeritaDetailScreen> {
             height: 1.3,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.space8),
         Row(
           children: [
             Icon(Icons.calendar_today_outlined,
@@ -169,9 +170,9 @@ class _CenterRetry extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           Text(message, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),

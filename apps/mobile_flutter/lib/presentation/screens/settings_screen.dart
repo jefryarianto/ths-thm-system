@@ -91,7 +91,7 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => _showAboutDialog(context),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.logout, color: AppTheme.danger),
               label: const Text('Keluar',
@@ -165,7 +165,7 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
       title: const Row(
         children: [
           Icon(Icons.info_outline, color: AppTheme.primary),
-          SizedBox(width: 8),
+          SizedBox(width: AppTheme.space8),
           Text('Tentang Aplikasi'),
         ],
       ),
@@ -186,14 +186,14 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
                           : 'Tidak diketahui')
                       : 'v${_package!.version} (${_package!.buildNumber})',
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppTheme.space8),
                 _InfoRow(
                   label: 'Versi Server',
                   value: info == null
                       ? '—'
                       : 'v${info.versionName} (build ${info.versionCode})',
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.space12),
                 _statusLine(updateState),
                 if (info != null && info.changelog.trim().isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -382,24 +382,24 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         children: [
           const Text('Ubah Password',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.space16),
           TextField(
             controller: _current,
             obscureText: _obscure,
             decoration: const InputDecoration(labelText: 'Password Saat Ini'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           TextField(
               controller: _new,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password Baru')),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           TextField(
               controller: _confirm,
               obscureText: true,
               decoration:
                   const InputDecoration(labelText: 'Konfirmasi Password Baru')),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppTheme.space20),
           FilledButton(
             onPressed: _loading ? null : _submit,
             child: _loading

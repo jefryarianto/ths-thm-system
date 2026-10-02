@@ -1,3 +1,4 @@
+import '../../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../widgets/app_bar_icon_title.dart';
@@ -65,7 +66,7 @@ class _BeritaSubmitScreenState extends State<BeritaSubmitScreen> {
         title: const AppBarIconTitle(icon: Icons.newspaper, title: 'Ajukan Berita Baru'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTheme.space16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -76,27 +77,27 @@ class _BeritaSubmitScreenState extends State<BeritaSubmitScreen> {
                 decoration: const InputDecoration(labelText: 'Judul *'),
                 validator: (v) => v == null || v.isEmpty ? 'Judul wajib diisi' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               TextFormField(
                 controller: _ringkasanCtrl,
                 decoration: const InputDecoration(labelText: 'Ringkasan *'),
                 validator: (v) => v == null || v.isEmpty ? 'Ringkasan wajib diisi' : null,
                 maxLines: 3,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               TextFormField(
                 controller: _kontenCtrl,
                 decoration: const InputDecoration(labelText: 'Konten (HTML) *'),
                 validator: (v) => v == null || v.isEmpty ? 'Konten wajib diisi' : null,
                 maxLines: 8,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               TextFormField(
                 controller: _slugCtrl,
                 decoration: const InputDecoration(labelText: 'Slug *'),
                 validator: (v) => v == null || v.isEmpty ? 'Slug wajib diisi' : null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               _isSubmitting
                   ? const Center(child: AppLoadingSpinner())
                   : ElevatedButton(

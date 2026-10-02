@@ -83,7 +83,7 @@ class _KegiatanDetailScreenState extends State<KegiatanDetailScreen> {
   Widget _body() {
     final color = AppTheme.statusColor(_status);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.space16),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +95,7 @@ class _KegiatanDetailScreenState extends State<KegiatanDetailScreen> {
                     fontSize: 20, fontWeight: FontWeight.w700, height: 1.3),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppTheme.space8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -113,7 +113,7 @@ class _KegiatanDetailScreenState extends State<KegiatanDetailScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppTheme.space20),
         _InfoTile(
           icon: Icons.category_outlined,
           label: 'Tipe Kegiatan',
@@ -147,7 +147,7 @@ class _KegiatanDetailScreenState extends State<KegiatanDetailScreen> {
             label: 'Peserta',
             value: '${_peserta.length} orang',
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.space8),
           ..._peserta.map((p) {
             final anggota = p is Map ? p['anggota'] : null;
             final nama =
@@ -188,7 +188,7 @@ class _InfoTile extends StatelessWidget {
             ),
             child: Icon(icon, size: 20, color: AppTheme.primary),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.space12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,9 +221,9 @@ class _CenterRetry extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           Text(message, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),

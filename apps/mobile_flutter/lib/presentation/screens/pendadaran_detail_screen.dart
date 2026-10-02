@@ -36,10 +36,10 @@ class PendadaranDetailScreen extends StatelessWidget {
             orElse: () => graduations.first,
           );
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             children: [
               _DetailHeader(graduation: graduation),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTheme.space20),
               _InfoTile(
                 icon: Icons.calendar_month_outlined,
                 label: 'Rentang Tanggal',
@@ -65,21 +65,21 @@ class PendadaranDetailScreen extends StatelessWidget {
                 label: 'Peserta',
                 value: '${graduation.jumlahPeserta} orang',
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTheme.space20),
               FilledButton.icon(
                 onPressed: () => context.push(
                     '/pendadaran/$graduationId/kriteria'),
                 icon: const Icon(Icons.checklist_outlined),
                 label: const Text('Kelola Kriteria Penilaian'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               OutlinedButton.icon(
                 onPressed: () =>
                     context.push('/pendadaran/$graduationId/penilaian'),
                 icon: const Icon(Icons.edit_note_outlined),
                 label: const Text('Input Nilai Penguji'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               OutlinedButton.icon(
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back),
@@ -122,7 +122,7 @@ class _DetailHeader extends StatelessWidget {
                     fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppTheme.space8),
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -141,7 +141,7 @@ class _DetailHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.space8),
         Text(
           'Detail & pengelolaan kriteria penilaian pendadaran.',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
@@ -173,7 +173,7 @@ class _InfoTile extends StatelessWidget {
             ),
             child: Icon(icon, size: 20, color: AppTheme.primary),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.space12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,9 +206,9 @@ class _CenterRetry extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline,
               size: 48, color: AppTheme.danger),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           Text(message, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             onPressed: () => context
                 .read<PendadaranBloc>()

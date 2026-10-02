@@ -127,7 +127,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
         builder: (context, state) {
           final busy = state is PendadaranSubmitting;
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             children: [
               TextField(
                 controller: _namaCtrl,
@@ -138,7 +138,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
                   prefixIcon: Icon(Icons.school_outlined),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               TextField(
                 controller: _lokasiCtrl,
                 textInputAction: TextInputAction.next,
@@ -148,7 +148,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
                   prefixIcon: Icon(Icons.place_outlined),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               _DateField(
                 label: 'Tanggal Mulai *',
                 value: _tanggalMulai == null
@@ -166,7 +166,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
                 icon: Icons.event_available,
                 onTap: _pickSelesai,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               FilledButton.icon(
                 onPressed: busy ? null : _submit,
                 icon: busy

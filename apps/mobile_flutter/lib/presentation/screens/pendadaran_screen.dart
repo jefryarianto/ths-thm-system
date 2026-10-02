@@ -76,10 +76,10 @@ class _PendadaranScreenState extends State<PendadaranScreen> {
             onRefresh: _refresh,
             child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.space16),
               itemCount: graduations.length,
               separatorBuilder: (context, index) =>
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
               itemBuilder: (context, index) {
                 final graduation = graduations[index];
                 return _GraduationCard(
@@ -119,7 +119,7 @@ class _GraduationCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.space16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -132,7 +132,7 @@ class _GraduationCard extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppTheme.space8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
@@ -243,19 +243,19 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline,
                 size: 48, color: AppTheme.danger),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
@@ -276,13 +276,13 @@ class _EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.school_outlined,
                 size: 56, color: AppTheme.primary),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             const Text(
               'Belum ada pendadaran.',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -294,7 +294,7 @@ class _EmptyView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.space16),
             if (onCreate != null)
               FilledButton.icon(
                 onPressed: onCreate,

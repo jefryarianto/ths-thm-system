@@ -25,12 +25,24 @@ class NotificationUnreadState extends NotificationState {
 class NotificationLoaded extends NotificationState {
   final List<NotificationItem> notifications;
 
-  const NotificationLoaded({required this.notifications});
+  /// true bila data berasal dari cache offline (bukan server).
+  /// UI menampilkan indikator "data lama" agar pengguna tahu.
+  final bool isStale;
+
+  /// Pesan error non-blocking (dipakai bersama [isStale]) bila segarkan
+  /// gagal tetapi cache masih bisa ditampilkan.
+  final String? errorMessage;
+
+  const NotificationLoaded({
+    required this.notifications,
+    this.isStale = false,
+    this.errorMessage,
+  });
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
 
   @override
-  List<Object> get props => [notifications];
+  List<Object> get props => [notifications, isStale, errorMessage ?? ''];
 }
 
 class NotificationError extends NotificationState {

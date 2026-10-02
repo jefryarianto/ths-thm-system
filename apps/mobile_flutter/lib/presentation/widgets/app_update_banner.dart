@@ -151,7 +151,7 @@ class ForceUpdateOverlay extends StatelessWidget {
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppTheme.space24),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
                     child: Column(
@@ -163,7 +163,7 @@ class ForceUpdateOverlay extends StatelessWidget {
                           size: 64,
                           color: AppTheme.primary,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.space16),
                         Text(
                           downloading
                               ? 'Mengunduh ${info?.versionName ?? 'pembaruan'}…'
@@ -175,7 +175,7 @@ class ForceUpdateOverlay extends StatelessWidget {
                             color: AppTheme.navy,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppTheme.space8),
                         Text(
                           downloading
                               ? 'Mohon tunggu unduhan selesai, lalu ikuti petunjuk '

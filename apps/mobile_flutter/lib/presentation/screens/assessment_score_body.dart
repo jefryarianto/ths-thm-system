@@ -67,14 +67,14 @@ class _AssessmentScoreBodyState extends State<AssessmentScoreBody> {
   Widget _buildError(String message, BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             Text(message, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             FilledButton.icon(
               onPressed: () {
                 context.read<AssessmentBloc>().add(
@@ -130,9 +130,9 @@ class _ScoringReadyView extends StatelessWidget {
             );
       },
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTheme.space16),
         itemCount: totalItems,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: AppTheme.space12),
         itemBuilder: (context, index) {
           if (extraHeaderCount > 0 && index == 0) {
             return _buildOfflineBanner(context);
@@ -151,7 +151,7 @@ class _ScoringReadyView extends StatelessWidget {
 
   Widget _buildOfflineBanner(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppTheme.space12),
       decoration: BoxDecoration(
         color: isOfflineMode
             ? AppTheme.warning.withValues(alpha: 0.15)
@@ -168,7 +168,7 @@ class _ScoringReadyView extends StatelessWidget {
             isOfflineMode ? Icons.cloud_off : Icons.cloud_upload_outlined,
             color: isOfflineMode ? AppTheme.warning : AppTheme.primary,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.space12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

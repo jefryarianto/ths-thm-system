@@ -23,11 +23,19 @@ class GamificationLoaded extends GamificationState {
   /// `null` = leaderboard belum selesai dimuat → tab Leaderboard menampilkan spinner.
   final List<LeaderboardEntry>? leaderboard;
 
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
+  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
+  final String? errorMessage;
+
   const GamificationLoaded({
     this.profile,
     this.events = const [],
     this.pointsHistory = const [],
     this.leaderboard,
+    this.isStale = false,
+    this.errorMessage,
   });
 
   GamificationLoaded copyWith({
@@ -42,6 +50,8 @@ class GamificationLoaded extends GamificationState {
       events: events ?? this.events,
       pointsHistory: pointsHistory ?? this.pointsHistory,
       leaderboard: clearLeaderboard ? null : leaderboard ?? this.leaderboard,
+      isStale: isStale,
+      errorMessage: errorMessage,
     );
   }
 
@@ -51,6 +61,8 @@ class GamificationLoaded extends GamificationState {
         events,
         pointsHistory,
         leaderboard ?? const [],
+        isStale,
+        errorMessage ?? '',
       ];
 }
 

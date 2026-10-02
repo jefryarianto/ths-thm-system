@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/api_cache.dart';
 import '../../data/models/forum.dart';
 
 part 'forum_event.dart';
@@ -26,14 +27,49 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     ForumCategoriesLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
-    emit(ForumLoading());
+    // Sajikan cache kategori segera bila ada.
+    CachedPayload<List<dynamic>>? cached;
+    try {
+      cached = await ApiCache.instance.get<List<dynamic>>(
+        CacheKeys.forumCategories,
+      );
+      if (cached != null) {
+        final list = cached.data
+            .whereType<Map<String, dynamic>>()
+            .map(ForumCategory.fromJson)
+            .toList();
+        emit(ForumCategoriesLoaded(
+          categories: list,
+          isStale: cached.isStale,
+        ));
+      } else {
+        emit(ForumLoading());
+      }
+    } catch (_) {
+      emit(ForumLoading());
+    }
+
     try {
       final res = await _apiClient.dio.get('/forum/categories');
+      final rawList = (res.data['data'] as List?)
+          ?.whereType<Map<String, dynamic>>()
+          .toList(growable: false);
       final list = _parseList(res.data, ForumCategory.fromJson);
+      await ApiCache.instance.set(CacheKeys.forumCategories, rawList ?? list);
       emit(ForumCategoriesLoaded(categories: list));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(ForumInitial());
+      } else if (cached != null) {
+        final list = cached.data
+            .whereType<Map<String, dynamic>>()
+            .map(ForumCategory.fromJson)
+            .toList();
+        emit(ForumCategoriesLoaded(
+          categories: list,
+          isStale: true,
+          errorMessage: _message(e),
+        ));
       } else {
         emit(ForumError(message: _message(e)));
       }

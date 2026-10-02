@@ -49,7 +49,7 @@ class DueItemCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.space16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -88,13 +88,13 @@ class DueItemCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               // ── Kanan: badge status + chevron ────────────────────────
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   _StatusBadge(label: _badgeLabel, color: badgeColor),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTheme.space8),
                   const Icon(Icons.chevron_right, color: AppTheme.textMuted),
                 ],
               ),

@@ -93,7 +93,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
             return Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppTheme.space20),
                 children: _formChildren(context, busy),
               ),
             );
@@ -106,11 +106,11 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
   List<Widget> _formChildren(BuildContext context, bool busy) {
     return [
       const Icon(Icons.app_registration, size: 56, color: AppTheme.primary),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppTheme.space12),
       const Text('Formulir Pendaftaran Calon Anggota',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           textAlign: TextAlign.center),
-      const SizedBox(height: 24),
+      const SizedBox(height: AppTheme.space24),
       TextFormField(
         controller: _namaCtrl,
         decoration: const InputDecoration(

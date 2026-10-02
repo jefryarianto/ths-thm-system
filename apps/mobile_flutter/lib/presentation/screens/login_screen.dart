@@ -120,7 +120,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppTheme.space20,
+                        AppTheme.space12,
+                        AppTheme.space20,
+                        AppTheme.space32,
+                      ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 440),
                         child: Column(
@@ -137,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fit: BoxFit.contain,
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: AppTheme.space20),
                             // ── SLOGAN ───────────────────────────────────
                             Text(
                               'Fortiter in Re, Suaviter in Modo',
@@ -154,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _identifier,
                               theme: theme,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppTheme.space16),
                             _PasswordField(
                               controller: _password,
                               obscure: _obscure,
@@ -162,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               onSubmitted: (_) => _submit(),
                               theme: theme,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppTheme.space16),
                             // ── INGAT SAYA + LUPA PASSWORD (SAME ROW) ────────
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -187,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppTheme.space24),
                             // ── TOMBOL MASUK (PRIMARY CTA) ────────────────
                             BlocBuilder<AuthBloc, AuthState>(
                               builder: (context, state) {
@@ -293,7 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppTheme.space16),
                           ],
                         ),
                       ),
@@ -471,7 +476,7 @@ class _RememberMeCheckbox extends StatelessWidget {
             materialTapTargetSize: MaterialTapTargetSize.padded,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppTheme.space8),
         Text(
           'Ingat Saya',
           style: theme.textTheme.bodyMedium?.copyWith(

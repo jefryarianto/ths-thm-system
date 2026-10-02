@@ -1,9 +1,11 @@
+import '../../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../widgets/app_bar_icon_title.dart';
 import '../../widgets/app_loading_spinner.dart';
+import '../../widgets/state_views.dart';
 
 class BeritaStatusScreen extends StatefulWidget {
   const BeritaStatusScreen({super.key});
@@ -79,21 +81,25 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
           : _error != null
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(AppTheme.space24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.error_outline, size: 40, color: Colors.red),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppTheme.space8),
                         Text('Gagal memuat pengajuan: $_error', textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.space16),
                         ElevatedButton(onPressed: _loadSubmissions, child: const Text('Coba Lagi')),
                       ],
                     ),
                   ),
                 )
               : _submissions.isEmpty
-                  ? const Center(child: Text('Belum ada pengajuan berita.'))
+                    ? const EmptyStateView(
+                        icon: Icons.article_outlined,
+                        title: 'Belum ada pengajuan berita',
+                        message: 'Pengajuan berita Anda akan muncul di sini.',
+                      )
                   : RefreshIndicator(
                       onRefresh: _loadSubmissions,
                       child: ListView.builder(

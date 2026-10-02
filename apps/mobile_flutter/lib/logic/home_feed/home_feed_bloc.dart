@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/api_cache.dart';
 import '../../data/models/berita.dart';
 import '../../data/models/kegiatan.dart';
 
@@ -29,37 +30,84 @@ class HomeFeedBloc extends Bloc<HomeFeedEvent, HomeFeedState> {
     HomeFeedLoadRequested event,
     Emitter<HomeFeedState> emit,
   ) async {
-    emit(const HomeFeedLoading());
+    // Sajikan cache feed segera bila ada (beranda adalah layar pertama,
+    // sehingga cache sangat membantu saat server lambat / offline).
+    CachedPayload<Map<String, dynamic>>? cached;
+    try {
+      cached = await ApiCache.instance.get<Map<String, dynamic>>(
+        CacheKeys.homeFeed,
+      );
+      if (cached != null) {
+        emit(HomeFeedLoaded(
+          berita: _parseBeritaList(cached.data['berita']),
+          kegiatan: _parseKegiatanList(cached.data['kegiatan']),
+          isStale: cached.isStale,
+        ));
+      } else {
+        emit(const HomeFeedLoading());
+      }
+    } catch (_) {
+      emit(const HomeFeedLoading());
+    }
+
     try {
       final results = await Future.wait<Object?>([
-        _fetchBerita(),
-        _fetchKegiatan(),
+        _fetchBeritaRaw(),
+        _fetchKegiatanRaw(),
       ]);
-      final berita = (results[0] as List<Berita>?) ?? [];
-      final kegiatan = (results[1] as List<Kegiatan>?) ?? [];
+      final beritaRaw = (results[0] as List<dynamic>?) ?? <dynamic>[];
+      final kegiatanRaw = (results[1] as List<dynamic>?) ?? <dynamic>[];
+      final berita = _parseBeritaList(beritaRaw);
+      final kegiatan = _parseKegiatanList(kegiatanRaw);
+      await ApiCache.instance.set(CacheKeys.homeFeed, {
+        'berita': beritaRaw,
+        'kegiatan': kegiatanRaw,
+      });
       emit(HomeFeedLoaded(berita: berita, kegiatan: kegiatan));
     } catch (e) {
-      emit(HomeFeedError(_messageFromError(e)));
+      if (cached != null) {
+        emit(HomeFeedLoaded(
+          berita: _parseBeritaList(cached.data['berita']),
+          kegiatan: _parseKegiatanList(cached.data['kegiatan']),
+          isStale: true,
+          errorMessage: _messageFromError(e),
+        ));
+      } else {
+        emit(HomeFeedError(_messageFromError(e)));
+      }
     }
   }
 
-  Future<List<Berita>> _fetchBerita() async {
+  List<Berita> _parseBeritaList(dynamic raw) {
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(Berita.fromJson)
+        .toList();
+  }
+
+  List<Kegiatan> _parseKegiatanList(dynamic raw) {
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(Kegiatan.fromJson)
+        .toList();
+  }
+
+  Future<List<dynamic>> _fetchBeritaRaw() async {
     try {
       // Global TransformInterceptor membungkus tiap respon: { success, data, ... }.
       final res = await _apiClient.dio.get<Map<String, dynamic>>(
         AppConstants.publicBerita,
       );
       final raw = res.data?['data'];
-      if (raw is! List) return [];
-      return raw
-          .map((e) => Berita.fromJson((e as Map).cast<String, dynamic>()))
-          .toList();
+      return raw is List ? raw : <dynamic>[];
     } on DioException {
-      return [];
+      return <dynamic>[];
     }
   }
 
-  Future<List<Kegiatan>> _fetchKegiatan() async {
+  Future<List<dynamic>> _fetchKegiatanRaw() async {
     try {
       // Global TransformInterceptor: { success, data: [...], meta } (lihat
       // baseFindAll) - ambil isi `data`.
@@ -67,12 +115,9 @@ class HomeFeedBloc extends Bloc<HomeFeedEvent, HomeFeedState> {
         AppConstants.activities,
       );
       final raw = res.data?['data'];
-      if (raw is! List) return [];
-      return raw
-          .map((e) => Kegiatan.fromJson((e as Map).cast<String, dynamic>()))
-          .toList();
+      return raw is List ? raw : <dynamic>[];
     } on DioException {
-      return [];
+      return <dynamic>[];
     }
   }
 

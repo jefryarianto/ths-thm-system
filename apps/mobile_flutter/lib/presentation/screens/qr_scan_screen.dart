@@ -480,7 +480,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               Icon(icon,
                   size: 16,
                   color: active ? Colors.white : Colors.grey.shade600),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppTheme.space4),
               Text(
                 label,
                 style: TextStyle(
@@ -509,7 +509,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             )
           : _kegiatan.isEmpty
               ? Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppTheme.space8),
                   child: Text(
                     'Tidak ada kegiatan aktif. Scan dibatasi verifikasi.',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -583,14 +583,14 @@ class _QrScanScreenState extends State<QrScanScreen> {
     final r = _result!;
     final color = r.success ? AppTheme.success : AppTheme.danger;
     return Card(
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(AppTheme.space12),
       color: color.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: color, width: 1.2),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppTheme.space12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -598,7 +598,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               children: [
                 Icon(r.success ? Icons.check_circle : Icons.cancel,
                     color: color),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppTheme.space8),
                 Expanded(
                   child: Text(
                     r.message,

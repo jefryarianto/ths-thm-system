@@ -428,12 +428,12 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             Text(
               'Gagal memuat data',
               style: TextStyle(color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             FilledButton.tonalIcon(
               onPressed: _retry,
               icon: const Icon(Icons.refresh),
@@ -487,7 +487,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
           : emptyMsg;
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppTheme.space24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -496,7 +496,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
                 size: 44,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               Text(
                 msg,
                 textAlign: TextAlign.center,
@@ -504,7 +504,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               Text(
                 _isSearching
                     ? 'Coba kata kunci lain atau hapus filter pencarian.'
@@ -515,7 +515,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               if (_isSearching)
                 OutlinedButton.icon(
                   onPressed: () {

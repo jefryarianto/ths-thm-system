@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Judul AppBar bergaya ikon + teks untuk header menu THS-THM.
@@ -18,12 +19,23 @@ class AppBarIconTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: iconSize),
-        const SizedBox(width: 8),
-        Text(title),
+        const SizedBox(width: AppTheme.space8),
+        Flexible(
+          child: Text(
+            title,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: theme.appBarTheme.titleTextStyle?.copyWith(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ],
     );
   }

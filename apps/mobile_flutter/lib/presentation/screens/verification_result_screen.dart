@@ -171,7 +171,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
 
   Widget _buildValidCard() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.space20),
       children: [
         _statusHeader(
           icon: Icons.verified,
@@ -181,19 +181,19 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
           badge: '✓ TERVERIFIKASI',
           color: AppTheme.success,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         _sectionTitle(Icons.description_outlined, 'Informasi Dokumen'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.space8),
         _infoCard(children: [
           _infoRow('Seri Dokumen', _nomorDokumen),
           _infoRow('Tipe', _documentLabel(_tipe)),
           _infoRow('Status', _status),
           _infoRow('Tanggal Diterbitkan', Formatters.dateLong(_createdAt)),
         ]),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         if (_tipe == 'kartu_anggota' && _namaLengkap.isNotEmpty) ...[
           _sectionTitle(Icons.person_outline, 'Informasi Anggota'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.space8),
           _infoCard(children: [
             _infoRow('Nomor Anggota', _nomorAnggota),
             _infoRow('Nama Lengkap', _namaLengkap),
@@ -216,10 +216,10 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
                     .join(' · '),
               ),
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.space16),
         ],
         _sectionTitle(Icons.history, 'Riwayat Pemindaian'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.space8),
         _infoCard(children: [
           _infoRow('Jumlah Pemindaian', '$_scanCount kali'),
           _infoRow('Sisa Pemindaian', '$_scanLeft dari $_scanLimit'),
@@ -236,13 +236,13 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
             ),
         ]),
         if (_scanLeft > 0 && _scanLeft <= 5) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           _warningBanner(
             'Sisa pemindaian tinggal $_scanLeft. Jika habis, kartu '
             'akan otomatis dinonaktifkan untuk mencegah pemalsuan.',
           ),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: AppTheme.space24),
       ],
     );
   }
@@ -251,7 +251,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
 
   Widget _buildInvalidCard() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.space20),
       children: [
         _statusHeader(
           icon: Icons.shield,
@@ -259,9 +259,9 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
           badge: '✗ TIDAK VALID',
           color: AppTheme.danger,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.space16),
           decoration: BoxDecoration(
             color: AppTheme.danger.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
@@ -273,7 +273,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
               const Row(
                 children: [
                   Icon(Icons.info_outline, color: AppTheme.danger, size: 18),
-                  SizedBox(width: 8),
+                  SizedBox(width: AppTheme.space8),
                   Text(
                     'Peringatan',
                     style: TextStyle(
@@ -284,7 +284,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               Text(
                 'Kartu atau dokumen dengan token ini tidak tercatat, '
                 'sudah dicabut, atau tidak berlaku.\n\n'
@@ -299,13 +299,13 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         FilledButton.icon(
           onPressed: _verify,
           icon: const Icon(Icons.refresh),
           label: const Text('Verifikasi Ulang'),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppTheme.space24),
       ],
     );
   }
@@ -314,17 +314,17 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
 
   Widget _buildErrorCard() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.space20),
       children: [
         const SizedBox(height: 40),
         const Icon(Icons.error_outline, color: AppTheme.danger, size: 56),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         Text(
           _error!,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, color: AppTheme.textSlate),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppTheme.space20),
         FilledButton.icon(
           onPressed: _verify,
           icon: const Icon(Icons.refresh),
@@ -438,7 +438,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
     return Row(
       children: [
         Icon(icon, size: 18, color: AppTheme.navy),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppTheme.space8),
         Text(
           title,
           style: const TextStyle(
@@ -454,7 +454,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
   Widget _infoCard({required List<Widget> children}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
@@ -488,7 +488,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppTheme.space8),
         Expanded(
           child: Text(
             value,

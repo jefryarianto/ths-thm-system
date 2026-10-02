@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/berita.dart';
 import '../../data/models/kegiatan.dart';
 import '../../logic/home_feed/home_feed_bloc.dart';
+import 'skeleton_loader.dart';
 
 /// Section "Agenda" beranda — daftar vertikal kartu kompak dari data nyata
 /// `GET /public/activities` (model [Kegiatan]).
@@ -26,6 +27,12 @@ class AgendaSection extends StatelessWidget {
             kegiatan.where((k) => kegiatanTampil(k.status)).toList(),
           _ => const <Kegiatan>[],
         };
+        if (state is HomeFeedLoading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: SkeletonList(itemCount: 3),
+          );
+        }
         if (kegiatan.isEmpty) return const SizedBox.shrink();
 
         return Column(
@@ -108,7 +115,7 @@ class _AgendaCard extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.calendar_today, size: 14, color: AppTheme.textMuted),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppTheme.space4),
                         Text(kegiatan.nama,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -149,6 +156,12 @@ class BeritaFeedSection extends StatelessWidget {
           HomeFeedLoaded(:final berita) => berita,
           _ => const <Berita>[],
         };
+        if (state is HomeFeedLoading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: SkeletonList(itemCount: 3),
+          );
+        }
         if (berita.isEmpty) return const SizedBox.shrink();
 
         return Column(
@@ -234,7 +247,7 @@ class _BeritaCard extends StatelessWidget {
                   Row(
                     children: [
                       Icon(Icons.article_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppTheme.space4),
                       Text(berita.judul,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

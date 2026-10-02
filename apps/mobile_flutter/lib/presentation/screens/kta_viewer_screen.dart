@@ -17,6 +17,7 @@ import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
 import '../widgets/secure_kta_container.dart';
+import '../widgets/state_views.dart';
 
 /// Viewer kartu KTA: pinch-zoom (InteractiveViewer), flip depan/belakang,
 /// dan simpan kartu sebagai PNG ukuran asli 856×540 ke galeri.
@@ -229,10 +230,19 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
               return const AppLoadingSpinner();
             }
             if (state is MemberError) {
-              return Center(child: Text(state.message));
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context
+                    .read<MemberBloc>()
+                    .add(const MemberLoadRequested()),
+              );
             }
             if (state is! MemberLoaded) {
-              return const Center(child: Text('Belum ada data anggota'));
+              return const EmptyStateView(
+                icon: Icons.badge_outlined,
+                title: 'Belum ada data anggota',
+                message: 'Data anggota Anda akan muncul setelah dimuat.',
+              );
             }
             if (state.cardData == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -268,7 +278,7 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
                 transformationController: _transformation,
                 minScale: 1,
                 maxScale: 5,
-                boundaryMargin: const EdgeInsets.all(24),
+                boundaryMargin: const EdgeInsets.all(AppTheme.space24),
                 child: FittedBox(
                   fit: BoxFit.contain,
                   child: card,
@@ -284,7 +294,7 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
           child: Column(
             children: [
               _zoomButton(Icons.add, () => _zoomBy(1.4)),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               _zoomButton(Icons.remove, () => _zoomBy(1 / 1.4)),
             ],
           ),

@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/state_views.dart';
 
 class ForumThreadDetailScreen extends StatefulWidget {
   final String threadId;
@@ -58,17 +59,24 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
             if (state is ForumLoading) {
               return const AppLoadingSpinner(message: 'Memuat thread...');
             }
-            if (state is ForumError) return Center(child: Text(state.message));
+            if (state is ForumError) {
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context
+                    .read<ForumBloc>()
+                    .add(ForumThreadLoadRequested(id: widget.threadId)),
+              );
+            }
             if (state is! ForumThreadLoaded) return const AppLoadingSpinner();
             final thread = state.thread;
             final posts = state.posts;
             return Column(children: [
               Expanded(
-                child: ListView(padding: const EdgeInsets.all(16), children: [
+                child: ListView(padding: const EdgeInsets.all(AppTheme.space16), children: [
                   Text(thread.judul,
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTheme.space8),
                   Row(children: [
                     CircleAvatar(
                         radius: 14,
@@ -82,7 +90,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: AppTheme.primary))),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -94,16 +102,16 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                   fontSize: 11, color: Colors.grey.shade500)),
                         ]),
                   ]),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTheme.space12),
                   Text(thread.konten, style: const TextStyle(height: 1.5)),
                   const Divider(height: 32),
                   Text('${posts.length} Balasan',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTheme.space8),
                   ...posts.map((p) => Card(
                         margin: const EdgeInsets.only(bottom: 8),
                         child: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppTheme.space12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -131,7 +139,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                         fontSize: 11,
                                         color: Colors.grey.shade500)),
                               ]),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppTheme.space8),
                               Text(p.konten,
                                   style: const TextStyle(
                                       fontSize: 13, height: 1.4)),
@@ -157,7 +165,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                         hintText: 'Tulis balasan...', isDense: true),
                     maxLines: null,
                   )),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppTheme.space8),
                   IconButton(
                     icon: _submitting
                         ? const AppLoadingSpinner.small()

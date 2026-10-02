@@ -14,10 +14,20 @@ class DuesLoading extends DuesState {}
 class DuesLoaded extends DuesState {
   final List<Due> dues;
 
-  const DuesLoaded({required this.dues});
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
+  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
+  final String? errorMessage;
+
+  const DuesLoaded({
+    required this.dues,
+    this.isStale = false,
+    this.errorMessage,
+  });
 
   @override
-  List<Object> get props => [dues];
+  List<Object> get props => [dues, isStale, errorMessage ?? ''];
 }
 
 class DuesError extends DuesState {

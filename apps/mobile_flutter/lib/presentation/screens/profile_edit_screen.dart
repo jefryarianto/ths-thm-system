@@ -132,7 +132,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             const Text('Ubah Foto Profil',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
@@ -232,10 +232,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             children: [
               _buildPhotoSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               _field(
                 label: 'Nama Lengkap',
                 controller: _nama,
@@ -244,19 +244,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     : null,
                 textCapitalization: TextCapitalization.words,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               _field(
                   label: 'No. HP',
                   controller: _noHp,
                   keyboardType: TextInputType.phone),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               _field(label: 'Alamat', controller: _alamat, maxLines: 3),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               _field(
                   label: 'Tempat Lahir',
                   controller: _tempatLahir,
                   textCapitalization: TextCapitalization.words),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               GestureDetector(
                 onTap: _pickDate,
                 child: InputDecorator(
@@ -275,7 +275,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space16),
               _field(
                   label: 'Email',
                   controller: _email,
@@ -283,7 +283,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   keyboardType: TextInputType.emailAddress),
               Container(
                 margin: const EdgeInsets.only(top: 10),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppTheme.space12),
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
@@ -294,7 +294,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Icons.info_outline, size: 18, color: AppTheme.primary),
-                    SizedBox(width: 8),
+                    SizedBox(width: AppTheme.space8),
                     Expanded(
                       child: Text(
                           'Email hanya dapat dibaca. Hubungi admin untuk perubahan email.',
@@ -306,7 +306,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               BlocBuilder<MemberBloc, MemberState>(
                 builder: (context, state) {
                   final saving = state is MemberUpdating;
@@ -363,7 +363,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   child: GestureDetector(
                     onTap: _photoUploading ? null : _pickAndUploadPhoto,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppTheme.space8),
                       decoration: const BoxDecoration(
                           color: AppTheme.primary, shape: BoxShape.circle),
                       child: const Icon(Icons.camera_alt,
@@ -371,7 +371,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     ),
                   )),
             ]),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             GestureDetector(
               onTap: _photoUploading ? null : _pickAndUploadPhoto,
               child: Text(_photoUploading ? 'Mengunggah...' : 'Ganti Foto',

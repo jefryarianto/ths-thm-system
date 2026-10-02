@@ -13,6 +13,7 @@ import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
 import '../widgets/secure_kta_container.dart';
+import '../widgets/state_views.dart';
 
 class KtaScreen extends StatefulWidget {
   const KtaScreen({super.key});
@@ -61,7 +62,11 @@ class _KtaScreenState extends State<KtaScreen> {
               return _Error(message: state.message);
             }
             if (state is! MemberLoaded) {
-              return const Center(child: Text('Belum ada data anggota'));
+              return const EmptyStateView(
+                icon: Icons.badge_outlined,
+                title: 'Belum ada data anggota',
+                message: 'Data anggota Anda akan muncul setelah dimuat.',
+              );
             }
             // Fetch card data if not loaded yet
             if (state.cardData == null) {
@@ -92,18 +97,18 @@ class _KtaCard extends StatelessWidget {
     final validasi = member.statusValidasi;
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppTheme.space20),
       children: [
         // Kartu digital — desain Expo
         KtaFlipCard(member: member, cardData: cardData),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppTheme.space12),
         FilledButton.tonalIcon(
           onPressed: () => context.push<void>('/kta/viewer'),
           icon: const Icon(Icons.zoom_in),
           label: const Text('Perbesar & Simpan'),
         ),
         if (cardData?.verificationUrl.isNotEmpty ?? false) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.space8),
           FilledButton.icon(
             onPressed: () {
               final token = Formatters.extractQrToken(cardData!.verificationUrl);
@@ -135,7 +140,7 @@ class _KtaCard extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 20),
+        const SizedBox(height: AppTheme.space20),
         // Status
         Wrap(
           spacing: 8,
@@ -145,10 +150,10 @@ class _KtaCard extends StatelessWidget {
               _chip('Validasi: $validasi', AppTheme.statusColor(validasi)),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppTheme.space20),
         const Text('Informasi Anggota',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppTheme.space12),
         _info(context, Icons.email_outlined, 'Email', member.email),
         _info(context, Icons.phone_outlined, 'No. Telepon', member.noHp),
         _info(context, Icons.wc_outlined, 'Jenis Kelamin', member.jenisKelamin),
@@ -193,7 +198,9 @@ class _KtaCard extends StatelessWidget {
         dense: true,
         leading: Icon(icon, color: AppTheme.primary, size: 22),
         title: Text(label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
         subtitle:
             Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
@@ -207,24 +214,10 @@ class _Error extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () =>
-                  context.read<MemberBloc>().add(const MemberLoadRequested()),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      message: message,
+      onRetry: () =>
+          context.read<MemberBloc>().add(const MemberLoadRequested()),
     );
   }
 }

@@ -146,10 +146,48 @@ class AppTheme {
   static const BorderRadius radiusSheetTop =
       BorderRadius.vertical(top: radiusSheet);
 
+  // ── SPACING SYSTEM (4dp baseline) ────────────────────────────────────
+  /// Skala spacing tunggal 4dp agar jarak antar elemen konsisten di
+  /// seluruh aplikasi. Ambil dari sini, jangan hardcode angka sendiri.
+  static const double space3 = 3; // hairline gap (badge ke teks)
+  static const double space4 = 4; // xs — rapat, ikon dalam chip
+  static const double space8 = 8; // sm — dalam card, antar baris
+  static const double space12 = 12; // md — antar field dalam form
+  static const double space16 = 16; // lg — margin layar / antar card
+  static const double space20 = 20; // xl — antar section
+  static const double space24 = 24; // 2xl — padding error/empty state
+  static const double space32 = 32; // 3xl — pemisah blok besar
+
+  /// Padding horizontal standar untuk badi layar (16dp).
+  static const EdgeInsets screenPaddingH =
+      EdgeInsets.symmetric(horizontal: space16);
+
+  /// Padding penuh layar standar.
+  static const EdgeInsets screenPadding = EdgeInsets.all(space16);
+
   // ── TARGET SENTUH MINIMUM (a11y) ─────────────────────────────────────
   /// Material 3 minimum 48 dp; pakai 44 dp untuk kompak dalam list.
   static const double touchTargetCompact = 44.0;
   static const double touchTarget = 48.0;
+
+  // ── ELEVATION SYSTEM ─────────────────────────────────────────────────
+  /// Bayangan sangat lembut satu tingkat — "subtle shadow" modern.
+  static const List<BoxShadow> shadowSm = [
+    BoxShadow(
+      color: Color(0x0A000000),
+      blurRadius: 8,
+      offset: Offset(0, 2),
+    ),
+  ];
+
+  /// Bayangan untuk elemen mengambang (FAB, bottom sheet, dialog).
+  static const List<BoxShadow> shadowMd = [
+    BoxShadow(
+      color: Color(0x14000000),
+      blurRadius: 16,
+      offset: Offset(0, 6),
+    ),
+  ];
 
   // ── LEGACY COMPATIBILITY ──────────────────────────────────────────────
   /// @deprecated Use [textSlate] instead

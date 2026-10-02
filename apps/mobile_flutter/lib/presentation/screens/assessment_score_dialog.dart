@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -102,7 +103,7 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
                 'tidak dikirim.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               DropdownButtonFormField<String>(
                 initialValue: _aspekId,
                 decoration: const InputDecoration(
@@ -120,11 +121,11 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
                   });
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               _buildProgressRow(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               ..._buildItemScoreFields(),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
             ],
           ),
         ),
@@ -178,7 +179,7 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
     final widgets = <Widget>[];
     for (final item in items) {
       final skorMax = item.skorMaksimal.toStringAsFixed(0);
-      widgets.add(const SizedBox(height: 8));
+      widgets.add(const SizedBox(height: AppTheme.space8));
       widgets.add(Text(
         '${item.namaItem} (maks $skorMax)',
         style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),

@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/claim.dart';
 import '../../logic/claim/claim_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/state_views.dart';
 
 class ClaimsAdminScreen extends StatefulWidget {
   const ClaimsAdminScreen({super.key});
@@ -30,20 +31,37 @@ class _ClaimsAdminScreenState extends State<ClaimsAdminScreen> {
         Expanded(child: BlocBuilder<ClaimBloc, ClaimState>(
           builder: (context, state) {
             if (state is ClaimLoading) return const AppLoadingSpinner();
-            if (state is ClaimError) return Center(child: Text('Error: ${state.message}'));
+            if (state is ClaimError) {
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context
+                    .read<ClaimBloc>()
+                    .add(ClaimLoadRequested(status: _statusFilter)),
+              );
+            }
             if (state is ClaimLoaded) {
-              if (state.claims.isEmpty) return const Center(child: Text('Tidak ada data'));
+              if (state.claims.isEmpty) {
+                return const EmptyStateView(
+                  icon: Icons.assignment_outlined,
+                  title: 'Tidak ada data',
+                  message: 'Tidak ada klaim pada filter ini.',
+                );
+              }
               return RefreshIndicator(
                 onRefresh: () async => context.read<ClaimBloc>().add(ClaimLoadRequested(status: _statusFilter)),
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppTheme.space12),
                   itemCount: state.claims.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, __) => const SizedBox(height: AppTheme.space8),
                   itemBuilder: (ctx, i) => _ClaimCard(claim: state.claims[i]),
                 ),
               );
             }
-            return const Center(child: Text('Tarik ke bawah untuk memuat'));
+            return const EmptyStateView(
+              icon: Icons.assignment_outlined,
+              title: 'Tarik ke bawah untuk memuat',
+              message: 'Data klaim belum dimuat.',
+            );
           },
         )),
       ]),
@@ -106,10 +124,10 @@ class _ClaimCard extends StatelessWidget {
             Row(children: [
               FilledButton.tonalIcon(onPressed: () => context.read<ClaimBloc>().add(ClaimProcessRequested(claim.id)),
                 icon: const Icon(Icons.play_arrow, size: 16), label: const Text('Proses')),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               FilledButton.tonalIcon(onPressed: () => _confirmApprove(context),
                 icon: const Icon(Icons.check, size: 16), label: const Text('Setujui')),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               OutlinedButton.icon(onPressed: () => _confirmReject(context),
                 icon: const Icon(Icons.close, size: 16), label: const Text('Tolak')),
             ]),
@@ -118,7 +136,7 @@ class _ClaimCard extends StatelessWidget {
             Row(children: [
               FilledButton.tonalIcon(onPressed: () => _confirmApprove(context),
                 icon: const Icon(Icons.check, size: 16), label: const Text('Setujui')),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               OutlinedButton.icon(onPressed: () => _confirmReject(context),
                 icon: const Icon(Icons.close, size: 16), label: const Text('Tolak')),
             ]),

@@ -93,14 +93,14 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
         child: BlocBuilder<ClaimBloc, ClaimState>(
           builder: (ctx, state) {
             final busy = state is ClaimSubmitting;
-            return ListView(padding: const EdgeInsets.all(20), children: [
+            return ListView(padding: const EdgeInsets.all(AppTheme.space20), children: [
               const Icon(Icons.verified_user,
                   size: 56, color: AppTheme.primary),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               const Text('Klaim Akun Anggota',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(
@@ -115,7 +115,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
                 selected: {_tipe},
                 onSelectionChanged: (s) => setState(() => _tipe = s.first),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTheme.space20),
               if (_tipe == 'dokumen') ..._dokumenFields(),
               if (_tipe == 'keanggotaan') ..._keanggotaanFields(),
               const SizedBox(height: 28),

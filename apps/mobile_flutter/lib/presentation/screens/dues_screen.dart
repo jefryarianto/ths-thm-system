@@ -9,6 +9,9 @@ import '../../logic/dues/dues_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/due_item_card.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/stale_data_banner.dart';
+import '../widgets/state_views.dart';
 
 class DuesScreen extends StatefulWidget {
   const DuesScreen({super.key});
@@ -39,19 +42,30 @@ class _DuesScreenState extends State<DuesScreen> {
       body: BlocBuilder<DuesBloc, DuesState>(
         builder: (context, state) {
           if (state is DuesLoading) {
-            return const AppLoadingSpinner();
+            return const SkeletonNotificationList();
           }
           if (state is DuesError) {
             return _Error(message: state.message);
           }
           if (state is! DuesLoaded) {
-            return const Center(child: Text('Belum ada data iuran'));
+            return const EmptyStateView(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Belum ada data iuran',
+              message: 'Riwayat iuran Anda akan muncul di sini.',
+            );
           }
           final dues = state.dues;
           final lunas = dues.where((d) => _isPaid(d.status)).length;
           return Column(
             children: [
               _SummaryBar(total: dues.length, lunas: lunas),
+              if (state.isStale)
+                StaleDataBanner(
+                  errorMessage: state.errorMessage,
+                  onRefresh: () => context
+                      .read<DuesBloc>()
+                      .add(const DuesLoadRequested()),
+                ),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async =>
@@ -60,13 +74,18 @@ class _DuesScreenState extends State<DuesScreen> {
                       ? ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
-                            SizedBox(height: 120),
-                            Center(child: Text('Tidak ada data iuran')),
+                            SizedBox(height: 80),
+                            EmptyStateView(
+                              icon: Icons.receipt_long_outlined,
+                              title: 'Tidak ada data iuran',
+                              message:
+                                  'Belum ada riwayat iuran pada periode ini.',
+                            ),
                           ],
                         )
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppTheme.space12),
                           itemCount: dues.length,
                           itemBuilder: (context, i) => DueItemCard(
                             due: dues[i],
@@ -101,17 +120,18 @@ class _DuesScreenState extends State<DuesScreen> {
             children: [
               Text('Detail Iuran ${due.periode}',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-              const SizedBox(height: 12),
-              _row('Status', due.status),
-              _row('Jumlah', Formatters.rupiah(due.jumlah)),
-              _row('Tanggal Jatuh Tempo',
+              const SizedBox(height: AppTheme.space12),
+              _row(context, 'Status', due.status),
+              _row(context, 'Jumlah', Formatters.rupiah(due.jumlah)),
+              _row(context, 'Tanggal Jatuh Tempo',
                   Formatters.dateLong(due.tanggalJatuhTempo)),
               _row(
+                  context,
                   'Tanggal Bayar',
                   due.tanggalBayar != null
                       ? Formatters.dateLong(due.tanggalBayar)
                       : '-'),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               _ProofSection(due: due),
             ],
           ),
@@ -120,16 +140,19 @@ class _DuesScreenState extends State<DuesScreen> {
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.space4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
               width: 140,
               child: Text(label,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.textMuted))),
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurfaceVariant))),
           Expanded(
             child: Text(value,
                 style:
@@ -150,8 +173,8 @@ class _SummaryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppTheme.space12),
+      padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
@@ -203,7 +226,7 @@ class _ProofSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.space8),
         Row(children: [
           Icon(Icons.receipt_long_outlined,
               size: 18, color: theme.colorScheme.primary),
@@ -215,7 +238,7 @@ class _ProofSection extends StatelessWidget {
         if (url.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
@@ -224,7 +247,7 @@ class _ProofSection extends StatelessWidget {
             child: Row(children: [
               Icon(Icons.image_not_supported_outlined,
                   size: 18, color: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               Expanded(
                 child: Text(
                   paid
@@ -268,7 +291,7 @@ class _ProofSection extends StatelessWidget {
             ),
           ),
         if (url.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.space8),
           Center(
             child: Text('Ketuk untuk melihat ukuran penuh',
                 style:
@@ -315,7 +338,7 @@ class _ProofViewerScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.broken_image_outlined,
                       size: 48, color: Colors.white54),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppTheme.space12),
                   Text('Gambar tidak dapat dimuat',
                       style: TextStyle(color: Colors.white70)),
                 ],
@@ -334,25 +357,9 @@ class _Error extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () =>
-                  context.read<DuesBloc>().add(const DuesLoadRequested()),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      message: message,
+      onRetry: () => context.read<DuesBloc>().add(const DuesLoadRequested()),
     );
   }
 }

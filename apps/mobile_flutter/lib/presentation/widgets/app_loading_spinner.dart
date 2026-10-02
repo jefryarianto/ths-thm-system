@@ -79,7 +79,7 @@ class AppLoadingSpinner extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         spinner,
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.space16),
         Text(
           text,
           style: TextStyle(

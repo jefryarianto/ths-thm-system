@@ -212,7 +212,7 @@ class _SecureKtaContainerState extends State<SecureKtaContainer> {
             ),
             child: Icon(Icons.shield_outlined, color: statusColor, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.space12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

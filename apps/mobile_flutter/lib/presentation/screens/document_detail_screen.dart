@@ -144,9 +144,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.space12),
             Text(_error ?? 'Dokumen tidak ditemukan'),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.space16),
             FilledButton(onPressed: _load, child: const Text('Coba Lagi')),
           ],
         ),
@@ -156,11 +156,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final status = doc.status;
     final color = AppTheme.statusColor(status);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.space16),
       children: [
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,7 +174,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   children: [
                     Icon(Icons.flag_outlined,
                         size: 16, color: Colors.grey.shade600),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     const Expanded(child: Text('Status')),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -199,7 +199,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
         ),
         if (doc.filePath != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             icon: _downloading
                 ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
@@ -210,19 +210,19 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
         ],
         if (doc.qrCode != null || doc.verificationUrl != null) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppTheme.space20),
           const Text('QR Code',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.space12),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppTheme.space24),
               child: Center(child: _buildQr(doc)),
             ),
           ),
         ],
         if (doc.verificationUrl != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.space8),
           FilledButton.icon(
             onPressed: () {
               final token = Formatters.extractQrToken(doc.verificationUrl!);

@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/app_search_field.dart';
+import '../widgets/state_views.dart';
 
 class ForumThreadsScreen extends StatefulWidget {
   final String categoryId;
@@ -18,7 +20,7 @@ class ForumThreadsScreen extends StatefulWidget {
 }
 
 class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
-  String _search = '';
+  final _search = TextEditingController();
 
   @override
   void initState() {
@@ -28,8 +30,13 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
         .add(ForumThreadsLoadRequested(categoryId: widget.categoryId));
   }
 
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   void _doSearch(String q) {
-    setState(() => _search = q);
     context.read<ForumBloc>().add(
         ForumThreadsLoadRequested(categoryId: widget.categoryId, search: q));
   }
@@ -51,13 +58,15 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
       ),
       body: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Cari thread...',
-              prefixIcon: Icon(Icons.search, size: 20),
-              isDense: true,
-            ),
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.space16,
+            AppTheme.space12,
+            AppTheme.space16,
+            AppTheme.space8,
+          ),
+          child: AppSearchField(
+            controller: _search,
+            hintText: 'Cari thread...',
             onChanged: _doSearch,
           ),
         ),
@@ -68,20 +77,26 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                 return const AppLoadingSpinner(message: 'Memuat thread...');
               }
               if (state is ForumError) {
-                return Center(child: Text(state.message));
+                return ErrorStateView(message: state.message);
               }
               if (state is! ForumThreadsLoaded) {
                 return const AppLoadingSpinner();
               }
               final threads = state.threads;
               if (threads.isEmpty) {
-                return const Center(child: Text('Belum ada thread'));
+                return EmptyStateView(
+                  icon: Icons.forum_outlined,
+                  title: 'Belum ada thread',
+                  message: 'Jadilah yang pertama memulai diskusi baru.',
+                  actionLabel: 'Buat Thread',
+                  onAction: () => context.push<void>('/forum/create'),
+                );
               }
               return RefreshIndicator(
-                onRefresh: () async => _doSearch(_search),
+                onRefresh: () async => _doSearch(_search.text),
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppTheme.space12),
                   itemCount: threads.length,
                   itemBuilder: (context, i) {
                     final t = threads[i];
@@ -92,7 +107,7 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                           if (t.isPinned)
                             const Icon(Icons.push_pin,
                                 size: 14, color: AppTheme.primary),
-                          if (t.isPinned) const SizedBox(width: 4),
+                          if (t.isPinned) const SizedBox(width: AppTheme.space4),
                           Expanded(
                               child: Text(t.judul,
                                   maxLines: 1,

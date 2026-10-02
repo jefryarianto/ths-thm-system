@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/registration.dart';
 import '../../logic/registration/registration_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/state_views.dart';
 
 class RegistrationsAdminScreen extends StatefulWidget {
   const RegistrationsAdminScreen({super.key});
@@ -30,20 +31,37 @@ class _RegistrationsAdminScreenState extends State<RegistrationsAdminScreen> {
         Expanded(child: BlocBuilder<RegistrationBloc, RegistrationState>(
           builder: (context, state) {
             if (state is RegistrationLoading) return const AppLoadingSpinner();
-            if (state is RegistrationError) return Center(child: Text('Error: ${state.message}'));
+            if (state is RegistrationError) {
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context
+                    .read<RegistrationBloc>()
+                    .add(RegistrationLoadRequested(status: _statusFilter)),
+              );
+            }
             if (state is RegistrationLoaded) {
-              if (state.registrations.isEmpty) return const Center(child: Text('Tidak ada data'));
+              if (state.registrations.isEmpty) {
+                return const EmptyStateView(
+                  icon: Icons.how_to_reg_outlined,
+                  title: 'Tidak ada data',
+                  message: 'Tidak ada pendaftaran pada filter ini.',
+                );
+              }
               return RefreshIndicator(
                 onRefresh: () async => context.read<RegistrationBloc>().add(RegistrationLoadRequested(status: _statusFilter)),
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppTheme.space12),
                   itemCount: state.registrations.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, __) => const SizedBox(height: AppTheme.space8),
                   itemBuilder: (ctx, i) => _RegistrationCard(reg: state.registrations[i]),
                 ),
               );
             }
-            return const Center(child: Text('Tarik ke bawah untuk memuat'));
+            return const EmptyStateView(
+              icon: Icons.how_to_reg_outlined,
+              title: 'Tarik ke bawah untuk memuat',
+              message: 'Data pendaftaran belum dimuat.',
+            );
           },
         )),
       ]),
@@ -106,7 +124,7 @@ class _RegistrationCard extends StatelessWidget {
                 icon: const Icon(Icons.check, size: 16),
                 label: const Text('Setujui'),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.space8),
               OutlinedButton.icon(
                 onPressed: () => _confirmReject(context),
                 icon: const Icon(Icons.close, size: 16),

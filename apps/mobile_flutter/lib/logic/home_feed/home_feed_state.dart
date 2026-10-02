@@ -19,10 +19,21 @@ class HomeFeedLoaded extends HomeFeedState {
   final List<Berita> berita;
   final List<Kegiatan> kegiatan;
 
-  const HomeFeedLoaded({required this.berita, required this.kegiatan});
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
+  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
+  final String? errorMessage;
+
+  const HomeFeedLoaded({
+    required this.berita,
+    required this.kegiatan,
+    this.isStale = false,
+    this.errorMessage,
+  });
 
   @override
-  List<Object?> get props => [berita, kegiatan];
+  List<Object?> get props => [berita, kegiatan, isStale, errorMessage];
 }
 
 class HomeFeedError extends HomeFeedState {

@@ -74,12 +74,12 @@ class _ForumCreateScreenState extends State<ForumCreateScreen> {
             final cats =
                 state is ForumCategoriesLoaded ? state.categories : <dynamic>[];
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.space16),
               children: [
                 const Text('Kategori',
                     style:
                         TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppTheme.space8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -92,19 +92,19 @@ class _ForumCreateScreenState extends State<ForumCreateScreen> {
                           ))
                       .toList(),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppTheme.space20),
                 TextField(
                   controller: _judulCtrl,
                   decoration: const InputDecoration(labelText: 'Judul'),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppTheme.space16),
                 TextField(
                   controller: _kontenCtrl,
                   decoration: const InputDecoration(labelText: 'Konten'),
                   maxLines: 8,
                   textAlignVertical: TextAlignVertical.top,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.space24),
                 FilledButton(
                   onPressed: _submitting ? null : _submit,
                   child: _submitting

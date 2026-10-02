@@ -21,11 +21,22 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _goBranch,
-        height: 68,
-        destinations: const [
+      bottomNavigationBar: Container(
+        // Navigasi tetap di atas padding sistem bawah (gesture bar) dengan
+        // divider sangat lembut sebagai pemisah visual.
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: _goBranch,
+          height: 68,
+          destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
@@ -52,6 +63,7 @@ class MainShell extends StatelessWidget {
             label: 'Profil',
           ),
         ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,7 +30,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           const _Avatar(),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.space12),
           Expanded(
             child: BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
@@ -135,7 +136,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Pengaturan',
           onPressed: () => context.push<void>('/settings'),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppTheme.space4),
       ],
     );
   }

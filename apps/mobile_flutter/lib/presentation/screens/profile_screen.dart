@@ -8,6 +8,7 @@ import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -42,11 +43,15 @@ class ProfileScreen extends StatelessWidget {
             return _Error(message: state.message);
           }
           if (state is! MemberLoaded) {
-            return const Center(child: Text('Data belum dimuat'));
+            return const EmptyStateView(
+              icon: Icons.person_outline,
+              title: 'Data belum dimuat',
+              message: 'Profil Anda akan muncul setelah data berhasil dimuat.',
+            );
           }
           final member = state.member;
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppTheme.space16),
             children: [
               Center(
                 child: CircleAvatar(
@@ -61,7 +66,7 @@ class ProfileScreen extends StatelessWidget {
                       : null,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.space12),
               Center(
                 child: Text(
                   member.namaLengkap,
@@ -74,11 +79,14 @@ class ProfileScreen extends StatelessWidget {
                 Center(
                   child: Text(
                     'No. Anggota: ${member.nomorAnggota}',
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant),
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -98,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTheme.space20),
               _infoCard(context, Icons.badge_outlined, 'Nama Lengkap',
                   member.namaLengkap),
               if (member.nomorAnggota.isNotEmpty)
@@ -134,7 +142,7 @@ class ProfileScreen extends StatelessWidget {
                       .where((e) => e.isNotEmpty)
                       .join(', '),
                 ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.space24),
               OutlinedButton.icon(
                 icon: const Icon(Icons.logout, color: AppTheme.danger),
                 label: const Text('Keluar',
@@ -159,10 +167,13 @@ class ProfileScreen extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon, color: AppTheme.primary),
         title: Text(label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
         subtitle: Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600, color: Colors.black87)),
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface)),
       ),
     );
   }
@@ -198,24 +209,10 @@ class _Error extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () =>
-                  context.read<MemberBloc>().add(const MemberLoadRequested()),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      message: message,
+      onRetry: () =>
+          context.read<MemberBloc>().add(const MemberLoadRequested()),
     );
   }
 }

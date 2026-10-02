@@ -6,7 +6,9 @@ import '../../core/utils/formatters.dart';
 import '../../logic/gamification/gamification_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
-import '../widgets/app_loading_spinner.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/stale_data_banner.dart';
+import '../widgets/state_views.dart';
 
 class GamificationScreen extends StatefulWidget {
   const GamificationScreen({super.key});
@@ -56,13 +58,21 @@ class _GamificationScreenState extends State<GamificationScreen> {
         child: BlocBuilder<GamificationBloc, GamificationState>(
           builder: (context, state) {
             if (state is GamificationLoading) {
-              return const AppLoadingSpinner(message: 'Memuat data...');
+              return const SkeletonNotificationList();
             }
             if (state is GamificationError) {
-              return Center(child: Text(state.message));
+              return ErrorStateView(
+                message: state.message,
+                onRetry: _startLoading,
+              );
             }
             return Column(children: [
               _TabBar(tab: _tab, onChanged: (i) => setState(() => _tab = i)),
+              if (state is GamificationLoaded && state.isStale)
+                StaleDataBanner(
+                  errorMessage: state.errorMessage,
+                  onRefresh: _startLoading,
+                ),
               Expanded(child: _buildTab()),
             ]);
           },
@@ -156,12 +166,12 @@ class _ProfileTab extends StatelessWidget {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
         if (state is! GamificationLoaded || state.profile == null) {
-          return const AppLoadingSpinner();
+          return const SkeletonNotificationList();
         }
         final p = state.profile!;
-        return ListView(padding: const EdgeInsets.all(16), children: [
+        return ListView(padding: const EdgeInsets.all(AppTheme.space16), children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppTheme.space24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                   colors: [AppTheme.primary, AppTheme.primaryLight]),
@@ -169,7 +179,7 @@ class _ProfileTab extends StatelessWidget {
             ),
             child: Column(children: [
               Text(p.level.icon, style: const TextStyle(fontSize: 40)),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.space8),
               Text(p.level.name,
                   style: const TextStyle(
                       color: AppTheme.onPrimary,
@@ -186,11 +196,11 @@ class _ProfileTab extends StatelessWidget {
                       color: AppTheme.onPrimary.withValues(alpha: 0.7), fontSize: 14)),
             ]),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.space16),
           if (p.badges.isNotEmpty) ...[
             const Text('Lencana',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -245,7 +255,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
         if (state is! GamificationLoaded || state.leaderboard == null) {
-          return const AppLoadingSpinner();
+          return const SkeletonNotificationList();
         }
         final entries = state.leaderboard!;
         return Column(
@@ -261,19 +271,19 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                         scope: GamificationLeaderboardScope.global,
                         selected: _scope == GamificationLeaderboardScope.global,
                         onSelected: (s) => _applyScope(s)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     _ScopeChip(
                         label: 'Distrik',
                         scope: GamificationLeaderboardScope.distrik,
                         selected: _scope == GamificationLeaderboardScope.distrik,
                         onSelected: (s) => _applyScope(s)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     _ScopeChip(
                         label: 'Wilayah',
                         scope: GamificationLeaderboardScope.wilayah,
                         selected: _scope == GamificationLeaderboardScope.wilayah,
                         onSelected: (s) => _applyScope(s)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     _ScopeChip(
                         label: 'Ranting',
                         scope: GamificationLeaderboardScope.ranting,
@@ -285,12 +295,16 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
             ),
             if (entries.isEmpty)
               const Expanded(
-                child: Center(child: Text('Belum ada data leaderboard')),
+                child: EmptyStateView(
+                  icon: Icons.emoji_events_outlined,
+                  title: 'Belum ada data leaderboard',
+                  message: 'Papan peringatan belum memiliki pesaing.',
+                ),
               )
             else
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppTheme.space16),
                   itemCount: entries.length,
                   itemBuilder: (context, i) {
                     final e = entries[i];
@@ -426,7 +440,7 @@ class _GuideTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.space16),
       children: [
         Text(
           'Petunjuk Poin & Level',
@@ -437,25 +451,25 @@ class _GuideTab extends StatelessWidget {
           'Cara mengumpulkan poin, naik level, dan meraih lencana.',
           style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppTheme.space12),
         ..._sections.map(
           (s) => Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
                     Icon(s.icon, size: 20, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTheme.space8),
                     Text(
                       s.title,
                       style: TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
                     ),
                   ]),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTheme.space8),
                   ...s.lines.map(
                     (l) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
@@ -482,10 +496,12 @@ class _HistoryTab extends StatelessWidget {
     final theme = Theme.of(context);
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
-        if (state is! GamificationLoaded) return const AppLoadingSpinner();
+        if (state is! GamificationLoaded) {
+          return const SkeletonNotificationList();
+        }
         final history = state.pointsHistory;
         final events = state.events;
-        return ListView(padding: const EdgeInsets.all(16), children: [
+        return ListView(padding: const EdgeInsets.all(AppTheme.space16), children: [
           if (history.isNotEmpty) ...[
             Row(children: [
               Icon(Icons.calendar_month_outlined,
@@ -494,7 +510,7 @@ class _HistoryTab extends StatelessWidget {
               Text('Poin per Bulan',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
             ]),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             ...history.map((h) => Card(
                   margin: const EdgeInsets.only(bottom: 6),
                   child: ListTile(
@@ -505,7 +521,7 @@ class _HistoryTab extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 )),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.space16),
           ],
           if (events.isNotEmpty) ...[
             Row(children: [
@@ -514,7 +530,7 @@ class _HistoryTab extends StatelessWidget {
               Text('Aktivitas Terbaru',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
             ]),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.space8),
             ...events.map((e) => Card(
                   margin: const EdgeInsets.only(bottom: 6),
                   child: ListTile(

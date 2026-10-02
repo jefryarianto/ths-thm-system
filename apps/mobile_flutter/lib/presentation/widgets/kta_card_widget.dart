@@ -131,7 +131,7 @@ class _KtaCardFront extends StatelessWidget {
                 const SizedBox(width: FrontLayout.headerGap),
                 Expanded(child: _hdr(distrik)),
                 if (cardData != null && cardData!.status.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppTheme.space8),
                   _statusBadge(cardData!.status),
                 ],
               ])),
@@ -380,7 +380,7 @@ Widget _backInfo(Member m) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
     Text('Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
         style: TextStyle(fontSize: 18, height: 27 / 18, color: CardColors.white.withValues(alpha: 0.95))),
-    const SizedBox(height: 16),
+    const SizedBox(height: AppTheme.space16),
     row('TTL', ttl), row('Dadar', dadarText(m.tempatDadar, m.tahunDadar)),
     row('Status', m.statusKeanggotaan == 'aktif' ? 'Aktif' : 'Nonaktif'),
     row('Valid s/d', validUntilText()),

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/services/api_cache.dart';
 import '../../data/models/user.dart';
 
 part 'auth_event.dart';
@@ -64,6 +65,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     await _apiClient.clearTokens();
     await _apiClient.clearUser();
+    // Buang seluruh cache data terautentikasi agar pengguna berikutnya
+    // tidak melihat data pribadi pengguna sebelumnya (lihat komentar
+    // `ApiCache.clear`).
+    await ApiCache.instance.clear();
     emit(AuthUnauthenticated());
   }
 
