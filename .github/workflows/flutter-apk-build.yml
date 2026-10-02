@@ -43,9 +43,20 @@ jobs:
         run: yes | flutter doctor --android-licenses
       - name: Setup release keystore (if secret exists)
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+          set -e
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEY_STORE_PASSWORD" ] && [ -n "$KEY_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/upload-keystore.jks
             printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=/tmp/upload-keystore.jks\n' "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+            echo "Release keystore configured"
+          else
+            echo "Release keystore secrets not set; building unsigned APK"
+          fi
+      - name: Verify keystore config
+        run: |
+          if [ -f android/key.properties ]; then
+            echo "key.properties present"
+          else
+            echo "key.properties absent (unsigned build)"
           fi
       - name: Install Flutter dependencies
         run: flutter pub get
