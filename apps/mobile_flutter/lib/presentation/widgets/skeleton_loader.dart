@@ -197,10 +197,10 @@ class SkeletonTile extends StatelessWidget {
         children: [
           if (leadingCircle) const SkeletonCircle(size: 44),
           if (leadingCircle) const SizedBox(width: AppTheme.space12),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 SkeletonLine(height: 14, width: 180),
                 SizedBox(height: AppTheme.space8),
                 SkeletonLine(height: 11, width: 120),
@@ -233,8 +233,8 @@ class SkeletonCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: const [
+            const Row(
+              children: [
                 SkeletonCircle(size: 32),
                 SizedBox(width: AppTheme.space8),
                 Expanded(
@@ -251,7 +251,7 @@ class SkeletonCard extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.space12),
             if (withImage) ...[
-              SkeletonBox(
+              const SkeletonBox(
                 height: 140,
                 radius: AppTheme.space8,
               ),
@@ -310,8 +310,8 @@ class SkeletonNotificationList extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.space12),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.space16),
+        child: const Padding(
+          padding: EdgeInsets.all(AppTheme.space16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -320,8 +320,8 @@ class SkeletonNotificationList extends StatelessWidget {
                 height: 40,
                 radius: AppTheme.space8,
               ),
-              const SizedBox(width: AppTheme.space12),
-              const Expanded(
+              SizedBox(width: AppTheme.space12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -362,14 +362,14 @@ class SkeletonGrid extends StatelessWidget {
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppTheme.space16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: AppTheme.space12,
         crossAxisSpacing: AppTheme.space12,
-        childAspectRatio: aspectRatio,
+        childAspectRatio: 1.0,
       ),
       itemCount: itemCount,
-      itemBuilder: (context, index) => SkeletonBox(
+      itemBuilder: (context, index) => const SkeletonBox(
         radius: AppTheme.space12,
         height: 120,
       ),
