@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface Berita {
   id: string;
@@ -107,7 +108,7 @@ export default function BeritaPage() {
 
       {loading ? (
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
+          <BreathableLogo size={72} message="Memuat berita..." />
         </div>
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

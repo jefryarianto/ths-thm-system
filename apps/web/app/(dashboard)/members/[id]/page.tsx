@@ -72,6 +72,7 @@ import {
 } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
 import { logError } from '@/lib/error-logger';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 // ─── Types ───
 
@@ -1472,10 +1473,7 @@ export default function MemberDetailPage() {
             {cardLoading && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
                 <div className="flex flex-col items-center justify-center gap-4">
-                  <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Memuat data kartu anggota...
-                  </p>
+                  <BreathableLogo size={56} message="Memuat data kartu anggota..." />
                 </div>
               </div>
             )}

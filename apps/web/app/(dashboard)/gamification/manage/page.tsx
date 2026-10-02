@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface Reward {
   id: string;
@@ -161,7 +162,7 @@ export default function ManageRewardsPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 sr-only">
             Manage Rewards
           </h1>
-          <Loader2 size={24} className="animate-spin text-blue-600 mx-auto" />
+          <BreathableLogo size={64} message="Memuat kelola reward..." />
         </div>
       </div>
     );

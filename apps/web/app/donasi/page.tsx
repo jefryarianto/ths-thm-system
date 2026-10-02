@@ -16,6 +16,7 @@ import {
   HeartHandshake,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface BankInfo {
   id: string;
@@ -100,7 +101,7 @@ export default function DonasiPage() {
 
       {loading ? (
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
+          <BreathableLogo size={72} message="Memuat program donasi..." />
         </div>
       ) : (
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">

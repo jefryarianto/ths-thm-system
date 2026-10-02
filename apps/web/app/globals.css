@@ -212,6 +212,22 @@
     animation: sidebarIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* ── Logo "breathable" ──
+     Menggantikan loading spinner klasik: logo THS-THM perlahan mengembang &
+     menciut seperti sedang bernapas, disertai halo lembut yang menyala/redup
+     seiring siklus. Fokus tetap pada logo (bukan cincin berputar). */
+  .animate-breathe {
+    animation: breathe 3.2s ease-in-out infinite;
+    transform-origin: center;
+    will-change: transform, opacity;
+  }
+
+  .animate-breathe-halo {
+    animation: breathe-halo 3.2s ease-in-out infinite;
+    transform-origin: center;
+    will-change: transform, opacity;
+  }
+
   /* ── Primary button ──
      Aturan radius tombol: md = rounded-lg · sm = rounded-md · lg = rounded-xl */
   .btn-primary {
@@ -289,6 +305,21 @@
   0% { transform: translateX(-100%); }
   50% { transform: translateX(200%); }
   100% { transform: translateX(400%); }
+}
+
+/* ── Logo breathable (pengganti loading spinner) ──
+   Scale 1 → 1.12 → 1 dengan opacity 0.9 → 1 → 0.9 — terasa seperti "bernapas".
+   Kompak (3.2s, ease-in-out) agar terlihat aktif tanpa gelisah. */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+/* Halo di belakang logo: membesar seiring tarikan napas lalu mengecil kembali,
+   memberi kesan ruang gerak di sekitar logo. */
+@keyframes breathe-halo {
+  0%, 100% { transform: scale(0.92); opacity: 0.35; }
+  50% { transform: scale(1.08); opacity: 0.6; }
 }
 
 /* ── Prose content (berita, sejarah, etc.) ── */

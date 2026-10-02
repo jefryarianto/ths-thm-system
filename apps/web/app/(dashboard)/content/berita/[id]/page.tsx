@@ -9,6 +9,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Save, ArrowLeft, Upload } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface Berita {
   id: string;
@@ -124,7 +125,7 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
     return (
       <PageContainer>
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <BreathableLogo size={64} message="Memuat berita..." />
         </div>
       </PageContainer>
     );

@@ -8,6 +8,7 @@ import { Trophy, Zap, AlertCircle, Download, Calendar } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface ReportEntry {
   rank: number;
@@ -125,10 +126,7 @@ export default function PointsReportPage() {
     return (
       <PageContainer>
         <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-            <p className="text-sm text-gray-500">Memuat laporan poin...</p>
-          </div>
+          <BreathableLogo size={64} message="Memuat laporan poin..." />
         </div>
       </PageContainer>
     );

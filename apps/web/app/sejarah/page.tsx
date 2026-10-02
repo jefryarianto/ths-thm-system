@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import { TIMELINE_EVENTS } from './sejarah-data';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 type ActiveTab = 'timeline' | 'story' | 'symbols' | 'pillars' | 'cms';
 
@@ -311,10 +312,7 @@ export default function SejarahPage() {
           <main className="lg:col-span-3 space-y-8">
             {loading ? (
               <div className="min-h-[45vh] flex flex-col items-center justify-center bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 p-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 dark:border-gold-400 border-t-transparent mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Memuat catatan sejarah...
-                </p>
+                <BreathableLogo size={64} message="Memuat catatan sejarah..." />
               </div>
             ) : (
               <>

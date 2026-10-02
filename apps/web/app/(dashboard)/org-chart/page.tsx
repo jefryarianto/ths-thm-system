@@ -3,9 +3,10 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import { ChevronDown, ChevronRight, Building2, MapPin, Users, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Building2, MapPin, Users } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface OrgNode {
   id: string;
@@ -98,8 +99,7 @@ export default function OrgChartPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={24} className="animate-spin text-blue-600" />
-          <span className="ml-3 text-gray-500">Memuat struktur organisasi...</span>
+          <BreathableLogo size={64} message="Memuat struktur organisasi..." />
         </div>
       ) : (
         <>

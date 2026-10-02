@@ -10,7 +10,7 @@ import 'package:mobile_flutter/presentation/widgets/due_item_card.dart';
 import 'package:mobile_flutter/presentation/widgets/secure_kta_wrapper.dart';
 
 void main() {
-  testWidgets('AppLoadingSpinner default merender dual-ring + logo dan beranimasi', (tester) async {
+  testWidgets('AppLoadingSpinner default merender logo breathable + halo dan beranimasi', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(body: AppLoadingSpinner()),
@@ -18,14 +18,15 @@ void main() {
     );
     await tester.pump();
 
-    // Kain canvas dua cincin + logo digambar tanpa error.
+    // Logo breathable (Image.asset logo.png + halo lingkaran) terender tanpa error.
     expect(find.byType(AppLoadingSpinner), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // Animasi kedua cincin berjalan.
-    await tester.pump(const Duration(milliseconds: 450));
+    // Animasi "napas" berjalan beberapa siklus.
+    await tester.pump(const Duration(milliseconds: 1600));
     expect(tester.takeException(), isNull);
-    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(milliseconds: 3200));
     expect(tester.takeException(), isNull);
   });
 

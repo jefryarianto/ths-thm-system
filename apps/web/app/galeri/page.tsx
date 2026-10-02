@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { logError } from '@/lib/error-logger';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface GambarGaleri {
   id: string;
@@ -120,7 +121,7 @@ export default function GaleriPage() {
 
       {loading ? (
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
+          <BreathableLogo size={72} message="Memuat galeri..." />
         </div>
       ) : (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

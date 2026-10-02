@@ -1,16 +1,14 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Loading spinner konsisten untuk seluruh aplikasi, meniru spinner login web
-/// (https://ths-thm.cloud/login).
+/// Loading indicator konsisten untuk seluruh aplikasi, meniru komponen web
+/// `BreathableLogo` (https://ths-thm.cloud/login).
 ///
-/// Konstruktor default menampilkan dua cincin 90° berputar berlawanan arah
-/// (cincin luar primary, cincin dalam primaryLight) + logo THS-THM di tengah yang
-/// berdenyut (opacity pulse) + teks opsional di bawahnya. `.small` tetap satu
-/// cincin sederhana (untuk tombol).
+/// Konstruktor default menampilkan **logo THS-THM yang "bernapas"**: gambar
+/// logo perlahan mengembang & menciut (scale 1 ↔ 1.12) dikelilingi halo lembut
+/// yang menyala/redup mengikuti siklus yang sama — menggantikan dua cincin
+/// berputar. `.small` tetap satu cincin sederhana (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
   final double size;
   final double strokeWidth;
@@ -51,12 +49,9 @@ class AppLoadingSpinner extends StatelessWidget {
           : Center(child: _withMessage(context, spinner, message!));
     }
 
-    final dual = _DualRingSpinner(
-      size: size,
-      strokeWidth: strokeWidth,
-      message: message,
+    return Center(
+      child: _BreathableLogo(size: size, message: message),
     );
-    return Center(child: dual);
   }
 
   Widget _withMessage(BuildContext context, Widget spinner, String text) {
@@ -78,188 +73,143 @@ class AppLoadingSpinner extends StatelessWidget {
   }
 }
 
-/// Dua cincin bergaya spinner login web: busur 90° berputar berlawanan arah
-/// (cincin luar primary #072AC8→#3D5BE0 searah jarum jam, cincin dalam
-/// primaryContainer #DDE4FF→primary #072AC8 berlawanan) + logo di tengah yang
-/// berdenyut. Tekstur opacity pulse meniru Tailwind `animate-pulse` (2 detik bolak-balik).
-class _DualRingSpinner extends StatefulWidget {
+/// Logo "breathable": gambar logo THS-THM mengembang & menciut seperti sedang
+/// bernapas (3,2 detik per siklus, ease-in-out), dikelilingi halo lingkaran
+/// lembut yang membesar & menyala saat logo menarik napas, lalu mengecil &
+/// meredup saat membuang napas. Cerminan langsung keyframes CSS `breathe` /
+/// `breathe-halo` di apps/web/app/globals.css.
+class _BreathableLogo extends StatefulWidget {
   final double size;
-  final double strokeWidth;
   final String? message;
 
-  const _DualRingSpinner({
+  const _BreathableLogo({
     required this.size,
-    required this.strokeWidth,
     this.message,
   });
 
   @override
-  State<_DualRingSpinner> createState() => _DualRingSpinnerState();
+  State<_BreathableLogo> createState() => _BreathableLogoState();
 }
 
-class _DualRingSpinnerState extends State<_DualRingSpinner>
+class _BreathableLogoState extends State<_BreathableLogo>
     with TickerProviderStateMixin {
-  // Warna sistem warna baru THS-THM (Primary #072AC8)
-  static const _primaryDark = AppTheme.primary;        // #072AC8
-  static const _primaryLight = AppTheme.primaryLight;  // #3D5BE0
-  static const _primaryContainerDark = AppTheme.primaryContainer; // #DDE4FF
-  static const _primaryContainerLight = AppTheme.primary;        // #072AC8
-
-  late final AnimationController _outer;
-  late final AnimationController _inner;
-  late final AnimationController _pulse;
+  late final AnimationController _breathe;
 
   @override
   void initState() {
     super.initState();
-    // Cincin luar: `animate-spin` (1 s, searah jarum jam).
-    _outer = AnimationController(
+    // Satu siklus "napas" 3,2 detik bolak-balik (scale 1 ↔ 1.12).
+    _breathe = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat();
-    // Cincin dalam: `animate-[spin_1.5s_linear_infinite_reverse]` (1,5 s,
-    // berlawanan arah jarum jam) — pakai Tween 1 → 0 agar tidak bolak-balik.
-    _inner = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-    // Denyut logo & teks: Tailwind `animate-pulse` = opacity 1 ↔ 0,5 tiap 2 s.
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 3200),
     )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _outer.dispose();
-    _inner.dispose();
-    _pulse.dispose();
+    _breathe.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.size;
-    // Geometri web: cincin luar = full box, cincin dalam inset-2 (0,8×),
-    // logo inset-4 (0,6×), stroke `border-4` (4 px).
-    final innerSize = size * 0.8;
-    final innerPad = (size - innerSize) / 2;
-    final logoSize = size * 0.6;
+    // Logo fill ~60% dari area agar ada ruang "bernafas" di dalam bingkai
+    // (sama dengan logoSize = size * 0.6 di versi web).
+    final logoSize = widget.size * 0.6;
 
-    final rings = SizedBox(
-      width: size,
-      height: size,
+    // Scale logo: 1 (membuang napas) ↔ 1.12 (menarik napas).
+    final logoScale = Tween<double>(begin: 1.0, end: 1.12)
+        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
+    // Opacity logo: 0.9 ↔ 1.0 — sedikit menyala saat mengembang.
+    final logoOpacity = Tween<double>(begin: 0.9, end: 1.0)
+        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
+
+    // Halo: scale 0.92 ↔ 1.08, opacity 0.35 ↔ 0.6 (bg-primary/10 → /25).
+    final haloScale = Tween<double>(begin: 0.92, end: 1.08)
+        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
+    final haloOpacity = Tween<double>(begin: 0.35, end: 0.6)
+        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final haloColor = isDark ? AppTheme.primary : AppTheme.primary;
+
+    final logo = SizedBox(
+      width: widget.size,
+      height: widget.size,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          RotationTransition(
-            // Cincin luar: clockwise (0 → 1), busur atas (kiri) → kanan.
-            turns: _outer,
-            child: SizedBox.expand(
-              child: CustomPaint(
-                painter: _SolidArcPainter(
-                  colors: const [_primaryDark, _primaryLight],
-                  strokeWidth: widget.strokeWidth,
-                  startAngle: -math.pi / 2,
-                  sweepAngle: math.pi / 2,
+          // Halo: lingkaran lembut di belakang logo, mengembang saat logo
+          // menarik napas.
+          ScaleTransition(
+            scale: haloScale,
+            child: FadeTransition(
+              opacity: haloOpacity,
+              child: Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: haloColor.withValues(alpha: 0.10),
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(innerPad),
-            child: RotationTransition(
-              // Cincin dalam: counter-clockwise (1 → 0), busur bawah → kiri.
-              turns: Tween<double>(begin: 1, end: 0).animate(_inner),
-              child: SizedBox.expand(
-                child: CustomPaint(
-                  painter: _SolidArcPainter(
-                    colors: const [_primaryContainerDark, _primaryContainerLight],
-                    strokeWidth: widget.strokeWidth,
-                    startAngle: math.pi / 2,
-                    sweepAngle: math.pi / 2,
-                  ),
-                ),
+          // Bingkai tipis sebagai jangkar visual logo saat "bernapas".
+          Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: haloColor.withValues(alpha: 0.15),
+                width: 1,
               ),
             ),
           ),
-          FadeTransition(
-            opacity: _pulse,
-            child: Image.asset(
-              'assets/images/logo.png',
-              width: logoSize,
-              height: logoSize,
-              fit: BoxFit.contain,
+          // Logo yang "bernapas".
+          ScaleTransition(
+            scale: logoScale,
+            child: FadeTransition(
+              opacity: logoOpacity,
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: logoSize,
+                height: logoSize,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],
       ),
     );
 
-    if (widget.message == null) return rings;
+    if (widget.message == null) return logo;
 
-    final message = Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        rings,
+        logo,
         const SizedBox(height: 24),
-        FadeTransition(
-          opacity: _pulse,
-          child: Text(
-            widget.message!,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppTheme.onDarkPrimaryContainer // dark mode: on dark primary container
-                  : AppTheme.navy,
+        // Teks ikut "bernapas" bersama logo (sama seperti versi web).
+        ScaleTransition(
+          scale: logoScale,
+          child: FadeTransition(
+            opacity: logoOpacity,
+            child: Text(
+              widget.message!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppTheme.onDarkPrimaryContainer
+                    : AppTheme.navy,
+              ),
             ),
           ),
         ),
       ],
     );
-    return message;
   }
-}
-
-/// Satu busur 90° solid dengan warna yang bergeser halus (gradasi radius)
-/// meniru dua sisi border yang saling bertemu di sudut pada web.
-class _SolidArcPainter extends CustomPainter {
-  final List<Color> colors;
-  final double strokeWidth;
-  final double startAngle;
-  final double sweepAngle;
-
-  const _SolidArcPainter({
-    required this.colors,
-    required this.strokeWidth,
-    this.startAngle = 0,
-    this.sweepAngle = math.pi / 2,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final arcRect = rect.deflate(strokeWidth / 2);
-    final gradient = SweepGradient(
-      colors: colors,
-      startAngle: startAngle,
-      endAngle: startAngle + sweepAngle,
-    );
-    final paint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    canvas.drawArc(arcRect, startAngle, sweepAngle, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SolidArcPainter oldDelegate) =>
-      oldDelegate.colors != colors ||
-      oldDelegate.strokeWidth != strokeWidth ||
-      oldDelegate.startAngle != startAngle ||
-      oldDelegate.sweepAngle != sweepAngle;
 }

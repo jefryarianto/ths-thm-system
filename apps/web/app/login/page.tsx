@@ -14,7 +14,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Home,
-  Loader2,
   Users,
   CreditCard,
   BarChart3,
@@ -26,6 +25,7 @@ import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { sessionManager } from '@/lib/session-manager';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
@@ -288,7 +288,7 @@ export default function LoginPage() {
         aria-label="Anda sudah masuk. Mengalihkan..."
       >
         <div className="flex flex-col items-center gap-3 text-surface-700">
-          <Loader2 size={28} className="animate-spin text-primary" />
+          <BreathableLogo size={56} />
           <p className="text-sm font-semibold text-secondary">Anda sudah masuk. Mengalihkan...</p>
         </div>
       </div>
@@ -573,7 +573,7 @@ export default function LoginPage() {
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                     <span>Memverifikasi...</span>
                   </>
                 ) : (
@@ -702,19 +702,7 @@ export default function LoginPage() {
       {/* Full-screen loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
-          <div className="relative flex items-center justify-center">
-            <div className="h-20 w-20 animate-spin rounded-full border-[3px] border-primary-200 border-t-primary border-r-secondary sm:h-24 sm:w-24" />
-            <div className="absolute flex h-12 w-12 items-center justify-center rounded-full bg-transparent p-2 sm:h-14 sm:w-14">
-              <img
-                src="/logo.svg"
-                alt="THS-THM Logo"
-                className="h-full w-full object-contain animate-pulse"
-              />
-            </div>
-          </div>
-          <p className="mt-5 text-sm font-semibold text-secondary animate-pulse">
-            Memverifikasi kredensial...
-          </p>
+          <BreathableLogo size={96} message="Memverifikasi kredensial..." />
         </div>
       )}
     </div>

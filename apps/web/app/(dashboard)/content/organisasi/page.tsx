@@ -22,6 +22,7 @@ import {
   Users,
   AlertCircle,
 } from 'lucide-react';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 
 interface OrganisasiItem {
   jabatan: string;
@@ -152,7 +153,7 @@ export default function OrganisasiPage() {
     return (
       <PageContainer>
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <BreathableLogo size={64} message="Memuat struktur organisasi..." />
         </div>
       </PageContainer>
     );

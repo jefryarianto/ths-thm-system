@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { logError } from '@/lib/error-logger';
+import { BreathableLogo } from '@/components/ui/breathable-logo';
 import {
   BarChart,
   Bar,
@@ -121,10 +122,7 @@ export default function ScoreboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data scoreboard...</p>
-        </div>
+        <BreathableLogo size={64} message="Memuat data scoreboard..." />
       </div>
     );
   }
