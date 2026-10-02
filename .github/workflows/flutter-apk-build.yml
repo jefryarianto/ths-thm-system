@@ -45,9 +45,13 @@ jobs:
         run: |
           set -e
           if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEY_STORE_PASSWORD" ] && [ -n "$KEY_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/upload-keystore.jks
-            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=/tmp/upload-keystore.jks\n' "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
-            echo "Release keystore configured"
+            if echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > /tmp/upload-keystore.jks 2>/dev/null && [ -s /tmp/upload-keystore.jks ]; then
+              printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=/tmp/upload-keystore.jks\n' "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+              echo "Release keystore configured"
+            else
+              echo "Release keystore base64 is invalid or empty; building unsigned APK"
+              rm -f /tmp/upload-keystore.jks android/key.properties
+            fi
           else
             echo "Release keystore secrets not set; building unsigned APK"
           fi
