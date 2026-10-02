@@ -216,7 +216,7 @@ function frontSide(d: CardSvgData): string {
   const logoY = FRONT.header.padTop;
   s += `<g>`;
   s += `<clipPath id="clipLogo"><circle cx="${logoX + FRONT.logo.size / 2}" cy="${logoY + FRONT.logo.size / 2}" r="${FRONT.logo.size / 2}"/></clipPath>`;
-  s += `<circle cx="${logoX + FRONT.logo.size / 2}" cy="${logoY + FRONT.logo.size / 2}" r="${FRONT.logo.size / 2}" fill="${FRONT.logo.bg}" stroke="${COLORS.white}" stroke-width="${FRONT.logo.border}"/>`;
+  // Tanpa lingkaran latar putih (FRONT.logo.bg = transparent, border = 0).
   s += `<g clip-path="url(#clipLogo)"><image x="${logoX + (FRONT.logo.size - FRONT.logo.img) / 2}" y="${logoY + (FRONT.logo.size - FRONT.logo.img) / 2}" width="${FRONT.logo.img}" height="${FRONT.logo.img}" preserveAspectRatio="xMidYMid meet" href="${KTA_LOGO_DATA_URL}" xlink:href="${KTA_LOGO_DATA_URL}"/></g>`;
   const textX = logoX + FRONT.logo.size + FRONT.header.gap;
   const rows: Array<[string, number]> = [
@@ -499,7 +499,7 @@ function backSide(d: CardSvgData): string {
   const logoH = bh.logo;
   s += `<g>`;
   s += `<clipPath id="clipBackLogo"><circle cx="${bh.padH + logoH.size / 2}" cy="${bh.height / 2}" r="${logoH.size / 2}"/></clipPath>`;
-  s += `<circle cx="${bh.padH + logoH.size / 2}" cy="${bh.height / 2}" r="${logoH.size / 2}" fill="${logoH.bg}" stroke="${logoH.borderColor}" stroke-width="${logoH.border}"/>`;
+  // Tanpa lingkaran latar putih (BACK.header.logo.bg = transparent, border = 0).
   s += `<g clip-path="url(#clipBackLogo)"><image x="${bh.padH + (logoH.size - logoH.img) / 2}" y="${bh.height / 2 - logoH.img / 2}" width="${logoH.img}" height="${logoH.img}" preserveAspectRatio="xMidYMid meet" href="${KTA_LOGO_DATA_URL}" xlink:href="${KTA_LOGO_DATA_URL}"/></g>`;
   s += txt(bh.padH + logoH.size + bh.gap, bh.height / 2 - 2, 'VERIFIKASI KARTU ANGGOTA', {
     size: bh.title.fontSize,

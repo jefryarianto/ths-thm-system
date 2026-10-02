@@ -319,7 +319,7 @@ export default function LoginPage() {
           <span className="text-[11px] font-medium text-gold-300">THS-THM Indonesia</span>
         </div>
         <div className="relative flex flex-col items-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-sm ring-1 ring-white/20 sm:h-16 sm:w-16">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-sm sm:h-16 sm:w-16">
             <img
               src="/logo.svg"
               alt="THS-THM Logo"
@@ -361,7 +361,7 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div className="mb-6">
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg ring-1 ring-white/20 backdrop-blur-sm xl:h-24 xl:w-24">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg backdrop-blur-sm xl:h-24 xl:w-24">
               <img
                 src="/logo.svg"
                 alt="THS-THM Logo"
@@ -704,7 +704,7 @@ export default function LoginPage() {
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
           <div className="relative flex items-center justify-center">
             <div className="h-20 w-20 animate-spin rounded-full border-[3px] border-primary-200 border-t-primary border-r-secondary sm:h-24 sm:w-24" />
-            <div className="absolute flex h-12 w-12 items-center justify-center rounded-full bg-white p-2 shadow-elegant-md ring-1 ring-primary-100 sm:h-14 sm:w-14">
+            <div className="absolute flex h-12 w-12 items-center justify-center rounded-full bg-transparent p-2 sm:h-14 sm:w-14">
               <img
                 src="/logo.svg"
                 alt="THS-THM Logo"

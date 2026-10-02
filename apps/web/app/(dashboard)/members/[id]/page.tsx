@@ -1613,7 +1613,7 @@ export default function MemberDetailPage() {
                       }}
                     >
                       <div
-                        className="relative rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
+                        className="relative rounded-full overflow-hidden bg-transparent flex items-center justify-center flex-shrink-0"
                         style={{ width: FRONT.logo.size, height: FRONT.logo.size }}
                       >
                         <img
@@ -1625,7 +1625,6 @@ export default function MemberDetailPage() {
                             objectFit: 'contain',
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
                       </div>
                       <div style={{ lineHeight: `${FRONT.header.row.lineHeight}px` }}>
                         {[
@@ -2099,8 +2098,6 @@ export default function MemberDetailPage() {
                         style={{
                           width: BACK.header.logo.size,
                           height: BACK.header.logo.size,
-                          background: BACK.header.logo.bg,
-                          border: `${BACK.header.logo.border}px solid ${BACK.header.logo.borderColor}`,
                         }}
                       >
                         <img

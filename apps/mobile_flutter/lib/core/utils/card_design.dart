@@ -56,7 +56,9 @@ class FrontLayout {
   static const double headerRowGap = 1;
   static const double logoSize = 150;
   static const double logoImg = 140;
-  static const double logoBorder = 2;
+  // Logo organisasi tanpa background/border putih (transparan) - cerminan
+  // packages/card-design (FRONT.logo.bg = transparent, border = 0).
+  static const double logoBorder = 0;
   static const double photoBigLeft = 40;
   static const double photoBigTop = 164;
   static const double photoBigW = 185;

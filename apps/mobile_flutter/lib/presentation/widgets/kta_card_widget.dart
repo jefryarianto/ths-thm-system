@@ -127,7 +127,7 @@ class _KtaCardFront extends StatelessWidget {
           _NamePattern(name: member.namaLengkap, color: CardColors.watermarkMap, opacity: Pat.frontOpacity),
           Positioned(top: FrontLayout.headerPadTop, left: FrontLayout.headerPadH, right: FrontLayout.headerPadH,
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _logo(FrontLayout.logoSize, FrontLayout.logoImg, FrontLayout.logoBorder),
+                _logo(FrontLayout.logoSize, FrontLayout.logoImg),
                 const SizedBox(width: FrontLayout.headerGap),
                 Expanded(child: _hdr(distrik)),
                 if (cardData != null && cardData!.status.isNotEmpty) ...[
@@ -188,7 +188,7 @@ class _KtaCardBack extends StatelessWidget {
                   return Center(
                     child: Container(
                       width: size, height: size,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
                       padding: EdgeInsets.all(size * 0.12),
                       child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
                     ),
@@ -224,9 +224,10 @@ Widget _bgCircle(double sz, Color c) => Container(width: sz, height: sz, decorat
 Widget _wm(String asset, double w, double h, double op, Color tint) =>
     Opacity(opacity: op, child: ColorFiltered(colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
         child: Image.asset(asset, width: w, height: h, fit: BoxFit.contain)));
-Widget _logo(double sz, double img, double bw) =>
-    Container(width: sz, height: sz, decoration: BoxDecoration(shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.95), border: Border.all(width: bw, color: Colors.white)),
+/// Logo organisasi: container transparan tanpa background/border putih
+/// (cermin `FRONT.logo` di packages/card-design) agar tidak muncul cincin putih.
+Widget _logo(double sz, double img) =>
+    Container(width: sz, height: sz, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
         child: Center(child: Image.asset('assets/images/logo.png', width: img, height: img, fit: BoxFit.contain)));
 Widget _hdr(String distrik) {
   final rows = [('KARTU TANDA ANGGOTA', 2.0), ('ORGANISASI PENCAK SILAT PENDIDIKAN', 1.1),
@@ -358,8 +359,7 @@ Widget _backHdr(String distrik) => Stack(children: [
   Positioned.fill(child: CustomPaint(painter: _HeaderGradientPainter())),
   Positioned(left: BackLayout.headerPadH, top: (BackLayout.headerHeight - BackLayout.logoSize) / 2,
       child: Container(width: BackLayout.logoSize, height: BackLayout.logoSize,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.14),
-              border: Border.all(width: 1, color: Colors.white.withValues(alpha: 0.45))),
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent),
           child: Center(child: Image.asset('assets/images/logo.png', width: BackLayout.logoImg, height: BackLayout.logoImg, fit: BoxFit.contain)))),
   Positioned(left: BackLayout.headerPadH + BackLayout.logoSize + BackLayout.headerGap, top: 14, right: BackLayout.headerPadH,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [

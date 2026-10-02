@@ -212,7 +212,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 rounded-full bg-white p-1 shadow-md shrink-0 flex items-center justify-center border border-white/20">
+              <div className="w-10 h-10 rounded-full bg-transparent p-1 shrink-0 flex items-center justify-center">
                 <img src="/logo.svg" alt="THS-THM Logo" className="w-full h-full object-contain" />
               </div>
               <div className="hidden sm:block">
@@ -483,7 +483,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 <img
                   src="/logo.svg"
                   alt="THS-THM Logo"
-                  className="w-10 h-10 rounded-lg object-contain bg-white p-1"
+                  className="w-10 h-10 rounded-lg object-contain bg-transparent p-1"
                 />
                 <div>
                   <span className="font-bold text-white text-lg leading-tight block font-serif">

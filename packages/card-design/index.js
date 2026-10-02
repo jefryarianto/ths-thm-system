@@ -90,12 +90,14 @@ const FRONT = Object.freeze({
     gap: 14,
     row: Object.freeze({ fontSize: 16, lineHeight: 19, spacing: [2, 1.1, 0.5, 0], rowGap: 1 }),
   }),
+  // Logo organisasi: TANPA background putih & TANPA border putih (transparan),
+  // supaya tidak muncul cincin/halo putih di sekeliling logo pada kartu & preview.
   logo: Object.freeze({
     size: 150,
     radius: 75,
-    bg: 'rgba(255,255,255,0.95)',
-    border: 2,
-    borderColor: '#ffffff',
+    bg: 'transparent',
+    border: 0,
+    borderColor: 'transparent',
     img: 143,
   }),
   photo: Object.freeze({
@@ -187,9 +189,9 @@ const BACK = Object.freeze({
     logo: Object.freeze({
       size: 68,
       radius: 34,
-      bg: 'rgba(255,255,255,0.14)',
-      border: 1,
-      borderColor: 'rgba(255,255,255,0.45)',
+      bg: 'transparent',
+      border: 0,
+      borderColor: 'transparent',
       img: 62,
     }),
     title: Object.freeze({ fontSize: 22, letterSpacing: 3 }),

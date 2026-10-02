@@ -217,7 +217,7 @@ function SidebarBody({
           <img
             src="/logo.svg"
             alt="THS-THM"
-            className={`shrink-0 rounded-lg object-cover ring-1 ring-white/20 transition-all duration-300 ${
+            className={`shrink-0 rounded-lg object-contain bg-transparent transition-all duration-300 ${
               collapsed ? 'h-7 w-7' : 'h-8 w-8'
             }`}
           />
