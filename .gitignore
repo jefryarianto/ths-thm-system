@@ -121,9 +121,13 @@ _scripts/eas-build-log*.txt
 *.keystore
 *.jks
 keystore.properties
+key.properties
+android/key.properties
+**/key.properties
 
 # Base64 keystore utk setup GitHub Actions secret (lokal saja)
 *.keystore.b64
+*.jks.b64
 
 # Artefak debug/local — jangan di-commit
 /*.xml

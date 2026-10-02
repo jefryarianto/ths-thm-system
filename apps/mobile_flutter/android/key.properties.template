@@ -1,0 +1,21 @@
+# ──────────────────────────────────────────────────────────────────────
+# Template kredensial release signing — JANGAN di-commit dengan nilai asli!
+#
+# Salin file ini menjadi `key.properties` (di folder `android/`), lalu isi
+# sesuai keystore release Anda. `key.properties` yang terisi diabaikan git.
+#
+# File ini dibaca oleh `android/app/build.gradle.kts`:
+#   - ada  → APK release di-sign dengan keystore stabil (update tanpa uninstall)
+#   - tidak ada → fallback ke debug signing (CI tetap sukses, tapi APK unsigned)
+#
+# Untuk CI GitHub Actions, isi 4 secret ini (Settings → Secrets and variables
+# → Actions), workflow `flutter-apk-build.yml` menulis file ini otomatis:
+#   ANDROID_KEYSTORE_BASE64 = isi file .jks hasil encode base64
+#   KEY_STORE_PASSWORD       = storePassword
+#   KEY_PASSWORD             = keyPassword
+#   KEY_ALIAS                = keyAlias
+# ──────────────────────────────────────────────────────────────────────
+storePassword=ISI_PASSWORD_KEYSTORE
+keyPassword=ISI_PASSWORD_KEY
+keyAlias=ISI_ALIAS
+storeFile=ISI_PATH_KE_KEYSTORE_JKS
