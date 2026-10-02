@@ -87,13 +87,11 @@ class _LogoSpinner extends StatefulWidget {
   final double size;
   final double ringWidth;
   final Color accentColor;
-  final String? message;
 
   const _LogoSpinner({
     required this.size,
     required this.ringWidth,
     required this.accentColor,
-    this.message,
   });
 
   @override
@@ -128,12 +126,10 @@ class _LogoSpinnerState extends State<_LogoSpinner>
   @override
   Widget build(BuildContext context) {
     final logoSize = widget.size * 0.55;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const primaryColor = AppTheme.primary;
     // 270° busur (border-top/border-left solid, sisi lain transparan).
     const sweep = pi / 2 + 0.35;
 
-    final spinner = SizedBox(
+    return SizedBox(
       width: widget.size,
       height: widget.size,
       child: Stack(
@@ -146,7 +142,7 @@ class _LogoSpinnerState extends State<_LogoSpinner>
             child: CustomPaint(
               size: Size(widget.size, widget.size),
               painter: _ArcPainter(
-                color: primaryColor,
+                color: AppTheme.primary,
                 strokeWidth: widget.ringWidth,
                 startAngle: -pi / 2, // atas
                 sweepAngle: sweep, // ~270°
@@ -174,25 +170,6 @@ class _LogoSpinnerState extends State<_LogoSpinner>
           ),
         ],
       ),
-    );
-
-    if (widget.message == null) return spinner;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        spinner,
-        const SizedBox(height: 24),
-        Text(
-          widget.message!,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: isDark ? AppTheme.onDarkPrimaryContainer : AppTheme.navy,
-          ),
-        ),
-      ],
     );
   }
 }

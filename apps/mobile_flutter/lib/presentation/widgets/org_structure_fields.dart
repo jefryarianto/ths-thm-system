@@ -388,7 +388,9 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
           // Content: loading / error / list
           Expanded(
             child: _isLoading
-                ? const Center(child: AppLoadingSpinner.small())
+                ? const Center(
+                    child: AppLoadingSpinner.small(message: 'Memuat data...'),
+                  )
                 : _isFailed
                     ? _buildError()
                     : _buildList(scrollCtrl),
