@@ -20,7 +20,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import FormField from '@/components/ui/form-field';
 import { useToast } from '@/components/ui/toast';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 // ─── Konfigurasi field template ───
 
@@ -211,7 +211,7 @@ export default function DocTemplateSettingsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <BreathableLogo size={64} message="Memuat template dokumen..." />
+            <LogoSpinner size={64} message="Memuat template dokumen..." />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Reward {
   id: string;
@@ -162,7 +162,7 @@ export default function ManageRewardsPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 sr-only">
             Manage Rewards
           </h1>
-          <BreathableLogo size={64} message="Memuat kelola reward..." />
+          <LogoSpinner size={64} message="Memuat kelola reward..." />
         </div>
       </div>
     );

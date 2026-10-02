@@ -7,7 +7,7 @@ import apiClient from '@/lib/api-client';
 import { EMAIL_TEMPLATES } from './shared';
 import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface CustomTemplate {
   id: string;
@@ -162,7 +162,7 @@ export default function EmailTemplatesTab() {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <div className="flex items-center justify-center py-8">
-          <BreathableLogo size={56} message="Memuat template email..." />
+          <LogoSpinner size={56} message="Memuat template email..." />
         </div>
       </div>
     );

@@ -35,7 +35,7 @@ import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface OrgSettings {
   nama: string;
@@ -415,7 +415,7 @@ export default function SettingsPage() {
   if (loading)
     return (
       <div className="flex items-center justify-center py-16">
-        <BreathableLogo size={64} />
+        <LogoSpinner size={64} />
       </div>
     );
 

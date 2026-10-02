@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface OrgNode {
   id: string;
@@ -99,7 +99,7 @@ export default function OrgChartPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <BreathableLogo size={64} message="Memuat struktur organisasi..." />
+          <LogoSpinner size={64} message="Memuat struktur organisasi..." />
         </div>
       ) : (
         <>

@@ -25,7 +25,7 @@ import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { sessionManager } from '@/lib/session-manager';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
@@ -288,7 +288,7 @@ export default function LoginPage() {
         aria-label="Anda sudah masuk. Mengalihkan..."
       >
         <div className="flex flex-col items-center gap-3 text-surface-700">
-          <BreathableLogo size={56} />
+          <LogoSpinner size={56} />
           <p className="text-sm font-semibold text-secondary">Anda sudah masuk. Mengalihkan...</p>
         </div>
       </div>
@@ -702,7 +702,7 @@ export default function LoginPage() {
       {/* Full-screen loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
-          <BreathableLogo size={96} message="Memverifikasi kredensial..." />
+          <LogoSpinner size={96} message="Memverifikasi kredensial..." />
         </div>
       )}
     </div>

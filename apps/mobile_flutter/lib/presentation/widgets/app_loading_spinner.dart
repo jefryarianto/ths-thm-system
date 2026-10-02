@@ -1,14 +1,17 @@
+import 'dart:math' show pi;
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
 /// Loading indicator konsisten untuk seluruh aplikasi, meniru komponen web
-/// `BreathableLogo` (https://ths-thm.cloud/login).
+/// `LogoSpinner` (https://ths-thm.cloud/login).
 ///
-/// Konstruktor default menampilkan **logo THS-THM yang "bernapas"**: gambar
-/// logo perlahan mengembang & menciut (scale 1 ↔ 1.12) dikelilingi halo lembut
-/// yang menyala/redup mengikuti siklus yang sama — menggantikan dua cincin
-/// berputar. `.small` tetap satu cincin sederhana (untuk tombol).
+/// Konstruktor default menampilkan **logo THS-THM dikelilingi dua busur
+/// lingkaran berputar berlawanan arah**: busur primary berputar 1 detik searah
+/// jarum jam, busur aksen 0,5 detik berlawanan arah — cerminan kelas CSS
+/// `.logo-spinner` di apps/web/app/globals.css. `.small` tetap satu cincin
+/// sederhana (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
   final double size;
   final double strokeWidth;
@@ -18,7 +21,7 @@ class AppLoadingSpinner extends StatelessWidget {
 
   const AppLoadingSpinner({
     super.key,
-    this.size = 80,
+    this.size = 48,
     this.strokeWidth = 4,
     this.color,
     this.message,
@@ -50,7 +53,7 @@ class AppLoadingSpinner extends StatelessWidget {
     }
 
     return Center(
-      child: _BreathableLogo(size: size, message: message),
+      child: _LogoSpinner(size: size, message: message),
     );
   }
 
@@ -73,143 +76,163 @@ class AppLoadingSpinner extends StatelessWidget {
   }
 }
 
-/// Logo "breathable": gambar logo THS-THM mengembang & menciut seperti sedang
-/// bernapas (3,2 detik per siklus, ease-in-out), dikelilingi halo lingkaran
-/// lembut yang membesar & menyala saat logo menarik napas, lalu mengecil &
-/// meredup saat membuang napas. Cerminan langsung keyframes CSS `breathe` /
-/// `breathe-halo` di apps/web/app/globals.css.
-class _BreathableLogo extends StatefulWidget {
+/// Logo dikelilingi dua busur berputar berlawanan arah. Busur primary
+/// (searah jarum jam, 1 detik) berlawanan arah dengan busur aksen (0,5 detik),
+/// sama seperti `.logo-spinner` / `::after` pada versi web.
+class _LogoSpinner extends StatefulWidget {
   final double size;
   final String? message;
 
-  const _BreathableLogo({
+  const _LogoSpinner({
     required this.size,
     this.message,
   });
 
   @override
-  State<_BreathableLogo> createState() => _BreathableLogoState();
+  State<_LogoSpinner> createState() => _LogoSpinnerState();
 }
 
-class _BreathableLogoState extends State<_BreathableLogo>
+class _LogoSpinnerState extends State<_LogoSpinner>
     with TickerProviderStateMixin {
-  late final AnimationController _breathe;
+  late final AnimationController _primary;
+  late final AnimationController _accent;
 
   @override
   void initState() {
     super.initState();
-    // Satu siklus "napas" 3,2 detik bolak-balik (scale 1 ↔ 1.12).
-    _breathe = AnimationController(
+    _primary = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
+    _accent = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _breathe.dispose();
+    _primary.dispose();
+    _accent.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Logo fill ~60% dari area agar ada ruang "bernafas" di dalam bingkai
-    // (sama dengan logoSize = size * 0.6 di versi web).
-    final logoSize = widget.size * 0.6;
-
-    // Scale logo: 1 (membuang napas) ↔ 1.12 (menarik napas).
-    final logoScale = Tween<double>(begin: 1.0, end: 1.12)
-        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
-    // Opacity logo: 0.9 ↔ 1.0 — sedikit menyala saat mengembang.
-    final logoOpacity = Tween<double>(begin: 0.9, end: 1.0)
-        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
-
-    // Halo: scale 0.92 ↔ 1.08, opacity 0.35 ↔ 0.6 (bg-primary/10 → /25).
-    final haloScale = Tween<double>(begin: 0.92, end: 1.08)
-        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
-    final haloOpacity = Tween<double>(begin: 0.35, end: 0.6)
-        .animate(CurvedAnimation(parent: _breathe, curve: Curves.easeInOut));
+    // Tebal busur ~1/12 diameter (var(--spinner-ring) di versi web).
+    final ringWidth = widget.size / 12;
+    // Logo mengisi ~55% area di dalam ring.
+    final logoSize = widget.size * 0.55;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final haloColor = isDark ? AppTheme.primary : AppTheme.primary;
+    const primaryColor = AppTheme.primary;
+    // Aksen emas: `warningContainer` (terang) / `warning` (gelap) — warna
+    // keemasan terdekat di palet untuk busur kedua.
+    final accentColor =
+        isDark ? AppTheme.warningContainer : AppTheme.warning;
+    // 270° busur (border-top/border-left solid, sisi lain transparan).
+    const sweep = pi / 2 + 0.35;
 
-    final logo = SizedBox(
+    final spinner = SizedBox(
       width: widget.size,
       height: widget.size,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Halo: lingkaran lembut di belakang logo, mengembang saat logo
-          // menarik napas.
-          ScaleTransition(
-            scale: haloScale,
-            child: FadeTransition(
-              opacity: haloOpacity,
-              child: Container(
-                width: widget.size,
-                height: widget.size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: haloColor.withValues(alpha: 0.10),
-                ),
+          // Busur primary: 3/4 lingkaran searah jarum jam (border-top penuh,
+          // border-right transparan di CSS).
+          RotationTransition(
+            turns: _primary,
+            child: CustomPaint(
+              size: Size(widget.size, widget.size),
+              painter: _ArcPainter(
+                color: primaryColor,
+                strokeWidth: ringWidth,
+                startAngle: -pi / 2, // atas
+                sweepAngle: sweep, // ~270°
               ),
             ),
           ),
-          // Bingkai tipis sebagai jangkar visual logo saat "bernapas".
-          Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: haloColor.withValues(alpha: 0.15),
-                width: 1,
+          // Busur aksen: ~270° berlawanan arah (border-left penuh).
+          RotationTransition(
+            turns: _accent,
+            child: CustomPaint(
+              size: Size(widget.size, widget.size),
+              painter: _ArcPainter(
+                color: accentColor,
+                strokeWidth: ringWidth,
+                startAngle: pi / 2, // bawah
+                sweepAngle: sweep,
               ),
             ),
           ),
-          // Logo yang "bernapas".
-          ScaleTransition(
-            scale: logoScale,
-            child: FadeTransition(
-              opacity: logoOpacity,
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: logoSize,
-                height: logoSize,
-                fit: BoxFit.contain,
-              ),
-            ),
+          Image.asset(
+            'assets/images/logo.png',
+            width: logoSize,
+            height: logoSize,
+            fit: BoxFit.contain,
           ),
         ],
       ),
     );
 
-    if (widget.message == null) return logo;
+    if (widget.message == null) return spinner;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        logo,
+        spinner,
         const SizedBox(height: 24),
-        // Teks ikut "bernapas" bersama logo (sama seperti versi web).
-        ScaleTransition(
-          scale: logoScale,
-          child: FadeTransition(
-            opacity: logoOpacity,
-            child: Text(
-              widget.message!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppTheme.onDarkPrimaryContainer
-                    : AppTheme.navy,
-              ),
-            ),
+        Text(
+          widget.message!,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDark
+                ? AppTheme.onDarkPrimaryContainer
+                : AppTheme.navy,
           ),
         ),
       ],
     );
   }
+}
+
+/// Menggambar satu busur melingkar (sama dengan border-top/border-left solid
+/// + sisi lain transparan pada `.logo-spinner`).
+class _ArcPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double startAngle;
+  final double sweepAngle;
+
+  const _ArcPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.startAngle,
+    required this.sweepAngle,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(
+      center: Offset(size.width / 2, size.height / 2),
+      radius: radius,
+    );
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ArcPainter oldDelegate) =>
+      color != oldDelegate.color ||
+      strokeWidth != oldDelegate.strokeWidth ||
+      startAngle != oldDelegate.startAngle ||
+      sweepAngle != oldDelegate.sweepAngle;
 }

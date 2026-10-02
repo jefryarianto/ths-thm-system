@@ -9,7 +9,7 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { Zap, AlertCircle, Gift, Users } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 import {
   BarChart,
   Bar,
@@ -91,7 +91,7 @@ export default function GamificationAdminPage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 sr-only">
             Admin Gamifikasi
           </h1>
-          <BreathableLogo size={64} message="Memuat data admin gamifikasi..." />
+          <LogoSpinner size={64} message="Memuat data admin gamifikasi..." />
         </div>
       </div>
     );

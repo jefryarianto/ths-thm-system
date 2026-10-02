@@ -19,7 +19,7 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface BackupFile {
   name: string;
@@ -310,7 +310,7 @@ export default function BackupPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <BreathableLogo size={56} message="Memuat daftar backup..." />
+            <LogoSpinner size={56} message="Memuat daftar backup..." />
           </div>
         ) : backups.length === 0 ? (
           <div className="text-center py-12 text-gray-400">

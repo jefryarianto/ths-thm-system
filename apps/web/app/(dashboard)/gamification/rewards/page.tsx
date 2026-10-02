@@ -9,7 +9,7 @@ import DataTable from '@/components/ui/data-table';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 import { logError } from '@/lib/error-logger';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 import {
   Gift,
   Zap,
@@ -112,7 +112,7 @@ export default function RewardsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900 sr-only">Reward</h1>
-          <BreathableLogo size={64} message="Memuat reward..." />
+          <LogoSpinner size={64} message="Memuat reward..." />
         </div>
       </div>
     );

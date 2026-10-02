@@ -26,7 +26,7 @@ import Modal from '@/components/ui/modal';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 import ExportTab from '@/components/reports/ExportTab';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Distrik {
   id: string;
@@ -597,7 +597,7 @@ export default function OrgStructureSettingsPage() {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-10">
-            <BreathableLogo size={56} message="Memuat struktur organisasi..." />
+            <LogoSpinner size={56} message="Memuat struktur organisasi..." />
           </div>
         )}
 

@@ -2,12 +2,12 @@
 
 import { Suspense } from 'react';
 import StrukturOrganisasiContent from './content';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 function LoadingFallback() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <BreathableLogo size={72} message="Memuat struktur organisasi..." />
+      <LogoSpinner size={72} message="Memuat struktur organisasi..." />
     </div>
   );
 }

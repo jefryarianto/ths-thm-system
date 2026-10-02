@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Berita {
   id: string;
@@ -90,7 +90,7 @@ export default function BeritaListPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <BreathableLogo size={64} message="Memuat berita..." />
+            <LogoSpinner size={64} message="Memuat berita..." />
           </div>
         ) : data.length === 0 ? (
           <div className="text-center py-20 text-gray-500">

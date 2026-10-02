@@ -8,7 +8,7 @@ import { Save, AlertCircle, Settings } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { logError } from '@/lib/error-logger';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 export default function GamificationSettingsPage() {
   const [config, setConfig] = useState<Record<string, unknown>>({});
@@ -93,7 +93,7 @@ export default function GamificationSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <BreathableLogo size={64} message="Memuat konfigurasi..." />
+        <LogoSpinner size={64} message="Memuat konfigurasi..." />
       </div>
     );
   }

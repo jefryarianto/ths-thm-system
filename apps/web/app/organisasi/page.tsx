@@ -33,7 +33,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 import {
   STATUTA_INFO,
   VISI_MISI_DATA,
@@ -945,7 +945,7 @@ export default function OrganisasiPage() {
 
                   {loading ? (
                     <div className="min-h-[25vh] flex flex-col items-center justify-center">
-                      <BreathableLogo size={56} message="Memeriksa database pengurus..." />
+                      <LogoSpinner size={56} message="Memeriksa database pengurus..." />
                     </div>
                   ) : dynamicData?.struktur && dynamicData.struktur.length > 0 ? (
                     <div className="grid sm:grid-cols-2 gap-4">

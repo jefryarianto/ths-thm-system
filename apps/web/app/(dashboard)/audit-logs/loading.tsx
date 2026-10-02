@@ -1,9 +1,9 @@
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 export default function AuditLogsLoading() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
-      <BreathableLogo size={64} message="Memuat audit log..." />
+      <LogoSpinner size={64} message="Memuat audit log..." />
     </div>
   );
 }

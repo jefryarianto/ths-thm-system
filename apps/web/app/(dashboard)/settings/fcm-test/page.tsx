@@ -6,7 +6,7 @@ import { Send, Smartphone, CheckCircle, XCircle, RefreshCw, Wifi, WifiOff } from
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { useToast } from '@/components/ui/toast';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface FcmToken {
   id: string;
@@ -259,7 +259,7 @@ export default function FcmTestPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <BreathableLogo size={56} message="Memuat token FCM..." />
+            <LogoSpinner size={56} message="Memuat token FCM..." />
           </div>
         ) : tokens?.tokens.length === 0 ? (
           <div className="text-center py-8 text-gray-400">

@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Save, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Sejarah {
   id: string;
@@ -59,7 +59,7 @@ export default function SejarahPage() {
     return (
       <PageContainer>
         <div className="flex items-center justify-center py-20">
-          <BreathableLogo size={64} message="Memuat sejarah..." />
+          <LogoSpinner size={64} message="Memuat sejarah..." />
         </div>
       </PageContainer>
     );

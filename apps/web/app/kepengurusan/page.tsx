@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PublicLayout } from '@/components';
 import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users } from 'lucide-react';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 import { useI18n } from '@/i18n/context';
 import Link from 'next/link';
 
@@ -118,7 +118,7 @@ export default function KepengurusanPage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <BreathableLogo size={72} message="Memuat struktur kepengurusan..." />
+            <LogoSpinner size={72} message="Memuat struktur kepengurusan..." />
           </div>
         ) : data ? (
           <>

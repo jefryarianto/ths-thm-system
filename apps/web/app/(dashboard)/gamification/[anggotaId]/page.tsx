@@ -26,7 +26,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { BreathableLogo } from '@/components/ui/breathable-logo';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Badge {
   id: string;
@@ -138,7 +138,7 @@ export default function GamificationProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <BreathableLogo size={64} message="Memuat profil..." />
+        <LogoSpinner size={64} message="Memuat profil..." />
       </div>
     );
   }

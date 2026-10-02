@@ -10,7 +10,7 @@ import 'package:mobile_flutter/presentation/widgets/due_item_card.dart';
 import 'package:mobile_flutter/presentation/widgets/secure_kta_wrapper.dart';
 
 void main() {
-  testWidgets('AppLoadingSpinner default merender logo breathable + halo dan beranimasi', (tester) async {
+  testWidgets('AppLoadingSpinner default merender logo di tengah busur berputar', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(body: AppLoadingSpinner()),
@@ -18,15 +18,31 @@ void main() {
     );
     await tester.pump();
 
-    // Logo breathable (Image.asset logo.png + halo lingkaran) terender tanpa error.
+    // Logo (Image.asset logo.png) dikelilingi dua busur berputar terender
+    // tanpa error.
     expect(find.byType(AppLoadingSpinner), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // Animasi "napas" berjalan beberapa siklus.
-    await tester.pump(const Duration(milliseconds: 1600));
+    // Busur berputar beberapa siklus (1s searah, 0.5s berlawanan).
+    await tester.pump(const Duration(milliseconds: 1000));
     expect(tester.takeException(), isNull);
-    await tester.pump(const Duration(milliseconds: 3200));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AppLoadingSpinner default menampilkan pesan', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppLoadingSpinner(message: 'Memuat data...'),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('Memuat data...'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
