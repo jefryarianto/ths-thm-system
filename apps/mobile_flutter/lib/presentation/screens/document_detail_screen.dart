@@ -243,7 +243,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               icon: const Icon(Icons.open_in_new, size: 16),
               label: const Text('Buka di Browser'),
               style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
+                // Target sentuh minimum 44 dp (a11y) — padding alih-alih compact.
+                minimumSize: const Size.fromHeight(
+                    AppTheme.touchTargetCompact),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: AppTheme.touchTargetCompact / 4),
                 textStyle: const TextStyle(fontSize: 12),
               ),
             ),

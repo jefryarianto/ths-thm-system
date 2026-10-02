@@ -54,11 +54,23 @@ class AppLoadingSpinner extends StatelessWidget {
             accentColor: accent,
           );
 
+    final a11yLabel = message ?? 'Memuat';
+
     if (message == null) {
-      return small ? spinner : Center(child: spinner);
+      return Semantics(
+        label: a11yLabel,
+        liveRegion: true,
+        child: small ? spinner : Center(child: spinner),
+      );
     }
 
-    return Center(child: _withMessage(context, spinner, message!));
+    return Center(
+      child: Semantics(
+        label: a11yLabel,
+        liveRegion: true,
+        child: _withMessage(context, spinner, message!),
+      ),
+    );
   }
 
   Widget _withMessage(BuildContext context, Widget spinner, String text) {

@@ -128,6 +128,29 @@ class AppTheme {
   /// On Dark Primary Container — #DDE4FF
   static const Color onDarkPrimaryContainer = Color(0xFFDDE4FF);
 
+  // ── SHAPE TOKENS (sudut bulat) ───────────────────────────────────────
+  /// Sistem radius tunggal agar kartu, tombol, dan input terasa satu bahasa.
+  /// Skala dipakai di seluruh tema & widget — ganti di sini, bukan per file.
+  static const Radius radiusSm = Radius.circular(8); // small chip, badge
+  static const Radius radiusMd = Radius.circular(12); // button, input, list tile
+  static const Radius radiusLg = Radius.circular(16); // card
+  static const Radius radiusXl = Radius.circular(20); // FAB, menu
+  static const Radius radiusSheet = Radius.circular(24); // bottom sheet
+
+  /// Border radius siap pakai (paling sering dipakai: md untuk kontrol,
+  /// lg untuk kartu, sheet untuk bottom sheet).
+  static const BorderRadius radiusSmAll = BorderRadius.all(radiusSm);
+  static const BorderRadius radiusMdAll = BorderRadius.all(radiusMd);
+  static const BorderRadius radiusLgAll = BorderRadius.all(radiusLg);
+  static const BorderRadius radiusXlAll = BorderRadius.all(radiusXl);
+  static const BorderRadius radiusSheetTop =
+      BorderRadius.vertical(top: radiusSheet);
+
+  // ── TARGET SENTUH MINIMUM (a11y) ─────────────────────────────────────
+  /// Material 3 minimum 48 dp; pakai 44 dp untuk kompak dalam list.
+  static const double touchTargetCompact = 44.0;
+  static const double touchTarget = 48.0;
+
   // ── LEGACY COMPATIBILITY ──────────────────────────────────────────────
   /// @deprecated Use [textSlate] instead
   @Deprecated('Use textSlate')
@@ -286,50 +309,46 @@ class AppTheme {
         color: lightSurface,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withValues(alpha: 0.04),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: radiusLgAll),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: lightSurface,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: lightOutline),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: lightOutline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: lightOutline),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: lightOutline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primary, width: 1.6),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: primary, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: error),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: error, width: 1.6),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: error, width: 1.6),
         ),
-        labelStyle: const TextStyle(color: textSlate),
-        floatingLabelStyle: const TextStyle(
+        labelStyle: TextStyle(color: textSlate),
+        floatingLabelStyle: TextStyle(
           color: navy,
           fontWeight: FontWeight.w600,
         ),
-        helperStyle: const TextStyle(fontSize: 12, color: textMuted),
+        helperStyle: TextStyle(fontSize: 12, color: textMuted),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: onPrimary,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: const RoundedRectangleBorder(borderRadius: radiusMdAll),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -348,18 +367,18 @@ class AppTheme {
           foregroundColor: linkBlue,
           minimumSize: const Size.fromHeight(48),
           side: BorderSide(color: linkBlue.withValues(alpha: 0.55)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: radiusMdAll,
           ),
         ),
       ),
-      chipTheme: ChipThemeData(
+      chipTheme: const ChipThemeData(
         backgroundColor: lightSurface,
         selectedColor: primaryContainer,
-        side: const BorderSide(color: lightOutlineVariant),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        side: BorderSide(color: lightOutlineVariant),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
+        labelStyle: TextStyle(fontWeight: FontWeight.w600),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
       dividerTheme: const DividerThemeData(
         color: lightOutlineVariant,
@@ -394,22 +413,20 @@ class AppTheme {
         modalBackgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: radiusSheetTop),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: const DialogThemeData(
         backgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: radiusXlAll),
       ),
-      datePickerTheme: DatePickerThemeData(
+      datePickerTheme: const DatePickerThemeData(
         backgroundColor: lightSurface,
         surfaceTintColor: Colors.transparent,
         headerBackgroundColor: primary,
         headerForegroundColor: onPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        todayBorder: const BorderSide(color: primary, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: radiusXlAll),
+        todayBorder: BorderSide(color: primary, width: 1.5),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: primary,
@@ -418,13 +435,11 @@ class AppTheme {
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
       ),
-      listTileTheme: ListTileThemeData(
+      listTileTheme: const ListTileThemeData(
         iconColor: primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
       ),
     );
   }
@@ -537,49 +552,49 @@ class AppTheme {
         color: darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: radiusLgAll,
           side: BorderSide(color: darkOutline.withValues(alpha: 0.12)),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: darkSurface,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkOutline),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: darkOutline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkOutline),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: darkOutline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkPrimary, width: 1.6),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: darkPrimary, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: error),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: error, width: 1.6),
+          borderRadius: radiusMdAll,
+          borderSide: BorderSide(color: error, width: 1.6),
         ),
-        labelStyle: const TextStyle(color: darkTextSecondary),
-        floatingLabelStyle: const TextStyle(
+        labelStyle: TextStyle(color: darkTextSecondary),
+        floatingLabelStyle: TextStyle(
           color: darkPrimary,
           fontWeight: FontWeight.w600,
         ),
-        helperStyle: const TextStyle(fontSize: 12, color: darkTextSecondary),
+        helperStyle: TextStyle(fontSize: 12, color: darkTextSecondary),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: darkPrimary,
           foregroundColor: onDarkPrimary,
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: radiusMdAll,
           ),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
@@ -598,18 +613,18 @@ class AppTheme {
           foregroundColor: darkPrimary,
           minimumSize: const Size.fromHeight(48),
           side: BorderSide(color: darkPrimary.withValues(alpha: 0.55)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: radiusMdAll,
           ),
         ),
       ),
-      chipTheme: ChipThemeData(
+      chipTheme: const ChipThemeData(
         backgroundColor: darkSurfaceVariant,
         selectedColor: darkPrimaryContainer,
-        side: const BorderSide(color: darkOutline),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: darkTextPrimary),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        side: BorderSide(color: darkOutline),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
+        labelStyle: TextStyle(fontWeight: FontWeight.w600, color: darkTextPrimary),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
       dividerTheme: const DividerThemeData(
         color: darkOutline,
@@ -642,22 +657,20 @@ class AppTheme {
         modalBackgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: radiusSheetTop),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: const DialogThemeData(
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: radiusXlAll),
       ),
-      datePickerTheme: DatePickerThemeData(
+      datePickerTheme: const DatePickerThemeData(
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
         headerBackgroundColor: darkPrimary,
         headerForegroundColor: onDarkPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        todayBorder: const BorderSide(color: darkPrimary, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: radiusXlAll),
+        todayBorder: BorderSide(color: darkPrimary, width: 1.5),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: darkPrimary,
@@ -666,13 +679,11 @@ class AppTheme {
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
       ),
-      listTileTheme: ListTileThemeData(
+      listTileTheme: const ListTileThemeData(
         iconColor: darkPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: radiusMdAll),
       ),
     );
   }

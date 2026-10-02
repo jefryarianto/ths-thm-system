@@ -75,6 +75,12 @@ Future<void> _pump(
 Finder _sf() => find.byWidgetPredicate(
     (w) => w is TextField && w.decoration?.hintText?.contains('Cari') == true);
 
+/// Mem-pump melewati debounce pencarian (300 ms) sebelum menunggu settle.
+Future<void> _settleSearch(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 350));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Cascade Distrik->Wilayah->Ranting with query filters', (tester) async {
     final log = <Uri>[];
@@ -154,20 +160,20 @@ void main() {
 
     // Filter distrik: only B visible.
     await tester.enterText(_sf(), 'B');
-    await tester.pumpAndSettle();
+    await _settleSearch(tester);
     expect(find.text('Distrik B'), findsOneWidget);
     expect(find.text('Distrik A'), findsNothing);
 
     // Clear.
     await tester.enterText(_sf(), '');
-    await tester.pumpAndSettle();
+    await _settleSearch(tester);
     expect(find.text('Distrik A'), findsOneWidget);
 
     // Drill down, filter wilayahs.
     await tester.tap(find.text('Distrik A'));
     await tester.pumpAndSettle();
     await tester.enterText(_sf(), '2');
-    await tester.pumpAndSettle();
+    await _settleSearch(tester);
     expect(find.text('Wilayah 2'), findsOneWidget);
     expect(find.text('Wilayah 1'), findsNothing);
   });

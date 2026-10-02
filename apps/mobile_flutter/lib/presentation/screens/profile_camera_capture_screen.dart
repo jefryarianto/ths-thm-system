@@ -137,21 +137,25 @@ class _ProfileCameraCaptureScreenState
           if (ready)
             CameraPreview(controller)
           else
-            Center(
-              child: _error != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
+            Container(
+              // Backdrop semi-transparan agar spinner kontras di atas preview.
+              color: Colors.black.withValues(alpha: 0.72),
+              child: Center(
+                child: _error != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      )
+                    : const AppLoadingSpinner.small(
+                        size: 40,
+                        strokeWidth: 3,
+                        color: Colors.white,
                       ),
-                    )
-                  : const AppLoadingSpinner.small(
-                      size: 40,
-                      strokeWidth: 3,
-                      color: Colors.white,
-                    ),
+              ),
             ),
           // Frame panduan + petunjuk (tetap tampil, tidak menangkap gesture).
           const IgnorePointer(child: _GuideFrameOverlay()),
@@ -171,21 +175,33 @@ class _ProfileCameraCaptureScreenState
                   tooltip: 'Ganti kamera',
                 ),
                 GestureDetector(
-                  onTap: _capture,
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black12, width: 2),
+                  onTap: _capturing ? null : _capture,
+                  child: Semantics(
+                    button: true,
+                    enabled: !_capturing,
+                    label: _capturing
+                        ? 'Sedang mengambil foto'
+                        : 'Ambil foto profil',
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(
+                          color: Colors.black12,
+                          width: _capturing ? 4 : 0,
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: Colors.black12, width: 2),
+                          ),
                         ),
                       ),
                     ),

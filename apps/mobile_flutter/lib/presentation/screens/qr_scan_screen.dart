@@ -610,7 +610,12 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   ),
                 ),
                 IconButton(
-                  visualDensity: VisualDensity.compact,
+                  // Target sentuh minimum 44 dp (a11y) — bukan compact.
+                  constraints: const BoxConstraints(
+                    minWidth: AppTheme.touchTargetCompact,
+                    minHeight: AppTheme.touchTargetCompact,
+                  ),
+                  padding: const EdgeInsets.all(AppTheme.touchTargetCompact / 6),
                   icon: const Icon(Icons.close, size: 18),
                   onPressed: () => setState(() => _result = null),
                 ),

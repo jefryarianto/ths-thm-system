@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'app_loading_spinner.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/models/distrik.dart';
@@ -55,7 +58,7 @@ class _OrgStructureFieldsState extends State<OrgStructureFields> {
       useSafeArea: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: AppTheme.radiusSheetTop,
       ),
       builder: (_) => _OrgPickerSheet(fetch: _fetch),
     );
@@ -90,6 +93,11 @@ class _OrgStructureFieldsState extends State<OrgStructureFields> {
                 icon: const Icon(Icons.clear),
                 tooltip: 'Hapus pilihan',
                 onPressed: _clearSelection,
+                // Target sentuh minimum (a11y).
+                constraints: const BoxConstraints(
+                  minWidth: AppTheme.touchTarget,
+                  minHeight: AppTheme.touchTarget,
+                ),
               )
             : const Icon(Icons.chevron_right),
       ),
@@ -120,6 +128,9 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
 
   int _step = 0; // 0 = distrik, 1 = wilayah, 2 = ranting
   final _searchCtrl = TextEditingController();
+
+  /// Debounce pencarian 300 ms — hindari rebuild list setiap ketikan.
+  Timer? _searchDebounce;
 
   Distrik? _selectedDistrik;
   Wilayah? _selectedWilayah;
@@ -159,6 +170,11 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
         _ => _rantingFailed,
       };
 
+  /// True bila ada query pencarian aktif (untuk pesan empty state berbeda).
+  bool get _isSearching => _searchCtrl.text.trim().isNotEmpty;
+
+  String get _searchQuery => _searchCtrl.text.trim();
+
   // ── Lifecycle ───────────────────────────────────────────────────────
 
   @override
@@ -169,6 +185,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -381,7 +398,13 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
                   vertical: 10,
                 ),
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) {
+                // Debounce 300 ms: satu rebuild per jeda ketik.
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                  if (mounted) setState(() {});
+                });
+              },
             ),
           ),
           const SizedBox(height: 4),
@@ -459,8 +482,58 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
     bool finalChoice = false,
   }) {
     if (items.isEmpty) {
+      final msg = _isSearching
+          ? 'Tidak ada hasil untuk "$_searchQuery"'
+          : emptyMsg;
       return Center(
-        child: Text(emptyMsg, style: TextStyle(color: Colors.grey.shade500)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _isSearching ? Icons.search_off : Icons.inbox_outlined,
+                size: 44,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                msg,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _isSearching
+                    ? 'Coba kata kunci lain atau hapus filter pencarian.'
+                    : 'Silakan coba lagi beberapa saat.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_isSearching)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _searchCtrl.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.clear, size: 18),
+                  label: const Text('Hapus pencarian'),
+                )
+              else
+                FilledButton.tonalIcon(
+                  onPressed: _retry,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Muat ulang'),
+                ),
+            ],
+          ),
+        ),
       );
     }
     return ListView.builder(
@@ -471,6 +544,8 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
         title: Text(name(items[i])),
         trailing: finalChoice ? null : const Icon(Icons.chevron_right),
         onTap: () => onTap(items[i]),
+        // Target sentuh minimum 44 dp (a11y) untuk list padat.
+        minVerticalPadding: AppTheme.touchTargetCompact / 2,
       ),
     );
   }
