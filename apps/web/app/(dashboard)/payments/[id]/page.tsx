@@ -8,6 +8,7 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { formatRupiah } from '@/lib/format';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import {
   ArrowLeft,
   CreditCard,
@@ -248,7 +249,7 @@ export default function PaymentDetailPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center"
           >
             {actionLoading === 'verify' ? (
-              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              <SmallLogoSpinner size={16} color="#fff" />
             ) : (
               <CheckCircle size={16} />
             )}
@@ -260,7 +261,7 @@ export default function PaymentDetailPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors shadow-sm flex-1 justify-center"
           >
             {actionLoading === 'reject' ? (
-              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              <SmallLogoSpinner size={16} color="#fff" />
             ) : (
               <Ban size={16} />
             )}

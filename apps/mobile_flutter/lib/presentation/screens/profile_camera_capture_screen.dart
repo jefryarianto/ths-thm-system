@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
+import '../widgets/app_loading_spinner.dart';
 import '../../core/utils/snack_bar_helper.dart';
 
 /// Layar kamera untuk foto profil (item 8) — frame panduan pas foto di tengah
@@ -147,7 +147,11 @@ class _ProfileCameraCaptureScreenState
                         style: const TextStyle(color: Colors.white70),
                       ),
                     )
-                  : const CircularProgressIndicator(color: Colors.white),
+                  : const AppLoadingSpinner.small(
+                      size: 40,
+                      strokeWidth: 3,
+                      color: Colors.white,
+                    ),
             ),
           // Frame panduan + petunjuk (tetap tampil, tidak menangkap gesture).
           const IgnorePointer(child: _GuideFrameOverlay()),

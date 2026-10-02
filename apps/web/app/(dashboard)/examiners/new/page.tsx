@@ -8,6 +8,7 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import { useToast } from '@/components/ui/toast';
 
@@ -108,7 +109,7 @@ export default function NewExaminerPage() {
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
             >
               {saving ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <SmallLogoSpinner size={16} color="#fff" />
               ) : (
                 <Save size={14} />
               )}

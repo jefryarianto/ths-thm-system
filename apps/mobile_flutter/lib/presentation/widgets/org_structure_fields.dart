@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_loading_spinner.dart';
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/models/distrik.dart';
@@ -387,7 +388,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
           // Content: loading / error / list
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppLoadingSpinner.small())
                 : _isFailed
                     ? _buildError()
                     : _buildList(scrollCtrl),

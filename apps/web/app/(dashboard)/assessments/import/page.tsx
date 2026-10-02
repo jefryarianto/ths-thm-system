@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import {
   ArrowLeft,
   Upload,
@@ -310,7 +311,7 @@ export default function ImportAssessmentsPage() {
             {/* Parsing indicator */}
             {parsing && (
               <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <SmallLogoSpinner size={16} color="#3B82F6" />
                 Memproses file...
               </div>
             )}

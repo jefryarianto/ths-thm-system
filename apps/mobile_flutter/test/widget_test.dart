@@ -46,13 +46,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('AppLoadingSpinner.small menampilkan CircularProgressIndicator', (tester) async {
+  testWidgets('AppLoadingSpinner.small menampilkan dua cincin tanpa logo', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(body: AppLoadingSpinner.small()),
       ),
     );
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // Varian kecil: dua busur CustomPaint berputar berlawanan arah, tanpa
+    // logo (cerminan SmallLogoSpinner di web) — bukan CircularProgressIndicator.
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(Image), findsNothing);
+    final rings = find.descendant(
+      of: find.byType(AppLoadingSpinner),
+      matching: find.byType(RotationTransition),
+    );
+    expect(rings, findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 

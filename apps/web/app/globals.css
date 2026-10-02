@@ -87,6 +87,8 @@
     --warning-container: #F6E9C3;
     --error: #BA1A1A;
     --error-container: #F5D6D6;
+    /* Gold-400 (merek THS-THM) — dipakai busur kedua .logo-spinner */
+    --gold-400: #D4AF37;
 
     /* ── Legacy vars (dipakai chart tooltip di banyak halaman) ── */
     --tooltip-bg: #ffffff;
@@ -115,6 +117,8 @@
     --success-container: #0E2E1E;
     --warning: #DCB447;
     --warning-container: #2E2309;
+    /* Gold-400 (merek THS-THM) — dipakai busur kedua .logo-spinner */
+    --gold-400: #E5C76E;
     --error: #F08080;
     --error-container: #3A0D0D;
 
@@ -218,6 +222,9 @@
   .logo-spinner {
     --spinner-size: 48px;
     --spinner-ring: calc(var(--spinner-size) / 12);
+    /* Ring colors: token CSS --primary + --gold-400; keduanya didefinisikan
+       ulang di :root/.dark (lihat @layer base) agar ikut mode gelap. */
+    --gold-400: #D4AF37;
 
     position: relative;
     display: grid;
@@ -231,13 +238,17 @@
     animation: logo-spinner-rotation 1s linear infinite;
   }
 
+  .dark .logo-spinner {
+    --gold-400: #E5C76E;
+  }
+
   .logo-spinner::after {
     content: '';
     box-sizing: border-box;
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    border-left: var(--spinner-ring) solid var(--gold-400, #C9A227);
+    border-left: var(--spinner-ring) solid var(--gold-400, #D4AF37);
     border-bottom: var(--spinner-ring) solid transparent;
     animation: logo-spinner-rotation 0.5s linear infinite reverse;
   }
@@ -259,6 +270,17 @@
     animation: logo-spinner-rotation 0.5s linear infinite reverse;
     transform-origin: center;
     will-change: transform;
+  }
+
+  /* Aksesibilitas (WCAG 2.3.3): hentikan animasi putar bila pengguna
+     meminta pengurangan gerak — logo tetap statis di tengah. */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-spinner,
+    .logo-spinner::after,
+    .animate-logo-spinner,
+    .animate-logo-spinner-reverse {
+      animation: none;
+    }
   }
 
   /* ── Primary button ──

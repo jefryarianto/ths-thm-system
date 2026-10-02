@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { Trophy, Zap, Flame, Star, Award } from 'lucide-react';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
 
 interface LeaderboardEntry {
   rank: number;
@@ -42,7 +43,7 @@ export default function PublicLeaderboardPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              <LogoSpinner size={64} message="Memuat peringkat..." />
             </div>
           ) : leaderboard.length > 0 ? (
             <div>

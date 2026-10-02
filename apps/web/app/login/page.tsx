@@ -25,7 +25,7 @@ import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { sessionManager } from '@/lib/session-manager';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
@@ -573,7 +573,7 @@ export default function LoginPage() {
               >
                 {loading ? (
                   <>
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    <SmallLogoSpinner size={18} color="#fff" accentColor="#D4AF37" />
                     <span>Memverifikasi...</span>
                   </>
                 ) : (

@@ -8,7 +8,7 @@ import { Save, AlertCircle, Settings } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { logError } from '@/lib/error-logger';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 export default function GamificationSettingsPage() {
   const [config, setConfig] = useState<Record<string, unknown>>({});
@@ -110,7 +110,7 @@ export default function GamificationSettingsPage() {
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-sm"
           >
             {saving ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+              <SmallLogoSpinner size={16} color="#fff" />
             ) : (
               <Save size={14} />
             )}

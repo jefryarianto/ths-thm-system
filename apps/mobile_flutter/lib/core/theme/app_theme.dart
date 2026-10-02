@@ -33,6 +33,15 @@ class AppTheme {
   /// Navy — heading, judul halaman, angka statistik penting, teks institusional (#06154F)
   static const Color navy = Color(0xFF06154F);
 
+  // ── GOLD / ACCENT (merek THS-THM) ────────────────────────────────────
+  /// Gold 400 — aksen keemasan merek THS-THM (#D4AF37), dipakai busur kedua
+  /// `AppLoadingSpinner`. Sama dengan `--gold-400` di web (light mode).
+  static const Color gold400 = Color(0xFFD4AF37);
+
+  /// Gold 300 — versi lebih terang (#E5C76E) untuk mode gelap, sama dengan
+  /// `--gold-400` di web (dark mode).
+  static const Color gold300 = Color(0xFFE5C76E);
+
   // ── SEMANTIC COLORS ───────────────────────────────────────────────────
   /// Info — informasi, badge informasi, status informasi, icon info (#2B63E6)
   static const Color info = Color(0xFF2B63E6);
