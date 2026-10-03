@@ -225,12 +225,18 @@ jobs:
           last_err=""
           for attempt in 1 2 3; do
             set +e
-            out=$(ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key -p "$PORT" "$USER@$HOST" 'echo _OK_' 2>&1)
+            # Jangan gabungkan stderr ke stdout (2>&1). Warning
+            # "Permanently added '<host>' (ED25519) ..." yang dipancarkan
+            # ssh saat StrictHostKeyChecking=accept-new ikut masuk ke $out,
+            # sehingga perbandingan string "$_OK_" di bawah gagal meskipun
+            # SSH-nya sendiri sebenarnya sukses (run 37123708655, attempt 1).
+            out=$(ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key -p "$PORT" "$USER@$HOST" 'echo _OK_' 2>/tmp/ssh_err)
             rc=$?
+            err=$(cat /tmp/ssh_err)
             set -e
-            if [ $rc -eq 0 ] && [ "$out" = "_OK_" ]; then ok=1; break; fi
-            last_err="$out"
-            echo "   ⚠️ Attempt ${attempt}/3: ${last_err} | retrying in 10s..."
+            if [ "$rc" -eq 0 ] && [ "$out" = "_OK_" ]; then ok=1; break; fi
+            last_err="${out:+$out }${err}"
+            echo "   ⚠️ Attempt ${attempt}/3: ${last_err}| retrying in 10s..."
             sleep 10
           done
           if [ "$ok" -ne 1 ]; then
