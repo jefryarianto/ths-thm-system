@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -48,19 +48,29 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          OUTPUT=$(pnpm audit --audit-level=high 2>&1)
-          CRITICAL=$(echo "$OUTPUT" | grep -oP 'Critical:\s+\K\d+' || echo '0')
-          HIGH=$(echo "$OUTPUT" | grep -oP 'High:\s+\K\d+' || echo '0')
-          MODERATE=$(echo "$OUTPUT" | grep -oP 'Moderate:\s+\K\d+' || echo '0')
-          LOW=$(echo "$OUTPUT" | grep -oP 'Low:\s+\K\d+' || echo '0')
+          set +e
+          AUDIT_JSON=$(pnpm audit --json 2>/dev/null)
+          CRITICAL=$(echo "$AUDIT_JSON" | node -e "let data=JSON.parse(require('fs').readFileSync(0, 'utf-8')); let count = Object.values(data.advisories || {}).filter(a => a.severity === 'critical').length; console.log(count);" 2>/dev/null || echo "0")
+          HIGH=$(echo "$AUDIT_JSON" | node -e "let data=JSON.parse(require('fs').readFileSync(0, 'utf-8')); let count = Object.values(data.advisories || {}).filter(a => a.severity === 'high').length; console.log(count);" 2>/dev/null || echo "0")
+          MODERATE=$(echo "$AUDIT_JSON" | node -e "let data=JSON.parse(require('fs').readFileSync(0, 'utf-8')); let count = Object.values(data.advisories || {}).filter(a => a.severity === 'moderate').length; console.log(count);" 2>/dev/null || echo "0")
+          LOW=$(echo "$AUDIT_JSON" | node -e "let data=JSON.parse(require('fs').readFileSync(0, 'utf-8')); let count = Object.values(data.advisories || {}).filter(a => a.severity === 'low').length; console.log(count);" 2>/dev/null || echo "0")
+          
           echo "critical=$CRITICAL" >> "$GITHUB_OUTPUT"
           echo "high=$HIGH" >> "$GITHUB_OUTPUT"
           echo "moderate=$MODERATE" >> "$GITHUB_OUTPUT"
           echo "low=$LOW" >> "$GITHUB_OUTPUT"
+          
+          echo "Dependency audit counts:"
           echo "  Critical: $CRITICAL"
           echo "  High:     $HIGH"
           echo "  Moderate: $MODERATE"
           echo "  Low:      $LOW"
+          
+          # Return status based on critical/high count
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical vulnerabilities!"
+            exit 1
+          fi
       - name: Audit summary
         shell: bash
         run: |
