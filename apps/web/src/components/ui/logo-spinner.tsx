@@ -19,22 +19,14 @@ interface LogoSpinnerProps {
  * Sumber kebenaran gaya: kelas `.logo-spinner` + keyframes `logo-spinner-rotation`
  * di globals.css.
  */
-export function LogoSpinner({
-  size = 48,
-  message,
-  messageClassName,
-  className,
-}: LogoSpinnerProps) {
+export function LogoSpinner({ size = 48, message, messageClassName, className }: LogoSpinnerProps) {
   return (
     <div
       role="status"
       className={cn('flex flex-col items-center justify-center gap-5', className)}
       aria-live="polite"
     >
-      <span
-        className="logo-spinner"
-        style={{ ['--spinner-size' as string]: `${size}px` }}
-      >
+      <span className="logo-spinner" style={{ ['--spinner-size' as string]: `${size}px` }}>
         {/* next/image tidak dipakai: logo statis di public/, animasi via CSS,
             dan hindari optimasi gambar untuk SVG kecil yang dimuat inline. */}
         <img

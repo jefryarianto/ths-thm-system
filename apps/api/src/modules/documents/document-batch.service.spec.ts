@@ -752,29 +752,25 @@ describe('DocumentBatchService', () => {
     it('should send socket event, create in-app notification, and broadcast queue update', async () => {
       // Use completely fresh mocks to avoid any lingering state across tests
       mockPrisma.documentJob.update = jest.fn().mockResolvedValue({});
-      mockPrisma.documentBatchJob.update = jest
-        .fn()
-        .mockResolvedValue({
-          id: 'b1',
-          totalJobs: 1,
-          completed: 1,
-          failed: 0,
-          createdBy: 'u1',
-          type: 'kta',
-        });
+      mockPrisma.documentBatchJob.update = jest.fn().mockResolvedValue({
+        id: 'b1',
+        totalJobs: 1,
+        completed: 1,
+        failed: 0,
+        createdBy: 'u1',
+        type: 'kta',
+      });
       mockPrisma.documentBatchJob.updateMany = jest.fn().mockResolvedValue({ count: 1 });
-      mockPrisma.documentBatchJob.findUnique = jest
-        .fn()
-        .mockResolvedValue({
-          id: 'b1',
-          type: 'kta',
-          totalJobs: 1,
-          completed: 1,
-          failed: 0,
-          status: 'completed',
-          progress: 100,
-          jobs: [],
-        });
+      mockPrisma.documentBatchJob.findUnique = jest.fn().mockResolvedValue({
+        id: 'b1',
+        type: 'kta',
+        totalJobs: 1,
+        completed: 1,
+        failed: 0,
+        status: 'completed',
+        progress: 100,
+        jobs: [],
+      });
       mockPrisma.notifikasi.create = jest.fn().mockResolvedValue({});
       mockPrisma.notifikasi.count = jest.fn().mockResolvedValue(3);
       mockPrisma.user.findUnique = jest

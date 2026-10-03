@@ -891,9 +891,7 @@ export class GamificationService {
     }));
   }
 
-  async getTopRedemptions(
-    limit: number = 10,
-  ): Promise<
+  async getTopRedemptions(limit: number = 10): Promise<
     Array<{
       id: string;
       rewardName: string;
@@ -978,9 +976,7 @@ export class GamificationService {
   //  WEEKLY SUMMARY & STATS
   // ═══════════════════════════════════════════════
 
-  async getWeeklySummary(
-    anggotaId: string,
-  ): Promise<{
+  async getWeeklySummary(anggotaId: string): Promise<{
     pointsEarned: number;
     events: number;
     badgesEarned: number;

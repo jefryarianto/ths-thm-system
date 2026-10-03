@@ -288,9 +288,7 @@ export default function OrgStructureSettingsPage() {
           headers
             .map((h) => {
               const v = String(r[h] ?? '');
-              return v.includes(',') || v.includes('"')
-                ? `"${v.replace(/"/g, '""')}"`
-                : v;
+              return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
             })
             .join(','),
         ),
@@ -479,12 +477,12 @@ export default function OrgStructureSettingsPage() {
     { key: 'wilayah', label: 'Wilayah', icon: MapIcon },
     { key: 'ranting', label: 'Ranting', icon: Home },
   ];
-        <ExportTab
-          exportType={exportType}
-          onExportTypeChange={setExportType}
-          exportLoading={exportLoading}
-          onExport={handleExport}
-        />
+  <ExportTab
+    exportType={exportType}
+    onExportTypeChange={setExportType}
+    exportLoading={exportLoading}
+    onExport={handleExport}
+  />;
 
   const currentList =
     activeTab === 'distrik' ? distriks : activeTab === 'wilayah' ? wilayahs : rantings;

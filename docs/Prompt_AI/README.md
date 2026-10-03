@@ -4,10 +4,10 @@ Kumpulan prompt untuk membantu pengembangan dengan AI (Claude, GPT, GitHub Copil
 
 ## Isi Folder
 
-| File               | Deskripsi                                                                 |
-| ------------------ | ------------------------------------------------------------------------- |
+| File               | Deskripsi                                                                  |
+| ------------------ | -------------------------------------------------------------------------- |
 | `Isi Prompt_AI.md` | Prompt induk: backend, web, mobile, template dokumen/CSV, role, deployment |
-| `README.md`        | Panduan folder ini                                                        |
+| `README.md`        | Panduan folder ini                                                         |
 
 Catatan:
 
@@ -17,7 +17,7 @@ Catatan:
   Bila butuh prompt khusus, buat file barunya lalu daftarkan di tabel di atas.
 - Aplikasi mobile kini **Flutter** (`apps/mobile_flutter/`) dan deploy produksi
   memakai VPS + Docker Compose (lihat `docs/DEPLOY-ths-thm.md`). `Isi
-  Prompt_AI.md` sudah disesuaikan dengan kenyataan tersebut.
+Prompt_AI.md` sudah disesuaikan dengan kenyataan tersebut.
 
 ## Format Prompt (konvensi bila menambah file baru)
 

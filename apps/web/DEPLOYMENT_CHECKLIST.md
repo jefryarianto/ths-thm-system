@@ -113,5 +113,5 @@ localStorage.removeItem('membersSavedViews');
 | Security Review | ⬜ / ⬜ |          |
 | Performance     | ⬜ / ⬜ |          |
 
-**Deployed by:** ********\_\_\_********
-**Date:** ********\_\_\_********
+**Deployed by:** **\*\*\*\***\_\_\_**\*\*\*\***
+**Date:** **\*\*\*\***\_\_\_**\*\*\*\***

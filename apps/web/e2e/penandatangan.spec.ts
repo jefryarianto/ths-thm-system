@@ -159,11 +159,9 @@ test.describe('Settings — /settings/penandatangan', () => {
 
   test('scope selector filters signatures and stamps sections', async ({ page }) => {
     // Default scope = Global: only global rows visible in each section
-    const globalSig = page
-      .locator('div.rounded-2xl')
-      .filter({
-        has: page.getByRole('heading', { name: 'Gambar Tanda Tangan — Global (Nasional)' }),
-      });
+    const globalSig = page.locator('div.rounded-2xl').filter({
+      has: page.getByRole('heading', { name: 'Gambar Tanda Tangan — Global (Nasional)' }),
+    });
     const globalStamp = page
       .locator('div.rounded-2xl')
       .filter({ has: page.getByRole('heading', { name: 'Stempel — Global (Nasional)' }) });

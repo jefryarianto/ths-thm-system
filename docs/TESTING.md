@@ -24,10 +24,10 @@ build-and-push → deploy → scan-images
 
 ### 1. Unit Tests
 
-| App    | Framework | Location                  | Run Command                                        |
-| ------ | --------- | ------------------------- | -------------------------------------------------- |
-| API    | Jest      | `apps/api/src/`           | `pnpm --filter @ths-thm/api test`                  |
-| Web    | Vitest    | `apps/web/src/`           | `pnpm --filter @ths-thm/web test`                  |
+| App    | Framework | Location                    | Run Command                                                    |
+| ------ | --------- | --------------------------- | -------------------------------------------------------------- |
+| API    | Jest      | `apps/api/src/`             | `pnpm --filter @ths-thm/api test`                              |
+| Web    | Vitest    | `apps/web/src/`             | `pnpm --filter @ths-thm/web test`                              |
 | Mobile | Flutter   | `apps/mobile_flutter/test/` | `pnpm test:mobile` or `cd apps/mobile_flutter && flutter test` |
 
 **Mobile tests (`apps/mobile_flutter/test/`):**
@@ -103,13 +103,13 @@ E2E_BASE_URL=http://localhost:3002 npx playwright test
 
 #### Mobile (Flutter)
 
-| Aspect          | Detail                                                          |
-| --------------- | --------------------------------------------------------------- |
-| **Framework**   | Flutter test (`flutter_test`)                                    |
-| **Location**    | `apps/mobile_flutter/test/`                                      |
-| **Unit tests**  | `cd apps/mobile_flutter && flutter test` (or `pnpm test:mobile`) |
-| **Static check**| `cd apps/mobile_flutter && flutter analyze`                      |
-| **APK build**   | `flutter build apk --release -t lib/main.dart`                   |
+| Aspect           | Detail                                                           |
+| ---------------- | ---------------------------------------------------------------- |
+| **Framework**    | Flutter test (`flutter_test`)                                    |
+| **Location**     | `apps/mobile_flutter/test/`                                      |
+| **Unit tests**   | `cd apps/mobile_flutter && flutter test` (or `pnpm test:mobile`) |
+| **Static check** | `cd apps/mobile_flutter && flutter analyze`                      |
+| **APK build**    | `flutter build apk --release -t lib/main.dart`                   |
 
 **CI Configuration:**
 
@@ -119,11 +119,11 @@ E2E_BASE_URL=http://localhost:3002 npx playwright test
 
 ### 4. Type Checking
 
-| App    | Command                              |
-| ------ | ------------------------------------ |
-| All    | `pnpm run typecheck`                 |
-| API    | `cd apps/api && npx tsc --noEmit`    |
-| Web    | `cd apps/web && npx tsc --noEmit`    |
+| App    | Command                                     |
+| ------ | ------------------------------------------- |
+| All    | `pnpm run typecheck`                        |
+| API    | `cd apps/api && npx tsc --noEmit`           |
+| Web    | `cd apps/web && npx tsc --noEmit`           |
 | Mobile | `cd apps/mobile_flutter && flutter analyze` |
 
 ### 5. Linting

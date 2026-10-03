@@ -159,8 +159,8 @@ npm run deploy -- --target production
 
 ## Contact & Support
 
-**Team Lead:** ********\_\_\_********
-**Developer:** ********\_\_\_********
+**Team Lead:** **\*\*\*\***\_\_\_**\*\*\*\***
+**Developer:** **\*\*\*\***\_\_\_**\*\*\*\***
 **Date Completed:** September 22, 2026
 
 **Questions?** Contact: dev@thsthm.id

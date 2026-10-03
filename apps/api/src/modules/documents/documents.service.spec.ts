@@ -97,23 +97,19 @@ describe('DocumentsService', () => {
     resolveActive: jest
       .fn()
       .mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }),
-    resolveSigners: jest
-      .fn()
-      .mockResolvedValue([
-        {
-          signerName: 'Yoseph Pehan Betan',
-          signerTitle: 'Koordinator Distrik',
-          signatureUrl: 'signatures/distrik-ttd.png',
-          stampUrl: 'stamps/distrik-stamp.png',
-        },
-      ]),
-    hasDocSigners: jest.fn().mockResolvedValue(true),
-    resolveAssets: jest
-      .fn()
-      .mockResolvedValue({
+    resolveSigners: jest.fn().mockResolvedValue([
+      {
+        signerName: 'Yoseph Pehan Betan',
+        signerTitle: 'Koordinator Distrik',
         signatureUrl: 'signatures/distrik-ttd.png',
         stampUrl: 'stamps/distrik-stamp.png',
-      }),
+      },
+    ]),
+    hasDocSigners: jest.fn().mockResolvedValue(true),
+    resolveAssets: jest.fn().mockResolvedValue({
+      signatureUrl: 'signatures/distrik-ttd.png',
+      stampUrl: 'stamps/distrik-stamp.png',
+    }),
   };
 
   beforeEach(async () => {

@@ -4,12 +4,12 @@
 
 **Monorepo** dengan **pnpm workspaces** yang terdiri dari:
 
-| Layer           | Path          | Teknologi              |
-| --------------- | ------------- | ---------------------- |
-| Backend         | `apps/api`    | NestJS + Prisma ORM    |
-| Frontend Web    | `apps/web`    | Next.js + Tailwind CSS |
-| Mobile          | `apps/mobile_flutter` | Flutter (Dart)  |
-| Shared Packages | `packages/`   | Template dokumen & CSV |
+| Layer           | Path                  | Teknologi              |
+| --------------- | --------------------- | ---------------------- |
+| Backend         | `apps/api`            | NestJS + Prisma ORM    |
+| Frontend Web    | `apps/web`            | Next.js + Tailwind CSS |
+| Mobile          | `apps/mobile_flutter` | Flutter (Dart)         |
+| Shared Packages | `packages/`           | Template dokumen & CSV |
 
 ## 2. Audit Hasil & Temuan
 

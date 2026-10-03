@@ -200,9 +200,7 @@ export class MembersDigitalCardService {
    * Template kartu aktif untuk distrik anggota (desain upload per distrik) —
    * distrik dulu, lalu global, lalu null = desain bawaan. Cache 5 menit per scope.
    */
-  private async resolveActiveTemplate(
-    distrikId?: string,
-  ): Promise<{
+  private async resolveActiveTemplate(distrikId?: string): Promise<{
     id: string;
     name: string;
     label: string | null;

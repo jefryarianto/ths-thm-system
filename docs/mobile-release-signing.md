@@ -22,14 +22,14 @@ keytool -genkeypair -v \
 
 ## 2. Daftarkan 4 GitHub Secret
 
-Repo → **Settings** → **Secrets and variables** → **Actions** → *New repository secret*:
+Repo → **Settings** → **Secrets and variables** → **Actions** → _New repository secret_:
 
-| Nama secret | Nilai |
-|---|---|
-| `ANDROID_KEYSTORE_BASE64` | isi file `.jks` hasil encode base64 (lihat di bawah) |
-| `KEY_STORE_PASSWORD` | password keystore (`storePassword`) |
-| `KEY_PASSWORD` | password key — untuk PKCS12 **sama** dengan `KEY_STORE_PASSWORD` |
-| `KEY_ALIAS` | alias, mis. `ths-thm-release` |
+| Nama secret               | Nilai                                                            |
+| ------------------------- | ---------------------------------------------------------------- |
+| `ANDROID_KEYSTORE_BASE64` | isi file `.jks` hasil encode base64 (lihat di bawah)             |
+| `KEY_STORE_PASSWORD`      | password keystore (`storePassword`)                              |
+| `KEY_PASSWORD`            | password key — untuk PKCS12 **sama** dengan `KEY_STORE_PASSWORD` |
+| `KEY_ALIAS`               | alias, mis. `ths-thm-release`                                    |
 
 Encode base64 di Windows (PowerShell):
 
@@ -47,12 +47,14 @@ base64 -w0 ths-thm-release.jks > ths-thm-release.jks.b64
 ## 3. Cara kerja CI
 
 Workflow `.github/workflows/flutter-apk-build.yml` berjalan otomatis pada:
+
 - push ke `master` yang mengubah `apps/mobile_flutter/**`
 - push tag `v*` (mis. `git tag v1.0.0 && git push origin v1.0.0`)
-- pemicu manual (tab **Actions** → *Run workflow*)
+- pemicu manual (tab **Actions** → _Run workflow_)
 
 Workflow menulis `key.properties` dari secret, membangun
 `flutter build apk --release`, lalu:
+
 - **selalu** meng-upload APK sebagai artifact (`flutter-release-apk`)
 - pada tag `v*`, juga membuat **GitHub Release** berisi APK tersebut
 
@@ -62,7 +64,7 @@ Bila secret belum diset, build tetap berhasil tapi fallback ke debug signing.
 
 1. Tab **Actions** → pilih run "Flutter APK Build & Release"
 2. Scroll ke bawah → download artifact `flutter-release-apk`
-3. Extract → seret `app-release.apk` ke jendela LDPlayer (atau toolbar *Install APK*)
+3. Extract → seret `app-release.apk` ke jendela LDPlayer (atau toolbar _Install APK_)
 
 Setelah secret diset, APK hasil CI berlabel signature yang sama → LDPlayer
 melakukan **update** atas aplikasi lama, bukan install paralel.
@@ -79,4 +81,4 @@ di-ignore git.
 keytool -printcert -jarfile app-release.apk | Select-String "SHA256"
 ```
 
- cocok dengan SHA256 fingerprint keystore → APK signed dengan benar.
+cocok dengan SHA256 fingerprint keystore → APK signed dengan benar.

@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+.next
+out
+coverage
+*.min.js
+*.min.css
+apps/mobile_flutter
+packages/*/dist
+pnpm-lock.yaml
+.kilo
+.git
+.turbo
+apps/web/next-env.d.ts

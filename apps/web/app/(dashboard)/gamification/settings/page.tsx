@@ -109,11 +109,7 @@ export default function GamificationSettingsPage() {
             disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-sm"
           >
-            {saving ? (
-              <SmallLogoSpinner size={16} color="#fff" />
-            ) : (
-              <Save size={14} />
-            )}
+            {saving ? <SmallLogoSpinner size={16} color="#fff" /> : <Save size={14} />}
             Simpan
           </button>
         </PageHeader>

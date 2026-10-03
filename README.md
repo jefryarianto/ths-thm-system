@@ -23,13 +23,13 @@ ths-thm-system/
 
 ## Tech Stack
 
-| Layer    | Teknologi                                            |
-| -------- | ---------------------------------------------------- |
-| Backend  | NestJS 10, Prisma 5, PostgreSQL 16, JWT, FCM, BullMQ |
-| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui        |
+| Layer    | Teknologi                                                |
+| -------- | -------------------------------------------------------- |
+| Backend  | NestJS 10, Prisma 5, PostgreSQL 16, JWT, FCM, BullMQ     |
+| Frontend | Next.js 16, React 19, Tailwind CSS, shadcn/ui            |
 | Mobile   | Flutter 3.44.0, Firebase, GoRouter, Mobile Scanner, BLoC |
-| Package  | @react-pdf/renderer, PapaParse, SheetJS              |
-| Manager  | pnpm 11 (monorepo workspace)                         |
+| Package  | @react-pdf/renderer, PapaParse, SheetJS                  |
+| Manager  | pnpm 11 (monorepo workspace)                             |
 
 ## Module List (47 Modul Backend)
 

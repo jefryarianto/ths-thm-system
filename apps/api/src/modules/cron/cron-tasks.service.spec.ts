@@ -305,15 +305,13 @@ describe('CronTasksService — sendDuesReminders (email blast)', () => {
         updateMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
       anggota: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            id: 'a1',
-            email: 'a@x.co',
-            noHp: null,
-            namaLengkap: 'A',
-            rantingId: null,
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'a1',
+          email: 'a@x.co',
+          noHp: null,
+          namaLengkap: 'A',
+          rantingId: null,
+        }),
         findMany: jest.fn().mockResolvedValue([]),
       },
       user: { findUnique: jest.fn().mockResolvedValue({ id: 'uX' }), create: jest.fn() },

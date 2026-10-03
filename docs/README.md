@@ -19,27 +19,27 @@ Kumpulan dokumen perencanaan, spesifikasi, dan referensi pengembangan.
 
 ## Panduan Operasional (file di root `docs/`)
 
-| Dokumen                       | Isi                                                      |
-| ----------------------------- | -------------------------------------------------------- |
-| `QUICK_START.md`              | Setup development lokal tercepat (tanpa build Docker)    |
-| `DOCKER_DEV_SETUP.md`         | Setup development berbasis Docker                        |
-| `DEPLOY-ths-thm.md`           | Prosedur deploy produksi                                 |
-| `DEPLOYMENT_SAFETY.md`        | Aturan & checklist keamanan deployment                   |
-| `EMAIL_SETUP.md`              | Konfigurasi email (Resend/SMTP)                          |
-| `EMAIL_TEMPLATES.md`          | Template email sistem                                    |
-| `FCM_SETUP.md`                | Konfigurasi Firebase Cloud Messaging (push notification) |
-| `TESTING.md`                  | Strategi & cara menjalankan test                         |
-| `e2e-bullmq.md`               | Test E2E manual queue BullMQ (butuh Redis asli)          |
-| `TENANT-ISOLATION.md`         | Isolasi data multi-tenant (distrik/wilayah/ranting)      |
-| `COOKBOOK-BaseCrudService.md` | Pola service CRUD berbasis BaseCrudService               |
-| `REFACTOR_MIGRATION.md`       | Catatan migrasi refactor                                 |
-| `MOBILE-ARCHITECTURE.md`      | ⚠️ Arsip — arsitektur app mobile RN/Expo lama (kini Flutter) |
-| `MOBILE-PRD-STATUS.md`        | ⚠️ Snapshot historis — status PRD mobile (app RN/Expo lama)  |
+| Dokumen                       | Isi                                                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `QUICK_START.md`              | Setup development lokal tercepat (tanpa build Docker)                                                    |
+| `DOCKER_DEV_SETUP.md`         | Setup development berbasis Docker                                                                        |
+| `DEPLOY-ths-thm.md`           | Prosedur deploy produksi                                                                                 |
+| `DEPLOYMENT_SAFETY.md`        | Aturan & checklist keamanan deployment                                                                   |
+| `EMAIL_SETUP.md`              | Konfigurasi email (Resend/SMTP)                                                                          |
+| `EMAIL_TEMPLATES.md`          | Template email sistem                                                                                    |
+| `FCM_SETUP.md`                | Konfigurasi Firebase Cloud Messaging (push notification)                                                 |
+| `TESTING.md`                  | Strategi & cara menjalankan test                                                                         |
+| `e2e-bullmq.md`               | Test E2E manual queue BullMQ (butuh Redis asli)                                                          |
+| `TENANT-ISOLATION.md`         | Isolasi data multi-tenant (distrik/wilayah/ranting)                                                      |
+| `COOKBOOK-BaseCrudService.md` | Pola service CRUD berbasis BaseCrudService                                                               |
+| `REFACTOR_MIGRATION.md`       | Catatan migrasi refactor                                                                                 |
+| `MOBILE-ARCHITECTURE.md`      | ⚠️ Arsip — arsitektur app mobile RN/Expo lama (kini Flutter)                                             |
+| `MOBILE-PRD-STATUS.md`        | ⚠️ Snapshot historis — status PRD mobile (app RN/Expo lama)                                              |
 | `PRD-MOBILE-*.md`             | PRD fitur mobile (approvals, push, scoring, reference) — kini diimplementasikan di `apps/mobile_flutter` |
-| `THM_SYSTEM_ANALYSIS.md`      | Analisis sistem THM                                      |
-| `COMPLIANCE.md`               | Catatan kepatuhan (bagian mobile = arsip RN/Expo lama)   |
-| `SECURITY.md`                 | Keamanan repo: secret scanning gitleaks (hook + CI)      |
-| `CI_WORKFLOW_AUDIT.md`        | ⚠️ Snapshot audit workflow CI per 2026-09-15             |
+| `THM_SYSTEM_ANALYSIS.md`      | Analisis sistem THM                                                                                      |
+| `COMPLIANCE.md`               | Catatan kepatuhan (bagian mobile = arsip RN/Expo lama)                                                   |
+| `SECURITY.md`                 | Keamanan repo: secret scanning gitleaks (hook + CI)                                                      |
+| `CI_WORKFLOW_AUDIT.md`        | ⚠️ Snapshot audit workflow CI per 2026-09-15                                                             |
 
 ## Arsip
 

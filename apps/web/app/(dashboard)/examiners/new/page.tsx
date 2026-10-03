@@ -108,11 +108,7 @@ export default function NewExaminerPage() {
               disabled={saving || !selectedMember}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
             >
-              {saving ? (
-                <SmallLogoSpinner size={16} color="#fff" />
-              ) : (
-                <Save size={14} />
-              )}
+              {saving ? <SmallLogoSpinner size={16} color="#fff" /> : <Save size={14} />}
               Simpan
             </button>
           </div>
