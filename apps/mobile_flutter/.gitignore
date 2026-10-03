@@ -20,3 +20,13 @@ f3*.txt
 build_out.txt
 *.pyc
 __pycache__/
+
+# Android signing files
+android/key.properties
+key.properties
+*.keystore
+*.jks
+*.base64
+*.b64
+android/app/*.keystore
+android/app/*.jks
