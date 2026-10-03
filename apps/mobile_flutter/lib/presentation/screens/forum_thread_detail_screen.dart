@@ -86,10 +86,10 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                             thread.author.namaLengkap.isNotEmpty
                                 ? thread.author.namaLengkap[0]
                                 : '?',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.primary))),
+                                color: Theme.of(context).colorScheme.primary))),
                     const SizedBox(width: AppTheme.space8),
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +99,10 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                   fontSize: 13, fontWeight: FontWeight.w600)),
                           Text(Formatters.dateLong(thread.createdAt),
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey.shade500)),
+                                  fontSize: 11,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant)),
                         ]),
                   ]),
                   const SizedBox(height: AppTheme.space12),
@@ -124,20 +127,23 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                         p.author.namaLengkap.isNotEmpty
                                             ? p.author.namaLengkap[0]
                                             : '?',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.primary))),
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary))),
                                 const SizedBox(width: 6),
                                 Text(p.author.namaLengkap,
                                     style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600)),
                                 const Spacer(),
-                                Text(Formatters.relative(p.createdAt),
-                                    style: TextStyle(
+                                Text(Formatters.relative(p.createdAt),                                    style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey.shade500)),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant)),
                               ]),
                               const SizedBox(height: AppTheme.space8),
                               Text(p.konten,
@@ -152,11 +158,13 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
               Container(
                 padding: EdgeInsets.fromLTRB(
                     16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 8),
-                decoration: BoxDecoration(color: Colors.white, boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4)
-                ]),
+                decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 4)
+                    ]),
                 child: Row(children: [
                   Expanded(
                       child: TextField(
@@ -169,7 +177,8 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                   IconButton(
                     icon: _submitting
                         ? const AppLoadingSpinner.small()
-                        : const Icon(Icons.send, color: AppTheme.primary),
+                        : Icon(Icons.send,
+                            color: Theme.of(context).colorScheme.primary),
                     onPressed: _submitting ? null : _submitReply,
                   ),
                 ]),

@@ -346,7 +346,7 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
               height: 4,
               margin: const EdgeInsets.only(top: 12, bottom: 4),
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -368,7 +368,11 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
                       if (_breadcrumb != null)
                         Text(
                           _breadcrumb!,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                           overflow: TextOverflow.ellipsis,
                         ),
                     ],
@@ -427,11 +431,13 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.grey.shade400),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: AppTheme.space12),
             Text(
               'Gagal memuat data',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppTheme.space12),
             FilledButton.tonalIcon(

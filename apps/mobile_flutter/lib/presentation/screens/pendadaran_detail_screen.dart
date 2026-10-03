@@ -109,7 +109,7 @@ class _DetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.statusColor(graduation.status);
+    final color = AppTheme.statusColorFor(context, graduation.status);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -144,7 +144,9 @@ class _DetailHeader extends StatelessWidget {
         const SizedBox(height: AppTheme.space8),
         Text(
           'Detail & pengelolaan kriteria penilaian pendadaran.',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 13),
         ),
       ],
     );
@@ -168,10 +170,12 @@ class _InfoTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.1),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 20, color: AppTheme.primary),
+            child:
+                Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: AppTheme.space12),
           Expanded(
@@ -180,7 +184,8 @@ class _InfoTile extends StatelessWidget {
               children: [
                 Text(label,
                     style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600)),
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 2),
                 Text(value,
                     style: const TextStyle(
@@ -204,10 +209,12 @@ class _CenterRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline,
-              size: 48, color: AppTheme.danger),
+          Icon(Icons.error_outline,
+              size: 48, color: Theme.of(context).colorScheme.error),
           const SizedBox(height: AppTheme.space12),
-          Text(message, style: const TextStyle(color: Colors.grey)),
+          Text(message,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             onPressed: () => context

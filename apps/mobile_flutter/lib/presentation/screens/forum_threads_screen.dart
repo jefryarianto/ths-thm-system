@@ -105,8 +105,9 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                       child: ListTile(
                         title: Row(children: [
                           if (t.isPinned)
-                            const Icon(Icons.push_pin,
-                                size: 14, color: AppTheme.primary),
+                            Icon(Icons.push_pin,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary),
                           if (t.isPinned) const SizedBox(width: AppTheme.space4),
                           Expanded(
                               child: Text(t.judul,
@@ -125,31 +126,41 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey.shade600)),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant)),
                                 const SizedBox(height: 6),
                                 Row(children: [
                                   CircleAvatar(
                                       radius: 10,
-                                      backgroundColor: AppTheme.primary
-                                          .withValues(alpha: 0.1),
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.12),
                                       child: Text(
                                           t.author.namaLengkap.isNotEmpty
                                               ? t.author.namaLengkap[0]
                                               : '?',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
-                                              color: AppTheme.primary))),
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary))),
                                   const SizedBox(width: 6),
                                   Expanded(
                                       child: Text(t.author.namaLengkap,
                                           style: TextStyle(
                                               fontSize: 11,
-                                              color: Colors.grey.shade600))),
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant))),
                                   Text('${t.postCount} balasan',
                                       style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.grey.shade500)),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant)),
                                 ]),
                               ]),
                         ),

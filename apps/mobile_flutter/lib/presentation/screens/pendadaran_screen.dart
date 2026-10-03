@@ -112,7 +112,7 @@ class _GraduationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.statusColor(graduation.status);
+    final color = AppTheme.statusColorFor(context, graduation.status);
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -155,12 +155,14 @@ class _GraduationCard extends StatelessWidget {
               Row(
                 children: [
 Icon(Icons.event, //fix-const-grey
-                      size: 15, color: Colors.grey.shade600),
+                      size: 15,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 6),
                   Text(
                     _range(graduation),
                     style: TextStyle(
-                        fontSize: 13, color: Colors.grey.shade600),
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -170,13 +172,16 @@ Icon(Icons.event, //fix-const-grey
                 Row(
                   children: [
 Icon(Icons.place_outlined, //fix-const-grey
-                        size: 15, color: Colors.grey.shade600),
+                        size: 15,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         graduation.lokasi!,
                         style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade600),
+                            fontSize: 13,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ],
@@ -227,7 +232,9 @@ class _MiniStat extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -247,13 +254,14 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline,
-                size: 48, color: AppTheme.danger),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: AppTheme.space12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppTheme.space12),
             OutlinedButton.icon(
@@ -280,19 +288,20 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.school_outlined,
-                size: 56, color: AppTheme.primary),
+            Icon(Icons.school_outlined,
+                size: 56, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: AppTheme.space12),
             const Text(
               'Belum ada pendadaran.',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Buat pendadaran baru untuk mulai mengelola undangan, '
               'penguji, dan penilaian.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppTheme.space16),
             if (onCreate != null)

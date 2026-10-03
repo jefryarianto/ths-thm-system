@@ -105,7 +105,8 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
 
   List<Widget> _formChildren(BuildContext context, bool busy) {
     return [
-      const Icon(Icons.app_registration, size: 56, color: AppTheme.primary),
+      Icon(Icons.app_registration,
+          size: 56, color: Theme.of(context).colorScheme.primary),
       const SizedBox(height: AppTheme.space12),
       const Text('Formulir Pendaftaran Calon Anggota',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -152,7 +153,9 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
           child: Text(
               _tanggalLahir != null ? _fmtDateDisplay(_tanggalLahir!) : 'Pilih',
               style: TextStyle(
-                  color: _tanggalLahir != null ? null : Colors.grey.shade500)),
+                  color: _tanggalLahir != null
+                      ? null
+                      : Theme.of(context).colorScheme.onSurfaceVariant)),
         ),
       ),
       const SizedBox(height: 14),

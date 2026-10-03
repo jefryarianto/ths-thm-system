@@ -275,11 +275,12 @@ class _AspectCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  color:
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.category_outlined,
-                    color: AppTheme.primary, size: 22),
+                child: Icon(Icons.category_outlined,
+                    color: Theme.of(context).colorScheme.primary, size: 22),
               ),
               const SizedBox(width: AppTheme.space12),
               Expanded(
@@ -295,8 +296,10 @@ class _AspectCard extends StatelessWidget {
                     Text(
                       '${aspek.kodeAspek}  ·  Bobot ${aspek.bobot.toStringAsFixed(1)}%'
                       '${aspek.items.isNotEmpty ? '  ·  ${aspek.items.length} item' : ''}',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -308,8 +311,8 @@ class _AspectCard extends StatelessWidget {
               ),
               IconButton(
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline,
-                    size: 20, color: AppTheme.danger),
+                icon: Icon(Icons.delete_outline,
+                    size: 20, color: Theme.of(context).colorScheme.error),
                 tooltip: 'Hapus',
               ),
             ],
@@ -332,8 +335,8 @@ class _EmptyAspects extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.category_outlined,
-                size: 56, color: AppTheme.primary),
+            Icon(Icons.category_outlined,
+                size: 56, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: AppTheme.space12),
             const Text(
               'Belum ada aspek penilaian.',
@@ -344,7 +347,6 @@ class _EmptyAspects extends StatelessWidget {
               'Tambahkan aspek seperti "Penulisan Karya Ilmiah" untuk '
               'mulai menyusun kriteria penilaian.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: AppTheme.space16),
             FilledButton.icon(

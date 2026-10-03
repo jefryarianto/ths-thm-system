@@ -81,7 +81,7 @@ class _KegiatanDetailScreenState extends State<KegiatanDetailScreen> {
   }
 
   Widget _body() {
-    final color = AppTheme.statusColor(_status);
+    final color = AppTheme.statusColorFor(context, _status);
     return ListView(
       padding: const EdgeInsets.all(AppTheme.space16),
       children: [
@@ -183,10 +183,11 @@ class _InfoTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 20, color: AppTheme.primary),
+            child:
+                Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: AppTheme.space12),
           Expanded(
@@ -194,8 +195,9 @@ class _InfoTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 2),
                 Text(value,
                     style: const TextStyle(
@@ -220,9 +222,12 @@ class _CenterRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+          Icon(Icons.error_outline,
+              size: 48, color: Theme.of(context).colorScheme.error),
           const SizedBox(height: AppTheme.space12),
-          Text(message, style: const TextStyle(color: Colors.grey)),
+          Text(message,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: AppTheme.space12),
           FilledButton.icon(
             onPressed: onRetry,

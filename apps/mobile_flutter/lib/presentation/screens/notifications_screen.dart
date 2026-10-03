@@ -63,11 +63,12 @@ PopupMenuButton<String>(
                 onSelected: (value) {
               if (value == 'delete_all') _confirmDeleteAll(context);
             },
-            itemBuilder: (context) => const [
+            itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'delete_all',
                 child: Text('Hapus Semua',
-                    style: TextStyle(color: AppTheme.danger)),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
             ],
           ),
@@ -389,8 +390,8 @@ PopupMenuButton<String>(
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus',
-                style: TextStyle(color: AppTheme.danger)),
+            child: Text('Hapus',
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),
@@ -410,8 +411,8 @@ PopupMenuButton<String>(
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child:
-                const Text('Hapus', style: TextStyle(color: AppTheme.danger)),
+            child: Text('Hapus',
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),
@@ -480,12 +481,12 @@ class _NotificationCard extends StatelessWidget {
                     ],
                     if (item.tipe == 'data_incomplete') ...[
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Ketuk untuk melengkapi profil →',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ],
@@ -547,7 +548,8 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: AppTheme.space12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppTheme.space16),

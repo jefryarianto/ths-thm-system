@@ -18,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const AppBarIconTitle(
@@ -43,28 +44,28 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.folder_outlined, color: AppTheme.primary),
+            leading: Icon(Icons.folder_outlined, color: colorScheme.primary),
             title: const Text('Dokumen'),
             subtitle: const Text('Dokumen resmi keanggotaan Anda'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push<void>('/documents'),
           ),
           ListTile(
-            leading: const Icon(Icons.key_outlined, color: AppTheme.primary),
+            leading: Icon(Icons.key_outlined, color: colorScheme.primary),
             title: const Text('Ubah Password'),
             subtitle: const Text('Perbarui kata sandi akun Anda'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _openChangePassword(context),
           ),
           ListTile(
-            leading: const Icon(Icons.credit_card, color: AppTheme.primary),
+            leading: Icon(Icons.credit_card, color: colorScheme.primary),
             title: const Text('KTA Digital'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push<void>('/kta'),
           ),
           ListTile(
-            leading: const Icon(Icons.notifications_outlined,
-                color: AppTheme.primary),
+            leading:
+                Icon(Icons.notifications_outlined, color: colorScheme.primary),
             title: const Text('Notifikasi'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push<void>('/notifications'),
@@ -76,7 +77,7 @@ class SettingsScreen extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade600)),
+                    color: colorScheme.onSurfaceVariant)),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -84,7 +85,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.info_outline, color: AppTheme.primary),
+            leading: Icon(Icons.info_outline, color: colorScheme.primary),
             title: const Text('Tentang Aplikasi'),
             subtitle: const Text('Versi, pembaruan, dan info aplikasi'),
             trailing: const Icon(Icons.chevron_right),
@@ -93,11 +94,10 @@ class SettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(AppTheme.space16),
             child: OutlinedButton.icon(
-              icon: const Icon(Icons.logout, color: AppTheme.danger),
-              label: const Text('Keluar',
-                  style: TextStyle(color: AppTheme.danger)),
+              icon: Icon(Icons.logout, color: colorScheme.error),
+              label: Text('Keluar', style: TextStyle(color: colorScheme.error)),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppTheme.danger),
+                side: BorderSide(color: colorScheme.error),
                 minimumSize: const Size.fromHeight(48),
               ),
               onPressed: () {
@@ -161,12 +161,13 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.info_outline, color: AppTheme.primary),
-          SizedBox(width: AppTheme.space8),
-          Text('Tentang Aplikasi'),
+          Icon(Icons.info_outline, color: colorScheme.primary),
+          const SizedBox(width: AppTheme.space8),
+          const Text('Tentang Aplikasi'),
         ],
       ),
       content: SingleChildScrollView(
@@ -194,7 +195,7 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
                       : 'v${info.versionName} (build ${info.versionCode})',
                 ),
                 const SizedBox(height: AppTheme.space12),
-                _statusLine(updateState),
+                _statusLine(context, updateState),
                 if (info != null && info.changelog.trim().isNotEmpty) ...[
                   const SizedBox(height: 10),
                   const Text(
@@ -208,7 +209,7 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
                     style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
-                        color: Colors.grey.shade700),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -244,33 +245,35 @@ class _AboutAppDialogState extends State<_AboutAppDialog> {
     );
   }
 
-  Widget _statusLine(AppUpdateState state) {
+  Widget _statusLine(BuildContext context, AppUpdateState state) {
+    final colorScheme = Theme.of(context).colorScheme;
     final (icon, text, color) = switch (state.status) {
-      AppUpdateStatus.checking => (Icons.hourglass_top, 'Memeriksa…', Colors.grey),
+      AppUpdateStatus.checking =>
+        (Icons.hourglass_top, 'Memeriksa…', colorScheme.outline),
       AppUpdateStatus.upToDate => (
           Icons.check_circle_outline,
           'Aplikasi sudah versi terbaru',
-          AppTheme.success,
+          AppTheme.successOf(context),
         ),
       AppUpdateStatus.updateAvailable => (
           Icons.system_update_alt,
           'Versi baru tersedia',
-          AppTheme.warning,
+          AppTheme.warningOf(context),
         ),
       AppUpdateStatus.forceUpdate => (
           Icons.error_outline,
           'Pembaruan wajib untuk melanjutkan',
-          AppTheme.danger,
+          colorScheme.error,
         ),
       AppUpdateStatus.downloading => (
           Icons.downloading,
           'Mengunduh…',
-          AppTheme.primary,
+          colorScheme.primary,
         ),
       AppUpdateStatus.error => (
           Icons.error_outline,
           state.error ?? 'Gagal memeriksa pembaruan',
-          AppTheme.danger,
+          colorScheme.error,
         ),
     };
     return Row(
@@ -306,7 +309,7 @@ class _InfoRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),

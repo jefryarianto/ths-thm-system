@@ -121,7 +121,8 @@ class _DocumentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.statusColor(doc.status);
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = AppTheme.statusColorFor(context, doc.status);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -129,10 +130,10 @@ class _DocumentCard extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: 0.08),
+            color: colorScheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(_tipeIcon(doc.tipe), color: AppTheme.primary),
+          child: Icon(_tipeIcon(doc.tipe), color: colorScheme.primary),
         ),
         title: Text(
           _tipeLabel(doc.tipe),

@@ -131,6 +131,91 @@ class AppTheme {
   // ── SHAPE TOKENS (sudut bulat) ───────────────────────────────────────
   /// Sistem radius tunggal agar kartu, tombol, dan input terasa satu bahasa.
   /// Skala dipakai di seluruh tema & widget — ganti di sini, bukan per file.
+  // ── TERTIARY / LINK CONTAINER ──────────────────────────────────────────
+  /// Tertiary container terang — latar lembut aksen link (#E4ECFF)
+  static const Color linkContainer = Color(0xFFE4ECFF);
+
+  /// On tertiary container terang — teks di atas [linkContainer] (#1646C7)
+  static const Color onLinkContainer = Color(0xFF1646C7);
+
+  /// Tertiary container gelap (#14265F)
+  static const Color linkContainerDark = Color(0xFF14265F);
+
+  /// On tertiary container gelap (#BFD0FF)
+  static const Color onLinkContainerDark = Color(0xFFBFD0FF);
+
+  // ── SURFACE DIM / BRIGHT (peran M3) ────────────────────────────────────
+  /// Permukaan "redup" mode terang — sedikit lebih gelap dari surface.
+  static const Color lightSurfaceDim = Color(0xFFE4E3EE);
+
+  /// Permukaan paling terang mode terang.
+  static const Color lightSurfaceBright = Color(0xFFFFFFFF);
+
+  /// Permukaan "redup" mode gelap — lebih gelap dari [darkSurface].
+  static const Color darkSurfaceDim = Color(0xFF0D0F14);
+
+  /// Permukaan "cerah" mode gelap.
+  static const Color darkSurfaceBright = Color(0xFF1A1D24);
+
+  // ── FIXED COLORS (identik di terang & gelap — peran M3 "…Fixed") ───────
+  static const Color primaryFixed = primaryContainer; // #DDE4FF
+  static const Color primaryFixedDim = Color(0xFFBCC8FA);
+  static const Color onPrimaryFixed = onPrimaryContainer; // #00145C
+  static const Color secondaryFixed = Color(0xFFEEF1F8);
+  static const Color secondaryFixedDim = Color(0xFFD8DEED);
+  static const Color onSecondaryFixed = navy; // #06154F
+  static const Color tertiaryFixed = linkContainer; // #E4ECFF
+  static const Color tertiaryFixedDim = Color(0xFFBFD0FF);
+  static const Color onTertiaryFixed = linkBlueDark; // #1646C7
+
+  // ── SEMANTIC — VARIAN MODE GELAP ──────────────────────────────────────
+  /// Warna semantik versi terang: dipakai sebagai teks/ikon di atas
+  /// permukaan gelap, karena varian terangnya hanya lolos WCAG di latar
+  /// terang (mis. [success] di atas #111318 hanya ≈3,7:1).
+  static const Color successOnDark = Color(0xFF5FD3A0);
+  static const Color warningOnDark = Color(0xFFF0B429);
+  static const Color errorOnDark = Color(0xFFFFB4AB); // M3 dark error
+  static const Color onErrorDark = Color(0xFF690005);
+  static const Color errorContainerDark = Color(0xFF93000A);
+  static const Color onErrorContainerDark = Color(0xFFFFDAD6);
+
+  // ── GRADIEN KARTU STATISTIK ───────────────────────────────────────────
+  /// Gradien kartu ringkasan (mis. `_SummaryBar` iuran) mode terang:
+  /// primary → primaryDark. Teks putih lolos WCAG di kedua ujung
+  /// (9,6:1 dan 12,8:1) — versi lama berakhir di primaryContainer yang
+  /// membuat putih hanya 1,26:1.
+  static const Gradient statGradientLight = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, primaryDark],
+  );
+
+  /// Gradien kartu ringkasan mode gelap: container → navy. Teks putih lolos
+  /// WCAG di kedua ujung (9,1:1 dan ≈15:1).
+  static const Gradient statGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0036B8), Color(0xFF00145C)],
+  );
+
+  /// Pilih gradien statistik sesuai [brightness] tema aktif.
+  static Gradient statGradient(Brightness brightness) =>
+      brightness == Brightness.dark ? statGradientDark : statGradientLight;
+
+  /// Warna teks di atas [statGradientLight] / [statGradientDark].
+  static const Color onStatGradient = Colors.white;
+
+  // ── GAMIFICATION / LEVEL ──────────────────────────────────────────────
+  /// Bronze — aksen kartu level (medali, progres).
+  static const Color levelBronze = Color(0xFF8C6A3E);
+  static const Color levelBronzeLight = Color(0xFFD7B98C);
+  static const Color levelBronzeBgLight = Color(0xFFFFFDF6); // krem lembut
+  static const Color levelBronzeBgDark = Color(0xFF241C11); // cokelat gelap
+
+  /// Latar kartu level sesuai [brightness] tema aktif.
+  static Color levelBg(Brightness brightness) =>
+      brightness == Brightness.dark ? levelBronzeBgDark : levelBronzeBgLight;
+
   static const Radius radiusSm = Radius.circular(8); // small chip, badge
   static const Radius radiusMd = Radius.circular(12); // button, input, list tile
   static const Radius radiusLg = Radius.circular(16); // card
@@ -252,6 +337,29 @@ class AppTheme {
       errorContainer: errorContainer,
       onErrorContainer: onErrorContainer,
       surface: lightSurface,
+      surfaceDim: lightSurfaceDim,
+      surfaceBright: lightSurfaceBright,
+      // ── Peran M3 yang tidak didefinisikan jatuh ke fallback Flutter 3.44
+      //    (`secondaryContainer ?? secondary` = info solid #2B63E6), sehingga
+      //    `FilledButton.tonal` & `SegmentedButton` terpilih tampil seperti
+      //    tombol utama. Dijadikan palet primary agar tampilan tonal M3
+      //    tetap satu bahasa dengan brand.
+      secondaryContainer: primaryContainer,
+      onSecondaryContainer: onPrimaryContainer,
+      tertiaryContainer: linkContainer,
+      onTertiaryContainer: onLinkContainer,
+      primaryFixed: primaryFixed,
+      primaryFixedDim: primaryFixedDim,
+      onPrimaryFixed: onPrimaryFixed,
+      onPrimaryFixedVariant: onPrimaryFixed,
+      secondaryFixed: secondaryFixed,
+      secondaryFixedDim: secondaryFixedDim,
+      onSecondaryFixed: onSecondaryFixed,
+      onSecondaryFixedVariant: onSecondaryFixed,
+      tertiaryFixed: tertiaryFixed,
+      tertiaryFixedDim: tertiaryFixedDim,
+      onTertiaryFixed: onTertiaryFixed,
+      onTertiaryFixedVariant: onTertiaryFixed,
       onSurface: textSlate,
       onSurfaceVariant: textMuted,
       outline: lightOutline,
@@ -493,11 +601,31 @@ class AppTheme {
       onSecondary: Colors.white,
       tertiary: linkBlue,
       onTertiary: Colors.white,
-      error: error,
-      onError: Colors.white,
-      errorContainer: errorContainer,
-      onErrorContainer: onErrorContainer,
+      // Mode gelap memakai varian terang error (pola M3) agar teks/ikon
+      // error tetap kontras di atas surface gelap (#BA1A1A hanya ≈2,9:1).
+      error: errorOnDark,
+      onError: onErrorDark,
+      errorContainer: errorContainerDark,
+      onErrorContainer: onErrorContainerDark,
       surface: darkSurface,
+      surfaceDim: darkSurfaceDim,
+      surfaceBright: darkSurfaceBright,
+      secondaryContainer: darkPrimaryContainer,
+      onSecondaryContainer: onDarkPrimaryContainer,
+      tertiaryContainer: linkContainerDark,
+      onTertiaryContainer: onLinkContainerDark,
+      primaryFixed: primaryFixed,
+      primaryFixedDim: primaryFixedDim,
+      onPrimaryFixed: onPrimaryFixed,
+      onPrimaryFixedVariant: onPrimaryFixed,
+      secondaryFixed: secondaryFixed,
+      secondaryFixedDim: secondaryFixedDim,
+      onSecondaryFixed: onSecondaryFixed,
+      onSecondaryFixedVariant: onSecondaryFixed,
+      tertiaryFixed: tertiaryFixed,
+      tertiaryFixedDim: tertiaryFixedDim,
+      onTertiaryFixed: onTertiaryFixed,
+      onTertiaryFixedVariant: onTertiaryFixed,
       onSurface: darkTextPrimary,
       onSurfaceVariant: darkTextSecondary,
       outline: darkOutline,
@@ -740,6 +868,53 @@ class AppTheme {
   }
 
   /// Warna pelengkap label status.
+  // ── HELPER SADAR TEMA (memerlukan BuildContext) ────────────────────────
+  /// Warna sukses yang kontras di tema aktif — mode gelap memakai
+  /// [successOnDark] karena [success] hanya lolos WCAG di latar terang.
+  static Color successOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? successOnDark : success;
+
+  /// Warna peringatan yang kontras di tema aktif (lihat [successOf]).
+  static Color warningOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? warningOnDark : warning;
+
+  /// Warna error yang kontras di tema aktif (mengikuti `colorScheme.error`,
+  /// yang di mode gelap bernilai [errorOnDark]).
+  static Color errorOf(BuildContext context) =>
+      Theme.of(context).colorScheme.error;
+
+  /// Warna tautan yang kontras di tema aktif — gelap memakai biru terang.
+  static Color linkOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? darkPrimary : linkBlue;
+
+  /// [statusColor] sadar tema: warna semantik memakai varian yang lolos
+  /// WCAG di tema aktif, warna netral mengikuti `onSurfaceVariant`.
+  static Color statusColorFor(BuildContext context, String status) {
+    final tone = statusColor(status);
+    if (tone == success) return successOf(context);
+    if (tone == warning) return warningOf(context);
+    if (tone == error) return errorOf(context);
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
+  /// [statusContainerColor] sadar tema — container netral mengikuti tema;
+  /// container sukses/peringatan/error tetap chip terang (aman di 2 tema).
+  static Color statusContainerColorFor(BuildContext context, String status) {
+    final container = statusContainerColor(status);
+    if (container == lightSurfaceVariant) {
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
+    }
+    return container;
+  }
+
+  /// [statusTextColor] sadar tema — teks netral mengikuti tema; teks di atas
+  /// container chip terang tetap dipakai apa adanya.
+  static Color statusTextColorFor(BuildContext context, String status) {
+    final color = statusTextColor(status);
+    if (color == textMuted) return Theme.of(context).colorScheme.onSurfaceVariant;
+    return color;
+  }
+
   static Color statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'lunas':

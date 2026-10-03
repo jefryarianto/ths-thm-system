@@ -198,8 +198,11 @@ class _ProfileTab extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.space16),
           if (p.badges.isNotEmpty) ...[
-            const Text('Lencana',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+            Text('Lencana',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: AppTheme.space8),
             Wrap(
                 spacing: 8,
@@ -209,14 +212,20 @@ class _ProfileTab extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                              color: AppTheme.primaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
                               borderRadius: BorderRadius.circular(12)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             Text(b.icon, style: const TextStyle(fontSize: 18)),
                             const SizedBox(width: 6),
                             Text(b.name,
-                                style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer)),
                           ]),
                         ))
                     .toList()),

@@ -185,7 +185,12 @@ class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) { 'disetujui' => Colors.green, 'ditolak' => Colors.red, 'diproses' => Colors.blue, _ => Colors.orange };
+    final color = switch (status) {
+      'disetujui' => AppTheme.successOf(context),
+      'ditolak' => AppTheme.errorOf(context),
+      'diproses' => Theme.of(context).colorScheme.primary,
+      _ => AppTheme.warningOf(context),
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),

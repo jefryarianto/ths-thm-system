@@ -202,16 +202,17 @@ class _DateField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20, color: AppTheme.primary),
+          prefixIcon:
+              Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w600,
           ),
         ),

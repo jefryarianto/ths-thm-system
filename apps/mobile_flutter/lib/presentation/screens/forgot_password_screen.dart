@@ -65,7 +65,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.lock_reset, size: 64, color: AppTheme.primary),
+            Icon(Icons.lock_reset,
+                size: 64, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: AppTheme.space20),
             const Text(
               'Masukkan email terdaftar Anda. Kami akan mengirimkan tautan untuk mereset password.',

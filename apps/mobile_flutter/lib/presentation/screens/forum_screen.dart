@@ -101,16 +101,21 @@ class _ForumScreenState extends State<ForumScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.folder_open, color: AppTheme.primary),
+                child: Icon(Icons.folder_open,
+                    color: Theme.of(context).colorScheme.primary),
               ),
               title: Text(c.nama,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text('${c.threadCount} thread',
-                  style:
-                      TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push<void>(
                   '/forum/c/${c.id}?name=${Uri.encodeComponent(c.nama)}'),

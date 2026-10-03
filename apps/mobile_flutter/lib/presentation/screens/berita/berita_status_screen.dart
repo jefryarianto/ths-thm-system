@@ -42,10 +42,11 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
     }
   }
 
-  Color _statusColor(String status) {
-    if (status == 'approved') return Colors.green;
-    if (status == 'rejected') return Colors.red;
-    return Colors.orange;
+  /// Warna status sadar tema — varian gelap lolos WCAG di atas surface gelap.
+  Color _statusColor(BuildContext context, String status) {
+    if (status == 'approved') return AppTheme.successOf(context);
+    if (status == 'rejected') return AppTheme.errorOf(context);
+    return AppTheme.warningOf(context);
   }
 
   String _statusLabel(String status) {
@@ -85,7 +86,8 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                        Icon(Icons.error_outline,
+                            size: 40, color: Theme.of(context).colorScheme.error),
                         const SizedBox(height: AppTheme.space8),
                         Text('Gagal memuat pengajuan: $_error', textAlign: TextAlign.center),
                         const SizedBox(height: AppTheme.space16),
@@ -121,7 +123,8 @@ class _BeritaStatusScreenState extends State<BeritaStatusScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Status: ${_statusLabel(status)}',
-                                    style: TextStyle(color: _statusColor(status)),
+                                    style: TextStyle(
+                                        color: _statusColor(context, status)),
                                   ),
                                   Text('Diajukan: ${_formatDate(s['submittedAt'])}'),
                                   if (s['completedAt'] != null)

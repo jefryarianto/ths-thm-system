@@ -445,7 +445,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   Widget _modeSelector() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
@@ -471,7 +471,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: active ? color : Colors.grey.shade100,
+            color: active
+                ? color
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -479,14 +481,18 @@ class _QrScanScreenState extends State<QrScanScreen> {
             children: [
               Icon(icon,
                   size: 16,
-                  color: active ? Colors.white : Colors.grey.shade600),
+                  color: active
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: AppTheme.space4),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : Colors.grey.shade600,
+                  color: active
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -498,7 +504,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   Widget _kegiatanPicker() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: _loadingKegiatan
           ? const Center(
@@ -512,7 +518,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   padding: const EdgeInsets.all(AppTheme.space8),
                   child: Text(
                     'Tidak ada kegiatan aktif. Scan dibatasi verifikasi.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 )
               : DropdownButtonFormField<String>(
@@ -582,6 +591,11 @@ class _QrScanScreenState extends State<QrScanScreen> {
   Widget _resultCard() {
     final r = _result!;
     final color = r.success ? AppTheme.success : AppTheme.danger;
+    // Aksen (ikon & teks) memakai varian yang kontras di tema aktif; warna
+    // solid di atas hanya dipakai untuk tint latar & border kartu.
+    final accent = r.success
+        ? AppTheme.successOf(context)
+        : Theme.of(context).colorScheme.error;
     return Card(
       margin: const EdgeInsets.all(AppTheme.space12),
       color: color.withValues(alpha: 0.06),
@@ -597,7 +611,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             Row(
               children: [
                 Icon(r.success ? Icons.check_circle : Icons.cancel,
-                    color: color),
+                    color: accent),
                 const SizedBox(width: AppTheme.space8),
                 Expanded(
                   child: Text(
@@ -605,7 +619,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: color,
+                      color: accent,
                     ),
                   ),
                 ),
@@ -626,7 +640,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 r.detail,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade700,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.45,
                 ),
               ),
@@ -641,7 +655,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
       return Center(
         child: Text(
           'Belum ada riwayat scan',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
     }
@@ -659,9 +675,11 @@ class _QrScanScreenState extends State<QrScanScreen> {
               ),
               TextButton(
                 onPressed: _clearHistory,
-                child: const Text(
+                child: Text(
                   'Hapus Riwayat',
-                  style: TextStyle(fontSize: 12, color: AppTheme.danger),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
@@ -680,7 +698,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 dense: true,
                 leading: Icon(
                   ok ? Icons.check_circle_outline : Icons.cancel_outlined,
-                  color: ok ? AppTheme.success : AppTheme.danger,
+                  color: ok
+                      ? AppTheme.successOf(context)
+                      : Theme.of(context).colorScheme.error,
                 ),
                 title: Text(h.result,
                     style: const TextStyle(
@@ -689,7 +709,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   '${h.detail}\n${Formatters.relative(h.timestamp)}',
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color:
+                          Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               );
             },

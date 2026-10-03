@@ -35,9 +35,10 @@ class DueItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusColor =
-        _isPaid ? AppTheme.success : AppTheme.statusColor(due.status);
-    final badgeColor = _isPaid ? AppTheme.successDark : statusColor;
+    // Warna ikon sadar tema — varian gelap lolos WCAG di atas surface gelap.
+    final statusColor = _isPaid
+        ? AppTheme.successOf(context)
+        : AppTheme.statusColorFor(context, due.status);
     final paidDate = due.tanggalBayar == null
         ? '-'
         : Formatters.dateLong(due.tanggalBayar);
@@ -93,9 +94,12 @@ class DueItemCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _StatusBadge(label: _badgeLabel, color: badgeColor),
+                  _StatusBadge(
+                      label: _badgeLabel,
+                      status: _isPaid ? 'lunas' : due.status),
                   const SizedBox(height: AppTheme.space8),
-                  const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                  Icon(Icons.chevron_right,
+                      color: theme.colorScheme.outline),
                 ],
               ),
             ],
@@ -124,17 +128,24 @@ class DueItemCard extends StatelessWidget {
 
 /// Lencana (badge) kecil — teks hijau sukses kontras ≥ 4.5:1 di atas putih.
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label, required this.color});
+  const _StatusBadge({required this.label, required this.status});
 
   final String label;
-  final Color color;
+
+  /// Status mentah (mis. `lunas`, `menunggu_verifikasi`) — dipakai untuk
+  /// mengambil pasangan container/teks status yang kontras di tema aktif.
+  final String status;
 
   @override
   Widget build(BuildContext context) {
+    // Pasangan container + on-container (bukan tint 12%) supaya teks badge
+    // tetap ≥ 4.5:1 di tema terang maupun gelap.
+    final bg = AppTheme.statusContainerColorFor(context, status);
+    final fg = AppTheme.statusTextColorFor(context, status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bg,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -142,7 +153,7 @@ class _StatusBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: color,
+          color: fg,
         ),
       ),
     );

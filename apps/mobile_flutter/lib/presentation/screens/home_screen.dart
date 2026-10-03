@@ -74,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             for (final item in items)
               ListTile(
-                leading: Icon(item.icon, color: AppTheme.primary),
+                leading: Icon(item.icon,
+                    color: Theme.of(sheetContext).colorScheme.primary),
                 title: Text(item.label,
                     style: const TextStyle(fontWeight: FontWeight.w600)),
                 trailing: const Icon(Icons.chevron_right, size: 20),
@@ -212,12 +213,15 @@ class _KtaSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Row(children: [
+            Row(children: [
               Icon(Icons.credit_card_outlined,
-                  size: 18, color: AppTheme.primary),
-              SizedBox(width: 6),
+                  size: 18, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 6),
               Text('Kartu Anggota (KTA)',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface)),
             ]),
             TextButton(
               onPressed: () => context.push<void>('/kta'),
@@ -231,12 +235,15 @@ class _KtaSection extends StatelessWidget {
               return const AppLoadingSpinner();
             }
             if (state is! MemberLoaded) {
-              return const Card(
+              return Card(
                 child: Padding(
-                  padding: EdgeInsets.all(AppTheme.space24),
+                  padding: const EdgeInsets.all(AppTheme.space24),
                   child: Center(
                     child: Text('Data kartu belum tersedia.',
-                        style: TextStyle(color: AppTheme.textMuted)),
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant)),
                   ),
                 ),
               );
@@ -286,9 +293,8 @@ class _KtaSectionCard extends StatelessWidget {
 class _GamificationTip extends StatelessWidget {
   // Bronzespalette — dipakai kartu "Level: Bronze" ala tampilan beranda.
   // Warna bronze dipertahankan untuk representasi visual level (fungsi khusus).
-  static const Color _bronze = Color(0xFF8C6A3E);
-  static const Color _bronzeLight = Color(0xFFD7B98C);
-  static const Color _bronzeBg = Color(0xFFFBF4E8);
+  static const Color _bronze = AppTheme.levelBronze;
+  static const Color _bronzeLight = AppTheme.levelBronzeLight;
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +315,7 @@ class _GamificationTip extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(AppTheme.space16),
               decoration: BoxDecoration(
-                color: _bronzeBg,
+                color: AppTheme.levelBg(Theme.of(context).brightness),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                     color: _bronze.withValues(alpha: 0.28), width: 1.2),
@@ -344,14 +350,16 @@ class _GamificationTip extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                       Text('Level: ${p.level.name}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.navy)),
+                              color: Theme.of(context).colorScheme.onSurface)),
                       const SizedBox(height: 2),
                       Text('${p.points} poin • ${p.level.name} member',
-                          style: const TextStyle(
-                              fontSize: 13, color: AppTheme.textMuted)),
+                          style: TextStyle(
+                              fontSize: 13,
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant)),
                       const SizedBox(height: AppTheme.space8),
                       // Progress sederhana menuju level berikutnya (bronze→silver)
                       ClipRRect(
@@ -361,7 +369,8 @@ class _GamificationTip extends StatelessWidget {
                               ? 1
                               : (p.points / 500).clamp(0.0, 1.0),
                           minHeight: 6,
-                          backgroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.surfaceContainerHighest,
                           valueColor: const AlwaysStoppedAnimation(_bronze),
                         ),
                       ),

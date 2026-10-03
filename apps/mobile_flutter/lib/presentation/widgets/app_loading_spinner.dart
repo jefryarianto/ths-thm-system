@@ -45,7 +45,7 @@ class AppLoadingSpinner extends StatelessWidget {
         ? _DualRings(
             size: size,
             ringWidth: strokeWidth,
-            primaryColor: color ?? AppTheme.primary,
+            primaryColor: color ?? Theme.of(context).colorScheme.primary,
             accentColor: accent,
           )
         : _LogoSpinner(
@@ -154,7 +154,7 @@ class _LogoSpinnerState extends State<_LogoSpinner>
             child: CustomPaint(
               size: Size(widget.size, widget.size),
               painter: _ArcPainter(
-                color: AppTheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 strokeWidth: widget.ringWidth,
                 startAngle: -pi / 2, // atas
                 sweepAngle: sweep, // ~270°

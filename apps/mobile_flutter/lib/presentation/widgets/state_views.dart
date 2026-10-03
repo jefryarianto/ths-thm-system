@@ -62,7 +62,6 @@ class EmptyStateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Center(
       child: Padding(
@@ -73,9 +72,7 @@ class EmptyStateView extends StatelessWidget {
             _StateIcon(
               icon: icon,
               color: theme.colorScheme.onSurfaceVariant,
-              containerColor: isDark
-                  ? theme.colorScheme.surfaceContainerHighest
-                  : AppTheme.lightSurfaceVariant,
+              containerColor: theme.colorScheme.surfaceContainerHighest,
             ),
             const SizedBox(height: AppTheme.space20),
             Text(

@@ -71,9 +71,12 @@ class _AssessmentScoreBodyState extends State<AssessmentScoreBody> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: AppTheme.space12),
-            Text(message, style: const TextStyle(color: Colors.grey)),
+            Text(message,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: AppTheme.space12),
             FilledButton.icon(
               onPressed: () {
@@ -139,7 +142,7 @@ class _ScoringReadyView extends StatelessWidget {
           }
           final adjustedIndex = index - extraHeaderCount;
           if (adjustedIndex == participants.length) {
-            return _buildSessionInfo();
+            return _buildSessionInfo(context);
           }
           final participant = participants[adjustedIndex];
           final isPendingSync = pendingCandidateIds.contains(participant.id);
@@ -154,11 +157,13 @@ class _ScoringReadyView extends StatelessWidget {
       padding: const EdgeInsets.all(AppTheme.space12),
       decoration: BoxDecoration(
         color: isOfflineMode
-            ? AppTheme.warning.withValues(alpha: 0.15)
-            : AppTheme.primaryContainer.withValues(alpha: 0.6),
+            ? AppTheme.warningOf(context).withValues(alpha: 0.15)
+            : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isOfflineMode ? AppTheme.warning : AppTheme.primary,
+          color: isOfflineMode
+              ? AppTheme.warningOf(context)
+              : Theme.of(context).colorScheme.primary,
           width: 1,
         ),
       ),
@@ -166,7 +171,9 @@ class _ScoringReadyView extends StatelessWidget {
         children: [
           Icon(
             isOfflineMode ? Icons.cloud_off : Icons.cloud_upload_outlined,
-            color: isOfflineMode ? AppTheme.warning : AppTheme.primary,
+            color: isOfflineMode
+                ? AppTheme.warningOf(context)
+                : Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: AppTheme.space12),
           Expanded(
@@ -181,7 +188,9 @@ class _ScoringReadyView extends StatelessWidget {
                   pendingOutboxCount > 0
                       ? '$pendingOutboxCount nilai tersimpan lokal dan siap disinkronkan'
                       : 'Data diambil dari cache lokal',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -200,13 +209,13 @@ class _ScoringReadyView extends StatelessWidget {
     );
   }
 
-  Widget _buildSessionInfo() {
+  Widget _buildSessionInfo(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      color: AppTheme.primaryContainer.withValues(alpha: 0.4),
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
       child: ListTile(
-        leading: const Icon(
-            Icons.calendar_today_outlined, color: AppTheme.primary),
+        leading: Icon(Icons.calendar_today_outlined,
+            color: Theme.of(context).colorScheme.primary),
         title: const Text('Sesi Ujian Praktek'),
         subtitle: Text(
           ujianPraktekId != null
@@ -233,15 +242,15 @@ class _ScoringReadyView extends StatelessWidget {
               ),
             ),
             if (isPendingSync)
-              const Positioned(
+              Positioned(
                 right: 0,
                 bottom: 0,
                 child: CircleAvatar(
                   radius: 6,
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   child: CircleAvatar(
                     radius: 5,
-                    backgroundColor: AppTheme.warning,
+                    backgroundColor: AppTheme.warningOf(context),
                   ),
                 ),
               ),
@@ -254,15 +263,15 @@ class _ScoringReadyView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.warning.withValues(alpha: 0.2),
+                  color: AppTheme.warningOf(context).withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   'Offline Draft',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.warning,
+                    color: AppTheme.warningOf(context),
                   ),
                 ),
               ),
@@ -274,7 +283,9 @@ class _ScoringReadyView extends StatelessWidget {
         ),
         trailing: Icon(
           Icons.edit_note_outlined,
-          color: hasSession ? AppTheme.primary : Colors.grey,
+          color: hasSession
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outline,
         ),
         enabled: hasSession,
         onTap: hasSession ? () => _openScoreDialog(context, p) : null,

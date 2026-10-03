@@ -226,10 +226,10 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
           if (_lastScannedAt != null)
             _infoRow('Terakhir Dipindai', Formatters.relative(_lastScannedAt!)),
           if (_firstScanned)
-            const Text(
+            Text(
               'Pemindaian pertama — kartu baru saja diverifikasi.',
               style: TextStyle(
-                color: AppTheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -250,6 +250,8 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
   // ── Invalid Card ────────────────────────────────────────────────────
 
   Widget _buildInvalidCard() {
+    // Aksen error sadar tema — mode gelap memakai varian terang (#FFB4AB).
+    final errorColor = Theme.of(context).colorScheme.error;
     return ListView(
       padding: const EdgeInsets.all(AppTheme.space20),
       children: [
@@ -263,22 +265,22 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
         Container(
           padding: const EdgeInsets.all(AppTheme.space16),
           decoration: BoxDecoration(
-            color: AppTheme.danger.withValues(alpha: 0.06),
+            color: errorColor.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.danger.withValues(alpha: 0.2)),
+            border: Border.all(color: errorColor.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTheme.danger, size: 18),
-                  SizedBox(width: AppTheme.space8),
+                  Icon(Icons.info_outline, color: errorColor, size: 18),
+                  const SizedBox(width: AppTheme.space8),
                   Text(
                     'Peringatan',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.danger,
+                      color: errorColor,
                       fontSize: 14,
                     ),
                   ),
@@ -317,12 +319,14 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
       padding: const EdgeInsets.all(AppTheme.space20),
       children: [
         const SizedBox(height: 40),
-        const Icon(Icons.error_outline, color: AppTheme.danger, size: 56),
+        Icon(Icons.error_outline,
+            color: Theme.of(context).colorScheme.error, size: 56),
         const SizedBox(height: AppTheme.space16),
         Text(
           _error!,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 15, color: AppTheme.textSlate),
+          style: TextStyle(
+              fontSize: 15, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: AppTheme.space20),
         FilledButton.icon(
@@ -408,21 +412,22 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.warning.withValues(alpha: 0.08),
+        color: AppTheme.warningOf(context).withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.25)),
+        border: Border.all(
+            color: AppTheme.warningOf(context).withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: AppTheme.warning, size: 20),
+          Icon(Icons.warning_amber_rounded,
+              color: AppTheme.warningOf(context), size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.warning,
+                color: AppTheme.warningOf(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -437,14 +442,14 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
   Widget _sectionTitle(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppTheme.navy),
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: AppTheme.space8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: AppTheme.navy,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -481,9 +486,9 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
           width: 130,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppTheme.textMuted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -492,9 +497,9 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: AppTheme.textSlate,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),

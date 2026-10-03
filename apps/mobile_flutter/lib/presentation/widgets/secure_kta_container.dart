@@ -185,8 +185,9 @@ class _SecureKtaContainerState extends State<SecureKtaContainer> {
   // ── Banner verifikasi di atas komponen KTA ───────────────────────────
   Widget _buildClockBanner(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final statusColor =
-        _protectionReady ? AppTheme.success : AppTheme.textMuted;
+    final statusColor = _protectionReady
+        ? AppTheme.successOf(context)
+        : colorScheme.onSurfaceVariant;
     final statusText = _protectionReady
         ? 'Screenshot & rekaman layar diblokir (FLAG_SECURE)'
         : 'Kode akurat pada waktu verifikasi — anti foto galeri';
@@ -197,7 +198,8 @@ class _SecureKtaContainerState extends State<SecureKtaContainer> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         boxShadow: AppTheme.softShadow(),
-        border: Border.all(color: AppTheme.textMuted.withValues(alpha: 0.18)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.45)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -275,7 +277,7 @@ class _LiveBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppTheme.success.withValues(alpha: 0.14),
+        color: AppTheme.successContainer,
         borderRadius: BorderRadius.circular(6),
       ),
       child: const Text(
@@ -283,7 +285,7 @@ class _LiveBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
-          color: AppTheme.successDark,
+          color: AppTheme.onSuccessContainer,
           letterSpacing: 0.8,
         ),
       ),

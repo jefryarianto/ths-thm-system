@@ -309,12 +309,15 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AppTheme.danger),
+                    Icon(Icons.error_outline,
+                        size: 48, color: Theme.of(context).colorScheme.error),
                     const SizedBox(height: AppTheme.space12),
                     Text(state.message,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey)),
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant)),
                     const SizedBox(height: AppTheme.space12),
                     FilledButton.icon(
                       onPressed: _refresh,
@@ -336,8 +339,8 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.notes_outlined,
-                        size: 56, color: AppTheme.primary),
+                    Icon(Icons.notes_outlined,
+                        size: 56, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(height: AppTheme.space12),
                     const Text(
                       'Belum ada item penilaian.',
@@ -349,7 +352,6 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                       'Tambahkan komponen yang dinilai, misalnya '
                       '"Kesesuaian Isi" atau "Penyajian".',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: AppTheme.space16),
                     FilledButton.icon(
@@ -386,12 +388,15 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.rule_outlined,
-                          size: 20, color: AppTheme.primary),
+                      child: Icon(Icons.rule_outlined,
+                          size: 20, color: Theme.of(context).colorScheme.primary),
                     ),
                     title: Text(item.namaItem,
                         style: const TextStyle(
@@ -410,8 +415,9 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                         ),
                         IconButton(
                           onPressed: () => _confirmDelete(item),
-                          icon: const Icon(Icons.delete_outline,
-                              size: 20, color: AppTheme.danger),
+                          icon: Icon(Icons.delete_outline,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.error),
                           tooltip: 'Hapus',
                         ),
                       ],

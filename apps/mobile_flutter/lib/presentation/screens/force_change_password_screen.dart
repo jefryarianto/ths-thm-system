@@ -77,8 +77,8 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.shield_outlined,
-                size: 64, color: AppTheme.warning),
+            Icon(Icons.shield_outlined,
+                size: 64, color: AppTheme.warningOf(context)),
             const SizedBox(height: AppTheme.space16),
             const Text(
               'Untuk keamanan, Anda harus mengubah password sebelum melanjutkan.',

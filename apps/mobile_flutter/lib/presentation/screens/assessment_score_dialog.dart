@@ -101,7 +101,6 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
                 'Isi skor item yang ingin dinilai. Skor minimal 0, '
                 'maksimal sesuai definisi item. Item yang dikosongkan '
                 'tidak dikirim.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: AppTheme.space8),
               DropdownButtonFormField<String>(
@@ -160,7 +159,9 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
         const SizedBox(width: 10),
         Text(
           '$filled/$total terisi',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -169,10 +170,12 @@ class _AssessmentScoreDialogState extends State<AssessmentScoreDialog> {
   List<Widget> _buildItemScoreFields() {
     final items = _itemsOfSelected;
     if (items.isEmpty) {
-      return const <Widget>[
+      return <Widget>[
         Text(
           'Belum ada item penilaian pada aspek ini.',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ];
     }

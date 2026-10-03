@@ -27,7 +27,13 @@ class AppUpdateBanner extends StatelessWidget {
         final downloading = state.status == AppUpdateStatus.downloading;
         final info = state.info;
 
-        final accent = force ? AppTheme.danger : AppTheme.primaryDark;
+        // Aksen teks/ikon/garis memakai varian yang kontras di tema aktif
+        // (primaryDark hanya ≈1,4:1 di atas surface gelap); aksen padat
+        // untuk latar tombol tetap warna solid agar teks putih terbaca.
+        final accent = force
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.primary;
+        final accentSolid = force ? AppTheme.danger : AppTheme.primaryDark;
         final background = (force ? AppTheme.danger : AppTheme.primary)
             .withValues(alpha: 0.08);
         final icon = force
@@ -76,8 +82,9 @@ class AppUpdateBanner extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     info.changelog.trim(),
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.textSlate),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                 ),
               if (downloading)
@@ -99,7 +106,7 @@ class AppUpdateBanner extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: accent,
+                        backgroundColor: accentSolid,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
                         padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -161,7 +168,7 @@ class ForceUpdateOverlay extends StatelessWidget {
                         Icon(
                           downloading ? Icons.get_app : Icons.system_update_alt,
                           size: 64,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(height: AppTheme.space16),
                         Text(
@@ -169,10 +176,10 @@ class ForceUpdateOverlay extends StatelessWidget {
                               ? 'Mengunduh ${info?.versionName ?? 'pembaruan'}…'
                               : 'Update Wajib',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.navy,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: AppTheme.space8),
@@ -183,9 +190,9 @@ class ForceUpdateOverlay extends StatelessWidget {
                               : 'Anda harus memperbarui aplikasi THS-THM ke versi '
                                   'terbaru untuk melanjutkan.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppTheme.textSlate,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         if (!downloading &&
@@ -196,9 +203,11 @@ class ForceUpdateOverlay extends StatelessWidget {
                             child: Text(
                               info.changelog.trim(),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.textMuted,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ),

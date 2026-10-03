@@ -119,7 +119,7 @@ class _DuesScreenState extends State<DuesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Detail Iuran ${due.periode}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                  style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.space12),
               _row(context, 'Status', due.status),
               _row(context, 'Jumlah', Formatters.rupiah(due.jumlah)),
@@ -176,9 +176,9 @@ class _SummaryBar extends StatelessWidget {
       margin: const EdgeInsets.all(AppTheme.space12),
       padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
-        ),
+        // Gradien brand sadar tema — putih lolos WCAG di kedua ujung gradien
+        // (versi lama berakhir di primaryContainer: putih hanya 1,26:1).
+        gradient: AppTheme.statGradient(theme.brightness),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -196,14 +196,14 @@ class _SummaryBar extends StatelessWidget {
     return Column(
       children: [
         Text(value,
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onPrimary)),
+                color: AppTheme.onStatGradient)),
         Text(label,
             style: TextStyle(
                 fontSize: 11,
-                color: theme.colorScheme.onPrimary.withValues(alpha: 0.8))),
+                color: AppTheme.onStatGradient.withValues(alpha: 0.85))),
       ],
     );
   }

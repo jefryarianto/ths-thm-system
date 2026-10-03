@@ -145,9 +145,11 @@ class _KtaCard extends StatelessWidget {
         Wrap(
           spacing: 8,
           children: [
-            if (status.isNotEmpty) _chip(status, AppTheme.statusColor(status)),
+            if (status.isNotEmpty)
+              _chip(status, AppTheme.statusColorFor(context, status)),
             if (validasi.isNotEmpty)
-              _chip('Validasi: $validasi', AppTheme.statusColor(validasi)),
+              _chip('Validasi: $validasi',
+                  AppTheme.statusColorFor(context, validasi)),
           ],
         ),
         const SizedBox(height: AppTheme.space20),
@@ -196,7 +198,7 @@ class _KtaCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         dense: true,
-        leading: Icon(icon, color: AppTheme.primary, size: 22),
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
         title: Text(label,
             style: TextStyle(
                 fontSize: 12,

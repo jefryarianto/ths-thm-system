@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 /// Kerangka utama aplikasi setelah login — bottom navigation 5 tab
-/// (Beranda, Iuran, Scan QR, Dokumen, Profil).
+/// (Beranda, Iuran, Scan QR, Forum, Profil).
 class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 

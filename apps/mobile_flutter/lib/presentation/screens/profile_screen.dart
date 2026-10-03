@@ -56,13 +56,14 @@ class ProfileScreen extends StatelessWidget {
               Center(
                 child: CircleAvatar(
                   radius: 48,
-                  backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                   backgroundImage: member.fotoUrl.isNotEmpty
                       ? NetworkImage(member.fotoUrl)
                       : null,
                   child: member.fotoUrl.isEmpty
-                      ? const Icon(Icons.person,
-                          size: 56, color: AppTheme.primary)
+                      ? Icon(Icons.person,
+                          size: 56, color: Theme.of(context).colorScheme.primary)
                       : null,
                 ),
               ),
@@ -90,7 +91,8 @@ class ProfileScreen extends StatelessWidget {
               Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
@@ -98,8 +100,8 @@ class ProfileScreen extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     child: Text(
                       member.status.isEmpty ? 'Anggota' : member.status,
-                      style: const TextStyle(
-                        color: AppTheme.primary,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -144,11 +146,11 @@ class ProfileScreen extends StatelessWidget {
                 ),
               const SizedBox(height: AppTheme.space24),
               OutlinedButton.icon(
-                icon: const Icon(Icons.logout, color: AppTheme.danger),
-                label: const Text('Keluar',
-                    style: TextStyle(color: AppTheme.danger)),
+                icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+                label: Text('Keluar',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.danger),
+                  side: BorderSide(color: Theme.of(context).colorScheme.error),
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: () => _logout(context),
@@ -165,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon, color: AppTheme.primary),
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
         title: Text(label,
             style: TextStyle(
                 fontSize: 12,

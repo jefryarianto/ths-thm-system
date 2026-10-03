@@ -69,13 +69,14 @@ class _AgendaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () => context.push<void>('/kegiatan/${kegiatan.id}'),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: AppTheme.lightSurface,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(14),
           boxShadow: AppTheme.softShadow(),
         ),
@@ -114,24 +115,25 @@ class _AgendaCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: AppTheme.textMuted),
+                        Icon(Icons.calendar_today, size: 14, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppTheme.space4),
                         Text(kegiatan.nama,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 height: 1.25,
-                                color: AppTheme.navy)),
+                                color: theme.colorScheme.onSurface)),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(kegiatan.ringkas,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppTheme.textMuted)),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),

@@ -94,8 +94,8 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
           builder: (ctx, state) {
             final busy = state is ClaimSubmitting;
             return ListView(padding: const EdgeInsets.all(AppTheme.space20), children: [
-              const Icon(Icons.verified_user,
-                  size: 56, color: AppTheme.primary),
+              Icon(Icons.verified_user,
+                  size: 56, color: Theme.of(ctx).colorScheme.primary),
               const SizedBox(height: AppTheme.space12),
               const Text('Klaim Akun Anggota',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -190,7 +190,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
                     style: TextStyle(
                         color: _tanggalLahir != null
                             ? null
-                            : Colors.grey.shade500)))),
+                            : Theme.of(context).colorScheme.onSurfaceVariant)))),
         const SizedBox(height: 14),
         TextFormField(
             controller: _alamatCtrl,

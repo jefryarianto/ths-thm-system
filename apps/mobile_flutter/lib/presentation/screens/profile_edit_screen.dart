@@ -270,8 +270,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     style: TextStyle(
                         fontSize: 15,
                         color: _tanggalLahir != null
-                            ? Colors.black87
-                            : Colors.grey.shade600),
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -285,22 +285,25 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 margin: const EdgeInsets.only(top: 10),
                 padding: const EdgeInsets.all(AppTheme.space12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  color:
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppTheme.primary.withValues(alpha: 0.25)),
+                      color:
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.35)),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, size: 18, color: AppTheme.primary),
-                    SizedBox(width: AppTheme.space8),
+                    Icon(Icons.info_outline,
+                        size: 18, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: AppTheme.space8),
                     Expanded(
                       child: Text(
                           'Email hanya dapat dibaca. Hubungi admin untuk perubahan email.',
                           style: TextStyle(
                               fontSize: 12,
-                              color: AppTheme.primaryDark,
+                              color: Theme.of(context).colorScheme.primary,
                               height: 1.4)),
                     ),
                   ],
@@ -344,11 +347,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             Stack(alignment: Alignment.bottomRight, children: [
               CircleAvatar(
                 radius: 56,
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+                backgroundColor:
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                 backgroundImage: backgroundImage,
                 child: backgroundImage == null
-                    ? const Icon(Icons.person,
-                        size: 64, color: AppTheme.primary)
+                    ? Icon(Icons.person,
+                        size: 64, color: Theme.of(context).colorScheme.primary)
                     : null,
               ),
               if (_photoUploading)
@@ -378,7 +382,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: _photoUploading ? Colors.grey : AppTheme.primary)),
+                      color: _photoUploading
+                          ? Theme.of(context).colorScheme.outline
+                          : Theme.of(context).colorScheme.primary)),
             ),
           ]),
         );
@@ -406,7 +412,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         labelText: label,
         border: const OutlineInputBorder(),
         filled: !enabled,
-        fillColor: enabled ? null : Colors.grey.shade100,
+        fillColor: enabled ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
     );
   }

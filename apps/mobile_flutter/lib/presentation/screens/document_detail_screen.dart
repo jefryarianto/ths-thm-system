@@ -143,7 +143,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: AppTheme.space12),
             Text(_error ?? 'Dokumen tidak ditemukan'),
             const SizedBox(height: AppTheme.space16),
@@ -154,7 +155,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
     final doc = _doc!;
     final status = doc.status;
-    final color = AppTheme.statusColor(status);
+    final color = AppTheme.statusColorFor(context, status);
     return ListView(
       padding: const EdgeInsets.all(AppTheme.space16),
       children: [
@@ -173,7 +174,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 Row(
                   children: [
                     Icon(Icons.flag_outlined,
-                        size: 16, color: Colors.grey.shade600),
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: AppTheme.space8),
                     const Expanded(child: Text('Status')),
                     Container(
@@ -282,7 +284,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           SizedBox(
             width: 130,
             child: Text(label,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           Expanded(
             child: Text(value,
