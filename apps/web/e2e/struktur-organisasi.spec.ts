@@ -207,20 +207,23 @@ test.describe('Struktur Organisasi (Public)', () => {
   });
 
   test('shows empty state instructions initially', async ({ page }) => {
-    // Should show instruction text when no data is loaded
-    const emptyState = page.getByText(/Pilih.*Level/i);
-    const hasEmptyState = await emptyState.isVisible().catch(() => false);
-    // Either empty state or already loaded data is acceptable
-    expect(hasEmptyState || true).toBeTruthy();
+    // No level in the URL => nothing loaded yet => instruction copy must render.
+    await expect(page.getByText(/Pilih level dan unit organisasi/i)).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('loads distrik options in dropdown', async ({ page }) => {
-    // Wait for distriks to load
-    await page.waitForTimeout(2000);
-    const distrikOption = page.getByText('Keuskupan Larantuka');
-    const isVisible = await distrikOption.isVisible().catch(() => false);
-    // Dropdown may be hidden until level is selected
-    expect(isVisible || true).toBeTruthy();
+    // Options of a closed <select> have no box, so assert on option contents.
+    const distrikSelect = page.locator('select[aria-label="Distrik"]');
+    await expect(
+      distrikSelect.locator('option', { hasText: 'Keuskupan Larantuka' }),
+    ).toHaveCount(1, { timeout: 10000 });
+    await expect(distrikSelect.locator('option', { hasText: 'Keuskupan Denpasar' })).toHaveCount(
+      1,
+    );
+    // "Semua Distrik" placeholder + the 2 mocked distriks.
+    await expect(distrikSelect.locator('option')).toHaveCount(3);
   });
 
   test('selecting Distrik level shows distrik dropdown', async ({ page }) => {
@@ -284,18 +287,13 @@ test.describe('Struktur Organisasi (Public)', () => {
 
     // Click Tampilkan
     await page.getByRole('button', { name: /Tampilkan/i }).click();
-    await page.waitForTimeout(3000);
 
-    // Should show unit info or pengurus names
-    const hasContent = await page
-      .getByText('Keuskupan Larantuka')
-      .isVisible()
-      .catch(() => false);
-    const hasPengurus = await page
-      .getByText('Yohanes Palmeo')
-      .isVisible()
-      .catch(() => false);
-    expect(hasContent || hasPengurus || true).toBeTruthy();
+    // Unit info card must render for the selected distrik...
+    await expect(page.getByRole('heading', { name: /KEPENGURUSAN DISTRIK/i })).toBeVisible({
+      timeout: 10000,
+    });
+    // ...and the mocked pengurus must show up in the org chart.
+    await expect(page.getByText('Yohanes Palmeo')).toBeVisible({ timeout: 10000 });
   });
 
   test('clicking Reset clears selections', async ({ page }) => {
@@ -320,11 +318,17 @@ test.describe('Struktur Organisasi (Public)', () => {
   });
 
   test('copy link button works', async ({ page }) => {
-    // The copy link button should be present
-    const copyBtn = page.getByRole('button', { name: /Salin Link|Copy/i });
-    const hasCopyBtn = await copyBtn.isVisible().catch(() => false);
-    // Copy button may only appear after data is loaded
-    expect(hasCopyBtn || true).toBeTruthy();
+    // The copy button only exists inside the unit info card, so load data first.
+    await page.locator('select[aria-label="Level"]').selectOption('distrik');
+    await page.locator('select[aria-label="Distrik"]').selectOption('distrik-1');
+    await page.getByRole('button', { name: /Tampilkan/i }).click();
+
+    const copyBtn = page.locator('button[title="Salin Link"]');
+    await expect(copyBtn).toBeVisible({ timeout: 10000 });
+
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await copyBtn.click();
+    await expect(page.getByText('Link berhasil disalin!')).toBeVisible({ timeout: 5000 });
   });
 
   test('page is responsive - mobile viewport', async ({ page }) => {
@@ -346,10 +350,7 @@ test.describe('Struktur Organisasi (Public)', () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(1000);
 
-    // Footer should contain THS-THM link
-    const footer = page.locator('footer');
-    const hasFooter = await footer.isVisible().catch(() => false);
-    expect(hasFooter || true).toBeTruthy();
+    await expect(page.locator('footer')).toBeVisible({ timeout: 10000 });
   });
 });
 

@@ -20,6 +20,14 @@
       {
         "selector": "MemberExpression[object.type=\"MemberExpression\"][object.property.name=\"data\"][property.name=\"data\"]",
         "message": "Gunakan unwrap() dari lib/api-client, jangan akses .data.data secara manual"
+      },
+      {
+        "selector": "CallExpression[callee.name=\"unwrap\"] > Identifier.arguments[name=\"data\"]",
+        "message": "unwrap() harus menerima response axios utuh, bukan body hasil destructuring { data } — body harus dipassing apa adanya ke unwrap(axiosResponse)"
+      },
+      {
+        "selector": "CallExpression[callee.name=\"unwrap\"] > MemberExpression.arguments[property.name=\"data\"]",
+        "message": "unwrap() harus menerima response axios utuh, bukan response.data (itu sudah membaca body satu kali terlalu banyak)"
       }
     ]
   },

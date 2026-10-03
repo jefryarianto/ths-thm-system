@@ -136,8 +136,10 @@ export default function StrukturOrganisasiContent() {
     if (level === 'nasional' || unitId) {
       apiClient
         .get('/public/struktur/periode', { params: { level, unitId } })
-        .then(({ data }) => {
-          const list = unwrap<PeriodeOption[]>(data) || [];
+        .then((res) => {
+          // unwrap() expects the full axios response ({ data: { data: ... } }),
+          // not the already-extracted body — passing the body would double-read.
+          const list = unwrap<PeriodeOption[]>(res) || [];
           setPeriodes(list);
           const active = list.find((p: PeriodeOption) => p.isActive);
           if (active && !periodeId) setPeriodeId(active.id);
@@ -161,10 +163,11 @@ export default function StrukturOrganisasiContent() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get('/public/struktur/members', {
+      const res = await apiClient.get('/public/struktur/members', {
         params: { level, unitId, periodeId: periodeId || undefined },
       });
-      setStrukturData(unwrap(data));
+      // unwrap() takes the axios response, not its `data` body.
+      setStrukturData(unwrap<StrukturData>(res));
 
       const childRes = await apiClient.get('/public/struktur/children', {
         params: { level, unitId: unitId || 'root' },
@@ -317,6 +320,7 @@ export default function StrukturOrganisasiContent() {
                 Level
               </label>
               <select
+                aria-label="Level"
                 value={level}
                 onChange={(e) => {
                   setLevel(e.target.value as Level);
@@ -338,6 +342,7 @@ export default function StrukturOrganisasiContent() {
                 Distrik
               </label>
               <select
+                aria-label="Distrik"
                 value={distrikId}
                 onChange={(e) => {
                   setDistrikId(e.target.value);
@@ -362,6 +367,7 @@ export default function StrukturOrganisasiContent() {
                   Wilayah
                 </label>
                 <select
+                  aria-label="Wilayah"
                   value={wilayahId}
                   onChange={(e) => {
                     setWilayahId(e.target.value);
@@ -386,6 +392,7 @@ export default function StrukturOrganisasiContent() {
                   Ranting
                 </label>
                 <select
+                  aria-label="Ranting"
                   value={rantingId}
                   onChange={(e) => setRantingId(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
@@ -407,6 +414,7 @@ export default function StrukturOrganisasiContent() {
                   Periode
                 </label>
                 <select
+                  aria-label="Periode"
                   value={periodeId}
                   onChange={(e) => setPeriodeId(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm dark:text-white focus:ring-2 focus:ring-navy-500 focus:outline-none"
