@@ -143,7 +143,7 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    expect(hrefs).toHaveLength(52);
+    expect(hrefs).toHaveLength(54);
   });
 
   it('anggota tidak melihat item adminOnly maupun menu di atas role-nya', () => {
