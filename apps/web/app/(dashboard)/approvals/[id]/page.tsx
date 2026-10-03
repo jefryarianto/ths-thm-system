@@ -324,7 +324,7 @@ export default function ApprovalDetailPage() {
           </h3>
           {approval.levels.length > 0 ? (
             <div className="space-y-3">
-              {approval.levels.map((level, idx) => (
+              {approval.levels.map((level) => (
                 <div
                   key={level.id}
                   className={`px-4 py-3 rounded-xl border ${levelStatusColors[level.status] || 'border-gray-200 dark:border-gray-700'} bg-opacity-50`}

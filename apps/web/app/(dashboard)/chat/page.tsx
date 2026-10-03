@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { MessageSquare, Plus, Send, RefreshCw } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { MessageSquare, RefreshCw } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';

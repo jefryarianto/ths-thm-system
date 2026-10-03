@@ -2,7 +2,7 @@
 
 import { Search } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 interface SearchBarProps {
   search: string;
@@ -10,7 +10,7 @@ interface SearchBarProps {
   onClear?: () => void;
   onReset: () => void;
   placeholder?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   /** Debounce delay in ms. Default 0 (no debounce). Set to e.g. 300 for debounced API search. */
   debounceMs?: number;
   /** Called with the debounced search value (only when debounceMs > 0). */

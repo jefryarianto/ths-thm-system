@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { Plus, Edit3, Trash2, RefreshCw, CheckCircle2, X, CalendarRange } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -126,8 +126,8 @@ export default function PeriodePage() {
       setEditData(null);
       setForm({ nama: '', tglMulai: '', tglSelesai: '', isActive: false });
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menyimpan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyimpan'));
     }
   };
 
@@ -142,8 +142,8 @@ export default function PeriodePage() {
       await apiClient.delete(`/periode/${item.id}`);
       toast('success', 'Periode berhasil dihapus');
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menghapus');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menghapus'));
     }
   };
 
@@ -155,8 +155,8 @@ export default function PeriodePage() {
         `Periode ${item.nama} ${!item.isActive ? 'diaktifkan' : 'dinonaktifkan'} (global)`,
       );
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal update');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal update'));
     }
   };
 
@@ -172,8 +172,8 @@ export default function PeriodePage() {
       toast('success', 'Periode aktif per unit berhasil disimpan');
       setShowUnitModal(false);
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal mengaktifkan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal mengaktifkan'));
     }
   };
 
@@ -187,8 +187,8 @@ export default function PeriodePage() {
       await apiClient.delete(`/periode/active-unit/${level}/${unitId}`);
       toast('success', 'Berhasil dinonaktifkan');
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menonaktifkan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menonaktifkan'));
     }
   };
 

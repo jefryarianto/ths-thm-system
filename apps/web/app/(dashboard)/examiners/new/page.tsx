@@ -4,7 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -46,8 +46,8 @@ export default function NewExaminerPage() {
       });
       toast('success', 'Penguji berhasil ditambahkan — akun dibuat/dipromosikan sebagai penguji');
       router.push('/examiners');
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal menyimpan penguji');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyimpan penguji'));
     }
     setSaving(false);
   };

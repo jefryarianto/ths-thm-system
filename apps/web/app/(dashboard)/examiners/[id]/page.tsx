@@ -17,7 +17,6 @@ import {
   AlertCircle,
   ClipboardList,
   Star,
-  Clock,
 } from 'lucide-react';
 import { formatDate } from '@/components/members/constants';
 

@@ -1,17 +1,9 @@
 'use client';
 
 import { X, MapPin, Calendar, Shield } from 'lucide-react';
+import type { Pengurus } from '@/app/struktur-organisasi/content';
 
-interface PengurusDetail {
-  id: string;
-  nama: string;
-  jabatan: string;
-  fotoPath?: string | null;
-  status?: string;
-  distrik?: string | null;
-  wilayah?: string | null;
-  ranting?: string | null;
-  nasional?: string | null;
+interface PengurusDetail extends Pengurus {
   periode?: string;
 }
 

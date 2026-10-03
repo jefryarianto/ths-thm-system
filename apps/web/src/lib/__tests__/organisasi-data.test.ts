@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   STATUTA_INFO,
-  VISI_MISI_DATA,
   JANJI_PRASETYA_DATA,
   TIGA_PILAR_DATA,
   STRUKTUR_HIERARKI_DATA,

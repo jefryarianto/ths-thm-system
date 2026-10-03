@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { type ReactNode } from 'react';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -58,7 +58,7 @@ export interface CalendarDayProps {
   isOutsideMonth?: boolean;
 
   /** Custom content rendered at the bottom of the cell (only for md/lg) */
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 // ─── Default Event Styles ──────────────────────────────────────
@@ -172,8 +172,6 @@ const SIZE_MAP: Record<
 
 export default function CalendarDay({
   day,
-  year,
-  month,
   variant = 'md',
   events = [],
   holidayName,

@@ -35,23 +35,6 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Pagination from '@/components/ui/pagination';
 
-// ─── Theme Toggle for Preview ─────────────────────────
-
-function ThemeToggle({ theme, onChange }: { theme: string; onChange: () => void }) {
-  return (
-    <button
-      onClick={onChange}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-        theme === 'dark'
-          ? 'bg-gray-700 text-gray-100 border border-gray-600'
-          : 'bg-gray-100 text-gray-800 border border-gray-300'
-      }`}
-    >
-      {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-    </button>
-  );
-}
-
 // ─── Section Wrapper ─────────────────────────────────
 
 function Section({
@@ -190,7 +173,7 @@ export default function StyleGuidePage() {
         {/* ─── 1. Tipografi ─── */}
         <Section id="typography" title="1. Tipografi">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Heading">
                   <p className="text-[10px] text-gray-400">text-2xl font-bold</p>
@@ -236,7 +219,7 @@ export default function StyleGuidePage() {
         {/* ─── 2. Warna ─── */}
         <Section id="colors" title="2. Warna Semantic">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-3">
                 <Showcase label="Background & Text">
                   <div className="flex gap-3 flex-wrap">
@@ -292,7 +275,7 @@ export default function StyleGuidePage() {
         {/* ─── 3. Button ─── */}
         <Section id="buttons" title="3. Button">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-5">
                 <Showcase label="Variants">
                   <Button variant="primary">Primary</Button>
@@ -334,7 +317,7 @@ export default function StyleGuidePage() {
         {/* ─── 4. Badge ─── */}
         <Section id="badges" title="4. Badge">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-3">
                 <Showcase label="Variants">
                   <Badge variant="default" label="Default" />
@@ -362,7 +345,7 @@ export default function StyleGuidePage() {
         {/* ─── 5. Input & Select ─── */}
         <Section id="inputs" title="5. Input & Select">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Input">
                   <div className="w-full max-w-xs space-y-3">
@@ -402,7 +385,7 @@ export default function StyleGuidePage() {
         {/* ─── 6. Avatar ─── */}
         <Section id="avatars" title="6. User Avatar">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-3">
                 <Showcase label="With Initials (no photo)">
                   <div className="flex items-center gap-4">
@@ -441,7 +424,7 @@ export default function StyleGuidePage() {
         {/* ─── 7. Data Table ─── */}
         <Section id="tables" title="7. Data Table">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="min-w-[500px]">
                 <Showcase label="Full Featured">
                   <DataTable
@@ -475,7 +458,7 @@ export default function StyleGuidePage() {
                     totalPages={1}
                     total={5}
                     empty={{ icon: Users, message: 'Tidak ada data' }}
-                    actions={(r: (typeof MOCK_MEMBERS)[0]) => (
+                    actions={(_r: (typeof MOCK_MEMBERS)[0]) => (
                       <div className="flex items-center justify-end gap-1">
                         <button className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition">
                           <Eye size={14} className="text-blue-600" />
@@ -495,7 +478,7 @@ export default function StyleGuidePage() {
         {/* ─── 8. Modal ─── */}
         <Section id="modals" title="8. Modal & Confirm Modal">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Modal Trigger">
                   <Button variant="primary" onClick={() => setModalOpen(true)}>
@@ -598,7 +581,7 @@ export default function StyleGuidePage() {
         {/* ─── 9. Info Row ─── */}
         <Section id="info-rows" title="9. Info Row & Detail Row">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="InfoRow (simple label:value)">
                   <div className="w-full max-w-sm space-y-2">
@@ -625,7 +608,7 @@ export default function StyleGuidePage() {
         {/* ─── 10. Search Bar ─── */}
         <Section id="search-bar" title="10. Search Bar & Filter">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Default">
                   <SearchBar
@@ -662,7 +645,7 @@ export default function StyleGuidePage() {
         {/* ─── 11. Pagination ─── */}
         <Section id="pagination" title="11. Pagination">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Default">
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 w-full">
@@ -682,7 +665,7 @@ export default function StyleGuidePage() {
         {/* ─── 12. Page Header ─── */}
         <Section id="page-header" title="12. Page Header">
           <DualThemePreview>
-            {(theme) => (
+            {(_theme) => (
               <div className="space-y-4">
                 <Showcase label="Default">
                   <PageHeader

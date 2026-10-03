@@ -18,10 +18,8 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
-  RefreshCw,
   XSquare,
   Loader2,
-  Layers,
 } from 'lucide-react';
 import { formatBatchType } from '@/lib/hooks/use-batch-progress';
 

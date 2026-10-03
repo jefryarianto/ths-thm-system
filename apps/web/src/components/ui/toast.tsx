@@ -54,7 +54,7 @@ export const useDismissToast = () => useContext(ToastContext).dismissToast;
 
 // ─── Icons ───
 
-const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
+const TOAST_ICONS: Record<ToastType, ReactNode> = {
   success: <CheckCircle size={20} className="text-success dark:text-success-400" />,
   error: <AlertCircle size={20} className="text-error dark:text-error-400" />,
   info: <Info size={20} className="text-info dark:text-info-400" />,
@@ -91,7 +91,6 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
   const startRef = useRef(Date.now());
   const pausedRef = useRef(false);
   const pausedAtRef = useRef(0);
-  const remainingRef = useRef(duration);
 
   // Auto-dismiss with progress
   useEffect(() => {
@@ -110,6 +109,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
 
     const interval = setInterval(tick, 50);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t.id, onDismiss, duration]);
 
   const handleDismiss = useCallback(() => {

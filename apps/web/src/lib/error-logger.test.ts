@@ -3,11 +3,13 @@ import { vi } from 'vitest';
 
 const env = process.env as Record<string, string | undefined>;
 
+let logSpy: ReturnType<typeof vi.spyOn>;
+
 describe('Error Logger', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     // Produce full structured JSON entries so metadata/redaction is observable
     env.NODE_ENV = 'production';
   });
@@ -137,7 +139,7 @@ describe('Error Logger', () => {
     });
 
     it('logs error with category and metadata', () => {
-      const error: any = {
+      const error: unknown = {
         response: {
           status: 401,
           data: { message: 'Invalid credentials' },
@@ -235,7 +237,7 @@ describe('Error Logger', () => {
       env.NODE_ENV = 'development';
 
       logInfo('Info message');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[App] Info message'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[App] Info message'));
 
       // Restore
       env.NODE_ENV = oldEnv;
@@ -246,7 +248,7 @@ describe('Error Logger', () => {
       env.NODE_ENV = 'production';
 
       logInfo('Info message');
-      expect(console.log).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
 
       // Restore
       env.NODE_ENV = oldEnv;
@@ -258,7 +260,7 @@ describe('Error Logger', () => {
       env.NODE_ENV = 'development';
 
       logInfo('Token: Bearer secret');
-      expect(console.log).toHaveBeenCalledWith(
+      expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining('[App] Token: [BearerTokenRedacted]'),
       );
 

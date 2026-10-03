@@ -92,7 +92,8 @@ class SessionManager {
     const secondsUntilExpiry = Math.floor((expiresAtMs - now) / 1000);
     const secondsUntilWarning = secondsUntilExpiry - warnSecondsBefore;
 
-    console.log(
+    // eslint-disable-next-line no-console -- verbose session timing diagnostic
+    console.debug(
       `[session-manager] Token expires in ${secondsUntilExpiry}s, warning in ${Math.max(secondsUntilWarning, 0)}s`,
     );
 
@@ -126,7 +127,8 @@ class SessionManager {
   private _fireExpiringSoon(secondsRemaining: number) {
     if (this._expiryWarningFired || this._isExpired) return;
     this._expiryWarningFired = true;
-    console.log(`[session-manager] Token expiring soon: ${secondsRemaining}s remaining`);
+    // eslint-disable-next-line no-console -- verbose session timing diagnostic
+    console.debug(`[session-manager] Token expiring soon: ${secondsRemaining}s remaining`);
     this.expiringSoonListeners.forEach((l) => l(secondsRemaining));
   }
 
@@ -145,7 +147,8 @@ class SessionManager {
     }
     this._inactivityTimer = setTimeout(() => {
       if (!this._isExpired) {
-        console.log('[session-manager] Inactivity timeout reached, expiring session');
+        // eslint-disable-next-line no-console -- verbose session timing diagnostic
+        console.debug('[session-manager] Inactivity timeout reached, expiring session');
         this.expire(true);
       }
     }, INACTIVITY_TIMEOUT_MS);
@@ -174,7 +177,8 @@ class SessionManager {
 
   expire(shouldRedirect = true) {
     if (this._isExpired) return;
-    console.log('[session-manager] Session expired', { shouldRedirect });
+    // eslint-disable-next-line no-console -- verbose session timing diagnostic
+    console.debug('[session-manager] Session expired', { shouldRedirect });
     this._isExpired = true;
     this.cancelExpiryWarning();
     this.clearTokens();

@@ -19,7 +19,7 @@ interface SavedViewsProps {
 export default function SavedViews({
   storageKey = 'membersSavedViews',
   onApply,
-  onReset,
+  onReset: _onReset,
 }: SavedViewsProps) {
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [isOpen, setIsOpen] = useState(false);

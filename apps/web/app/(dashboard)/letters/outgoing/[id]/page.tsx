@@ -32,7 +32,7 @@ interface OutgoingLetterDetail {
 
 export default function OutgoingLetterDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const id = params?.id as string;
 
   const [letter, setLetter] = useState<OutgoingLetterDetail | null>(null);

@@ -1,16 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  FileText,
-  X,
-  Loader2,
-  AlertTriangle,
-  CheckCircle2,
-  ExternalLink,
-  Users,
-  UserCheck,
-} from 'lucide-react';
+import { FileText, X, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { BatchProgressCard } from '@/components/ui/batch-progress';
 

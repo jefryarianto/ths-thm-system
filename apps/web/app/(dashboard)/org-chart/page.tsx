@@ -1,6 +1,5 @@
 'use client';
 
-import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users } from 'lucide-react';

@@ -393,7 +393,7 @@ export default function MonitoringAlertsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState<MonitoringAlert | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [_saving, setSaving] = useState(false);
 
   const fetchAlerts = useCallback(async () => {
     try {

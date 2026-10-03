@@ -49,7 +49,7 @@ interface IncomingLetterDetail {
 
 export default function IncomingLetterDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const id = params?.id as string;
 
   const [letter, setLetter] = useState<IncomingLetterDetail | null>(null);

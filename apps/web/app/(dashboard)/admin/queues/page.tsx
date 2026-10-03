@@ -414,7 +414,7 @@ export default function QueueMonitorPage() {
         setPersistentEvents(data.data.events);
       }
     }
-  }, []);
+  }, [logHealthEvent]);
 
   // Keep ref in sync so the socket handler always calls the latest fetchStats
   fetchStatsRef.current = fetchStats;
@@ -465,7 +465,7 @@ export default function QueueMonitorPage() {
         socket.off('disconnect');
       }
     };
-  }, [fetchStats]);
+  }, [fetchStats, logHealthEvent]);
 
   const totalJobs = stats
     ? stats.counts.waiting +

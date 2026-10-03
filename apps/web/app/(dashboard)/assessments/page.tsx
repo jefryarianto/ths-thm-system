@@ -103,7 +103,7 @@ export default function AssessmentsPage() {
     (p: number) => {
       if (p >= 1 && p <= meta.totalPages) setPage(p);
     },
-    [meta.totalPages],
+    [meta.totalPages, setPage],
   );
 
   const refetch = tab === 'aspek' ? refetchAspek : refetchItems;

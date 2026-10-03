@@ -670,7 +670,7 @@ function StorybookPageContent() {
                     page={1}
                     totalPages={1}
                     total={1}
-                    actions={(item: { nama: string }) => (
+                    actions={() => (
                       <div className="flex gap-1 justify-end">
                         <Button variant="ghost" size="sm">
                           <Eye size={14} />

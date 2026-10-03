@@ -15,7 +15,6 @@ interface RichTextEditorProps {
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = '',
   disabled = false,
   className = '',
 }: RichTextEditorProps) {

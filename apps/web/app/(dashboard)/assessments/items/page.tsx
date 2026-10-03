@@ -60,7 +60,7 @@ export default function ItemsPage() {
     (p: number) => {
       if (p >= 1 && p <= meta.totalPages) setPage(p);
     },
-    [meta.totalPages],
+    [meta.totalPages, setPage],
   );
 
   return (

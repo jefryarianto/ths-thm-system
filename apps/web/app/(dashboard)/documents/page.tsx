@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';

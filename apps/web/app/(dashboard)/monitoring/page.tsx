@@ -10,7 +10,6 @@ import {
   Server,
   CheckCircle2,
   XCircle,
-  RefreshCw,
   AlertTriangle,
   BarChart3,
   WifiOff,
@@ -310,7 +309,7 @@ export default function MonitoringPage() {
           }
         });
 
-        es.addEventListener('queue-status', (event) => {
+        es.addEventListener('queue-status', () => {
           // Optionally update UI for queue transitions
           // The full health event already contains queue data
         });

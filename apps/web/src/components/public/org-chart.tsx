@@ -2,22 +2,14 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { ZoomIn, ZoomOut, Maximize2, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
+import type { Pengurus } from '@/app/struktur-organisasi/content';
 
-interface OrgMember {
-  id: string;
-  nama: string;
-  jabatan: string;
-  jabatanUrutan: number;
-  parentId: string | null;
-  fotoPath?: string | null;
-  status?: string;
-}
+export type OrgMember = Pengurus;
 
 interface OrgChartProps {
   members: OrgMember[];
   onMemberClick?: (member: OrgMember) => void;
 }
-
 function getInitials(name: string): string {
   return name
     .split(' ')

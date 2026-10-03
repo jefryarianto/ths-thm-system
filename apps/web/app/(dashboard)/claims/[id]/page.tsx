@@ -16,7 +16,6 @@ import {
   XCircle,
   RefreshCw,
   AlertCircle,
-  Clock,
   ThumbsUp,
   ThumbsDown,
   MessageSquare,

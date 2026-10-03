@@ -10,7 +10,6 @@ import {
   Shield,
   Heart,
   Award,
-  Calendar,
   Users,
   Cross,
   Sparkles,
@@ -21,7 +20,6 @@ import {
   Building2,
   Share2,
   Check,
-  Flame,
   ScrollText,
   UserCheck,
   Layers,
@@ -29,8 +27,6 @@ import {
   Star,
   Scale,
   ShieldCheck,
-  HeartHandshake,
-  Eye,
 } from 'lucide-react';
 import { logError } from '@/lib/error-logger';
 import { LogoSpinner } from '@/components/ui/logo-spinner';

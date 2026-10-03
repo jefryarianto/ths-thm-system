@@ -77,8 +77,10 @@ export interface PrintBatchResponse {
 /**
  * Get members with pagination, sorting, and filtering
  */
+import type { Member } from '@/types';
+
 export async function getMembers(params: GetMembersParams): Promise<{
-  data: any[];
+  data: Member[];
   meta: {
     total: number;
     totalPages: number;

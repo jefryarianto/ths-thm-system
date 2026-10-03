@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { type LucideIcon, ArrowUp, ArrowDown } from 'lucide-react';
 import TableSkeleton from './table-skeleton';
 import EmptyState from './empty-state';
@@ -11,8 +11,8 @@ export interface Column<TRow = Record<string, unknown>> {
   key?: string;
   label: string;
   /** Optional custom header cell content (e.g. select-all checkbox). */
-  header?: () => React.ReactNode;
-  render?: (item: TRow) => React.ReactNode;
+  header?: () => ReactNode;
+  render?: (item: TRow) => ReactNode;
   /** Responsive visibility class e.g. 'hidden sm:table-cell' */
   hidden?: string;
   align?: 'left' | 'right' | 'center';
@@ -42,16 +42,16 @@ interface DataTableProps<T> {
   /** Callback when page changes. Falls back to no-op if not provided. */
   onPageChange?: (page: number) => void;
   /** Fallback when columns don't have render functions. Receives item + index. */
-  renderRow?: (item: T, index: number) => React.ReactNode;
+  renderRow?: (item: T, index: number) => ReactNode;
   /** Row click handler (only works in column-based auto-render mode) */
   onRowClick?: (item: T) => void;
   /** Optional actions column rendered at the end of each row (only in column-based mode) */
-  actions?: (item: T) => React.ReactNode;
+  actions?: (item: T) => ReactNode;
   /** Override auto-calculated colSpan */
   colSpan?: number;
   skeletonRows?: number;
   /** Render function for mobile card view (shown on screens < md) */
-  renderMobileCard?: (item: T, index: number) => React.ReactNode;
+  renderMobileCard?: (item: T, index: number) => ReactNode;
   /** Current sort state */
   sort?: SortConfig | null;
   /** Callback when sort changes */

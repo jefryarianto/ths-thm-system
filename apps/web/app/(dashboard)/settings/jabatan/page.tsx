@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { Plus, Edit3, Trash2, RefreshCw } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -119,8 +119,8 @@ export default function JabatanPage() {
       setForm({ nama: '', kode: '', urutan: 0 });
       invalidateJabatanCache();
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menyimpan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyimpan'));
     }
   };
 
@@ -136,8 +136,8 @@ export default function JabatanPage() {
       toast('success', 'Jabatan berhasil dihapus');
       invalidateJabatanCache();
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menghapus');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menghapus'));
     }
   };
 

@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import { ArrowLeft, Send, RefreshCw, Trash2 } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -56,6 +56,16 @@ export default function ChatRoomPage() {
       /* ignore */
     }
     setLoading(false);
+  }, [roomId]);
+
+  const markAsRead = useCallback(async () => {
+    setMarkingRead(true);
+    try {
+      await apiClient.post(`/chat/rooms/${roomId}/read`);
+    } catch {
+      /* ignore */
+    }
+    setMarkingRead(false);
   }, [roomId]);
 
   useEffect(() => {
@@ -128,21 +138,11 @@ export default function ChatRoomPage() {
       }
       disconnectSocket();
     };
-  }, [roomId, fetchMessages]);
+  }, [roomId, fetchMessages, markAsRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const markAsRead = async () => {
-    setMarkingRead(true);
-    try {
-      await apiClient.post(`/chat/rooms/${roomId}/read`);
-    } catch {
-      /* ignore */
-    }
-    setMarkingRead(false);
-  };
 
   const handleSend = async () => {
     if (!content.trim() || sending) return;
@@ -175,8 +175,8 @@ export default function ChatRoomPage() {
     try {
       await apiClient.delete(`/chat/messages/${messageId}`);
       await fetchMessages();
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal menghapus pesan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menghapus pesan'));
     }
   };
 

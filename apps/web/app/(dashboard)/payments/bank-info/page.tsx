@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -104,8 +104,8 @@ export default function BankInfoPage() {
         'success',
         editingId ? 'Rekening berhasil diperbarui' : 'Rekening berhasil ditambahkan',
       );
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal menyimpan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyimpan'));
     }
     setSubmitting(false);
   };
@@ -116,8 +116,8 @@ export default function BankInfoPage() {
       await apiClient.delete(`/payments/bank-info/${id}`);
       await fetchBanks();
       toast('success', 'Rekening berhasil dihapus');
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal menghapus');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menghapus'));
     }
   };
 
@@ -126,8 +126,8 @@ export default function BankInfoPage() {
       await apiClient.patch(`/payments/bank-info/${bank.id}`, { isActive: !bank.isActive });
       await fetchBanks();
       toast('success', bank.isActive ? 'Rekening dinonaktifkan' : 'Rekening diaktifkan');
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal memperbarui');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal memperbarui'));
     }
   };
 

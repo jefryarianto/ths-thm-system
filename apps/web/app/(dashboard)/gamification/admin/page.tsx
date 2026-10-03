@@ -28,6 +28,14 @@ interface PointsDistribution {
   count: number;
 }
 
+interface TooltipFormatterProps<TPayload> {
+  active?: boolean;
+  payload?: Array<{
+    value?: number | string;
+    payload?: TPayload;
+  }>;
+}
+
 interface Redemption {
   id: string;
   rewardName: string;
@@ -141,11 +149,13 @@ export default function GamificationAdminPage() {
                 />
                 <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
                 <Tooltip
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: number, _name: string, props: any) => [
-                    `${value} anggota`,
-                    `${props.payload.icon} ${props.payload.level}`,
-                  ]}
+                  formatter={(value: number, _name: string, props: TooltipFormatterProps<PointsDistribution>) => {
+                    const entry = props.payload?.[0]?.payload;
+                    return [
+                      `${value} anggota`,
+                      `${entry?.icon} ${entry?.level}`,
+                    ];
+                  }}
                   contentStyle={{
                     borderRadius: '8px',
                     border: '1px solid #e5e7eb',

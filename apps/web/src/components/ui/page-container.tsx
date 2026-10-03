@@ -1,7 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 interface PageContainerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   /** Override the default spacing class */
   className?: string;
 }

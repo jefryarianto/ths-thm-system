@@ -1,5 +1,3 @@
-import { ReactNode } from 'react';
-
 /**
  * Badge semantic THS-THM (token-based, auto dark).
  * Untuk status domain (aktif/pending/ditolak) gunakan `status-badge.tsx`.

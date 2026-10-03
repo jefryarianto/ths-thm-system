@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { Save, Check, Loader2 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -36,7 +36,7 @@ export default function BeritaSubmitPage() {
         .replace(/^-+|-+$/g, ''); // hapus strip di awal/akhir
       setForm((prev) => ({ ...prev, slug }));
     }
-  }, [form.judul]);
+  }, [form.judul, form.slug]);
   const handleChange = (field: keyof BeritaSubmitForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -58,10 +58,9 @@ export default function BeritaSubmitPage() {
       setTimeout(() => {
         router.push('/content/berita');
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSaving(false);
-      const message =
-        error.response?.data?.message || error.response?.data?.error || 'Gagal mengajukan berita';
+      const message = extractErrorMessage(error, 'Gagal mengajukan berita');
       toast('error', `Error: ${message}`);
     }
   };

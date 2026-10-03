@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   FileText,
   Layers,
@@ -30,7 +30,7 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: 'bg-surface-variant text-muted border-border',
 };
 
-const STATUS_ICONS_SMALL: Record<string, React.ReactNode> = {
+const STATUS_ICONS_SMALL: Record<string, ReactNode> = {
   pending: <Clock size={12} />,
   processing: <Loader2 size={12} className="animate-spin" />,
   completed: <CheckCircle2 size={12} />,

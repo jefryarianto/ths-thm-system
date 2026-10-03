@@ -145,7 +145,7 @@ export default function NewTrainingPage() {
         `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
       );
     }
-  }, []);
+  }, [hariTanggal]);
 
   return (
     <PermissionGuard module="trainings" action="create">

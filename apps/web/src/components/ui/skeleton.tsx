@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SkeletonProps {
@@ -23,7 +24,7 @@ export function Skeleton({ variant = 'text', className, width, height, lines = 1
     input: 'rounded-lg h-10',
   };
 
-  const styles: React.CSSProperties = {};
+  const styles: CSSProperties = {};
   if (width) styles.width = typeof width === 'number' ? `${width}px` : width;
   if (height) styles.height = typeof height === 'number' ? `${height}px` : height;
 
@@ -67,7 +68,6 @@ export function InputSkeleton({ className, ...props }: Omit<SkeletonProps, 'vari
 export function ChartSkeleton({
   height = 280,
   className,
-  ...props
 }: { height?: number; className?: string } & Omit<SkeletonProps, 'variant' | 'height'>) {
   return (
     <div

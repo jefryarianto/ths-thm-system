@@ -9,7 +9,6 @@ import {
   Activity,
   Radio,
   PlugZap,
-  Timer,
   Globe,
 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -58,7 +57,7 @@ function getRoomLabel(room: string): string {
 
 export default function WsMonitorPage() {
   const [stats, setStats] = useState<WsStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);

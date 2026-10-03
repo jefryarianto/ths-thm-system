@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Home,
   Users,
   CreditCard,
   BarChart3,
