@@ -9,8 +9,6 @@
  * - Does NOT invoke apiClient to avoid logger->refresh->logger recursion risk.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
 export type ErrorCategory =
   | 'Auth'
   | 'Network'
@@ -64,6 +62,34 @@ function isSessionExpiredError(error: unknown): boolean {
 }
 
 /**
+ * Helpers for reading axios-like error shapes without falling back to `any`.
+ * We deliberately keep the checks loose because errors can come from a wide
+ * range of sources (axios, fetch, third-party SDKs).
+ */
+type ErrorLike = Record<string, unknown>;
+
+function getErrorCode(error: unknown): string | undefined {
+  return typeof (error as ErrorLike)?.code === 'string'
+    ? ((error as ErrorLike).code as string)
+    : undefined;
+}
+
+function getErrorMessage(error: unknown): string {
+  return typeof (error as ErrorLike)?.message === 'string'
+    ? ((error as ErrorLike).message as string)
+    : '';
+}
+
+function hasResponse(error: unknown): boolean {
+  return (error as ErrorLike)?.response !== null && (error as ErrorLike)?.response !== undefined;
+}
+
+function getResponseStatus(error: unknown): number | undefined {
+  const response = (error as ErrorLike)?.response as ErrorLike | undefined;
+  return typeof response?.status === 'number' ? response.status : undefined;
+}
+
+/**
  * Classify an error into a bounded taxonomy.
  * Returns the most specific category possible.
  */
@@ -77,9 +103,9 @@ export function classifyError(error: unknown): {
   }
 
   // Axios-like network error (has code but no response)
-  if (typeof error === 'object' && error !== null && 'code' in error && !(error as any).response) {
-    const code = (error as any).code as string | undefined;
-    const message = typeof (error as any).message === 'string' ? (error as any).message : '';
+  if (typeof error === 'object' && error !== null && 'code' in error && !hasResponse(error)) {
+    const code = getErrorCode(error);
+    const message = getErrorMessage(error);
 
     // Network-level timeout (ECONNABORTED)
     if (code === 'ECONNABORTED' || message.toLowerCase().includes('timeout')) {
@@ -105,28 +131,29 @@ export function classifyError(error: unknown): {
     typeof error === 'object' &&
     error !== null &&
     'response' in error &&
-    (error as any).response !== null &&
-    typeof (error as any).response?.status === 'number'
+    hasResponse(error)
   ) {
-    const status = (error as any).response.status;
+    const status = getResponseStatus(error);
 
-    // Client errors
-    if (status >= 400 && status < 500) {
-      if (status === 401) {
-        return { category: 'Auth', authCategory: 'Auth_invalid' };
+    if (status !== undefined) {
+      // Client errors
+      if (status >= 400 && status < 500) {
+        if (status === 401) {
+          return { category: 'Auth', authCategory: 'Auth_invalid' };
+        }
+        if (status === 403) {
+          return { category: 'Permission' };
+        }
+        if (status === 400 || status === 422) {
+          return { category: 'Validation' };
+        }
+        return { category: 'Auth' }; // generic 4xx auth-ish
       }
-      if (status === 403) {
-        return { category: 'Permission' };
-      }
-      if (status === 400 || status === 422) {
-        return { category: 'Validation' };
-      }
-      return { category: 'Auth' }; // generic 4xx auth-ish
-    }
 
-    // Server errors
-    if (status >= 500) {
-      return { category: 'Server' };
+      // Server errors
+      if (status >= 500) {
+        return { category: 'Server' };
+      }
     }
   }
 
@@ -260,10 +287,11 @@ export function logError(error: unknown, context?: ErrorContext): void {
       // In production, use structured JSON format
       console.error(JSON.stringify(entry));
     } else {
-      // In development, use readable format
-      console.error(
-        `[${context?.module || 'App'}] ${entry.message}${entry.stack ? '\n' + entry.stack : ''}`,
-      );
+    // In development, use readable format
+    // eslint-disable-next-line no-console -- intended for local debugging only
+    console.error(
+      `[${context?.module || 'App'}] ${entry.message}${entry.stack ? '\n' + entry.stack : ''}`,
+    );
     }
   } catch (loggingError) {
     // If logging itself fails, swallow silently to preserve original error flow
@@ -308,15 +336,21 @@ export function logWarning(message: string, context?: ErrorContext): void {
 /**
  * Info logging function.
  */
+export function logDebug(message: string, context?: ErrorContext): void {
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      // eslint-disable-next-line no-console -- intended for local debugging only
+      console.debug(`[${context?.module || 'App'}] ${redactSensitive(message)}`);
+    } catch {
+      // Swallow logging failures
+    }
+  }
+}
+
 export function logInfo(message: string, context?: ErrorContext): void {
   if (process.env.NODE_ENV !== 'production') {
     try {
-      const entry: Record<string, unknown> = {
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: redactSensitive(message),
-        ...safeContext(context),
-      };
+      // eslint-disable-next-line no-console -- intended for local debugging only
       console.log(`[${context?.module || 'App'}] ${redactSensitive(message)}`);
     } catch {
       // Swallow logging failures

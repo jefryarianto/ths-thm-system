@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Shield, Clock } from 'lucide-react';
 import { proactivelyRefresh } from '@/lib/api-client';
 import { sessionManager } from '@/lib/session-manager';
@@ -25,7 +25,8 @@ export function SessionWarningToast({
   const [refreshing, setRefreshing] = useState(false);
   const dismissToast = useDismissToast();
 
-  const dismiss = () => dismissToast(toastId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dismissToast is stable; adding it would reset the interval
+  const dismiss = useCallback(() => dismissToast(toastId), [dismissToast, toastId]);
 
   useEffect(() => {
     if (remaining <= 0) {

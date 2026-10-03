@@ -36,7 +36,7 @@ function triggerSessionExpired() {
 let isRefreshing = false;
 type RefreshSubscriber = {
   resolve: (token: string) => void;
-  reject: (error: any) => void;
+  reject: (error: unknown) => void;
 };
 let refreshSubscribers: RefreshSubscriber[] = [];
 
@@ -45,12 +45,12 @@ function onTokenRefreshed(token: string) {
   refreshSubscribers = [];
 }
 
-function onTokenRefreshFailed(error: any) {
+function onTokenRefreshFailed(error: unknown) {
   refreshSubscribers.forEach((cb) => cb.reject(error));
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(resolve: (token: string) => void, reject: (error: any) => void) {
+function addRefreshSubscriber(resolve: (token: string) => void, reject: (error: unknown) => void) {
   refreshSubscribers.push({ resolve, reject });
 }
 
@@ -477,11 +477,21 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// eslint-disable-next-line no-restricted-syntax
-export const unwrap = <T>(response: { data: ApiResponse<T> | ApiResponse<unknown> }): T =>
-  response.data.data as T;
+/**
+ * Extract the payload from a standard API response.
+ *
+ * NOTE: the selector rule for `response.data.data` matches the body of this
+ * function too, so the suppression sits on the line that actually performs the
+ * access. unwrap() *is* the approved accessor — callers should use it rather
+ * than reaching into `data.data` themselves.
+ */
+export function unwrap<T>(
+  response: { data: ApiResponse<T> | ApiResponse<unknown> },
+): T {
+  // eslint-disable-next-line no-restricted-syntax -- the unwrap helper itself
+  return response.data.data as T;
+}
 
-// eslint-disable-next-line no-restricted-syntax
 export const unwrapPaginated = <T>(response: {
   data: ApiResponse<PaginatedResponse<T>>;
-}): PaginatedResponse<T> => response.data.data;
+}): PaginatedResponse<T> => unwrap(response);

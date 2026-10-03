@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { proactivelyRefresh } from '@/lib/api-client';
+import { logDebug } from '@/lib/error-logger';
 import { sessionManager } from '@/lib/session-manager';
 
 // Refresh token if less than this many seconds remain
@@ -48,8 +49,9 @@ export function useActivityTracker() {
       // Token is within threshold — refresh now
       refreshing.current = true;
       lastRefreshAt.current = Date.now();
-      console.log(
-        `[activity-tracker] Token expiring in ${secondsUntilExpiry}s, refreshing proactively`,
+      logDebug(
+        `Token expiring in ${secondsUntilExpiry}s, refreshing proactively`,
+        { module: 'activity-tracker' },
       );
       await proactivelyRefresh();
     } catch {

@@ -6,8 +6,8 @@ import { PublicLayout } from '@/components';
 import { ChevronRight, Building2, Users, Calendar, Link2, Loader2, RefreshCw } from 'lucide-react';
 import OrgChart from '@/components/public/org-chart';
 import PengurusModal from '@/components/public/pengurus-modal';
-import StrukturSearchBar from '@/components/public/search-bar';
-import apiClient from '@/lib/api-client';
+import StrukturSearchBar, { type SearchResult } from '@/components/public/search-bar';
+import apiClient, { unwrap } from '@/lib/api-client';
 
 type Level = 'nasional' | 'distrik' | 'wilayah' | 'ranting';
 
@@ -24,7 +24,7 @@ interface PeriodeOption {
   isActive: boolean;
 }
 
-interface Pengurus {
+export interface Pengurus {
   id: string;
   nama: string;
   jabatan: string;
@@ -137,13 +137,14 @@ export default function StrukturOrganisasiContent() {
       apiClient
         .get('/public/struktur/periode', { params: { level, unitId } })
         .then(({ data }) => {
-          setPeriodes(data.data || []);
-          const active = (data.data || []).find((p: PeriodeOption) => p.isActive);
+          const list = unwrap<PeriodeOption[]>(data) || [];
+          setPeriodes(list);
+          const active = list.find((p: PeriodeOption) => p.isActive);
           if (active && !periodeId) setPeriodeId(active.id);
         })
         .catch(() => {});
     }
-  }, [level, distrikId, wilayahId, rantingId]);
+  }, [level, distrikId, wilayahId, rantingId, periodeId]);
 
   const loadStruktur = useCallback(async () => {
     const unitId =
@@ -163,12 +164,12 @@ export default function StrukturOrganisasiContent() {
       const { data } = await apiClient.get('/public/struktur/members', {
         params: { level, unitId, periodeId: periodeId || undefined },
       });
-      setStrukturData(data.data);
+      setStrukturData(unwrap(data));
 
       const childRes = await apiClient.get('/public/struktur/children', {
         params: { level, unitId: unitId || 'root' },
       });
-      setChildUnits(childRes.data.data);
+      setChildUnits(unwrap(childRes));
 
       // Update URL
       const params = new URLSearchParams();
@@ -190,9 +191,10 @@ export default function StrukturOrganisasiContent() {
     if (!hasLoaded && searchParams.get('level')) {
       loadStruktur();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSearchSelect = (result: { level: string; unitId: string; periodeId: string }) => {
+  const handleSearchSelect = (result: SearchResult) => {
     setLevel(result.level as Level);
     setPeriodeId(result.periodeId);
     if (result.level === 'distrik') {
@@ -303,7 +305,7 @@ export default function StrukturOrganisasiContent() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="mb-8">
-          <StrukturSearchBar onSelect={handleSearchSelect as any} />
+          <StrukturSearchBar onSelect={handleSearchSelect} />
         </div>
 
         {/* Filters */}
@@ -516,7 +518,7 @@ export default function StrukturOrganisasiContent() {
             <div className="mb-8">
               <OrgChart
                 members={strukturData.pengurus}
-                onMemberClick={(m) => setSelectedMember(m as any)}
+                onMemberClick={(m) => setSelectedMember(m)}
               />
             </div>
 
@@ -562,7 +564,7 @@ export default function StrukturOrganisasiContent() {
       </section>
 
       {selectedMember && (
-        <PengurusModal member={selectedMember as any} onClose={() => setSelectedMember(null)} />
+        <PengurusModal member={selectedMember} onClose={() => setSelectedMember(null)} />
       )}
     </PublicLayout>
   );

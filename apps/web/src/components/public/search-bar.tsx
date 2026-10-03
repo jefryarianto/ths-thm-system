@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, X, User } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
-interface SearchResult {
+export interface SearchResult {
   id: string;
   nama: string;
   jabatan: string;

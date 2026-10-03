@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import {
   Download,
   FileText,
@@ -19,7 +18,6 @@ import {
 import {
   useBatchProgress,
   formatBatchType,
-  type BatchDetail,
   type BatchJobItem,
 } from '@/lib/hooks/use-batch-progress';
 import apiClient from '@/lib/api-client';
@@ -34,7 +32,7 @@ const PROGRESS_COLORS: Record<string, string> = {
   cancelled: 'bg-muted',
 };
 
-const STATUS_ICONS: Record<string, React.ReactNode> = {
+const STATUS_ICONS: Record<string, ReactNode> = {
   pending: <Clock size={16} className="text-warning-600" />,
   processing: <Loader2 size={16} className="text-info-600 animate-spin" />,
   completed: <CheckCircle2 size={16} className="text-success" />,
@@ -50,7 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Dibatalkan',
 };
 
-const JOB_STATUS_ICONS: Record<string, React.ReactNode> = {
+const JOB_STATUS_ICONS: Record<string, ReactNode> = {
   pending: <Clock size={14} className="text-muted" />,
   processing: <Loader2 size={14} className="text-primary animate-spin" />,
   completed: <CheckCircle2 size={14} className="text-success-500" />,
@@ -187,6 +185,7 @@ export function BatchProgressCard({
     ) {
       onComplete?.(batchId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- detail.jobs is derived from progress polling
   }, [progress?.status, batchId, onComplete]);
 
   // ── Initial loading ──

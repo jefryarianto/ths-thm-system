@@ -13,9 +13,6 @@ vi.mock('next/server', () => {
 });
 
 import { proxy } from '../../proxy';
-import { NextResponse } from 'next/server';
-
-const mockedNextResponse = vi.mocked(NextResponse);
 
 function makeRequest(opts: {
   pathname?: string;
