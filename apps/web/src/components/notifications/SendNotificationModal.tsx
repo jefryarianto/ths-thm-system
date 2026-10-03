@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { NOTIF_TYPES } from './constants';
+import { unwrap } from '@/lib/api-client';
 
 interface SendNotificationModalProps {
   isOpen: boolean;
@@ -36,20 +37,24 @@ export default function SendNotificationModal({ isOpen, onClose }: SendNotificat
     setSendResult(null);
     try {
       const apiClient = (await import('@/lib/api-client')).default;
-      let res;
+      let sentTo: number | undefined;
       if (sendTarget === 'broadcast') {
-        res = await apiClient.post('/notifications/broadcast', sendForm);
+        sentTo = unwrap<{ sentTo?: number }>(
+          await apiClient.post('/notifications/broadcast', sendForm),
+        ).sentTo;
       } else if (sendTarget === 'role') {
-        res = await apiClient.post('/notifications/role', { ...sendForm, role: sendTargetRole });
+        sentTo = unwrap<{ sentTo?: number }>(
+          await apiClient.post('/notifications/role', { ...sendForm, role: sendTargetRole }),
+        ).sentTo;
       } else if (sendTarget === 'user') {
-        res = await apiClient.post('/notifications/send', {
-          ...sendForm,
-          userId: sendTargetUserId,
-        });
+        sentTo = unwrap<{ sentTo?: number }>(
+          await apiClient.post('/notifications/send', {
+            ...sendForm,
+            userId: sendTargetUserId,
+          }),
+        ).sentTo;
       }
-      setSendResult(
-        `Berhasil! ${(res as { data?: { data?: { sentTo?: number } } })?.data?.data?.sentTo || 1} notifikasi terkirim.`,
-      );
+      setSendResult(`Berhasil! ${sentTo || 1} notifikasi terkirim.`);
       setSendForm({ judul: '', isi: '', tipe: 'umum' });
       setTimeout(() => {
         setSendResult(null);

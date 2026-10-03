@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient, { extractErrorMessage } from '@/lib/api-client';
+import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -61,7 +61,7 @@ export default function NewBeritaPage() {
         slug,
         isVisible,
       });
-      const createdId: string | undefined = res.data?.data?.id;
+      const createdId: string | undefined = unwrap<{ id: string }>(res)?.id;
 
       // Upload gambar terpilih ke berita yang baru dibuat. Kegagalan upload
       // tidak membatalkan berita — admin bisa menambah ulang gambar via edit.

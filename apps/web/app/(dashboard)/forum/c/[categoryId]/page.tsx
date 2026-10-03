@@ -4,8 +4,8 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { MessageSquare, Pin, Eye, ArrowLeft, Plus, Search, RefreshCw } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import { MessageSquare, Pin, Eye, ArrowLeft, Plus, Search } from 'lucide-react';
+import apiClient, { unwrap } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -41,11 +41,11 @@ export default function CategoryThreadsPage() {
             params: debouncedSearch ? { search: debouncedSearch } : undefined,
           }),
           apiClient.get('/forum/categories'),
-        ]);
-        if (threadsRes.data.success) setThreads(threadsRes.data.data);
-        if (catsRes.data.success) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cat = catsRes.data.data.find((c: any) => c.id === categoryId);
+        ]);        const threadsData = unwrap<Thread[]>(threadsRes);
+        if (threadsData) setThreads(threadsData);
+        const catsData = unwrap<Array<{ id: string; nama: string }>>(catsRes);
+        if (catsData) {
+          const cat = catsData.find((c) => c.id === categoryId);
           if (cat) setCategoryName(cat.nama);
         }
       } catch {
@@ -63,13 +63,13 @@ export default function CategoryThreadsPage() {
           params: debouncedSearch ? { search: debouncedSearch } : undefined,
         }),
         apiClient.get('/forum/categories'),
-      ]);
-      if (threadsRes.data.success) setThreads(threadsRes.data.data);
-      if (catsRes.data.success) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cat = catsRes.data.data.find((c: any) => c.id === categoryId);
-        if (cat) setCategoryName(cat.nama);
-      }
+      ]);        const threadsData = unwrap<Thread[]>(threadsRes);
+        if (threadsData) setThreads(threadsData);
+        const catsData = unwrap<Array<{ id: string; nama: string }>>(catsRes);
+        if (catsData) {
+          const cat = catsData.find((c) => c.id === categoryId);
+          if (cat) setCategoryName(cat.nama);
+        }
     } catch {
       /* ignore */
     }

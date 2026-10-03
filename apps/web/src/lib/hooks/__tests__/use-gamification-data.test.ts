@@ -38,6 +38,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => {
+  // eslint-disable-next-line no-restricted-syntax
   const unwrap = <T>(r: { data: { data: T } }): T => r.data.data;
   return {
     default: { get: mockGet },

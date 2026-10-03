@@ -2,7 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useEffect, useState, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 
 import {
@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
       const res = await apiClient.get('/reports/dashboard');
-      setData(res.data?.data || res.data);
+      setData(unwrap<DashboardData>(res) || res.data);
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {

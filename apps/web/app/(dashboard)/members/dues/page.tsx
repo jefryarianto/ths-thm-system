@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Upload, Building2, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import { Upload, Building2, CheckCircle, Clock } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { formatDate, formatPeriode } from '@/lib/format';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -42,9 +42,9 @@ export default function MemberDuesPage() {
         apiClient.get('/dues/members/me'),
         apiClient.get('/payments/bank-info'),
       ]);
-      if (duesRes.data.success) setDues(duesRes.data.data || []);
-      // bankRes.data.data adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
-      const bankList = bankRes.data?.data;
+      setDues(unwrap<DuesRecord[]>(duesRes) || []);
+      // bankRes data adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
+      const bankList = unwrap<BankInfo[]>(bankRes);
       if (Array.isArray(bankList) && bankList.length > 0) setBankInfo(bankList[0]);
       else setBankInfo(null);
     } catch {
@@ -85,8 +85,9 @@ export default function MemberDuesPage() {
       setProofFiles((prev) => ({ ...prev, [id]: null }));
       setProofNotes((prev) => ({ ...prev, [id]: '' }));
       toast('success', 'Bukti pembayaran berhasil dikirim');
-    } catch (err: any) {
-      toast('error', err?.message || 'Gagal mengirim bukti');
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message;
+      toast('error', msg || 'Gagal mengirim bukti');
     }
     setUploadingId(null);
   };

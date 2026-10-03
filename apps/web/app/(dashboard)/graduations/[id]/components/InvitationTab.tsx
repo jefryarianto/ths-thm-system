@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Send,
   UserCheck,
@@ -65,7 +65,7 @@ export default function InvitationTab({
     setLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/invitations`);
-      setInvitations(res.data.data || []);
+      setInvitations(unwrap<Invitation[]>(res) || []);
     } catch {
       /* ignore */
     }
@@ -82,7 +82,7 @@ export default function InvitationTab({
     setMsg(null);
     try {
       const res = await apiClient.post(`/graduations/${id}/invitations/generate`, {});
-      const d = res.data.data || { generated: 0, skipped: 0, total: 0 };
+      const d = unwrap<{ generated: number; skipped: number; total: number }>(res) || { generated: 0, skipped: 0, total: 0 };
       setMsg({
         ok: true,
         text: `${d.generated} undangan dibuat (${d.skipped} dilewati dari ${d.total} anggota memenuhi kriteria)`,

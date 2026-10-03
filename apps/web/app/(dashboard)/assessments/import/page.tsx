@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import {
@@ -172,8 +172,8 @@ export default function ImportAssessmentsPage() {
           skorMaksimal: row.skorMaksimal || undefined,
         })),
       });
-      // Response dinormalisasi oleh TransformInterceptor → hasil import ada di res.data.data
-      setResult(res.data?.data ?? res.data);
+      // Response dinormalisasi oleh TransformInterceptor → unwrap data
+      setResult(unwrap<ImportResult>(res) ?? res.data);
     } catch (err) {
       setError(
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

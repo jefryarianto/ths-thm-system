@@ -5,7 +5,7 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Plus,
   PenLine,
@@ -145,8 +145,8 @@ export default function PenandatanganPage() {
         apiClient.get('/settings/signatures'),
         apiClient.get('/settings/stamps'),
       ]);
-      setTtdRows((sigRes.data?.data || sigRes.data || []) as TandaTanganRow[]);
-      setStampRows((stampRes.data?.data || stampRes.data || []) as StampRow[]);
+      setTtdRows(unwrap<TandaTanganRow[]>(sigRes) || []);
+      setStampRows(unwrap<StampRow[]>(stampRes) || []);
     } catch {
       // silent
     }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, FolderOpen, Plus, Settings } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { CanAdmin } from '@/components/auth/can';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -24,7 +24,8 @@ export default function ForumPage() {
     (async () => {
       try {
         const res = await apiClient.get('/forum/categories');
-        if (res.data.success) setCategories(res.data.data);
+        const data = unwrap<Category[]>(res);
+        if (data) setCategories(data);
       } catch {
         /* ignore */
       }

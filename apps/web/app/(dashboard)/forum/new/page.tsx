@@ -4,7 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -28,9 +28,10 @@ export default function NewThreadPage() {
     (async () => {
       try {
         const res = await apiClient.get('/forum/categories');
-        if (res.data.success) {
-          setCategories(res.data.data);
-          if (res.data.data.length > 0) setCategoryId(res.data.data[0].id);
+        const data = unwrap<Category[]>(res) || [];
+        if (data) {
+          setCategories(data);
+          if (data.length > 0) setCategoryId(data[0].id);
         }
       } catch {
         /* ignore */
@@ -47,8 +48,9 @@ export default function NewThreadPage() {
         judul: judul.trim(),
         konten: konten.trim(),
       });
-      if (res.data.success) {
-        router.push(`/forum/t/${res.data.data.id}`);
+      const data = unwrap<{ id: string }>(res);
+      if (data?.id) {
+        router.push(`/forum/t/${data.id}`);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

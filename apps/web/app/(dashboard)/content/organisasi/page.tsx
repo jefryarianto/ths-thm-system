@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -39,7 +39,7 @@ interface Organisasi {
 export default function OrganisasiPage() {
   const router = useRouter();
   const toast = useToast();
-  const [data, setData] = useState<Organisasi | null>(null);
+  const [, setData] = useState<Organisasi | null>(null);
   const [struktur, setStruktur] = useState<OrganisasiItem[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -48,11 +48,7 @@ export default function OrganisasiPage() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncPreview, setSyncPreview] = useState<OrganisasiItem[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await apiClient.get('/settings/organisasi');
       const org = unwrap<Organisasi>(res);
@@ -64,7 +60,12 @@ export default function OrganisasiPage() {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast is a stable context value
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async () => {
     setSaving(true);

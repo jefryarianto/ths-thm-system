@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Newspaper, Clock, CheckCircle2, XCircle } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -32,7 +32,7 @@ export default function BeritaSubmissionsPage() {
     setLoading(true);
     try {
       const res = await apiClient.get('/content/berita/mine');
-      setItems(res.data.data || []);
+      setItems(unwrap<BeritaSubmission[]>(res) || []);
     } catch {
       toast('error', 'Gagal memuat riwayat pengajuan berita');
     } finally {

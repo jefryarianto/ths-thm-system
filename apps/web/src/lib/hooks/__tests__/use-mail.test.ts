@@ -6,6 +6,7 @@ vi.mock('@/lib/api-client', () => ({
   default: {
     get: vi.fn(),
   },
+  // eslint-disable-next-line no-restricted-syntax
   unwrap: <T>(response: { data: { data: T } }): T => response.data.data,
 }));
 

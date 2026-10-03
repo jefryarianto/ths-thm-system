@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import apiClient from '@/lib/api-client';
+import { useState, useEffect, useCallback } from 'react';
+import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import {
   GripVertical,
   ChevronDown,
@@ -17,12 +17,29 @@ import PageHeader from '@/components/ui/page-header';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 
+interface KepengurusanRow {
+  id: string;
+  userId: string | null;
+  user?: { namaLengkap?: string | null };
+  jabatanId: string | null;
+  jabatan?: { nama?: string | null };
+  parentId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  distrikId?: string | null;
+  distrik?: { nama?: string | null };
+  wilayahId?: string | null;
+  wilayah?: { nama?: string | null };
+  rantingId?: string | null;
+  ranting?: { nama?: string | null };
+}
+
 interface OrgNode {
   id: string;
-  userId: string;
+  userId: string | null;
   nama: string;
   jabatan: string;
-  jabatanId: string;
+  jabatanId: string | null;
   unitName: string;
   level: 'nasional' | 'distrik' | 'wilayah' | 'ranting';
   startDate?: string | null;
@@ -52,7 +69,7 @@ export default function OrgChartEditorPage() {
   const isWilayahScoped = userRole === 'admin_wilayah';
   const isRantingScoped = userRole === 'admin_ranting';
   const isScoped = isWilayahScoped || isRantingScoped;
-  const [scopeResolved, setScopeResolved] = useState(false);
+  const [, setScopeResolved] = useState(false);
 
   const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
   const [wilayahs, setWilayahs] = useState<{ id: string; nama: string }[]>([]);
@@ -69,7 +86,9 @@ export default function OrgChartEditorPage() {
       .get('/periode')
       .then(({ data }) => {
         setPeriodes(data.data || []);
-        const active = (data.data || []).find((p: any) => p.isActive);
+        const active = (data.data || []).find(
+          (p: { id: string; nama: string; isActive?: boolean }) => p.isActive,
+        );
         if (active) setPeriodeId(active.id);
       })
       .catch(() => {});
@@ -141,7 +160,7 @@ export default function OrgChartEditorPage() {
       if (unitId) params.unitId = unitId;
       if (periodeId) params.periodeId = periodeId;
       const { data: res } = await apiClient.get('/kepengurusan', { params });
-      const items = (res.data || []) as any[];
+      const items = unwrap<KepengurusanRow[]>(res);
 
       // Build tree from flat list
       const map = new Map<string, OrgNode>();
@@ -191,6 +210,7 @@ export default function OrgChartEditorPage() {
       toast('error', 'Gagal memuat data kepengurusan');
     }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, distrikId, wilayahId, rantingId, periodeId]);
 
   useEffect(() => {
@@ -254,8 +274,8 @@ export default function OrgChartEditorPage() {
       });
       toast('success', `${draggedNode.nama} dipindahkan ke bawahan ${targetNode.nama}`);
       fetchTree();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal memindahkan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal memindahkan'));
     }
   };
 
@@ -269,8 +289,8 @@ export default function OrgChartEditorPage() {
       await apiClient.patch(`/kepengurusan/${draggedNode.id}/reparent`, { parentId: null });
       toast('success', `${draggedNode.nama} dipindahkan ke root`);
       fetchTree();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal memindahkan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal memindahkan'));
     }
   };
 
@@ -363,7 +383,7 @@ export default function OrgChartEditorPage() {
             </label>
             <select
               value={level}
-              onChange={(e) => setLevel(e.target.value as any)}
+              onChange={(e) => setLevel(e.target.value as 'distrik' | 'wilayah' | 'ranting')}
               disabled={isScoped}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >

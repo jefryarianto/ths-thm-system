@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Database,
   Download,
@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Shield,
-  TrendingUp,
 } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -66,8 +65,8 @@ export default function BackupPage() {
         apiClient.get('/admin/db-backup'),
         apiClient.get('/health'),
       ]);
-      setBackups(backupsRes.data?.data || backupsRes.data || []);
-      setDiskInfo(healthRes.data?.data?.disk || null);
+      setBackups(unwrap<BackupFile[]>(backupsRes) || []);
+      setDiskInfo(unwrap<{ disk?: DiskInfo } | null>(healthRes)?.disk || null);
     } catch {
       // ignore
     }

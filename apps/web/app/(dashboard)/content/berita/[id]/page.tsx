@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient, { extractErrorMessage } from '@/lib/api-client';
+import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -39,14 +39,10 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
   const [isVisible, setIsVisible] = useState(true);
   const [gambar, setGambar] = useState<string | undefined>();
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await apiClient.get(`/content/berita/${id}`);
-      const data = res.data.data;
+      const data = unwrap<Berita>(res);
       setBerita(data);
       setJudul(data.judul);
       setRingkasan(data.ringkasan);
@@ -60,7 +56,11 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, router, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const generateSlug = (text: string) => {
     return text

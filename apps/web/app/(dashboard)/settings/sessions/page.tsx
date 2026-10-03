@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrapPaginated } from '@/lib/api-client';
 import {
   Shield,
   Monitor,
   Smartphone,
   Globe,
   LogOut,
-  Trash2,
   RefreshCw,
   Search,
   Users,
@@ -112,10 +111,11 @@ export default function SessionsPage() {
         setLoading(true);
         const params = new URLSearchParams({ page: String(p), limit: '20' });
         if (q) params.set('search', q);
-        const { data } = await apiClient.get(`/auth/admin/sessions?${params}`);
-        setSessions(data.data.data);
-        setTotalPages(data.data.meta.totalPages);
-        setTotal(data.data.meta.total);
+        const res = await apiClient.get(`/auth/admin/sessions?${params}`);
+        const page = unwrapPaginated<Session>(res);
+        setSessions(page.data);
+        setTotalPages(page.meta.totalPages);
+        setTotal(page.meta.total);
       } catch {
         toast('error', 'Gagal memuat data sesi');
       } finally {

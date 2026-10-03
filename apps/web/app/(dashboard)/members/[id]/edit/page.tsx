@@ -4,7 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 
@@ -79,7 +79,7 @@ export default function EditMemberPage() {
   useEffect(() => {
     apiClient
       .get('/tingkatan')
-      .then((r) => setTingkatanList(r.data.data || []))
+      .then((r) => setTingkatanList(unwrap<TingkatanOption[]>(r) || []))
       .catch(() => {
         /* ignore */
       });
@@ -125,7 +125,7 @@ export default function EditMemberPage() {
     try {
       // Load distrik
       const dRes = await apiClient.get('/org-structure/distrik');
-      const dList = dRes.data.data || [];
+      const dList = unwrap<Array<{ id: string; nama: string }>>(dRes) || [];
       setDistriks(dList);
 
       // Pre-select distrik
@@ -134,7 +134,7 @@ export default function EditMemberPage() {
         setSelectedDistrikId(distrikId);
         // Load wilayah
         const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-        const wList = wRes.data.data || [];
+        const wList = unwrap<Array<{ id: string; nama: string }>>(wRes) || [];
         setWilayahs(wList);
 
         const wilayahId = m.ranting?.wilayah?.id || '';
@@ -142,7 +142,7 @@ export default function EditMemberPage() {
           setSelectedWilayahId(wilayahId);
           // Load ranting
           const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-          setRantings(rRes.data.data || []);
+          setRantings(unwrap<Array<{ id: string; nama: string; kodeRanting: string }>>(rRes) || []);
         }
       }
     } catch {

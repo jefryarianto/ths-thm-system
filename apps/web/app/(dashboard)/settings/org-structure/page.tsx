@@ -4,7 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Plus,
   Edit3,
@@ -320,9 +320,9 @@ export default function OrgStructureSettingsPage() {
           ? apiClient.get(`/org-structure/ranting?wilayahId=${selectedWilayah}`)
           : apiClient.get('/org-structure/ranting'),
       ]);
-      setDistriks(dRes.data.data);
-      setWilayahs(wRes.data.data);
-      setRantings(rRes.data.data);
+      setDistriks(unwrap<Distrik[]>(dRes));
+      setWilayahs(unwrap<Wilayah[]>(wRes));
+      setRantings(unwrap<Ranting[]>(rRes));
     } catch {
       /* ignore */
     }

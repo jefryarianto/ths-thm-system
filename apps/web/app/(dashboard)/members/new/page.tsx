@@ -47,7 +47,7 @@ export default function NewMemberPage() {
   useEffect(() => {
     apiClient
       .get('/tingkatan')
-      .then((r) => setTingkatanList(r.data.data || []))
+      .then((r) => setTingkatanList(unwrap<TingkatanOption[]>(r) || []))
       .catch(() => {
         /* ignore */
       });
@@ -57,7 +57,7 @@ export default function NewMemberPage() {
     setOrgLoading((prev) => ({ ...prev, distrik: true }));
     apiClient
       .get('/org-structure/distrik')
-      .then((r) => setDistriks(r.data.data || []))
+      .then((r) => setDistriks(unwrap<Array<{ id: string; nama: string }>>(r) || []))
       .catch(() => {
         /* ignore */
       })

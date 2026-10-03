@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi, usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { BarChart3, Users, Activity, Download, TrendingUp } from 'lucide-react';
@@ -82,7 +82,7 @@ export default function ReportsPage() {
 
   // Overview data
   const { data: dashboard, loading } = useApi<DashboardData>(
-    () => apiClient.get('/reports/dashboard').then((r) => r.data.data as DashboardData),
+    () => apiClient.get('/reports/dashboard').then((r) => unwrap<DashboardData>(r)),
     [],
   );
 
@@ -115,7 +115,7 @@ export default function ReportsPage() {
     loading: scanLoading,
     refetch: fetchScanStats,
   } = useApi<ScanStats>(
-    () => apiClient.get('/reports/scan-stats').then((r) => r.data.data as ScanStats),
+    () => apiClient.get('/reports/scan-stats').then((r) => unwrap<ScanStats>(r)),
     [],
     activeTab === 'scan',
   );

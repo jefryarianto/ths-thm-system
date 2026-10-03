@@ -5,7 +5,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { ArrowLeft, UserPlus, Save, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -40,7 +40,7 @@ export default function NewCandidatePage() {
     setOrgLoading((prev) => ({ ...prev, distrik: true }));
     apiClient
       .get('/org-structure/distrik')
-      .then((r) => setDistriks(r.data.data || []))
+      .then((r) => setDistriks(unwrap<{ id: string; nama: string }[]>(r) || []))
       .catch(() => {
         /* ignore */
       })
@@ -59,7 +59,7 @@ export default function NewCandidatePage() {
     try {
       const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
       if (seq !== orgReqSeq.current) return; // stale response - user moved on
-      setWilayahs(r.data.data || []);
+      setWilayahs(unwrap<{ id: string; nama: string }[]>(r) || []);
     } catch {
       /* ignore */
     }
@@ -78,7 +78,7 @@ export default function NewCandidatePage() {
     try {
       const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
       if (seq !== orgReqSeq.current) return; // stale response - user moved on
-      setRantings(r.data.data || []);
+      setRantings(unwrap<{ id: string; nama: string }[]>(r) || []);
     } catch {
       /* ignore */
     }

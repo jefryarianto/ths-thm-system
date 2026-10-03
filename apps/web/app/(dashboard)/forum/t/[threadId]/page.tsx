@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useParams } from 'next/navigation';
-import { Pin, Lock, Eye, Trash2, Send, CheckCircle, Edit3, X } from 'lucide-react';
+import { Pin, Lock, Eye, Trash2, Send, CheckCircle, Edit3 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -44,20 +44,20 @@ export default function ThreadDetailPage() {
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
-  const fetchThread = async () => {
+  const fetchThread = useCallback(async () => {
     try {
       const res = await apiClient.get(`/forum/threads/${threadId}`);
-      if (res.data.success) setThread(res.data.data);
+      const data = unwrap<Thread>(res);
+      if (data) setThread(data);
     } catch {
       /* ignore */
     }
     setLoading(false);
-  };
+  }, [threadId]);
 
   useEffect(() => {
     fetchThread();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threadId]);
+  }, [fetchThread]);
 
   const handleReply = async () => {
     if (!reply.trim()) return;
@@ -67,8 +67,8 @@ export default function ThreadDetailPage() {
       setReply('');
       await fetchThread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal mengirim balasan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal mengirim balasan'));
     }
     setSubmitting(false);
   };
@@ -101,8 +101,8 @@ export default function ThreadDetailPage() {
       setEditingPostId(null);
       setEditContent('');
       await fetchThread();
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal memperbarui balasan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal memperbarui balasan'));
     }
   };
 
@@ -110,8 +110,8 @@ export default function ThreadDetailPage() {
     try {
       await apiClient.patch(`/forum/posts/${postId}/solution?threadId=${threadId}`);
       await fetchThread();
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal menandai solusi');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menandai solusi'));
     }
   };
 

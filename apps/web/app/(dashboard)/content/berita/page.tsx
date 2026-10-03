@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -31,7 +31,7 @@ export default function BeritaListPage() {
     setLoading(true);
     try {
       const res = await apiClient.get('/content/berita');
-      setData(res.data.data || []);
+      setData(unwrap<Berita[]>(res) || []);
     } catch {
       toast('error', 'Gagal memuat data berita');
     } finally {

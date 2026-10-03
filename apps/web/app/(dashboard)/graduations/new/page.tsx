@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle, AlertTriangle, Users } from 'lucide-react';
 import Link from 'next/link';
 import FormField from '@/components/ui/form-field';
@@ -52,9 +52,10 @@ export default function NewGraduationPage() {
   useEffect(() => {
     apiClient
       .get('/assessments/aspects', { params: { limit: 1 } })
-      .then((res) =>
-        setTemplateAspekCount(Array.isArray(res.data?.data) ? res.data.data.length : 0),
-      )
+      .then((res) => {
+        const d = unwrap<unknown[]>(res);
+        setTemplateAspekCount(Array.isArray(d) ? d.length : 0);
+      })
       .catch(() => setTemplateAspekCount(null));
   }, []);
 
@@ -69,7 +70,7 @@ export default function NewGraduationPage() {
     }
     apiClient
       .get('/graduations/admin-kegiatan-options', { params })
-      .then((res) => setAdminKegiatanOptions(res.data?.data || []))
+      .then((res) => setAdminKegiatanOptions(unwrap<AdminKegiatanOption[]>(res) || []))
       .catch(() => setAdminKegiatanOptions([]));
   }, [isDistrikLevel, form.scopeType, form.scopeId, adminKegiatanSearch]);
 

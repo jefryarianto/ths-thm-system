@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import EmptyState from '@/components/ui/empty-state';
 
@@ -25,7 +25,7 @@ export default function TrendTab() {
     () =>
       apiClient
         .get('/reports/chart/members-over-time')
-        .then((res) => res.data.data as TrendPoint[]),
+        .then((res) => unwrap<TrendPoint[]>(res)),
     [],
   );
 

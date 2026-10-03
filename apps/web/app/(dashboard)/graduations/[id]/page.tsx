@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
   ArrowLeft,
@@ -183,6 +183,30 @@ interface NilaiRecord {
   komentar: string | null;
 }
 
+interface CompletenessScoreRow {
+  itemPenilaian?: { aspek?: { id?: string } };
+}
+
+interface CompletenessEval {
+  scores?: CompletenessScoreRow[];
+  summary?: Record<string, unknown>;
+}
+
+interface ScoreProgress {
+  totalParticipants: number;
+  totalItems: number;
+  totalExpectedScores: number;
+  totalEntered: number;
+  percentage: number;
+  perPenguji: Array<{
+    id: string;
+    nama: string;
+    entered: number;
+    expected: number;
+    percentage: number;
+  }>;
+}
+
 interface HasilRecord {
   id: string;
   calonAnggotaId: string;
@@ -287,7 +311,7 @@ export default function GraduationDetailPage() {
   >([]);
 
   // Scoring state
-  const [scores, setScores] = useState<NilaiRecord[]>([]);
+  const [_scores, setScores] = useState<NilaiRecord[]>([]);
   // Score progress state
   const [scoreProgress, setScoreProgress] = useState<{
     totalParticipants: number;
@@ -360,7 +384,7 @@ export default function GraduationDetailPage() {
     setCloningAspek(true);
     try {
       const res = await apiClient.post(`/graduations/${id}/clone-aspek`);
-      const r = res.data?.data || {};
+      const r = unwrap<{ skipped?: boolean; total?: number; clonedAspects?: number; clonedItems?: number }>(res) || {};
       if (r.skipped) {
         toast('info', `Pendadaran sudah memiliki ${r.total} aspek penilaian sendiri`);
       } else if (r.clonedAspects === 0) {
@@ -454,7 +478,8 @@ export default function GraduationDetailPage() {
     setQrLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/qr`);
-      setQrDataUrl(res.data?.data?.qrDataUrl || null);
+      const qrData = unwrap<{ qrDataUrl?: string }>(res);
+      setQrDataUrl(qrData?.qrDataUrl || null);
     } catch {
       /* ignore */
     }
@@ -471,7 +496,7 @@ export default function GraduationDetailPage() {
     setExaminersLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/examiners`);
-      setExaminers(res.data.data || []);
+      setExaminers(unwrap<ExaminerAssignment[]>(res) || []);
     } catch {
       /* ignore */
     }
@@ -482,7 +507,11 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/examiner-candidates`);
-      const data = res.data?.data || {};
+      const data = unwrap<{
+        manajemenPenguji?: ExaminerOption[];
+        daftarHadir?: ExaminerOption[];
+        anggotaKegiatan?: ExaminerOption[];
+      }>(res) || {};
       const manajemen: ExaminerOption[] = (data.manajemenPenguji || []).map(
         (m: ExaminerOption) => ({
           ...m,
@@ -515,30 +544,37 @@ export default function GraduationDetailPage() {
         // global) — jadi checklist langsung hijau begitu aspek terpasang.
         apiClient.get(`/graduations/${id}/aspek-count`),
       ]);
-      const participants = pRes.status === 'fulfilled' ? pRes.value.data.data || [] : [];
-      const ex = eRes.status === 'fulfilled' ? eRes.value.data.data || [] : [];
-      const evalData = aRes.status === 'fulfilled' ? aRes.value.data : { scores: [], summary: {} };
+      const participants =
+        pRes.status === 'fulfilled' ? unwrap<Participant[]>(pRes.value) || [] : [];
+      const ex =
+        eRes.status === 'fulfilled'
+          ? unwrap<ExaminerAssignment[]>(eRes.value) || []
+          : [];
+      const evalData: CompletenessEval =
+        aRes.status === 'fulfilled'
+          ? unwrap<CompletenessEval>(aRes.value) || aRes.value.data
+          : { scores: [], summary: {} };
       const scoreRows = evalData?.scores || [];
       const aspekSet = new Set<string>();
       for (const s of scoreRows) {
         if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
       }
+      const kData = kRes.status === 'fulfilled' ? unwrap<{ total?: number }>(kRes.value) : null;
       const aspekTotal =
-        kRes.status === 'fulfilled' ? Number(kRes.value.data?.data?.total ?? 0) : aspekSet.size;
+        kRes.status === 'fulfilled' ? Number(kData?.total ?? 0) : aspekSet.size;
       // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
       // otomatis saat validasi disetujui - idempoten, satu per calon lulus).
-      const hasilRows = rRes.status === 'fulfilled' ? rRes.value.data.data || [] : [];
+      const hasilRows = rRes.status === 'fulfilled' ? unwrap<HasilRecord[]>(rRes.value) || [] : [];
       const sertifikatCount = hasilRows.filter(
         (h: HasilRecord) => h.statusKelulusan === 'lulus' && h.statusValidasi === 'approved',
       ).length;
       setCompleteness({
-        calonAnggota: participants.filter(
-          (p: { status: string }) => p.status === 'mengikuti_pendadaran',
-        ).length,
+        calonAnggota: participants.filter((p) => p.status === 'mengikuti_pendadaran')
+          .length,
         adminKegiatan: !!graduation?.adminKegiatanId,
         penguji: {
           total: ex.length,
-          approved: ex.filter((x: ExaminerAssignment) => x.status === 'approved').length,
+          approved: ex.filter((x) => x.status === 'approved').length,
         },
         aspek: aspekTotal,
         sertifikat: sertifikatCount,
@@ -559,11 +595,11 @@ export default function GraduationDetailPage() {
       }
       if (adminKegiatanSearch.trim().length >= 2) params.search = adminKegiatanSearch.trim();
       const res = await apiClient.get('/graduations/admin-kegiatan-options', { params });
-      setAdminKegiatanOptions(res.data?.data || []);
+      setAdminKegiatanOptions(unwrap<AdminKegiatanOption[]>(res) || []);
     } catch {
       /* ignore */
     }
-  }, [graduation, adminKegiatanSearch]);
+  }, [graduation, adminKegiatanSearch, id]);
 
   // ── Participants: fetch eligible, ranting options, handle add/select/import ──
 
@@ -572,7 +608,9 @@ export default function GraduationDetailPage() {
     setEligibleLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/participants/eligible`);
-      setEligibleCandidates(res.data?.data || []);
+      setEligibleCandidates(
+        unwrap<Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>>(res) || []
+      );
     } catch {
       /* ignore */
     }
@@ -590,7 +628,7 @@ export default function GraduationDetailPage() {
       const res = await apiClient.get('/org-structure/ranting', {
         params: params as Record<string, never>,
       });
-      setRantingOptions(res.data?.data || []);
+      setRantingOptions(unwrap<Array<{ id: string; nama: string }>>(res) || []);
     } catch {
       /* ignore */
     }
@@ -681,7 +719,7 @@ export default function GraduationDetailPage() {
       const res = await apiClient.post(`/graduations/${id}/participants/import`, {
         data: importPreview,
       });
-      setImportResult(res.data?.data || { imported: 0, linked: 0, created: 0, errors: [] });
+      setImportResult(unwrap<{ imported: number; linked: number; created: number; errors: string[] }>(res) || { imported: 0, linked: 0, created: 0, errors: [] });
       await fetchData();
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -737,9 +775,9 @@ export default function GraduationDetailPage() {
         apiClient.get(`/graduations/${id}/participants`),
         apiClient.get(`/graduations/${id}/results`),
       ]);
-      setGraduation(gradRes.data.data);
-      setParticipants(partRes.data.data || []);
-      setResults(hasilRes.data.data || []);
+      setGraduation(unwrap<GraduationDetail>(gradRes));
+      setParticipants(unwrap<Participant[]>(partRes) || []);
+      setResults(unwrap<HasilRecord[]>(hasilRes) || []);
       setError(null);
     } catch {
       setError('Gagal memuat data pendadaran');
@@ -752,7 +790,7 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/score-progress`);
-      setScoreProgress(res.data?.data || null);
+      setScoreProgress(unwrap<ScoreProgress>(res) || null);
     } catch {
       /* ignore */
     }
@@ -763,7 +801,7 @@ export default function GraduationDetailPage() {
     setUjianLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek`);
-      setUjianList(res.data.data || []);
+      setUjianList(unwrap<UjianPraktek[]>(res) || []);
     } catch {
       /* ignore */
     }
@@ -774,7 +812,7 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-items`);
-      setAvailableItems(res.data.data || []);
+      setAvailableItems(unwrap<AvailableItem[]>(res) || []);
     } catch {
       /* ignore */
     }
@@ -784,7 +822,8 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-examiners`);
-      setAvailableExaminers(res.data.data?.allPenguji || []);
+      const d = unwrap<{ allPenguji?: Array<{ id: string; namaLengkap: string; email: string }> }>(res);
+      setAvailableExaminers(d?.allPenguji || []);
     } catch {
       /* ignore */
     }
@@ -795,7 +834,7 @@ export default function GraduationDetailPage() {
     setResultsLoading(true);
     try {
       const res = await apiClient.get(`/graduations/${id}/results`);
-      setResults(res.data.data || []);
+      setResults(unwrap<HasilRecord[]>(res) || []);
     } catch {
       /* ignore */
     }
@@ -923,7 +962,8 @@ export default function GraduationDetailPage() {
     setWorkflowMsg(null);
     try {
       const res = await apiClient.post(`/graduations/${id}/scores/approve`);
-      setWorkflowMsg({ ok: true, text: `${res.data.data?.approved || 0} nilai penguji disetujui` });
+      const d = unwrap<{ approved?: number }>(res);
+      setWorkflowMsg({ ok: true, text: `${d?.approved || 0} nilai penguji disetujui` });
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -1001,7 +1041,7 @@ export default function GraduationDetailPage() {
     setGenDocsResult(null);
     try {
       const res = await apiClient.post(`/graduations/${graduation.id}/generate-docs`, {});
-      setGenDocsResult(res.data.data || { generated: 0, total: 0, errors: [] });
+      setGenDocsResult(unwrap<{ generated: number; total: number; errors: string[] }>(res) || { generated: 0, total: 0, errors: [] });
       await fetchResults();
       await fetchData();
     } catch (err) {
@@ -1115,7 +1155,7 @@ export default function GraduationDetailPage() {
     // Fetch existing scores
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/${ujianId}/scores`);
-      const existingScores: NilaiRecord[] = res.data.data || [];
+      const existingScores: NilaiRecord[] = unwrap<NilaiRecord[]>(res) || [];
       setScores(existingScores);
 
       // Build score input from existing data

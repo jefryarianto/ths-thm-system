@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   AlertTriangle,
   Calendar,
@@ -473,11 +473,12 @@ export default function IncidentsPage() {
         apiClient.get('/health/admin/queue-uptime'),
       ]);
 
-      const events = eventsRes.data?.data?.events || [];
-      setIncidents(events);
+      const eventsData = unwrap<{ events?: Incident[] } | null>(eventsRes);
+      setIncidents(eventsData?.events || []);
 
-      if (sparklineRes.data?.data?.uptimePercent !== undefined) {
-        setUptimePct(sparklineRes.data.data.uptimePercent);
+      const sparklineData = unwrap<{ uptimePercent?: number } | null>(sparklineRes);
+      if (sparklineData?.uptimePercent !== undefined) {
+        setUptimePct(sparklineData.uptimePercent);
       }
     } catch {
       // silently degrade

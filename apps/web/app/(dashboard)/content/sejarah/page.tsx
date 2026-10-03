@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -19,17 +19,13 @@ interface Sejarah {
 export default function SejarahPage() {
   const router = useRouter();
   const toast = useToast();
-  const [data, setData] = useState<Sejarah | null>(null);
+  const [, setData] = useState<Sejarah | null>(null);
   const [konten, setKonten] = useState('');
   const [isVisible, setIsVisible] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await apiClient.get('/settings/sejarah');
       const sejarah = unwrap<Sejarah>(res);
@@ -41,7 +37,12 @@ export default function SejarahPage() {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast is a stable context value
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSave = async () => {
     setSaving(true);

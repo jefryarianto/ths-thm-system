@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
@@ -70,7 +70,7 @@ export default function GraduationsPage() {
     setDeletingId(id);
     try {
       const res = await apiClient.delete('/graduations/' + id);
-      const data = res.data?.data;
+      const data = unwrap<{ deleted?: boolean }>(res);
       if (data?.deleted === false) {
         toast('info', 'Pendadaran dibatalkan (masih memiliki data terkait)');
       } else {

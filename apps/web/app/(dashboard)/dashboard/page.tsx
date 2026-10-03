@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import {
   TrendingUp,
@@ -50,30 +50,10 @@ import {
   ROLE_LABELS,
   formatRupiah,
   formatCompactRupiah,
-  formatTime,
 } from '@/components/dashboard/constants';
 import { useAuth } from '@/hooks/use-auth';
 import { ChartSkeleton } from '@/components/ui/skeleton';
 
-// ── Design tokens untuk accent strip sekunder ─────────────────────
-const ACCENT_CLASSES: Record<string, { icon: string; bar: string }> = {
-  primary: { icon: 'bg-primary-container text-primary-700', bar: 'bg-primary' },
-  success: { icon: 'bg-success-50 text-success-700', bar: 'bg-success' },
-  warning: { icon: 'bg-warning-50 text-warning-700', bar: 'bg-warning' },
-  error: { icon: 'bg-error-50 text-error-700', bar: 'bg-error' },
-  info: { icon: 'bg-info-50 text-info-700', bar: 'bg-info' },
-  slate: { icon: 'bg-surface-variant text-muted', bar: 'bg-border' },
-  pending: { icon: 'bg-warning-50 text-warning-700', bar: 'bg-warning-300' },
-};
-
-/** Warna latar icon per item "Perlu Tindakan" sesuai semantic token */
-const ACTION_ICON_BG: Record<string, string> = {
-  error: 'bg-error-50 dark:bg-error-950',
-  warning: 'bg-warning-50 dark:bg-warning-950',
-  pending: 'bg-warning-50 dark:bg-warning-950',
-  info: 'bg-info-50 dark:bg-info-950',
-  success: 'bg-success-50 dark:bg-success-950',
-};
 
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -273,9 +253,9 @@ export default function DashboardPage() {
 
   const fetchDashboard = useCallback(
     () =>
-      apiClient.get('/reports/dashboard').then(({ data }) => {
+      apiClient.get('/reports/dashboard').then((res) => {
         setLastUpdated(new Date());
-        return data.data as DashboardData;
+        return unwrap<DashboardData>(res);
       }),
     [],
   );
@@ -286,7 +266,7 @@ export default function DashboardPage() {
     setGrowthLoading(true);
     try {
       const res = await apiClient.get('/reports/chart/members-over-time');
-      const raw = (res.data?.data || res.data || []) as Array<{ month: string; count: number }>;
+      const raw = unwrap<Array<{ month: string; count: number }>>(res) || [];
       let cumulative = 0;
       const formatted = raw.map((item) => {
         cumulative += item.count;

@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import { typedApi } from '@/lib/api-typed';
-import { unwrap } from '@/lib/api-client';
+
 import {
   Plus,
   Edit3,
   Trash2,
   RefreshCw,
-  Users,
   Search,
   Download,
   Upload,
@@ -108,7 +107,9 @@ export default function KepengurusanPage() {
       .get('/periode')
       .then(({ data }) => {
         setPeriodes(data.data || []);
-        const active = (data.data || []).find((p: any) => p.isActive);
+        const active = (data.data || []).find(
+          (p: { id: string; nama: string; isActive?: boolean }) => p.isActive,
+        );
         if (active) setPeriodeId(active.id);
       })
       .catch(() => {});
@@ -243,8 +244,8 @@ export default function KepengurusanPage() {
       setEditData(null);
       setForm(INITIAL_FORM);
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menyimpan');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyimpan'));
     }
   };
 
@@ -258,8 +259,8 @@ export default function KepengurusanPage() {
       await apiClient.delete(`/kepengurusan/${item.id}`);
       toast('success', 'Penghapusan menunggu persetujuan');
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menghapus');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menghapus'));
     }
   };
 
@@ -270,8 +271,8 @@ export default function KepengurusanPage() {
       toast('success', 'Berhasil disetujui');
       fetchData();
       setPendingCount((c) => Math.max(0, c - 1));
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menyetujui');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyetujui'));
     }
     setApprovingId(null);
   };
@@ -284,8 +285,8 @@ export default function KepengurusanPage() {
       toast('success', 'Berhasil ditolak');
       fetchData();
       setPendingCount((c) => Math.max(0, c - 1));
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menolak');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menolak'));
     }
     setApprovingId(null);
   };
@@ -304,8 +305,8 @@ export default function KepengurusanPage() {
       toast('success', selectedIds.size + ' item berhasil disetujui');
       setSelectedIds(new Set());
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menyetujui');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menyetujui'));
     }
     setBulkApproving(false);
   };
@@ -323,8 +324,8 @@ export default function KepengurusanPage() {
       toast('success', selectedIds.size + ' item berhasil ditolak');
       setSelectedIds(new Set());
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal menolak');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal menolak'));
     }
     setBulkApproving(false);
   };
@@ -384,8 +385,8 @@ export default function KepengurusanPage() {
       a.click();
       URL.revokeObjectURL(url);
       toast('success', 'Export berhasil');
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || 'Gagal export');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal export'));
     }
   };
 
@@ -414,8 +415,8 @@ export default function KepengurusanPage() {
         toast('error', `${result.errors.length} error: ${result.errors.slice(0, 3).join('; ')}`);
       }
       fetchData();
-    } catch (e: any) {
-      toast('error', e?.response?.data?.message || e.message || 'Gagal import');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal import'));
     }
     setImporting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';

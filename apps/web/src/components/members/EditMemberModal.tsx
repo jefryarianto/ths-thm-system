@@ -86,7 +86,7 @@ export default function EditMemberModal({
     if (!open || !memberId) return;
     apiClient
       .get('/tingkatan')
-      .then((r) => setTingkatanList(r.data.data || []))
+      .then((r) => setTingkatanList(unwrap<TingkatanOption[]>(r)))
       .catch(() => {
         /* ignore */
       });

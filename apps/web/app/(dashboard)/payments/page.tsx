@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { formatDate, formatRupiah } from '@/lib/format';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -89,8 +89,8 @@ export default function PaymentsPage() {
         paidCount: statsData.paidCount || 0,
         totalDues: statsData.totalTransaksi || 0,
       });
-    // bankRes.data.data adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
-    const bankList = bankRes.data?.data;
+    // unwrap(bankRes) adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
+    const bankList = unwrap<BankInfo[] | null>(bankRes);
     if (Array.isArray(bankList) && bankList.length > 0) setBankInfo(bankList[0]);
     else setBankInfo(null);
     return duesRes.data;

@@ -3,7 +3,7 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useEffect, useState, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Download, Filter, Calendar, BarChart3, Bell, FileText } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
@@ -68,7 +68,7 @@ export default function NotificationReportPage() {
           promises.push(
             apiClient
               .get('/notifications', { params: { ...listParams, page: p } })
-              .then((r) => r.data?.data || [])
+              .then((r) => unwrap<NotificationItem[] | null>(r) || [])
               .catch(() => [] as NotificationItem[]),
           );
         }

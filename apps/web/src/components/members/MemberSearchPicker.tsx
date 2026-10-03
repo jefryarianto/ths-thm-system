@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { Search, X, Loader2, MapPin, BadgeCheck, Check } from 'lucide-react';
 
 interface MemberResult {
@@ -66,7 +66,7 @@ export default function MemberSearchPicker({
       apiClient
         .get(`/members/${value}`)
         .then((r) => {
-          const m = r.data?.data || r.data;
+          const m = unwrap<MemberResult>(r);
           if (m && m.id) {
             setSelected({
               id: m.id,
@@ -104,7 +104,7 @@ export default function MemberSearchPicker({
         if (rantingId) params.rantingId = rantingId;
         if (wilayahId) params.wilayahId = wilayahId;
         const res = await apiClient.get('/members/search', { params });
-        const data = res.data?.data || res.data;
+        const data = unwrap<MemberResult[]>(res);
         setResults(Array.isArray(data) ? data : []);
       } catch {
         setResults([]);

@@ -4,11 +4,11 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import FormField from '@/components/ui/form-field';
 import { DetailSkeleton, ErrorPage, FormLayout } from '@/components/crud';
 
-interface DocDetail {
+interface _DocDetail {
   id: string;
   judul: string;
   deskripsi: string | null;
@@ -39,14 +39,14 @@ export default function EditOrgDocumentPage() {
           apiClient.get(`/org-documents/${id}`),
           apiClient.get('/org-documents/categories/list'),
         ]);
-        const d = docRes.data.data;
+        const d = unwrap<{ judul: string; deskripsi?: string | null; kategoriId?: string | null; filePath?: string | null }>(docRes);
         setForm({
           judul: d.judul,
           deskripsi: d.deskripsi || '',
           kategoriId: d.kategoriId || '',
           filePath: d.filePath || '',
         });
-        setCategories(catRes.data.data || []);
+        setCategories(unwrap<Array<{ id: string; nama: string }>>(catRes) || []);
       } catch {
         setFetchError('Gagal memuat data dokumen');
       }
