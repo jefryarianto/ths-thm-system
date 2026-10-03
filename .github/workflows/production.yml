@@ -258,7 +258,13 @@ jobs:
         run: |
           # SSH hardening: faster fail on dead hosts, retry transient blips,
           # keep long-running commands alive.
-          SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ConnectionAttempts=2 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o BatchMode=yes)
+          # PENTING: ControlMaster multiplexing + ControlPersist. Sesi SSH kedua
+          # di langkah ini (docker login) sering di-reset VPS tepat saat
+          # handshake baru ("kex_exchange_identification: read: Connection
+          # reset by peer", run 37124654095). Multiplexing memakai koneksi
+          # pertama yang sudah mapan, sehingga tidak ada handshake baru.
+          SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ConnectionAttempts=2 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o BatchMode=yes
+            -o ControlMaster=auto -o ControlPath="$HOME/.ssh/cm-%r@%h:%p" -o ControlPersist=10m)
           # Cleanup old images on VPS
           ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
@@ -271,10 +277,25 @@ jobs:
           # PENTING: pakai github.token langsung — `gh auth token` tanpa env
           # GH_TOKEN selalu gagal di runner, sehingga login kosong dan pull
           # berikutnya selalu "error from registry: denied".
-          printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
-            ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
-            'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+          # Retry loop: VPS kadang me-reset koneksi baru; ulangi beberapa kali
+          # dengan jeda, token di stdin diisi ulang tiap percobaan.
+          LOGIN_OK=0
+          for attempt in 1 2 3 4; do
+            set +e
+            printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+              ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
+              'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+            rc=$?
+            set -e
+            if [ "$rc" -eq 0 ]; then LOGIN_OK=1; echo "   ✅ GHCR login succeeded (attempt $attempt)."; break; fi
+            echo "   ⚠️ docker login SSH attempt $attempt failed (exit $rc); retrying in $((attempt * 5))s ..."
+            sleep $((attempt * 5))
+          done
           rm -f ~/.ssh/deploy_key
+          if [ "$LOGIN_OK" -ne 1 ]; then
+            echo "   ❌ FAILURE: could not complete GHCR docker login after 4 attempts."
+            exit 1
+          fi
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
