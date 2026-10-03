@@ -13,3 +13,10 @@ pnpm-lock.yaml
 .git
 .turbo
 apps/web/next-env.d.ts
+
+# Artefak API yang ter-generate — jangan diformat Prettier.
+# CI me-regenerate keduanya lalu membandingkan dengan git diff, jadi
+# formatting buatan Prettier akan membuat langkah "contract" CI gagal.
+# Lihat .github/workflows/ci.yml job `contract`.
+apps/api/swagger.json
+apps/web/src/types/api.d.ts

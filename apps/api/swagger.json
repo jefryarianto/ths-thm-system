@@ -11,7 +11,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/health/detailed": {
@@ -24,7 +26,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/health/events": {
@@ -37,7 +41,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/health/admin/queue-uptime": {
@@ -50,7 +56,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "security": [
           {
             "bearer": []
@@ -101,7 +109,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "security": [
           {
             "bearer": []
@@ -128,7 +138,9 @@
             "description": ""
           }
         },
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "security": [
           {
             "bearer": []
@@ -148,7 +160,12 @@
             "in": "query",
             "description": "Filter by event type",
             "schema": {
-              "enum": ["SCOPE_VIOLATION", "DATA_ACCESS", "DATA_MUTATION", "AUTH_FAILURE"],
+              "enum": [
+                "SCOPE_VIOLATION",
+                "DATA_ACCESS",
+                "DATA_MUTATION",
+                "AUTH_FAILURE"
+              ],
               "type": "string"
             }
           },
@@ -233,7 +250,9 @@
             "description": "Paginated audit log entries with total count"
           }
         },
-        "tags": ["Audit Logs"],
+        "tags": [
+          "Audit Logs"
+        ],
         "security": [
           {
             "bearer": []
@@ -252,7 +271,9 @@
             "description": "Audit log statistics with event type and role breakdowns"
           }
         },
-        "tags": ["Audit Logs"],
+        "tags": [
+          "Audit Logs"
+        ],
         "security": [
           {
             "bearer": []
@@ -272,7 +293,12 @@
             "in": "query",
             "description": "Filter by event type",
             "schema": {
-              "enum": ["SCOPE_VIOLATION", "DATA_ACCESS", "DATA_MUTATION", "AUTH_FAILURE"],
+              "enum": [
+                "SCOPE_VIOLATION",
+                "DATA_ACCESS",
+                "DATA_MUTATION",
+                "AUTH_FAILURE"
+              ],
               "type": "string"
             }
           },
@@ -357,7 +383,9 @@
             "description": ""
           }
         },
-        "tags": ["Audit Logs"],
+        "tags": [
+          "Audit Logs"
+        ],
         "security": [
           {
             "bearer": []
@@ -376,7 +404,9 @@
             "description": ""
           }
         },
-        "tags": ["Audit Logs"]
+        "tags": [
+          "Audit Logs"
+        ]
       }
     },
     "/api-keys": {
@@ -390,7 +420,9 @@
             "description": "List of API key previews with role and description"
           }
         },
-        "tags": ["API Key Management"],
+        "tags": [
+          "API Key Management"
+        ],
         "security": [
           {
             "bearer": []
@@ -416,7 +448,9 @@
             "description": "API key created successfully. Store the key securely — it will not be shown again."
           }
         },
-        "tags": ["API Key Management"],
+        "tags": [
+          "API Key Management"
+        ],
         "security": [
           {
             "bearer": []
@@ -445,7 +479,9 @@
             "description": "Revocation result — success indicates key was found and removed"
           }
         },
-        "tags": ["API Key Management"],
+        "tags": [
+          "API Key Management"
+        ],
         "security": [
           {
             "bearer": []
@@ -464,7 +500,9 @@
             "description": "Cache stats with entry count and key list"
           }
         },
-        "tags": ["Cache Management"],
+        "tags": [
+          "Cache Management"
+        ],
         "security": [
           {
             "bearer": []
@@ -493,7 +531,9 @@
             "description": "Invalidation result — success and affected scope"
           }
         },
-        "tags": ["Cache Management"],
+        "tags": [
+          "Cache Management"
+        ],
         "security": [
           {
             "bearer": []
@@ -511,7 +551,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearer": []
@@ -527,7 +569,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearer": []
@@ -554,7 +598,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearer": []
@@ -589,7 +635,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearer": []
@@ -607,7 +655,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"]
+        "tags": [
+          "Admin"
+        ]
       }
     },
     "/admin/metrics": {
@@ -620,7 +670,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "security": [
           {
             "bearer": []
@@ -671,7 +723,9 @@
             "description": ""
           }
         },
-        "tags": ["Revisions"],
+        "tags": [
+          "Revisions"
+        ],
         "security": [
           {
             "bearer": []
@@ -698,7 +752,9 @@
             "description": ""
           }
         },
-        "tags": ["Revisions"],
+        "tags": [
+          "Revisions"
+        ],
         "security": [
           {
             "bearer": []
@@ -749,7 +805,9 @@
             "description": ""
           }
         },
-        "tags": ["Revisions"],
+        "tags": [
+          "Revisions"
+        ],
         "security": [
           {
             "bearer": []
@@ -778,7 +836,9 @@
             "description": ""
           }
         },
-        "tags": ["Revisions"],
+        "tags": [
+          "Revisions"
+        ],
         "security": [
           {
             "bearer": []
@@ -806,7 +866,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -834,7 +896,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -862,7 +926,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -880,7 +946,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -933,7 +1001,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -949,7 +1019,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -976,7 +1048,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -994,7 +1068,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1012,7 +1088,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1030,7 +1108,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1048,7 +1128,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1064,7 +1146,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1082,7 +1166,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1109,7 +1195,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1134,7 +1222,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1152,7 +1242,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1170,7 +1262,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1188,7 +1282,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1216,7 +1312,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1244,7 +1342,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1271,7 +1371,9 @@
             "description": ""
           }
         },
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "security": [
           {
             "bearer": []
@@ -1299,7 +1401,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/register": {
@@ -1322,7 +1426,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/refresh": {
@@ -1345,7 +1451,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/forgot": {
@@ -1368,7 +1476,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/reset": {
@@ -1391,7 +1501,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/force-change-password": {
@@ -1414,7 +1526,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/logout": {
@@ -1427,7 +1541,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1445,7 +1561,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/sessions": {
@@ -1458,7 +1576,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1485,7 +1605,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1536,7 +1658,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1554,7 +1678,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1581,7 +1707,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1608,7 +1736,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1626,7 +1756,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1644,7 +1776,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1670,7 +1804,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1688,7 +1824,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1706,7 +1844,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1724,7 +1864,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1752,7 +1894,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1780,7 +1924,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1808,7 +1954,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1826,7 +1974,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [
           {
             "bearer": []
@@ -1854,7 +2004,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/magic-link/verify": {
@@ -1877,7 +2029,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/providers": {
@@ -1890,7 +2044,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/google": {
@@ -1903,7 +2059,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/google/callback": {
@@ -1916,7 +2074,9 @@
             "description": ""
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/approvals/submit": {
@@ -1929,7 +2089,9 @@
             "description": ""
           }
         },
-        "tags": ["Approvals"],
+        "tags": [
+          "Approvals"
+        ],
         "security": [
           {
             "bearer": []
@@ -1956,7 +2118,9 @@
             "description": ""
           }
         },
-        "tags": ["Approvals"],
+        "tags": [
+          "Approvals"
+        ],
         "security": [
           {
             "bearer": []
@@ -1983,7 +2147,9 @@
             "description": ""
           }
         },
-        "tags": ["Approvals"],
+        "tags": [
+          "Approvals"
+        ],
         "security": [
           {
             "bearer": []
@@ -2010,7 +2176,9 @@
             "description": ""
           }
         },
-        "tags": ["Approvals"],
+        "tags": [
+          "Approvals"
+        ],
         "security": [
           {
             "bearer": []
@@ -2028,7 +2196,9 @@
             "description": ""
           }
         },
-        "tags": ["Approvals"],
+        "tags": [
+          "Approvals"
+        ],
         "security": [
           {
             "bearer": []
@@ -2081,7 +2251,9 @@
             "description": ""
           }
         },
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearer": []
@@ -2107,7 +2279,9 @@
             "description": ""
           }
         },
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearer": []
@@ -2134,7 +2308,9 @@
             "description": ""
           }
         },
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearer": []
@@ -2169,7 +2345,9 @@
             "description": ""
           }
         },
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearer": []
@@ -2194,7 +2372,9 @@
             "description": ""
           }
         },
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearer": []
@@ -2212,7 +2392,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2255,7 +2437,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2323,7 +2507,13 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["aktif", "nonaktif", "pindah", "keluar", "meninggal"],
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2332,7 +2522,11 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["pending", "approved", "rejected"],
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2341,7 +2535,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["complete", "incomplete"],
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -2360,7 +2557,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2378,7 +2577,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2446,7 +2647,13 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["aktif", "nonaktif", "pindah", "keluar", "meninggal"],
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2455,7 +2662,11 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["pending", "approved", "rejected"],
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2464,7 +2675,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["complete", "incomplete"],
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -2483,7 +2697,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2509,7 +2725,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2536,7 +2754,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2571,7 +2791,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2596,7 +2818,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2614,7 +2838,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2641,7 +2867,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2672,7 +2900,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2740,7 +2970,13 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["aktif", "nonaktif", "pindah", "keluar", "meninggal"],
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2749,7 +2985,11 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["pending", "approved", "rejected"],
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2758,7 +2998,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["complete", "incomplete"],
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -2777,7 +3020,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2804,7 +3049,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2831,7 +3078,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2858,7 +3107,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2885,7 +3136,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2912,7 +3165,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2939,7 +3194,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2966,7 +3223,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -2993,7 +3252,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3020,7 +3281,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3055,7 +3318,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3082,7 +3347,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3109,7 +3376,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3136,7 +3405,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3163,7 +3434,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3198,7 +3471,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3225,7 +3500,9 @@
             "description": ""
           }
         },
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "security": [
           {
             "bearer": []
@@ -3243,7 +3520,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3269,7 +3548,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3296,7 +3577,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3333,7 +3616,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3358,7 +3643,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3385,7 +3672,9 @@
             "description": ""
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3423,7 +3712,9 @@
             "description": "Penugasan tersimpan"
           }
         },
-        "tags": ["Penandatangan"],
+        "tags": [
+          "Penandatangan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3441,7 +3732,9 @@
             "description": ""
           }
         },
-        "tags": ["Tingkatan"],
+        "tags": [
+          "Tingkatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3467,7 +3760,9 @@
             "description": ""
           }
         },
-        "tags": ["Tingkatan"],
+        "tags": [
+          "Tingkatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3485,7 +3780,9 @@
             "description": ""
           }
         },
-        "tags": ["Tingkatan"],
+        "tags": [
+          "Tingkatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3522,7 +3819,9 @@
             "description": ""
           }
         },
-        "tags": ["Tingkatan"],
+        "tags": [
+          "Tingkatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3547,7 +3846,9 @@
             "description": ""
           }
         },
-        "tags": ["Tingkatan"],
+        "tags": [
+          "Tingkatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -3576,7 +3877,9 @@
             "description": ""
           }
         },
-        "tags": ["Import Batch"],
+        "tags": [
+          "Import Batch"
+        ],
         "security": [
           {
             "bearer": []
@@ -3609,7 +3912,9 @@
             "description": ""
           }
         },
-        "tags": ["Import Batch"],
+        "tags": [
+          "Import Batch"
+        ],
         "security": [
           {
             "bearer": []
@@ -3652,7 +3957,9 @@
             "description": ""
           }
         },
-        "tags": ["Import Batch"],
+        "tags": [
+          "Import Batch"
+        ],
         "security": [
           {
             "bearer": []
@@ -3679,7 +3986,9 @@
             "description": ""
           }
         },
-        "tags": ["Import Batch"],
+        "tags": [
+          "Import Batch"
+        ],
         "security": [
           {
             "bearer": []
@@ -3706,7 +4015,9 @@
             "description": ""
           }
         },
-        "tags": ["Import Batch"],
+        "tags": [
+          "Import Batch"
+        ],
         "security": [
           {
             "bearer": []
@@ -3758,7 +4069,13 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["diusulkan", "mengikuti_pendadaran", "lulus", "gagal", "dibatalkan"],
+              "enum": [
+                "diusulkan",
+                "mengikuti_pendadaran",
+                "lulus",
+                "gagal",
+                "dibatalkan"
+              ],
               "type": "string"
             }
           }
@@ -3768,7 +4085,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3794,7 +4113,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3821,7 +4142,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3856,7 +4179,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3881,7 +4206,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3912,7 +4239,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3939,7 +4268,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3966,7 +4297,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -3993,7 +4326,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -4045,7 +4380,13 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["diusulkan", "mengikuti_pendadaran", "lulus", "gagal", "dibatalkan"],
+              "enum": [
+                "diusulkan",
+                "mengikuti_pendadaran",
+                "lulus",
+                "gagal",
+                "dibatalkan"
+              ],
               "type": "string"
             }
           }
@@ -4055,7 +4396,9 @@
             "description": ""
           }
         },
-        "tags": ["Candidates"],
+        "tags": [
+          "Candidates"
+        ],
         "security": [
           {
             "bearer": []
@@ -4100,7 +4443,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4126,7 +4471,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"]
+        "tags": [
+          "Registrations"
+        ]
       }
     },
     "/pendaftaran": {
@@ -4166,7 +4513,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4192,7 +4541,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"]
+        "tags": [
+          "Registrations"
+        ]
       }
     },
     "/registrations/{id}": {
@@ -4214,7 +4565,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4249,7 +4602,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4274,7 +4629,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4301,7 +4658,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4336,7 +4695,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4361,7 +4722,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4388,7 +4751,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4415,7 +4780,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4442,7 +4809,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4469,7 +4838,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4506,7 +4877,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4543,7 +4916,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4561,7 +4936,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4579,7 +4956,9 @@
             "description": ""
           }
         },
-        "tags": ["Registrations"],
+        "tags": [
+          "Registrations"
+        ],
         "security": [
           {
             "bearer": []
@@ -4615,7 +4994,12 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["pending", "diproses", "disetujui", "ditolak"],
+              "enum": [
+                "pending",
+                "diproses",
+                "disetujui",
+                "ditolak"
+              ],
               "type": "string"
             }
           },
@@ -4624,7 +5008,10 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["keanggotaan", "dokumen"],
+              "enum": [
+                "keanggotaan",
+                "dokumen"
+              ],
               "type": "string"
             }
           }
@@ -4634,7 +5021,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4660,7 +5049,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4687,7 +5078,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4722,7 +5115,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4747,7 +5142,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4774,7 +5171,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4811,7 +5210,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4838,7 +5239,9 @@
             "description": ""
           }
         },
-        "tags": ["Claims"],
+        "tags": [
+          "Claims"
+        ],
         "security": [
           {
             "bearer": []
@@ -4883,7 +5286,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -4909,7 +5314,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -4936,7 +5343,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -4971,7 +5380,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -4996,7 +5407,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5023,7 +5436,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5058,7 +5473,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5095,7 +5512,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5122,7 +5541,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5157,7 +5578,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5202,7 +5625,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5235,7 +5660,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5262,7 +5689,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5297,7 +5726,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5342,7 +5773,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5375,7 +5808,9 @@
             "description": ""
           }
         },
-        "tags": ["Trainings"],
+        "tags": [
+          "Trainings"
+        ],
         "security": [
           {
             "bearer": []
@@ -5393,7 +5828,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5420,7 +5857,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5455,7 +5894,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5482,7 +5923,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5509,7 +5952,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5552,7 +5997,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5570,7 +6017,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5645,7 +6094,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5672,7 +6123,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5690,7 +6143,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5708,7 +6163,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5735,7 +6192,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5770,7 +6229,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5788,7 +6249,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5806,7 +6269,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5822,7 +6287,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5849,7 +6316,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5876,7 +6345,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5903,7 +6374,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5930,7 +6403,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5948,7 +6423,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5964,7 +6441,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -5991,7 +6470,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6016,7 +6497,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6043,7 +6526,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6070,7 +6555,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6088,7 +6575,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6115,7 +6604,9 @@
             "description": ""
           }
         },
-        "tags": ["Gamification"],
+        "tags": [
+          "Gamification"
+        ],
         "security": [
           {
             "bearer": []
@@ -6133,7 +6624,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6177,7 +6670,12 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["draft", "published", "closed", "cancelled"],
+              "enum": [
+                "draft",
+                "published",
+                "closed",
+                "cancelled"
+              ],
               "type": "string"
             }
           }
@@ -6187,7 +6685,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6213,7 +6713,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6256,7 +6758,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6283,7 +6787,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6318,7 +6824,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6343,7 +6851,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6380,7 +6890,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6418,7 +6930,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6443,7 +6957,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6470,7 +6986,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6507,7 +7025,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6534,7 +7054,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6571,7 +7093,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6608,7 +7132,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6645,7 +7171,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6672,7 +7200,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6699,7 +7229,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6726,7 +7258,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6753,7 +7287,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6780,7 +7316,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6807,7 +7345,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6832,7 +7372,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6859,7 +7401,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6886,7 +7430,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6913,7 +7459,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6948,7 +7496,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -6975,7 +7525,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7002,7 +7554,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7029,7 +7583,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7056,7 +7612,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7074,7 +7632,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7101,7 +7661,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7128,7 +7690,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7163,7 +7727,9 @@
             "description": ""
           }
         },
-        "tags": ["Graduations"],
+        "tags": [
+          "Graduations"
+        ],
         "security": [
           {
             "bearer": []
@@ -7190,7 +7756,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"]
+        "tags": [
+          "Documents"
+        ]
       }
     },
     "/documents/{id}/file": {
@@ -7212,7 +7780,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7271,7 +7841,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7298,7 +7870,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7323,7 +7897,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7351,7 +7927,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7379,7 +7957,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7414,7 +7994,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7432,7 +8014,12 @@
             "required": true,
             "in": "query",
             "schema": {
-              "enum": ["all_active", "by_ranting", "by_ids", "graduated_only"],
+              "enum": [
+                "all_active",
+                "by_ranting",
+                "by_ids",
+                "graduated_only"
+              ],
               "type": "string"
             }
           },
@@ -7450,7 +8037,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7487,7 +8076,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7514,7 +8105,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7541,7 +8134,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7578,7 +8173,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7605,7 +8202,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7630,7 +8229,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7648,7 +8249,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7666,7 +8269,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7684,7 +8289,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7702,7 +8309,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7720,7 +8329,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7747,7 +8358,9 @@
             "description": ""
           }
         },
-        "tags": ["Documents"],
+        "tags": [
+          "Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -7816,7 +8429,9 @@
             "description": "Daftar semua aspek penilaian beserta item-itemnya"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -7843,7 +8458,9 @@
             "description": "Aspek penilaian berhasil dibuat"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -7871,7 +8488,9 @@
             "description": "Detail aspek penilaian dengan daftar item"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -7908,7 +8527,9 @@
             "description": "Aspek penilaian berhasil diperbarui"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -7934,7 +8555,9 @@
             "description": "Aspek penilaian dinonaktifkan (soft-disable, tidak tampil di list)"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8004,7 +8627,9 @@
             "description": "Daftar semua item penilaian"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8031,7 +8656,9 @@
             "description": "Item penilaian berhasil dibuat"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8059,7 +8686,9 @@
             "description": "Detail item penilaian"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8096,7 +8725,9 @@
             "description": "Item penilaian berhasil diperbarui"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8122,7 +8753,9 @@
             "description": "Item penilaian dinonaktifkan"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8151,7 +8784,9 @@
             "description": "Data import diproses"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8190,7 +8825,9 @@
             "description": "Data CSV diproses dan diimport"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8217,7 +8854,9 @@
             "description": "Aspek penilaian diaktifkan kembali"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8244,7 +8883,9 @@
             "description": "Item penilaian diaktifkan kembali"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8299,7 +8940,9 @@
             "description": "Daftar nilai pendadaran"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8326,7 +8969,9 @@
             "description": "Nilai berhasil disimpan"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8355,7 +9000,9 @@
             "description": "Nilai berhasil diimpor"
           }
         },
-        "tags": ["Assessments"],
+        "tags": [
+          "Assessments"
+        ],
         "security": [
           {
             "bearer": []
@@ -8409,7 +9056,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8435,7 +9084,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8462,7 +9113,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8497,7 +9150,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8522,7 +9177,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8540,7 +9197,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8577,7 +9236,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8604,7 +9265,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8631,7 +9294,9 @@
             "description": ""
           }
         },
-        "tags": ["Examiners"],
+        "tags": [
+          "Examiners"
+        ],
         "security": [
           {
             "bearer": []
@@ -8700,7 +9365,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8726,7 +9393,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8753,7 +9422,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8788,7 +9459,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8813,7 +9486,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8850,7 +9525,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8885,7 +9562,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8912,7 +9591,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8939,7 +9620,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -8974,7 +9657,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -9001,7 +9686,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -9036,7 +9723,9 @@
             "description": ""
           }
         },
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "security": [
           {
             "bearer": []
@@ -9089,7 +9778,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9115,7 +9806,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9142,7 +9835,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9177,7 +9872,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9202,7 +9899,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9229,7 +9928,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9247,7 +9948,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9274,7 +9977,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9309,7 +10014,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9334,7 +10041,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9362,7 +10071,9 @@
             "description": ""
           }
         },
-        "tags": ["Org-Documents"],
+        "tags": [
+          "Org-Documents"
+        ],
         "security": [
           {
             "bearer": []
@@ -9399,7 +10110,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9436,7 +10149,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9462,7 +10177,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9489,7 +10206,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9524,7 +10243,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9549,7 +10270,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9586,7 +10309,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9623,7 +10348,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9649,7 +10376,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9676,7 +10405,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9711,7 +10442,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9736,7 +10469,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9763,7 +10498,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9781,7 +10518,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9799,7 +10538,9 @@
             "description": ""
           }
         },
-        "tags": ["Letters"],
+        "tags": [
+          "Letters"
+        ],
         "security": [
           {
             "bearer": []
@@ -9827,7 +10568,9 @@
             "description": ""
           }
         },
-        "tags": ["Logs"]
+        "tags": [
+          "Logs"
+        ]
       }
     },
     "/dues": {
@@ -9858,7 +10601,12 @@
             "required": false,
             "in": "query",
             "schema": {
-              "enum": ["belum_dibayar", "menunggu_verifikasi", "lunas", "menunggak"],
+              "enum": [
+                "belum_dibayar",
+                "menunggu_verifikasi",
+                "lunas",
+                "menunggak"
+              ],
               "type": "string"
             }
           },
@@ -9876,7 +10624,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -9902,7 +10652,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -9939,7 +10691,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -9964,7 +10718,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -9989,7 +10745,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10007,7 +10765,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10034,7 +10794,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10052,7 +10814,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10070,7 +10834,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10088,7 +10854,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10106,7 +10874,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10134,7 +10904,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10152,7 +10924,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10189,7 +10963,9 @@
             "description": ""
           }
         },
-        "tags": ["Dues"],
+        "tags": [
+          "Dues"
+        ],
         "security": [
           {
             "bearer": []
@@ -10207,7 +10983,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10223,7 +11001,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10241,7 +11021,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10268,7 +11050,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10293,7 +11077,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10320,7 +11106,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10347,7 +11135,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10374,7 +11164,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10401,7 +11193,9 @@
             "description": ""
           }
         },
-        "tags": ["Payments"],
+        "tags": [
+          "Payments"
+        ],
         "security": [
           {
             "bearer": []
@@ -10419,7 +11213,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10437,7 +11233,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10455,7 +11253,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10482,7 +11282,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10517,7 +11319,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10552,7 +11356,9 @@
             "description": ""
           }
         },
-        "tags": ["Reports"],
+        "tags": [
+          "Reports"
+        ],
         "security": [
           {
             "bearer": []
@@ -10595,7 +11401,9 @@
             "description": ""
           }
         },
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "security": [
           {
             "bearer": []
@@ -10612,7 +11420,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10627,7 +11437,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10645,7 +11457,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10661,7 +11475,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10679,7 +11495,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10705,7 +11523,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10742,7 +11562,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10767,7 +11589,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10785,7 +11609,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10801,7 +11627,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10828,7 +11656,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10846,7 +11676,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10873,7 +11705,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10900,7 +11734,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10916,7 +11752,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10934,7 +11772,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10950,7 +11790,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10968,7 +11810,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -10984,7 +11828,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11002,7 +11848,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11020,7 +11868,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11038,7 +11888,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11054,7 +11906,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11081,7 +11935,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11106,7 +11962,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11141,7 +11999,9 @@
             "description": ""
           }
         },
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "security": [
           {
             "bearer": []
@@ -11159,7 +12019,9 @@
             "description": ""
           }
         },
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "security": [
           {
             "bearer": []
@@ -11186,7 +12048,9 @@
             "description": ""
           }
         },
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "security": [
           {
             "bearer": []
@@ -11227,7 +12091,9 @@
             "description": ""
           }
         },
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "security": [
           {
             "bearer": []
@@ -11254,7 +12120,9 @@
             "description": ""
           }
         },
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "security": [
           {
             "bearer": []
@@ -11281,7 +12149,9 @@
             "description": ""
           }
         },
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "security": [
           {
             "bearer": []
@@ -11299,7 +12169,9 @@
             "description": "Daftar semua kategori forum dengan jumlah thread per kategori"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11326,7 +12198,9 @@
             "description": "Kategori forum berhasil dibuat"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11354,7 +12228,9 @@
             "description": "Detail kategori forum"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11391,7 +12267,9 @@
             "description": "Kategori forum berhasil diperbarui"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11417,7 +12295,9 @@
             "description": "Kategori forum berhasil dihapus"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11497,7 +12377,9 @@
             "description": "Daftar thread dalam kategori"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11524,7 +12406,9 @@
             "description": "Detail thread beserta semua balasan"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11561,7 +12445,9 @@
             "description": "Thread berhasil diperbarui"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11587,7 +12473,9 @@
             "description": "Thread berhasil dihapus"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11616,7 +12504,9 @@
             "description": "Thread berhasil dibuat"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11644,7 +12534,9 @@
             "description": "Status pin thread berubah"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11672,7 +12564,9 @@
             "description": "Status lock thread berubah"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11711,7 +12605,9 @@
             "description": "Balasan berhasil dikirim"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11750,7 +12646,9 @@
             "description": "Balasan berhasil diperbarui"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11776,7 +12674,9 @@
             "description": "Balasan berhasil dihapus"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11813,7 +12713,9 @@
             "description": "Post ditandai sebagai solusi"
           }
         },
-        "tags": ["Forum"],
+        "tags": [
+          "Forum"
+        ],
         "security": [
           {
             "bearer": []
@@ -11848,7 +12750,9 @@
             "description": ""
           }
         },
-        "tags": ["Calendar"],
+        "tags": [
+          "Calendar"
+        ],
         "security": [
           {
             "bearer": []
@@ -11875,7 +12779,9 @@
             "description": ""
           }
         },
-        "tags": ["Calendar"],
+        "tags": [
+          "Calendar"
+        ],
         "security": [
           {
             "bearer": []
@@ -11902,7 +12808,9 @@
             "description": ""
           }
         },
-        "tags": ["Calendar"],
+        "tags": [
+          "Calendar"
+        ],
         "security": [
           {
             "bearer": []
@@ -11920,7 +12828,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Chart"]
+        "tags": [
+          "Organization Chart"
+        ]
       }
     },
     "/org-chart": {
@@ -11933,7 +12843,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Chart"],
+        "tags": [
+          "Organization Chart"
+        ],
         "security": [
           {
             "bearer": []
@@ -11951,7 +12863,9 @@
             "description": ""
           }
         },
-        "tags": ["Targets"],
+        "tags": [
+          "Targets"
+        ],
         "security": [
           {
             "bearer": []
@@ -11969,7 +12883,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -11987,7 +12903,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12013,7 +12931,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12040,7 +12960,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12075,7 +12997,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12100,7 +13024,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12128,7 +13054,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12154,7 +13082,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12181,7 +13111,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12216,7 +13148,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12241,7 +13175,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12269,7 +13205,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12295,7 +13233,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12322,7 +13262,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12357,7 +13299,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12382,7 +13326,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12400,7 +13346,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12417,7 +13365,9 @@
             "description": ""
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12446,7 +13396,9 @@
             "description": "Struktur organisasi di-import (upsert by nama)"
           }
         },
-        "tags": ["Organization Structure"],
+        "tags": [
+          "Organization Structure"
+        ],
         "security": [
           {
             "bearer": []
@@ -12473,7 +13425,9 @@
             "description": ""
           }
         },
-        "tags": ["Upload"],
+        "tags": [
+          "Upload"
+        ],
         "security": [
           {
             "bearer": []
@@ -12492,7 +13446,9 @@
             "description": ""
           }
         },
-        "tags": ["Admin / Queue"],
+        "tags": [
+          "Admin / Queue"
+        ],
         "security": [
           {
             "bearer": []
@@ -12510,7 +13466,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12536,7 +13494,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12563,7 +13523,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12598,7 +13560,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12623,7 +13587,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12650,7 +13616,9 @@
             "description": ""
           }
         },
-        "tags": ["Monitoring"],
+        "tags": [
+          "Monitoring"
+        ],
         "security": [
           {
             "bearer": []
@@ -12668,7 +13636,9 @@
             "description": ""
           }
         },
-        "tags": ["Feature Flags"]
+        "tags": [
+          "Feature Flags"
+        ]
       }
     },
     "/feature-flags/{key}": {
@@ -12690,7 +13660,9 @@
             "description": ""
           }
         },
-        "tags": ["Feature Flags"]
+        "tags": [
+          "Feature Flags"
+        ]
       },
       "post": {
         "operationId": "FeatureFlagsController_setFlag",
@@ -12710,7 +13682,9 @@
             "description": ""
           }
         },
-        "tags": ["Feature Flags"]
+        "tags": [
+          "Feature Flags"
+        ]
       }
     },
     "/graduations/{kegiatanId}/ujian-praktek": {
@@ -12732,7 +13706,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12767,7 +13743,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12794,7 +13772,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12821,7 +13801,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12856,7 +13838,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12881,7 +13865,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12908,7 +13894,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12945,7 +13933,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -12980,7 +13970,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13017,7 +14009,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13052,7 +14046,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13079,7 +14075,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13116,7 +14114,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13143,7 +14143,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13170,7 +14172,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13197,7 +14201,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13242,7 +14248,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13277,7 +14285,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13312,7 +14322,9 @@
             "description": ""
           }
         },
-        "tags": ["Ujian Praktek"],
+        "tags": [
+          "Ujian Praktek"
+        ],
         "security": [
           {
             "bearer": []
@@ -13329,7 +14341,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/berita/{slug}": {
@@ -13351,7 +14365,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/galeri": {
@@ -13363,7 +14379,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/donasi-program": {
@@ -13375,7 +14393,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/sejarah": {
@@ -13387,7 +14407,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/sambutan": {
@@ -13399,7 +14421,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/beranda": {
@@ -13411,7 +14435,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/organisasi": {
@@ -13423,7 +14449,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/bank-info": {
@@ -13435,7 +14463,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/kepengurusan": {
@@ -13447,7 +14477,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/distrik": {
@@ -13460,7 +14492,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/wilayah": {
@@ -13482,7 +14516,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/ranting": {
@@ -13504,7 +14540,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/periode": {
@@ -13517,7 +14555,12 @@
             "required": true,
             "in": "query",
             "schema": {
-              "enum": ["nasional", "distrik", "wilayah", "ranting"],
+              "enum": [
+                "nasional",
+                "distrik",
+                "wilayah",
+                "ranting"
+              ],
               "type": "string"
             }
           },
@@ -13535,7 +14578,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/members": {
@@ -13548,7 +14593,12 @@
             "required": true,
             "in": "query",
             "schema": {
-              "enum": ["nasional", "distrik", "wilayah", "ranting"],
+              "enum": [
+                "nasional",
+                "distrik",
+                "wilayah",
+                "ranting"
+              ],
               "type": "string"
             }
           },
@@ -13574,7 +14624,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/search": {
@@ -13596,7 +14648,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/struktur/children": {
@@ -13609,7 +14663,12 @@
             "required": true,
             "in": "query",
             "schema": {
-              "enum": ["nasional", "distrik", "wilayah", "ranting"],
+              "enum": [
+                "nasional",
+                "distrik",
+                "wilayah",
+                "ranting"
+              ],
               "type": "string"
             }
           },
@@ -13627,7 +14686,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/public/mobile-app-info": {
@@ -13640,7 +14701,9 @@
             "description": ""
           }
         },
-        "tags": ["Public"]
+        "tags": [
+          "Public"
+        ]
       }
     },
     "/periode": {
@@ -13653,7 +14716,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13669,7 +14734,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13696,7 +14763,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13721,7 +14790,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13746,7 +14817,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13773,7 +14846,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13808,7 +14883,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13835,7 +14912,9 @@
             "description": ""
           }
         },
-        "tags": ["Periode"],
+        "tags": [
+          "Periode"
+        ],
         "security": [
           {
             "bearer": []
@@ -13853,7 +14932,9 @@
             "description": ""
           }
         },
-        "tags": ["Jabatan"],
+        "tags": [
+          "Jabatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -13869,7 +14950,9 @@
             "description": ""
           }
         },
-        "tags": ["Jabatan"],
+        "tags": [
+          "Jabatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -13896,7 +14979,9 @@
             "description": ""
           }
         },
-        "tags": ["Jabatan"],
+        "tags": [
+          "Jabatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -13921,7 +15006,9 @@
             "description": ""
           }
         },
-        "tags": ["Jabatan"],
+        "tags": [
+          "Jabatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -13946,7 +15033,9 @@
             "description": ""
           }
         },
-        "tags": ["Jabatan"],
+        "tags": [
+          "Jabatan"
+        ],
         "security": [
           {
             "bearer": []
@@ -13997,7 +15086,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14013,7 +15104,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14040,7 +15133,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14065,7 +15160,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14090,7 +15187,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14133,7 +15232,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14151,7 +15252,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14178,7 +15281,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14196,7 +15301,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14223,7 +15330,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14250,7 +15359,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14268,7 +15379,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14286,7 +15399,9 @@
             "description": ""
           }
         },
-        "tags": ["Kepengurusan"],
+        "tags": [
+          "Kepengurusan"
+        ],
         "security": [
           {
             "bearer": []
@@ -14304,7 +15419,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14320,7 +15437,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14347,7 +15466,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14372,7 +15493,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14397,7 +15520,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14425,7 +15550,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14443,7 +15570,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14470,7 +15599,9 @@
             "description": ""
           }
         },
-        "tags": ["Content"],
+        "tags": [
+          "Content"
+        ],
         "security": [
           {
             "bearer": []
@@ -14498,7 +15629,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14514,7 +15647,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14541,7 +15676,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14568,7 +15705,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14605,7 +15744,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14642,7 +15783,9 @@
             "description": ""
           }
         },
-        "tags": ["Mutations"],
+        "tags": [
+          "Mutations"
+        ],
         "security": [
           {
             "bearer": []
@@ -14659,7 +15802,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14686,7 +15831,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14704,7 +15851,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14721,7 +15870,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14787,7 +15938,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14845,7 +15998,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14862,7 +16017,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14896,7 +16053,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14911,7 +16070,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14937,7 +16098,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14954,7 +16117,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14972,7 +16137,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -14990,7 +16157,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15017,7 +16186,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15042,7 +16213,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15067,7 +16240,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15094,7 +16269,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15111,7 +16288,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15153,7 +16332,9 @@
             "description": ""
           }
         },
-        "tags": ["Mail"],
+        "tags": [
+          "Mail"
+        ],
         "security": [
           {
             "bearer": []
@@ -15180,7 +16361,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15198,7 +16381,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15214,7 +16399,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15241,7 +16428,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15266,7 +16455,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15291,7 +16482,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15318,7 +16511,9 @@
             "description": ""
           }
         },
-        "tags": ["Card Templates"],
+        "tags": [
+          "Card Templates"
+        ],
         "security": [
           {
             "bearer": []
@@ -15336,7 +16531,9 @@
             "description": ""
           }
         },
-        "tags": ["Role Menu Permissions"],
+        "tags": [
+          "Role Menu Permissions"
+        ],
         "security": [
           {
             "bearer": []
@@ -15352,7 +16549,9 @@
             "description": ""
           }
         },
-        "tags": ["Role Menu Permissions"],
+        "tags": [
+          "Role Menu Permissions"
+        ],
         "security": [
           {
             "bearer": []
@@ -15379,7 +16578,9 @@
             "description": ""
           }
         },
-        "tags": ["Role Menu Permissions"],
+        "tags": [
+          "Role Menu Permissions"
+        ],
         "security": [
           {
             "bearer": []
@@ -15406,7 +16607,9 @@
             "description": ""
           }
         },
-        "tags": ["Role Menu Permissions"],
+        "tags": [
+          "Role Menu Permissions"
+        ],
         "security": [
           {
             "bearer": []
@@ -15467,7 +16670,10 @@
             "description": "Scope overrides for the key"
           }
         },
-        "required": ["description", "role"]
+        "required": [
+          "description",
+          "role"
+        ]
       },
       "RevokeApiKeyDto": {
         "type": "object",
@@ -15477,7 +16683,9 @@
             "description": "The full API key to revoke"
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "InvalidateCacheDto": {
         "type": "object",
@@ -15529,7 +16737,10 @@
             "type": "object"
           }
         },
-        "required": ["judul", "isi"]
+        "required": [
+          "judul",
+          "isi"
+        ]
       },
       "BroadcastNotificationDto": {
         "type": "object",
@@ -15560,7 +16771,10 @@
             "type": "object"
           }
         },
-        "required": ["judul", "isi"]
+        "required": [
+          "judul",
+          "isi"
+        ]
       },
       "SendToRoleDto": {
         "type": "object",
@@ -15603,7 +16817,11 @@
             "type": "object"
           }
         },
-        "required": ["role", "judul", "isi"]
+        "required": [
+          "role",
+          "judul",
+          "isi"
+        ]
       },
       "RegisterDeviceTokenDto": {
         "type": "object",
@@ -15615,7 +16833,10 @@
             "type": "string"
           }
         },
-        "required": ["token", "platform"]
+        "required": [
+          "token",
+          "platform"
+        ]
       },
       "PublishAppUpdateDto": {
         "type": "object",
@@ -15642,7 +16863,11 @@
             "description": "URL alternatif APK. Kosongkan untuk memakai endpoint bawaan /api/app."
           }
         },
-        "required": ["versionCode", "versionName", "minVersionCode"]
+        "required": [
+          "versionCode",
+          "versionName",
+          "minVersionCode"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -15661,7 +16886,10 @@
             "example": "123456"
           }
         },
-        "required": ["identifier", "password"]
+        "required": [
+          "identifier",
+          "password"
+        ]
       },
       "RegisterDto": {
         "type": "object",
@@ -15682,7 +16910,11 @@
             "type": "string"
           }
         },
-        "required": ["email", "password", "namaLengkap"]
+        "required": [
+          "email",
+          "password",
+          "namaLengkap"
+        ]
       },
       "RefreshDto": {
         "type": "object",
@@ -15699,7 +16931,9 @@
             "type": "string"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -15711,7 +16945,10 @@
             "type": "string"
           }
         },
-        "required": ["token", "newPassword"]
+        "required": [
+          "token",
+          "newPassword"
+        ]
       },
       "ForceChangePasswordDto": {
         "type": "object",
@@ -15724,7 +16961,10 @@
             "type": "string"
           }
         },
-        "required": ["token", "newPassword"]
+        "required": [
+          "token",
+          "newPassword"
+        ]
       },
       "UpdateProfileDto": {
         "type": "object",
@@ -15757,7 +16997,9 @@
             "example": "123456"
           }
         },
-        "required": ["code"]
+        "required": [
+          "code"
+        ]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -15769,7 +17011,10 @@
             "type": "string"
           }
         },
-        "required": ["currentPassword", "newPassword"]
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
       },
       "MagicLinkDto": {
         "type": "object",
@@ -15778,7 +17023,9 @@
             "type": "string"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "MagicLinkVerifyDto": {
         "type": "object",
@@ -15787,7 +17034,9 @@
             "type": "string"
           }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       },
       "CreateUserDto": {
         "type": "object",
@@ -15823,7 +17072,11 @@
             "type": "boolean"
           }
         },
-        "required": ["email", "namaLengkap", "role"]
+        "required": [
+          "email",
+          "namaLengkap",
+          "role"
+        ]
       },
       "UpdateUserDto": {
         "type": "object",
@@ -15865,7 +17118,10 @@
           },
           "jenisKelamin": {
             "type": "string",
-            "enum": ["L", "P"]
+            "enum": [
+              "L",
+              "P"
+            ]
           },
           "tempatLahir": {
             "type": "string"
@@ -15898,7 +17154,10 @@
             "type": "string"
           }
         },
-        "required": ["namaLengkap", "jenisKelamin"]
+        "required": [
+          "namaLengkap",
+          "jenisKelamin"
+        ]
       },
       "UpdateMemberDto": {
         "type": "object",
@@ -15973,7 +17232,10 @@
           },
           "jenisKelamin": {
             "type": "string",
-            "enum": ["L", "P"]
+            "enum": [
+              "L",
+              "P"
+            ]
           },
           "tempatLahir": {
             "type": "string"
@@ -15997,7 +17259,10 @@
             "type": "string"
           }
         },
-        "required": ["namaLengkap", "jenisKelamin"]
+        "required": [
+          "namaLengkap",
+          "jenisKelamin"
+        ]
       },
       "UpdateCandidateDto": {
         "type": "object",
@@ -16036,7 +17301,10 @@
           },
           "jenisKelamin": {
             "type": "string",
-            "enum": ["L", "P"]
+            "enum": [
+              "L",
+              "P"
+            ]
           },
           "tempatLahir": {
             "type": "string"
@@ -16061,7 +17329,11 @@
             "description": "ID ranting asal calon anggota (wajib untuk approve)"
           }
         },
-        "required": ["namaLengkap", "jenisKelamin", "rantingId"]
+        "required": [
+          "namaLengkap",
+          "jenisKelamin",
+          "rantingId"
+        ]
       },
       "UpdateRegistrationDto": {
         "type": "object",
@@ -16113,7 +17385,10 @@
           },
           "tipe": {
             "type": "string",
-            "enum": ["keanggotaan", "dokumen"],
+            "enum": [
+              "keanggotaan",
+              "dokumen"
+            ],
             "description": "Tipe klaim"
           },
           "catatan": {
@@ -16125,7 +17400,10 @@
           },
           "jenisKelamin": {
             "type": "string",
-            "enum": ["L", "P"],
+            "enum": [
+              "L",
+              "P"
+            ],
             "description": "Jenis kelamin"
           },
           "tempatLahir": {
@@ -16168,7 +17446,9 @@
             }
           }
         },
-        "required": ["tipe"]
+        "required": [
+          "tipe"
+        ]
       },
       "UpdateClaimDto": {
         "type": "object",
@@ -16200,7 +17480,10 @@
             "type": "string"
           }
         },
-        "required": ["kategori", "detail"]
+        "required": [
+          "kategori",
+          "detail"
+        ]
       },
       "CreateTrainingDto": {
         "type": "object",
@@ -16236,7 +17519,10 @@
             "type": "string"
           }
         },
-        "required": ["hariTanggal", "lokasi"]
+        "required": [
+          "hariTanggal",
+          "lokasi"
+        ]
       },
       "UpdateTrainingDto": {
         "type": "object",
@@ -16281,7 +17567,9 @@
             "type": "string"
           }
         },
-        "required": ["anggotaId"]
+        "required": [
+          "anggotaId"
+        ]
       },
       "ImportAttendanceDto": {
         "type": "object",
@@ -16293,7 +17581,9 @@
             }
           }
         },
-        "required": ["data"]
+        "required": [
+          "data"
+        ]
       },
       "CreateEvaluationDto": {
         "type": "object",
@@ -16308,7 +17598,10 @@
             "type": "string"
           }
         },
-        "required": ["anggotaId", "nilai"]
+        "required": [
+          "anggotaId",
+          "nilai"
+        ]
       },
       "UpdateEvaluationDto": {
         "type": "object",
@@ -16371,7 +17664,10 @@
             "description": "User ID yang ditunjuk sebagai admin kegiatan"
           }
         },
-        "required": ["nama", "tanggalMulai"]
+        "required": [
+          "nama",
+          "tanggalMulai"
+        ]
       },
       "RegisterParticipantDto": {
         "type": "object",
@@ -16380,7 +17676,9 @@
             "type": "string"
           }
         },
-        "required": ["candidateId"]
+        "required": [
+          "candidateId"
+        ]
       },
       "CreateParticipantDto": {
         "type": "object",
@@ -16393,7 +17691,10 @@
           },
           "jenisKelamin": {
             "type": "string",
-            "enum": ["L", "P"]
+            "enum": [
+              "L",
+              "P"
+            ]
           },
           "noHp": {
             "type": "string"
@@ -16405,7 +17706,10 @@
             "type": "string"
           }
         },
-        "required": ["namaLengkap", "rantingId"]
+        "required": [
+          "namaLengkap",
+          "rantingId"
+        ]
       },
       "GraduateResultDto": {
         "type": "object",
@@ -16425,7 +17729,10 @@
             "type": "boolean"
           }
         },
-        "required": ["candidateId", "lulus"]
+        "required": [
+          "candidateId",
+          "lulus"
+        ]
       },
       "GraduateDto": {
         "type": "object",
@@ -16437,7 +17744,9 @@
             }
           }
         },
-        "required": ["results"]
+        "required": [
+          "results"
+        ]
       },
       "SingleValidateResultDto": {
         "type": "object",
@@ -16454,7 +17763,10 @@
             "type": "string"
           }
         },
-        "required": ["candidateId", "approved"]
+        "required": [
+          "candidateId",
+          "approved"
+        ]
       },
       "ValidateResultDto": {
         "type": "object",
@@ -16478,7 +17790,10 @@
             "type": "string"
           }
         },
-        "required": ["candidateId", "approved"]
+        "required": [
+          "candidateId",
+          "approved"
+        ]
       },
       "GenerateDocsDto": {
         "type": "object",
@@ -16511,7 +17826,10 @@
             "type": "string"
           }
         },
-        "required": ["memberId", "type"]
+        "required": [
+          "memberId",
+          "type"
+        ]
       },
       "BatchGenerateDocumentDto": {
         "type": "object",
@@ -16534,7 +17852,12 @@
           },
           "range": {
             "type": "string",
-            "enum": ["all_active", "by_ranting", "by_ids", "graduated_only"],
+            "enum": [
+              "all_active",
+              "by_ranting",
+              "by_ids",
+              "graduated_only"
+            ],
             "description": "Rentang anggota untuk resolve memberIds otomatis"
           },
           "rantingId": {
@@ -16548,7 +17871,9 @@
             "type": "string"
           }
         },
-        "required": ["type"]
+        "required": [
+          "type"
+        ]
       },
       "BatchRetryDto": {
         "type": "object",
@@ -16581,7 +17906,11 @@
             "type": "boolean"
           }
         },
-        "required": ["kodeAspek", "namaAspek", "bobot"]
+        "required": [
+          "kodeAspek",
+          "namaAspek",
+          "bobot"
+        ]
       },
       "UpdateAspectDto": {
         "type": "object",
@@ -16625,7 +17954,13 @@
             "type": "boolean"
           }
         },
-        "required": ["aspekId", "kodeItem", "namaItem", "skorMaksimal", "bobot"]
+        "required": [
+          "aspekId",
+          "kodeItem",
+          "namaItem",
+          "skorMaksimal",
+          "bobot"
+        ]
       },
       "UpdateItemDto": {
         "type": "object",
@@ -16672,7 +18007,13 @@
             "type": "string"
           }
         },
-        "required": ["kegiatanId", "calonAnggotaId", "itemPenilaianId", "pengujiUserId", "skor"]
+        "required": [
+          "kegiatanId",
+          "calonAnggotaId",
+          "itemPenilaianId",
+          "pengujiUserId",
+          "skor"
+        ]
       },
       "CreateExaminerDto": {
         "type": "object",
@@ -16696,7 +18037,9 @@
             "description": "Diabaikan di sini — catatan diisi saat penugasan pada pendadaran"
           }
         },
-        "required": ["namaLengkap"]
+        "required": [
+          "namaLengkap"
+        ]
       },
       "UpdateExaminerDto": {
         "type": "object",
@@ -16726,7 +18069,9 @@
             "type": "string"
           }
         },
-        "required": ["pengujiUserId"]
+        "required": [
+          "pengujiUserId"
+        ]
       },
       "CreateActivityDto": {
         "type": "object",
@@ -16768,7 +18113,10 @@
             "type": "string"
           }
         },
-        "required": ["nama", "tanggalMulai"]
+        "required": [
+          "nama",
+          "tanggalMulai"
+        ]
       },
       "UpdateActivityDto": {
         "type": "object",
@@ -16797,7 +18145,9 @@
             "type": "string"
           }
         },
-        "required": ["anggotaId"]
+        "required": [
+          "anggotaId"
+        ]
       },
       "RecordPresenceDto": {
         "type": "object",
@@ -16810,7 +18160,9 @@
             "default": true
           }
         },
-        "required": ["anggotaId"]
+        "required": [
+          "anggotaId"
+        ]
       },
       "UploadActivityDocumentDto": {
         "type": "object",
@@ -16825,7 +18177,9 @@
             "type": "string"
           }
         },
-        "required": ["nama"]
+        "required": [
+          "nama"
+        ]
       },
       "CreateOrgDocumentDto": {
         "type": "object",
@@ -16846,7 +18200,12 @@
             "type": "string"
           }
         },
-        "required": ["kategoriId", "judul", "filePath", "uploadedBy"]
+        "required": [
+          "kategoriId",
+          "judul",
+          "filePath",
+          "uploadedBy"
+        ]
       },
       "UpdateOrgDocumentDto": {
         "type": "object",
@@ -16879,7 +18238,9 @@
             "default": 0
           }
         },
-        "required": ["nama"]
+        "required": [
+          "nama"
+        ]
       },
       "UpdateCategoryDto": {
         "type": "object",
@@ -16917,7 +18278,13 @@
             "type": "string"
           }
         },
-        "required": ["nomorSurat", "tanggalSurat", "tanggalTerima", "pengirim", "perihal"]
+        "required": [
+          "nomorSurat",
+          "tanggalSurat",
+          "tanggalTerima",
+          "pengirim",
+          "perihal"
+        ]
       },
       "UpdateIncomingLetterDto": {
         "type": "object",
@@ -16955,7 +18322,11 @@
             "type": "string"
           }
         },
-        "required": ["dariUserId", "kepadaUserId", "isi"]
+        "required": [
+          "dariUserId",
+          "kepadaUserId",
+          "isi"
+        ]
       },
       "CreateOutgoingLetterDto": {
         "type": "object",
@@ -16979,7 +18350,13 @@
             "type": "string"
           }
         },
-        "required": ["nomorSurat", "tanggalSurat", "tujuan", "perihal", "isi"]
+        "required": [
+          "nomorSurat",
+          "tanggalSurat",
+          "tujuan",
+          "perihal",
+          "isi"
+        ]
       },
       "UpdateOutgoingLetterDto": {
         "type": "object",
@@ -17042,7 +18419,9 @@
             "type": "object"
           }
         },
-        "required": ["message"]
+        "required": [
+          "message"
+        ]
       },
       "CreateDueDto": {
         "type": "object",
@@ -17061,17 +18440,30 @@
           },
           "metodeBayar": {
             "type": "string",
-            "enum": ["manual", "transfer", "online"]
+            "enum": [
+              "manual",
+              "transfer",
+              "online"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["belum_dibayar", "menunggu_verifikasi", "lunas", "menunggak"]
+            "enum": [
+              "belum_dibayar",
+              "menunggu_verifikasi",
+              "lunas",
+              "menunggak"
+            ]
           },
           "buktiBayarPath": {
             "type": "string"
           }
         },
-        "required": ["anggotaId", "periode", "jumlah"]
+        "required": [
+          "anggotaId",
+          "periode",
+          "jumlah"
+        ]
       },
       "UpdateDueDto": {
         "type": "object",
@@ -17087,11 +18479,20 @@
           },
           "metodeBayar": {
             "type": "string",
-            "enum": ["manual", "transfer", "online"]
+            "enum": [
+              "manual",
+              "transfer",
+              "online"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["belum_dibayar", "menunggu_verifikasi", "lunas", "menunggak"]
+            "enum": [
+              "belum_dibayar",
+              "menunggu_verifikasi",
+              "lunas",
+              "menunggak"
+            ]
           },
           "buktiBayarPath": {
             "type": "string"
@@ -17114,7 +18515,11 @@
             "type": "number"
           }
         },
-        "required": ["memberIds", "periode", "jumlah"]
+        "required": [
+          "memberIds",
+          "periode",
+          "jumlah"
+        ]
       },
       "PaymentConfirmationDto": {
         "type": "object",
@@ -17140,7 +18545,11 @@
             "type": "boolean"
           }
         },
-        "required": ["nama", "tglMulai", "tglSelesai"]
+        "required": [
+          "nama",
+          "tglMulai",
+          "tglSelesai"
+        ]
       },
       "UpdatePeriodDto": {
         "type": "object",
@@ -17172,7 +18581,11 @@
             "type": "string"
           }
         },
-        "required": ["categoryId", "judul", "konten"]
+        "required": [
+          "categoryId",
+          "judul",
+          "konten"
+        ]
       },
       "UpdateThreadDto": {
         "type": "object",
@@ -17192,7 +18605,9 @@
             "type": "string"
           }
         },
-        "required": ["konten"]
+        "required": [
+          "konten"
+        ]
       },
       "UpdatePostDto": {
         "type": "object",
@@ -17250,7 +18665,9 @@
             "type": "number"
           }
         },
-        "required": ["nama"]
+        "required": [
+          "nama"
+        ]
       },
       "UpdateUjianPraktekDto": {
         "type": "object",
@@ -17279,7 +18696,9 @@
             "type": "string"
           }
         },
-        "required": ["pengujiUserId"]
+        "required": [
+          "pengujiUserId"
+        ]
       },
       "AssignItemDto": {
         "type": "object",
@@ -17291,7 +18710,9 @@
             "type": "number"
           }
         },
-        "required": ["itemPenilaianId"]
+        "required": [
+          "itemPenilaianId"
+        ]
       },
       "CandidateScoreItemDto": {
         "type": "object",
@@ -17306,7 +18727,10 @@
             "type": "string"
           }
         },
-        "required": ["itemPenilaianId", "skor"]
+        "required": [
+          "itemPenilaianId",
+          "skor"
+        ]
       },
       "ScoreCandidateDto": {
         "type": "object",
@@ -17321,7 +18745,10 @@
             }
           }
         },
-        "required": ["calonAnggotaId", "items"]
+        "required": [
+          "calonAnggotaId",
+          "items"
+        ]
       },
       "BulkScoreDto": {
         "type": "object",
@@ -17333,7 +18760,9 @@
             }
           }
         },
-        "required": ["scores"]
+        "required": [
+          "scores"
+        ]
       },
       "StartSesiDto": {
         "type": "object",
@@ -17368,7 +18797,12 @@
             "description": "Slug URL unik untuk berita"
           }
         },
-        "required": ["judul", "ringkasan", "konten", "slug"]
+        "required": [
+          "judul",
+          "ringkasan",
+          "konten",
+          "slug"
+        ]
       },
       "CreateMutationDto": {
         "type": "object",
@@ -17386,7 +18820,10 @@
             "description": "Alasan mutasi"
           }
         },
-        "required": ["anggotaId", "toRantingId"]
+        "required": [
+          "anggotaId",
+          "toRantingId"
+        ]
       },
       "MutationActionDto": {
         "type": "object",
@@ -17406,7 +18843,9 @@
             "description": "Email tujuan test"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       }
     }
   }
