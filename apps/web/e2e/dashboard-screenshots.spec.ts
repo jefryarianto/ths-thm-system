@@ -1,5 +1,39 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { mockAuthWithAll } from './helpers';
+
+/**
+ * Tunggu halaman benar-benar stabil sebelum screenshot:
+ * 1. networkidle — tapi retry backoff axios (500ms/1000ms) ke backend mati
+ *    bisa membuat networkidle meletus di sela jeda retry, sehingga konten
+ *    masih berubah setelahnya;
+ * 2. seluruh animasi CSS/WAAPI selesai;
+ * 3. DOM identik 3x berturut-turut (750ms) — menangkap perubahan telat
+ *    (retry, chart animasi berbasis requestAnimationFrame).
+ * Kap 5 detik agar tetap deterministik jika ada elemen jam yang ticking.
+ */
+async function waitForStableDom(page: Page) {
+  await page.waitForLoadState('networkidle');
+  // Animasi finite diakhiri sampai selesai; animasi infinite (skeleton
+  // `animate-pulse`) dilewati — `finished`-nya tak pernah resolve, dan
+  // skeleton akan hilang dengan sendirinya saat DOM-stability check di bawah.
+  await page.evaluate(async () => {
+    const infinite = (a: Animation) =>
+      a.effect && a.effect.getComputedTiming().iterations === Infinity;
+    const finite = document.getAnimations().filter((a) => !infinite(a));
+    await Promise.race([
+      Promise.all(finite.map((a) => a.finished.catch(() => undefined))),
+      new Promise((r) => setTimeout(r, 1500)),
+    ]);
+  });
+  let last = '';
+  let stable = 0;
+  for (let i = 0; i < 20 && stable < 3; i++) {
+    const cur = await page.evaluate(() => document.body.innerHTML);
+    stable = cur === last ? stable + 1 : 0;
+    last = cur;
+    if (stable < 3) await page.waitForTimeout(250);
+  }
+}
 
 test.describe('Dashboard Page Screenshots', () => {
   test.beforeEach(async ({ page }) => {
@@ -40,9 +74,7 @@ test.describe('Dashboard Page Screenshots', () => {
     test(`screenshot: ${name}`, async ({ page }) => {
       await page.goto(path);
       // Wait for page to stabilize (loading spinners disappear)
-      await page.waitForLoadState('networkidle');
-      // Wait a bit more for any animations to complete
-      await page.waitForTimeout(500);
+      await waitForStableDom(page);
 
       // Verify the page loaded (no crash)
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
@@ -85,8 +117,7 @@ test.describe('Dashboard Page Screenshots', () => {
 
     for (const link of sidebarLinks) {
       await page.goto(link);
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(300);
+      await waitForStableDom(page);
       await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
       await page.screenshot({
         path: `e2e/screenshots/nav-${link.replace(/\//g, '-')}.png`,
