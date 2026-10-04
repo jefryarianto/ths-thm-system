@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
@@ -282,7 +283,7 @@ export default function ManageRewardsPage() {
                   disabled={saving}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium mt-4"
                 >
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {saving ? <SmallLogoSpinner size={16} /> : <Save size={16} />}
                   {editingReward ? 'Update' : 'Simpan'}
                 </button>
               </div>

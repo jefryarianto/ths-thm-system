@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Key, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
@@ -271,7 +272,7 @@ function ResetPasswordForm() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" />
+                      <SmallLogoSpinner size={18} />
                       Memproses...
                     </>
                   ) : (

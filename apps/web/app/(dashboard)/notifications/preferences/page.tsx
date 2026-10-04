@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 // Force dynamic rendering to prevent React useContext(null) during static generation
 // The page depends on auth context and API calls that aren't available during prerender
@@ -347,7 +348,7 @@ export default function NotificationPreferencesPage() {
               disabled={saving}
               className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
             >
-              <Save size={14} />
+              {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />}
               {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
             </button>
           </div>

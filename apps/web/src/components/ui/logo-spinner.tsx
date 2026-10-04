@@ -37,14 +37,28 @@ export function LogoSpinner({ size = 48, message, messageClassName, className }:
         />
       </span>
       {message ? (
-        <p
-          className={cn(
-            'text-sm font-medium text-secondary animate-pulse text-center motion-reduce:animate-none',
-            messageClassName,
-          )}
-        >
-          {message}
-        </p>
+        <div className="flex flex-col items-center gap-3">
+          <p
+            className={cn(
+              'text-sm font-medium text-secondary animate-pulse text-center motion-reduce:animate-none',
+              messageClassName,
+            )}
+          >
+            {message}
+          </p>
+          {/* Fallback reduced-motion (WCAG 2.3.3): saat animasi dihentikan,
+              pesan pulse terlihat statis dan bisa disalahartikan sebagai
+              "macet". Tiga titik gradient statis menyampaikan bahwa proses
+              masih berjalan, tanpa gerak apa pun. */}
+          <span
+            className="progress-dots hidden motion-reduce:inline-flex motion-reduce:text-secondary"
+            aria-hidden="true"
+          >
+            <span />
+            <span />
+            <span />
+          </span>
+        </div>
       ) : null}
     </div>
   );

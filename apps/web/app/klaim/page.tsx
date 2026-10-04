@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import Link from 'next/link';
 import {
   IdCard,
@@ -686,7 +687,7 @@ export default function KlaimPage() {
             >
               {loading ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
+                  <SmallLogoSpinner size={18} />
                   Mengirim...
                 </>
               ) : (

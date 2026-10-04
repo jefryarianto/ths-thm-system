@@ -1,6 +1,7 @@
 'use client';
 
 import { useConfirm } from '@/components/ui/confirm-modal';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
@@ -203,7 +204,7 @@ export default function DocTemplateSettingsPage() {
             disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />}
             {saving ? 'Menyimpan?' : 'Simpan Template'}
           </button>
         </PageHeader>

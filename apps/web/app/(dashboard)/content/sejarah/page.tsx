@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Save, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Sejarah {
   id: string;
@@ -151,7 +151,7 @@ export default function SejarahPage() {
               disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              <Save size={16} />
+              {saving ? <SmallLogoSpinner size={16} /> : <Save size={16} />}
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>

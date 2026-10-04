@@ -26,7 +26,7 @@ import Modal from '@/components/ui/modal';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 import ExportTab from '@/components/reports/ExportTab';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Distrik {
   id: string;
@@ -231,7 +231,7 @@ function OrgFormModal({
             disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            <Save size={14} /> {saving ? 'Menyimpan...' : 'Simpan'}
+            {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
       </form>

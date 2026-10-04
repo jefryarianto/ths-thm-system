@@ -35,7 +35,7 @@ import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 interface OrgSettings {
   nama: string;
@@ -1130,7 +1130,7 @@ export default function SettingsPage() {
                 disabled={savingOrg}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} /> {savingOrg ? 'Menyimpan...' : 'Simpan'}
+                {savingOrg ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {savingOrg ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
           </div>
@@ -1176,7 +1176,7 @@ export default function SettingsPage() {
                 disabled={savingPeriod}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} />{' '}
+                {savingPeriod ? <SmallLogoSpinner size={14} /> : <Save size={14} />}{' '}
                 {savingPeriod ? 'Menyimpan...' : editingPeriod ? 'Simpan' : 'Tambah'}
               </button>
             </div>
@@ -1244,7 +1244,7 @@ export default function SettingsPage() {
                 disabled={savingStamp}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                <Upload size={14} /> {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
+                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
               </button>
             </div>
           </div>
@@ -1323,7 +1323,7 @@ export default function SettingsPage() {
                 disabled={savingSignature}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Upload size={14} /> {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
+                {savingSignature ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
               </button>
             </div>
           </div>

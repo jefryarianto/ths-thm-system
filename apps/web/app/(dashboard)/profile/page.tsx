@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
@@ -355,7 +356,7 @@ export default function ProfilePage() {
             disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            <Save size={14} />
+            {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />}
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
@@ -431,7 +432,7 @@ export default function ProfilePage() {
               disabled={pwSaving}
               className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50 transition"
             >
-              <KeyRound size={14} />
+              {pwSaving ? <SmallLogoSpinner size={14} /> : <KeyRound size={14} />}
               {pwSaving ? 'Mengubah...' : 'Ubah Password'}
             </button>
           </div>

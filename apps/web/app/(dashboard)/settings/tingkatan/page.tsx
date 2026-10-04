@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -357,7 +358,7 @@ export default function TingkatanPage() {
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} /> {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+                {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
               </button>
             </div>
           </div>

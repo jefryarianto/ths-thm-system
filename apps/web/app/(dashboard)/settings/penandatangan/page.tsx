@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -950,7 +951,7 @@ export default function PenandatanganPage() {
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Save size={14} /> {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+                {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
               </button>
             </div>
           </div>
@@ -998,7 +999,7 @@ export default function PenandatanganPage() {
                 disabled={savingTtd}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Upload size={14} /> {savingTtd ? 'Mengunggah...' : 'Upload'}
+                {savingTtd ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingTtd ? 'Mengunggah...' : 'Upload'}
               </button>
             </div>
           </div>
@@ -1041,7 +1042,7 @@ export default function PenandatanganPage() {
                 disabled={savingStamp}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <Upload size={14} /> {savingStamp ? 'Mengunggah...' : 'Upload'}
+                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingStamp ? 'Mengunggah...' : 'Upload'}
               </button>
             </div>
           </div>

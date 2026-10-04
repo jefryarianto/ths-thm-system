@@ -11,6 +11,29 @@ import FilterSelect from '@/components/ui/filter-select';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
 import StatCard from '@/components/cards/stat-card';
+import Button from '@/components/ui/button';
+
+describe('Button', () => {
+  it('renders children when not loading', () => {
+    render(<Button>Simpan</Button>);
+    expect(screen.getByRole('button', { name: /simpan/i })).toBeEnabled();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('renders an inline logo spinner and disables itself when loading', () => {
+    render(<Button loading>Simpan</Button>);
+    const status = screen.getByRole('status');
+    expect(status).toHaveAttribute('aria-label', 'Memuat');
+    expect(screen.getByRole('button', { name: /simpan/i })).toBeDisabled();
+  });
+
+  it('renders both spinner arcs while loading', () => {
+    const { container } = render(<Button loading>Kirim</Button>);
+    expect(container.querySelectorAll('.animate-logo-spinner')).toHaveLength(1);
+    expect(container.querySelectorAll('.animate-logo-spinner-reverse')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /kirim/i })).toBeDisabled();
+  });
+});
 
 describe('Pagination', () => {
   it('renders total count', () => {

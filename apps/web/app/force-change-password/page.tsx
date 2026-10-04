@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -278,7 +279,7 @@ function ForceChangePasswordForm() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" />
+                      <SmallLogoSpinner size={18} />
                       Memproses...
                     </>
                   ) : (

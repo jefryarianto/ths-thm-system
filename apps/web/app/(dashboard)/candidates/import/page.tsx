@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -534,7 +535,7 @@ export default function ImportCandidatesPage() {
                 >
                   {retrying ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" /> Mencoba Ulang...
+                      <SmallLogoSpinner size={14} /> Mencoba Ulang...
                     </>
                   ) : (
                     <>
@@ -851,7 +852,7 @@ export default function ImportCandidatesPage() {
                   >
                     {importing ? (
                       <>
-                        <Loader2 size={16} className="animate-spin" /> Mengimpor...
+                        <SmallLogoSpinner size={16} /> Mengimpor...
                       </>
                     ) : (
                       <>

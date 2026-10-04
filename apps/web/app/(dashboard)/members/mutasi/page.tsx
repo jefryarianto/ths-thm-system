@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -206,7 +207,7 @@ export default function MutasiPage() {
                           className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                         >
                           {actingId === r.id ? (
-                            <Loader2 size={12} className="animate-spin" />
+                            <SmallLogoSpinner size={12} />
                           ) : (
                             <CheckCircle2 size={12} />
                           )}

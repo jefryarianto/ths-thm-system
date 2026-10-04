@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PublicLayout } from '@/components';
 import { ChevronRight, Building2, Users, Calendar, Link2, Loader2, RefreshCw } from 'lucide-react';
@@ -435,7 +436,7 @@ export default function StrukturOrganisasiContent() {
               disabled={loading || (level !== 'nasional' && !distrikId)}
               className="px-6 py-2.5 bg-navy-800 text-white rounded-xl text-sm font-semibold hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+              {loading ? <SmallLogoSpinner size={16} /> : null}
               Tampilkan
             </button>
             <button

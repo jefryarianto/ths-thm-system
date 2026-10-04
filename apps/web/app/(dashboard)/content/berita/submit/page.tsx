@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient, { extractErrorMessage } from '@/lib/api-client';
@@ -166,7 +167,7 @@ export default function BeritaSubmitPage() {
             >
               {saving ? (
                 <>
-                  <Loader2 size={16} className="mr-2" />
+                  <SmallLogoSpinner size={16} />
                   Mengirim...
                 </>
               ) : (

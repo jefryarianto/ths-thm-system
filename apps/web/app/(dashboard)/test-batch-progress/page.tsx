@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
   Play,
@@ -758,7 +759,7 @@ function MockBatchProgressCard({
               disabled={cancelling}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
             >
-              {cancelling ? <Loader2 size={12} className="animate-spin" /> : <XSquare size={12} />}
+              {cancelling ? <SmallLogoSpinner size={12} /> : <XSquare size={12} />}
               Batalkan
             </button>
           )}

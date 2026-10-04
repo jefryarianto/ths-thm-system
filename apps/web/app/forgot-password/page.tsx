@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import Link from 'next/link';
 import { Mail, ArrowLeft, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
@@ -121,7 +122,7 @@ export default function ForgotPasswordPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" />
+                      <SmallLogoSpinner size={18} />
                       Mengirim...
                     </>
                   ) : (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useRouter } from 'next/navigation';
 import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -223,7 +224,7 @@ export default function NewBeritaPage() {
               disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              <Save size={16} />
+              {saving ? <SmallLogoSpinner size={16} /> : <Save size={16} />}
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>

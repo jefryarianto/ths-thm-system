@@ -272,14 +272,53 @@
     will-change: transform;
   }
 
+  /* Indikator "memuat" non-animasi (tiga titik). Hanya ditampilkan kepada
+     pengguna yang meminta pengurangan gerak, menggantikan logo spinner yang
+     animasinya dihentikan — agar status "sedang memuat" tetap tersampaikan
+     tanpa gerak apa pun (WCAG 2.3.3). */
+  .progress-dots {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    vertical-align: middle;
+  }
+  .progress-dots > span {
+    display: block;
+    width: 0.25rem;
+    height: 0.25rem;
+    border-radius: 9999px;
+    background-color: currentColor;
+    opacity: 0.45;
+  }
+  .progress-dots > span:nth-child(2) { opacity: 0.7; }
+  .progress-dots > span:nth-child(3) { opacity: 1; }
+
   /* Aksesibilitas (WCAG 2.3.3): hentikan animasi putar bila pengguna
-     meminta pengurangan gerak — logo tetap statis di tengah. */
+     meminta pengurangan gerak. Cincin digambar penuh (bukan separuh) sebagai
+     indikator "sedang memuat" statis agar tidak terlihat seperti macet. */
   @media (prefers-reduced-motion: reduce) {
     .logo-spinner,
     .logo-spinner::after,
     .animate-logo-spinner,
     .animate-logo-spinner-reverse {
       animation: none;
+    }
+    /* Cincin penuh: sisi yang sebelumnya transparan diberi warna disamarkan
+       agar ring terlihat utuh, bukan hanya busur di kuadran atas saja. */
+    .logo-spinner {
+      border-right-color: color-mix(in srgb, var(--primary, #072ac8) 25%, transparent);
+    }
+    .logo-spinner::after {
+      border-bottom-color: color-mix(in srgb, var(--gold-400, #d4af37) 25%, transparent);
+    }
+    /* SmallLogoSpinner (varian tombol): kedua ring juga digambar penuh. Tanpa
+       ini, tombol loading hanya menampilkan busur di kuadran atas saat animasi
+       dihentikan, sehingga terlihat seperti tombol macet. */
+    .animate-logo-spinner {
+      border-right-color: color-mix(in srgb, currentColor 25%, transparent);
+    }
+    .animate-logo-spinner-reverse {
+      border-bottom-color: color-mix(in srgb, currentColor 25%, transparent);
     }
   }
 

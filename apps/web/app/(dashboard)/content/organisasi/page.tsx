@@ -22,7 +22,7 @@ import {
   Users,
   AlertCircle,
 } from 'lucide-react';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 interface OrganisasiItem {
   jabatan: string;
@@ -225,7 +225,7 @@ export default function OrganisasiPage() {
                   title="Ambil data pengurus nasional aktif"
                 >
                   {syncing ? (
-                    <Loader2 size={14} className="animate-spin" />
+                    <SmallLogoSpinner size={14} />
                   ) : (
                     <DownloadCloud size={14} />
                   )}
@@ -346,7 +346,7 @@ export default function OrganisasiPage() {
               disabled={saving}
               className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
             >
-              <Save size={16} />
+              {saving ? <SmallLogoSpinner size={16} /> : <Save size={16} />}
               {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </div>
@@ -406,7 +406,7 @@ export default function OrganisasiPage() {
                   disabled={syncing}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-200 text-gray-800 hover:bg-gray-300 rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
-                  {syncing && <Loader2 size={14} className="animate-spin" />}
+                  {syncing && <SmallLogoSpinner size={14} />}
                   Tambahkan ke Daftar
                 </button>
                 <button
@@ -414,7 +414,7 @@ export default function OrganisasiPage() {
                   disabled={syncing}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
-                  {syncing && <Loader2 size={14} className="animate-spin" />}
+                  {syncing && <SmallLogoSpinner size={14} />}
                   Timpa Semua
                 </button>
               </div>

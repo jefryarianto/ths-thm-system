@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { IdCard, Upload, CheckCircle2, Trash2, RefreshCw, Pencil, Globe } from 'lucide-react';
 import apiClient, { extractErrorMessage } from '@/lib/api-client';
@@ -410,7 +411,7 @@ export default function KartuSettingsPage() {
             disabled={saving}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50"
           >
-            <Upload size={16} />{' '}
+            {saving ? <SmallLogoSpinner size={16} /> : <Upload size={16} />}{' '}
             {saving
               ? 'Menyimpan…'
               : editingId

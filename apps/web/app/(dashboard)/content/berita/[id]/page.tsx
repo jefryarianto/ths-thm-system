@@ -9,7 +9,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Save, ArrowLeft, Upload } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 interface Berita {
   id: string;
@@ -258,7 +258,7 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
               disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              <Save size={16} />
+              {saving ? <SmallLogoSpinner size={16} /> : <Save size={16} />}
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>

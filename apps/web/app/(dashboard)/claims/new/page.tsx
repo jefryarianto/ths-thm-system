@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -426,7 +427,7 @@ export default function NewClaimPage() {
               disabled={saving}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              <Save size={14} /> {saving ? 'Menyimpan...' : 'Ajukan Klaim'}
+              {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : 'Ajukan Klaim'}
             </button>
           </div>
         </form>

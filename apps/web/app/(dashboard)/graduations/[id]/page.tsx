@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useAuth } from '@/hooks/use-auth';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -1370,7 +1371,7 @@ export default function GraduationDetailPage() {
                   disabled={statusSaving}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 >
-                  <CheckCircle2 size={13} />
+                  {statusSaving ? <SmallLogoSpinner size={13} /> : <CheckCircle2 size={13} />}
                   Publish
                 </button>
               )}
@@ -1380,7 +1381,7 @@ export default function GraduationDetailPage() {
                   disabled={statusSaving}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600 text-white rounded-lg text-xs font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 >
-                  <XCircle size={13} />
+                  {statusSaving ? <SmallLogoSpinner size={13} /> : <XCircle size={13} />}
                   Tutup
                 </button>
               )}
@@ -1626,7 +1627,7 @@ export default function GraduationDetailPage() {
                     disabled={cloningAspek}
                     className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                   >
-                    <Copy size={13} />
+                    {cloningAspek ? <SmallLogoSpinner size={13} /> : <Copy size={13} />}
                     {cloningAspek ? 'Menyalin...' : 'Salin dari Template'}
                   </button>
                 </div>
@@ -2250,7 +2251,7 @@ export default function GraduationDetailPage() {
                                   disabled={savingScores}
                                   className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                                 >
-                                  <Save size={12} />{' '}
+                                  {savingScores ? <SmallLogoSpinner size={12} /> : <Save size={12} />}{' '}
                                   {savingScores ? 'Menyimpan...' : 'Simpan Nilai'}
                                 </button>
                               )}
@@ -2537,7 +2538,7 @@ export default function GraduationDetailPage() {
                     disabled={approveScoresLoading}
                     className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                   >
-                    <CheckCircle2 size={14} />
+                    {approveScoresLoading ? <SmallLogoSpinner size={14} /> : <CheckCircle2 size={14} />}
                     {approveScoresLoading ? 'Menyetujui...' : 'Setujui Nilai Penguji'}
                   </button>
                   <button
@@ -2932,7 +2933,7 @@ export default function GraduationDetailPage() {
                 disabled={genDocsLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50 shrink-0"
               >
-                <FileEdit size={14} /> {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
+                {genDocsLoading ? <SmallLogoSpinner size={14} /> : <FileEdit size={14} />} {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
               </button>
             </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -389,7 +390,7 @@ export default function NewCandidatePage() {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" /> Menyimpan...
+                    <SmallLogoSpinner size={16} /> Menyimpan...
                   </>
                 ) : (
                   <>

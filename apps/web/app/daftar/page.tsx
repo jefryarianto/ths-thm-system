@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import Link from 'next/link';
 import { UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
 import { z } from 'zod';
@@ -555,7 +556,7 @@ export default function DaftarPage() {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
+                    <SmallLogoSpinner size={18} />
                     Mendaftarkan...
                   </>
                 ) : (
