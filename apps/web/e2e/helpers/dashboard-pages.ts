@@ -145,7 +145,10 @@ export async function registerDashboardPageMocks(page: Page) {
           activeKegiatan: 8,
           absensiHarian: Array.from({ length: 30 }, (_, i) => ({
             tanggal: new Date(2025, 0, i + 1).toISOString().split('T')[0],
-            count: 20 + Math.floor(Math.random() * 40),
+            // Deterministik (bukan Math.random): mock ini dirender di grafik
+            // scan-stats/reports dan dipakai spec screenshot — data acak membuat
+            // screenshot berubah tiap run (churn di git).
+            count: 20 + ((i * 17 + 13) % 40),
           })),
           recentAbsensi: Array.from({ length: 10 }, (_, i) => ({
             namaAnggota: `Anggota ${i + 1}`,

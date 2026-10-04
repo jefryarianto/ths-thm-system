@@ -120,6 +120,13 @@ export default function LettersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, search, filters.status]);
 
+  // Fetch saat mount dan saat identitas fetchData berubah (tab/page/search/filter).
+  // Regresi 3903b3fa menghapus effect ini tanpa pengganti → tabel Surat
+  // skeleton selamanya karena tidak pernah ada request /api/letters.
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const handleDelete = async (letter: import('./shared').LetterDetail) => {
     if (!(await confirm('Yakin ingin menghapus surat ini?'))) return;
     const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
