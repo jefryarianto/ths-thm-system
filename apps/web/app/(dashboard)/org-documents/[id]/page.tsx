@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { Can } from '@/components/auth/can';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -176,20 +177,24 @@ export default function OrgDocumentDetailPage() {
               </div>
               {/* Actions */}
               <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
-                >
-                  <Download size={14} /> Download
-                </button>
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  title="Hapus"
-                  aria-label="Hapus"
-                  className="p-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition"
-                >
-                  <Trash2 size={15} />
-                </button>
+                <Can module="org-documents" action="export">
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                  >
+                    <Download size={14} /> Download
+                  </button>
+                </Can>
+                <Can module="org-documents" action="delete">
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    title="Hapus"
+                    aria-label="Hapus"
+                    className="p-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </Can>
               </div>
             </div>
           </div>

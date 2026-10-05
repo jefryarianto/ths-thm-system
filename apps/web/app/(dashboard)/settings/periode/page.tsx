@@ -7,6 +7,7 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import EmptyState from '@/components/ui/empty-state';
 import Modal from '@/components/ui/modal';
+import { Can } from '@/components/auth/can';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
@@ -210,28 +211,32 @@ export default function PeriodePage() {
         onRefresh={fetchData}
         children={
           <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setUnitForm((prev) => ({
-                  ...prev,
-                  periodeId: data.find((p) => p.isActive)?.id || data[0]?.id || '',
-                }));
-                setShowUnitModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
-            >
-              <Plus size={16} /> Atur Per Unit
-            </button>
-            <button
-              onClick={() => {
-                setEditData(null);
-                setForm({ nama: '', tglMulai: '', tglSelesai: '', isActive: false });
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={16} /> Tambah Periode
-            </button>
+            <Can module="periode" action="create">
+              <button
+                onClick={() => {
+                  setUnitForm((prev) => ({
+                    ...prev,
+                    periodeId: data.find((p) => p.isActive)?.id || data[0]?.id || '',
+                  }));
+                  setShowUnitModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+              >
+                <Plus size={16} /> Atur Per Unit
+              </button>
+            </Can>
+            <Can module="periode" action="create">
+              <button
+                onClick={() => {
+                  setEditData(null);
+                  setForm({ nama: '', tglMulai: '', tglSelesai: '', isActive: false });
+                  setShowModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={16} /> Tambah Periode
+              </button>
+            </Can>
           </div>
         }
       />
@@ -275,33 +280,39 @@ export default function PeriodePage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleToggleGlobal(item)}
-                  className={`px-3 py-1.5 text-xs rounded-lg font-medium ${item.isActive ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
-                >
-                  {item.isActive ? 'Nonaktif Global' : 'Aktifkan Global'}
-                </button>
-                <button
-                  onClick={() => {
-                    setEditData(item);
-                    setForm({
-                      nama: item.nama,
-                      tglMulai: item.tglMulai.split('T')[0],
-                      tglSelesai: item.tglSelesai.split('T')[0],
-                      isActive: item.isActive,
-                    });
-                    setShowModal(true);
-                  }}
-                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <Edit3 size={14} className="text-gray-500" />
-                </button>
-                <button
-                  onClick={() => handleDelete(item)}
-                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 size={14} className="text-red-500" />
-                </button>
+                <Can module="periode" action="edit">
+                  <button
+                    onClick={() => handleToggleGlobal(item)}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-medium ${item.isActive ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                  >
+                    {item.isActive ? 'Nonaktif Global' : 'Aktifkan Global'}
+                  </button>
+                </Can>
+                <Can module="periode" action="edit">
+                  <button
+                    onClick={() => {
+                      setEditData(item);
+                      setForm({
+                        nama: item.nama,
+                        tglMulai: item.tglMulai.split('T')[0],
+                        tglSelesai: item.tglSelesai.split('T')[0],
+                        isActive: item.isActive,
+                      });
+                      setShowModal(true);
+                    }}
+                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Edit3 size={14} className="text-gray-500" />
+                  </button>
+                </Can>
+                <Can module="periode" action="delete">
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 size={14} className="text-red-500" />
+                  </button>
+                </Can>
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { Can } from '@/components/auth/can';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -75,12 +76,14 @@ export default function OrgDocumentsPage() {
     <PermissionGuard module="org-documents" action="view">
       <PageContainer>
         <PageHeader title="Dokumen Organisasi" onRefresh={refetch}>
-          <button
-            onClick={() => router.push('/org-documents/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={14} /> Tambah
-          </button>
+          <Can module="org-documents" action="create">
+            <button
+              onClick={() => router.push('/org-documents/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Tambah
+            </button>
+          </Can>
         </PageHeader>
 
         <SummaryBar icon={FolderOpen} label="Total Dokumen" total={meta.total} />
@@ -144,46 +147,51 @@ export default function OrgDocumentsPage() {
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <button
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem('accessToken');
-                        const response = await fetch(`/api/org-documents/${row.id}`, {
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (!response.ok) {
-                          toast('error', 'Gagal memuat dokumen');
-                          return;
-                        }
-                        const data = await response.json();
-                        if (data?.data?.fileUrl) {
-                          window.open(data.data.fileUrl, '_blank');
-                        } else {
-                          const token2 = localStorage.getItem('accessToken');
-                          const dlResponse = await fetch(`/api/org-documents/${row.id}/download`, {
-                            headers: { Authorization: `Bearer ${token2}` },
+                  <Can module="org-documents" action="export">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('accessToken');
+                          const response = await fetch(`/api/org-documents/${row.id}`, {
+                            headers: { Authorization: `Bearer ${token}` },
                           });
-                          if (!dlResponse.ok) {
-                            toast('error', 'Dokumen tidak tersedia untuk didownload');
+                          if (!response.ok) {
+                            toast('error', 'Gagal memuat dokumen');
                             return;
                           }
-                          const blob = await dlResponse.blob();
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${row.judul}.pdf`;
-                          a.click();
-                          URL.revokeObjectURL(url);
+                          const data = await response.json();
+                          if (data?.data?.fileUrl) {
+                            window.open(data.data.fileUrl, '_blank');
+                          } else {
+                            const token2 = localStorage.getItem('accessToken');
+                            const dlResponse = await fetch(
+                              `/api/org-documents/${row.id}/download`,
+                              {
+                                headers: { Authorization: `Bearer ${token2}` },
+                              },
+                            );
+                            if (!dlResponse.ok) {
+                              toast('error', 'Dokumen tidak tersedia untuk didownload');
+                              return;
+                            }
+                            const blob = await dlResponse.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${row.judul}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }
+                        } catch {
+                          toast('error', 'Gagal mendownload dokumen');
                         }
-                      } catch {
-                        toast('error', 'Gagal mendownload dokumen');
-                      }
-                    }}
-                    className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                    title="Download"
-                  >
-                    <Download size={15} />
-                  </button>
+                      }}
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                      title="Download"
+                    >
+                      <Download size={15} />
+                    </button>
+                  </Can>
                   <button
                     onClick={() => router.push(`/org-documents/${row.id}`)}
                     className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
@@ -191,21 +199,23 @@ export default function OrgDocumentsPage() {
                   >
                     <Eye size={15} />
                   </button>
-                  <button
-                    onClick={async () => {
-                      if (!(await confirm(`Hapus dokumen "${row.judul}"?`))) return;
-                      try {
-                        await apiClient.delete(`/org-documents/${row.id}`);
-                        refetch();
-                      } catch {
-                        toast('error', 'Gagal menghapus dokumen');
-                      }
-                    }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                    title="Hapus"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  <Can module="org-documents" action="delete">
+                    <button
+                      onClick={async () => {
+                        if (!(await confirm(`Hapus dokumen "${row.judul}"?`))) return;
+                        try {
+                          await apiClient.delete(`/org-documents/${row.id}`);
+                          refetch();
+                        } catch {
+                          toast('error', 'Gagal menghapus dokumen');
+                        }
+                      }}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </Can>
                 </div>
               </td>
             </tr>

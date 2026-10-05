@@ -14,6 +14,7 @@ import type { Role } from '@/types';
  * - `edit`:   minimum role level to show the "Edit" button
  * - `delete`: minimum role level to show the "Delete" button
  * - `export`: minimum role level to show the "Export" button
+ * - `approve`: minimum role level to approve/reject pending changes
  * - `admin`:  minimum role level to access admin-only pages (users, settings, etc.)
  */
 export interface ModulePermission {
@@ -22,6 +23,7 @@ export interface ModulePermission {
   edit?: Role;
   delete?: Role;
   export?: Role;
+  approve?: Role;
   admin?: Role;
 }
 
@@ -65,8 +67,15 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   assessments: { ...DEFAULT_MODULE, view: 'penguji', create: 'penguji', edit: 'penguji' },
   notifications: { ...DEFAULT_MODULE, export: 'admin_ranting' },
   reports: { ...DEFAULT_MODULE, admin: 'admin_ranting' },
-  'org-chart': { view: 'anggota', admin: 'admin_ranting' },
-  'org-documents': { view: 'anggota', create: 'admin_ranting', edit: 'admin_ranting' },
+  'org-documents': {
+    view: 'anggota',
+    create: 'admin_ranting',
+    edit: 'admin_ranting',
+    // Backend @Delete('org-documents/:id'): superadmin + admin_distrik
+    delete: 'admin_distrik',
+    // Backend @Get('org-documents/:id/download'): admin_kegiatan ke atas
+    export: 'admin_kegiatan',
+  },
   calendar: { ...DEFAULT_MODULE, view: 'anggota' },
   chat: { ...DEFAULT_MODULE, view: 'anggota' },
   forum: { ...DEFAULT_MODULE, view: 'anggota', admin: 'admin_distrik' },
@@ -82,12 +91,42 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   // Pengajuan berita oleh anggota (butuh approval sebelum visible)
   beritaSubmit: { view: 'anggota', create: 'anggota' },
   users: { view: 'admin_ranting', create: 'superadmin', edit: 'superadmin', delete: 'superadmin' },
+  // settings adalah key placeholder agar halaman indeks settings bisa render;
+  // tiap sub-modul settings punya entry sendiri di bawah.
   settings: {
     view: 'admin_ranting',
     create: 'admin_ranting',
     edit: 'admin_ranting',
     delete: 'admin_ranting',
   },
+  // Backend (jabatan.controller): @Get() terbuka untuk semua role (sampai
+  // anggota), create/edit/delete hanya superadmin + admin_distrik.
+  jabatan: {
+    view: 'anggota',
+    create: 'admin_distrik',
+    edit: 'admin_distrik',
+    delete: 'admin_distrik',
+  },
+  // Backend (kepengurusan.controller): semua aksi hanya admin_ranting.
+  kepengurusan: {
+    view: 'admin_ranting',
+    create: 'admin_ranting',
+    edit: 'admin_ranting',
+    delete: 'admin_ranting',
+    // Backend @Patch(':id/approve'|'reject'|'bulk-*'): admin_ranting ke atas
+    approve: 'admin_ranting',
+    export: 'admin_ranting',
+  },
+  // Backend (periode.controller): semua aksi hanya superadmin.
+  periode: {
+    view: 'superadmin',
+    create: 'superadmin',
+    edit: 'superadmin',
+    delete: 'superadmin',
+  },
+  // Backend (org-structure.controller): view untuk semua role, edit struktur
+  // (drag & drop org chart) hanya admin_ranting.
+  'org-chart': { view: 'anggota', edit: 'admin_ranting', admin: 'admin_ranting' },
   auditLogs: { view: 'superadmin', admin: 'superadmin' },
   gamification: {
     view: 'anggota',
@@ -106,8 +145,8 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
 interface CanProps {
   /** Module name key - looks up permissions from MODULE_PERMISSIONS */
   module?: string;
-  /** Action to check: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin' */
-  action?: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin';
+  /** Action to check: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'admin' */
+  action?: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'admin';
   /** Alternatively, pass explicit minimum role */
   minRole?: Role;
   /** Alternatively, pass exact role(s) allowed */

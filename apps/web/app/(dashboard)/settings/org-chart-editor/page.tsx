@@ -64,12 +64,15 @@ export default function OrgChartEditorPage() {
   const [periodeId, setPeriodeId] = useState('');
 
   // Role-based scope locking
-  const { user } = useAuth();
+  const { user, hasMinRole } = useAuth();
   const userRole = user?.role || '';
   const isWilayahScoped = userRole === 'admin_wilayah';
   const isRantingScoped = userRole === 'admin_ranting';
   const isScoped = isWilayahScoped || isRantingScoped;
   const [, setScopeResolved] = useState(false);
+
+  // Backend @Patch(':id/reparent') requires admin_ranting+; read-only for lower roles
+  const canEditStructure = hasMinRole('admin_ranting');
 
   const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
   const [wilayahs, setWilayahs] = useState<{ id: string; nama: string }[]>([]);
@@ -256,6 +259,10 @@ export default function OrgChartEditorPage() {
     e.preventDefault();
     setDragOverNode(null);
 
+    // Defense in depth: draggable is disabled for read-only roles, but make
+    // sure a drop can never mutate structure without admin_ranting.
+    if (!canEditStructure) return;
+
     if (!draggedNode || draggedNode.id === targetNode.id) return;
 
     // Prevent dropping parent onto own descendant
@@ -283,6 +290,7 @@ export default function OrgChartEditorPage() {
   const handleDropToRoot = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOverNode(null);
+    if (!canEditStructure) return;
     if (!draggedNode || !draggedNode.parentId) return;
 
     try {
@@ -313,13 +321,17 @@ export default function OrgChartEditorPage() {
     return (
       <div key={node.id} style={{ marginLeft: depth * 24 }}>
         <div
-          draggable
+          draggable={canEditStructure}
           onDragStart={(e) => handleDragStart(e, node)}
           onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(e, node.id)}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, node)}
-          className={`flex items-center gap-2 p-3 mb-1 rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
+          className={`flex items-center gap-2 p-3 mb-1 rounded-lg border transition-all ${
+            canEditStructure
+              ? 'cursor-grab active:cursor-grabbing'
+              : 'cursor-default opacity-90'
+          } ${
             isDragOver
               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 ring-2 ring-indigo-300'
               : isExpired
@@ -473,8 +485,17 @@ export default function OrgChartEditorPage() {
       {/* Instructions */}
       <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 text-sm text-blue-800 dark:text-blue-200">
         <ArrowUpDown size={16} className="inline mr-2" />
-        <strong>Cara menggunakan:</strong> Seret node ke node lain untuk menjadikan bawahan. Seret
-        ke root area untuk memindahkan ke tingkat atas.
+        {canEditStructure ? (
+          <>
+            <strong>Cara menggunakan:</strong> Seret node ke node lain untuk menjadikan bawahan.
+            Seret ke root area untuk memindahkan ke tingkat atas.
+          </>
+        ) : (
+          <>
+            <strong>Mode lihat:</strong> Struktur organisasi hanya bisa diubah oleh admin_ranting
+            ke atas. Hubungi admin Anda bila perlu perubahan.
+          </>
+        )}
       </div>
 
       {/* Tree */}

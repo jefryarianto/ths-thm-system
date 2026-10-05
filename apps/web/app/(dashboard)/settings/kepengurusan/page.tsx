@@ -24,6 +24,7 @@ import Modal from '@/components/ui/modal';
 import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
+import { Can } from '@/components/auth/can';
 
 interface Kepengurusan {
   id: string;
@@ -549,12 +550,14 @@ export default function KepengurusanPage() {
             className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           />
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
-        >
-          <Download size={16} /> Export
-        </button>
+        <Can module="kepengurusan" action="export">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+          >
+            <Download size={16} /> Export
+          </button>
+        </Can>
         <input
           ref={fileInputRef}
           type="file"
@@ -562,13 +565,15 @@ export default function KepengurusanPage() {
           className="hidden"
           onChange={handleImport}
         />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={importing}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-        >
-          <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
-        </button>
+        <Can module="kepengurusan" action="create">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+          >
+            <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
+          </button>
+        </Can>
         {pendingCount > 0 && statusFilter === 'all' && (
           <button
             onClick={() => setStatusFilter('pending')}
@@ -577,16 +582,18 @@ export default function KepengurusanPage() {
             <AlertCircle size={16} /> {pendingCount} Menunggu Persetujuan
           </button>
         )}
-        <button
-          onClick={() => {
-            setEditData(null);
-            setForm(INITIAL_FORM);
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
-        >
-          <Plus size={16} /> Tambah
-        </button>
+        <Can module="kepengurusan" action="create">
+          <button
+            onClick={() => {
+              setEditData(null);
+              setForm(INITIAL_FORM);
+              setShowModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
+          >
+            <Plus size={16} /> Tambah
+          </button>
+        </Can>
         <button
           onClick={fetchData}
           className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -750,7 +757,7 @@ export default function KepengurusanPage() {
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
                       {(item.status === 'pending' || item.status === 'pending_deletion') && (
-                        <>
+                        <Can module="kepengurusan" action="approve">
                           <button
                             onClick={() => handleApprove(item.id)}
                             disabled={approvingId === item.id}
@@ -767,17 +774,18 @@ export default function KepengurusanPage() {
                           >
                             <XCircle size={14} />
                           </button>
-                        </>
+                        </Can>
                       )}
-                      <button
-                        onClick={() => {
-                          setEditData(item);
-                          setForm({
-                            userId: item.userId,
-                            anggotaId: '',
-                            selectedMemberName: item.user.namaLengkap,
-                            jabatanId: item.jabatanId,
-                            periodeId: item.periodeId,
+                      <Can module="kepengurusan" action="edit">
+                        <button
+                          onClick={() => {
+                            setEditData(item);
+                            setForm({
+                              userId: item.userId,
+                              anggotaId: '',
+                              selectedMemberName: item.user.namaLengkap,
+                              jabatanId: item.jabatanId,
+                              periodeId: item.periodeId,
                             parentId: item.parentId || '',
                             startDate: item.startDate ? item.startDate.split('T')[0] : '',
                             endDate: item.endDate ? item.endDate.split('T')[0] : '',
@@ -788,12 +796,15 @@ export default function KepengurusanPage() {
                       >
                         <Edit3 size={14} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        className="text-red-600 hover:text-red-800 dark:text-red-400"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      </Can>
+                      <Can module="kepengurusan" action="delete">
+                        <button
+                          onClick={() => handleDelete(item)}
+                          className="text-red-600 hover:text-red-800 dark:text-red-400"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </Can>
                     </td>
                   </tr>
                 ))}

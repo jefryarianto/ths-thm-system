@@ -5,6 +5,7 @@ import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { Plus, Edit3, Trash2, RefreshCw } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
+import { Can } from '@/components/auth/can';
 import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
@@ -147,16 +148,18 @@ export default function JabatanPage() {
         title="Jabatan"
         onRefresh={fetchData}
         children={
-          <button
-            onClick={() => {
-              setEditData(null);
-              setForm({ nama: '', kode: '', urutan: data.length });
-              setShowModal(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={16} /> Tambah Jabatan
-          </button>
+          <Can module="jabatan" action="create">
+            <button
+              onClick={() => {
+                setEditData(null);
+                setForm({ nama: '', kode: '', urutan: data.length });
+                setShowModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={16} /> Tambah Jabatan
+            </button>
+          </Can>
         }
       />
 
@@ -248,22 +251,30 @@ export default function JabatanPage() {
                   <td className="px-4 py-3 text-gray-500">{item._count.pengurus}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => {
-                          setEditData(item);
-                          setForm({ nama: item.nama, kode: item.kode || '', urutan: item.urutan });
-                          setShowModal(true);
-                        }}
-                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <Edit3 size={14} className="text-gray-500" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 size={14} className="text-red-500" />
-                      </button>
+                      <Can module="jabatan" action="edit">
+                        <button
+                          onClick={() => {
+                            setEditData(item);
+                            setForm({
+                              nama: item.nama,
+                              kode: item.kode || '',
+                              urutan: item.urutan,
+                            });
+                            setShowModal(true);
+                          }}
+                          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <Edit3 size={14} className="text-gray-500" />
+                        </button>
+                      </Can>
+                      <Can module="jabatan" action="delete">
+                        <button
+                          onClick={() => handleDelete(item)}
+                          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 size={14} className="text-red-500" />
+                        </button>
+                      </Can>
                     </div>
                   </td>
                 </tr>
