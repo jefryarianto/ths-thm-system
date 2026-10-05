@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OrgChartService {
@@ -7,21 +9,53 @@ export class OrgChartService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOrgChart(isPublic = false) {
+  async getOrgChart(isPublic = false, scope?: UserScope) {
     // Get all organizational levels
-    const whereVisible = isPublic ? { isVisible: true } : {};
+    const isVisibleFilter = isPublic ? { isVisible: true } : {};
+
+    let nasionalWhere: Prisma.NasionalWhereInput = { ...isVisibleFilter };
+    let distrikWhere: Prisma.DistrikWhereInput = { ...isVisibleFilter };
+    let wilayahWhere: Prisma.WilayahWhereInput = { ...isVisibleFilter };
+    let rantingWhere: Prisma.RantingWhereInput = { ...isVisibleFilter };
+
+    if (!isPublic && scope) {
+      if (scope.rantingId) {
+        rantingWhere = { ...rantingWhere, id: scope.rantingId };
+        wilayahWhere = { ...wilayahWhere, rantings: { some: { id: scope.rantingId } } };
+        distrikWhere = {
+          ...distrikWhere,
+          wilayahs: { some: { rantings: { some: { id: scope.rantingId } } } },
+        };
+        nasionalWhere = {
+          ...nasionalWhere,
+          distriks: {
+            some: { wilayahs: { some: { rantings: { some: { id: scope.rantingId } } } } },
+          },
+        };
+      } else if (scope.wilayahId) {
+        wilayahWhere = { ...wilayahWhere, id: scope.wilayahId };
+        distrikWhere = { ...distrikWhere, wilayahs: { some: { id: scope.wilayahId } } };
+        nasionalWhere = {
+          ...nasionalWhere,
+          distriks: { some: { wilayahs: { some: { id: scope.wilayahId } } } },
+        };
+      } else if (scope.distrikId) {
+        distrikWhere = { ...distrikWhere, id: scope.distrikId };
+        nasionalWhere = { ...nasionalWhere, distriks: { some: { id: scope.distrikId } } };
+      }
+    }
 
     const nasional = await this.prisma.nasional.findMany({
-      where: whereVisible,
+      where: nasionalWhere,
       include: {
         distriks: {
-          where: whereVisible,
+          where: distrikWhere,
           include: {
             wilayahs: {
-              where: whereVisible,
+              where: wilayahWhere,
               include: {
                 rantings: {
-                  where: whereVisible,
+                  where: rantingWhere,
                   include: {
                     _count: { select: { anggota: true } },
                   },
