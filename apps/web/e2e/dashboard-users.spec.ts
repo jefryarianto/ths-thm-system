@@ -238,7 +238,7 @@ test.describe('Users Dashboard Page', () => {
 
   // ── Cascade Ranting pada form user ──────────────────────────────────────
 
-  test('membuat user admin_distrik mengirim rantingId dari cascade', async ({ page }) => {
+  test('membuat user admin_distrik mengirim distrikId dari cascade', async ({ page }) => {
     await mockOrgStructure(page);
     await mockSuperadminScope(page);
 
@@ -262,15 +262,13 @@ test.describe('Users Dashboard Page', () => {
 
     await page.getByTestId('user-role').selectOption('admin_distrik');
     await page.getByTestId('org-cascade-distrik').selectOption('d1');
-    await page.getByTestId('org-cascade-wilayah').selectOption('w1');
-    await page.getByTestId('org-cascade-ranting').selectOption('r1');
 
     await page.getByPlaceholder('Masukkan nama lengkap').fill('Admin Distrik Baru');
     await page.getByPlaceholder('contoh@email.com').fill('distrik@ths-thm.or.id');
     await page.getByRole('button', { name: 'Simpan' }).click();
 
     await expect.poll(() => createBody).not.toBeNull();
-    expect(createBody).toMatchObject({ role: 'admin_distrik', rantingId: 'r1' });
+    expect(createBody).toMatchObject({ role: 'admin_distrik', distrikId: 'd1' });
   });
 
   test('menolak submit role non-superadmin tanpa ranting', async ({ page }) => {
@@ -295,7 +293,7 @@ test.describe('Users Dashboard Page', () => {
     await page.getByRole('button', { name: 'Simpan' }).click();
 
     await expect(
-      page.getByText('Ranting wajib dipilih untuk role selain superadmin'),
+      page.getByText('Ranting wajib dipilih untuk role admin_ranting'),
     ).toBeVisible();
     expect(createBody).toBeNull();
   });
