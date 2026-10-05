@@ -5,6 +5,8 @@ import { badgeEarnedEmail, levelUpEmail } from '../../mail/email-templates';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../../common/services/cache.service';
 import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { Prisma } from '@prisma/client';
 
 export interface Badge {
   id: string;
@@ -767,15 +769,43 @@ export class GamificationService {
     return result;
   }
 
-  async getOrgStructure(): Promise<
+  async getOrgStructure(scope?: UserScope): Promise<
     Array<{
       id: string;
       nama: string;
       wilayahs: Array<{ id: string; nama: string; rantings: Array<{ id: string; nama: string }> }>;
     }>
   > {
+    let distrikWhere: Prisma.DistrikWhereInput = {};
+    let wilayahWhere: Prisma.WilayahWhereInput = {};
+    let rantingWhere: Prisma.RantingWhereInput = {};
+
+    if (scope) {
+      if (scope.rantingId) {
+        rantingWhere = { id: scope.rantingId };
+        wilayahWhere = { rantings: { some: { id: scope.rantingId } } };
+        distrikWhere = { wilayahs: { some: { rantings: { some: { id: scope.rantingId } } } } };
+      } else if (scope.wilayahId) {
+        wilayahWhere = { id: scope.wilayahId };
+        distrikWhere = { wilayahs: { some: { id: scope.wilayahId } } };
+      } else if (scope.distrikId) {
+        distrikWhere = { id: scope.distrikId };
+      }
+    }
+
     const distriks = await this.prisma.distrik.findMany({
-      include: { wilayahs: { include: { rantings: { select: { id: true, nama: true } } } } },
+      where: distrikWhere,
+      include: {
+        wilayahs: {
+          where: wilayahWhere,
+          include: {
+            rantings: {
+              where: rantingWhere,
+              select: { id: true, nama: true },
+            },
+          },
+        },
+      },
       orderBy: { nama: 'asc' },
     });
 

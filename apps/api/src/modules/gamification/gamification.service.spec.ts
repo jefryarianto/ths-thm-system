@@ -34,6 +34,9 @@ const prismaMock: any = {
   user: {
     findMany: jest.fn(),
   },
+  distrik: {
+    findMany: jest.fn(),
+  },
   $transaction: jest.fn(),
 };
 
@@ -334,6 +337,71 @@ describe('GamificationService', () => {
       expect(stats.totalEvents).toBe(1200);
       expect(stats.totalPointsAwarded).toBe(25000);
       expect(stats.badgesAwarded).toBe(120);
+    });
+  });
+  describe('getOrgStructure', () => {
+    const mockDistriks = [
+      {
+        id: 'distrik-1',
+        nama: 'Distrik 1',
+        wilayahs: [
+          {
+            id: 'wilayah-1',
+            nama: 'Wilayah 1',
+            rantings: [{ id: 'ranting-1', nama: 'Ranting 1' }],
+          },
+        ],
+      },
+    ];
+
+    it('returns org structure for unscoped request', async () => {
+      prismaMock.distrik.findMany.mockResolvedValue(mockDistriks);
+
+      const result = await service.getOrgStructure();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].nama).toBe('Distrik 1');
+      expect(prismaMock.distrik.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {},
+        }),
+      );
+    });
+
+    it('filters by distrikId when distrik scope is provided', async () => {
+      prismaMock.distrik.findMany.mockResolvedValue(mockDistriks);
+
+      await service.getOrgStructure({ distrikId: 'distrik-1' });
+
+      expect(prismaMock.distrik.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'distrik-1' },
+        }),
+      );
+    });
+
+    it('filters by wilayahId when wilayah scope is provided', async () => {
+      prismaMock.distrik.findMany.mockResolvedValue(mockDistriks);
+
+      await service.getOrgStructure({ wilayahId: 'wilayah-1', distrikId: 'distrik-1' });
+
+      expect(prismaMock.distrik.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { wilayahs: { some: { id: 'wilayah-1' } } },
+        }),
+      );
+    });
+
+    it('filters by rantingId when ranting scope is provided', async () => {
+      prismaMock.distrik.findMany.mockResolvedValue(mockDistriks);
+
+      await service.getOrgStructure({ rantingId: 'ranting-1', wilayahId: 'wilayah-1', distrikId: 'distrik-1' });
+
+      expect(prismaMock.distrik.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { wilayahs: { some: { rantings: { some: { id: 'ranting-1' } } } } },
+        }),
+      );
     });
   });
 });

@@ -163,8 +163,8 @@ export class GamificationController {
   )
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get org structure (distrik → wilayah → ranting) for filters' })
-  async getOrgStructure() {
-    return this.gamificationService.getOrgStructure();
+  async getOrgStructure(@Req() req: ScopedRequest) {
+    return this.gamificationService.getOrgStructure(req.scope);
   }
 
   /**
