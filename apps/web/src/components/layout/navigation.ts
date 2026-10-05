@@ -200,14 +200,14 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Pemantauan',
     items: [
-      { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'admin_ranting' },
+      { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'superadmin' },
       {
         href: '/monitoring/alerts',
         label: 'Alert Thresholds',
         icon: AlertTriangle,
-        minRole: 'admin_ranting',
+        minRole: 'superadmin',
       },
-      { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'admin_ranting' },
+      { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'superadmin' },
       { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
     ],
   },
@@ -239,7 +239,7 @@ export const menuGroups: MenuGroup[] = [
         href: '/settings/dokumen',
         label: 'Template Dokumen',
         icon: Printer,
-        minRole: 'admin_distrik',
+        minRole: 'superadmin',
       },
       { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
     ],

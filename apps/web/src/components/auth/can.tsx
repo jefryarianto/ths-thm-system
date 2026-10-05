@@ -97,7 +97,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   },
   wsMonitor: { view: 'superadmin', admin: 'superadmin' },
   queues: { view: 'superadmin', admin: 'superadmin' },
-  monitoring: { view: 'admin_ranting', admin: 'admin_ranting' },
+  monitoring: { view: 'superadmin', admin: 'superadmin' },
   admin: { view: 'superadmin', admin: 'superadmin' },
 };
 
