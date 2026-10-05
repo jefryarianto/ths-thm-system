@@ -14862,14 +14862,6 @@
         "summary": "Hapus periode aktif untuk unit",
         "parameters": [
           {
-            "name": "level",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "unitId",
             "required": true,
             "in": "path",
@@ -17065,6 +17057,12 @@
               "anggota"
             ]
           },
+          "distrikId": {
+            "type": "string"
+          },
+          "wilayahId": {
+            "type": "string"
+          },
           "rantingId": {
             "type": "string"
           },
@@ -17101,6 +17099,12 @@
               "penguji",
               "anggota"
             ]
+          },
+          "distrikId": {
+            "type": "string"
+          },
+          "wilayahId": {
+            "type": "string"
           },
           "rantingId": {
             "type": "string"
@@ -17271,7 +17275,7 @@
             "type": "string"
           },
           "jenisKelamin": {
-            "type": "string"
+            "type": "object"
           },
           "tempatLahir": {
             "type": "string"

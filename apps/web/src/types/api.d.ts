@@ -7409,6 +7409,8 @@ export interface components {
             namaLengkap: string;
             /** @enum {string} */
             role: "superadmin" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            distrikId?: string;
+            wilayahId?: string;
             rantingId?: string;
             isActive?: boolean;
         };
@@ -7418,6 +7420,8 @@ export interface components {
             namaLengkap?: string;
             /** @enum {string} */
             role?: "superadmin" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            distrikId?: string;
+            wilayahId?: string;
             rantingId?: string;
             isActive?: boolean;
         };
@@ -7471,7 +7475,7 @@ export interface components {
         };
         UpdateCandidateDto: {
             namaLengkap?: string;
-            jenisKelamin?: string;
+            jenisKelamin?: Record<string, never>;
             tempatLahir?: string;
             tanggalLahir?: string;
             alamat?: string;
@@ -17659,7 +17663,6 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                level: string;
                 unitId: string;
             };
             cookie?: never;

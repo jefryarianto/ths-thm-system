@@ -22,9 +22,9 @@ export interface User {
   email: string;
   namaLengkap: string;
   role: Role;
-  distrikId: string | null;
-  wilayahId: string | null;
-  rantingId: string | null;
+  distrikId?: string | null;
+  wilayahId?: string | null;
+  rantingId?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -36,9 +36,9 @@ export const UserSchema = z.object({
   email: z.string().email(),
   namaLengkap: z.string(),
   role: z.nativeEnum(ROLE),
-  distrikId: z.string().nullable(),
-  wilayahId: z.string().nullable(),
-  rantingId: z.string().nullable(),
+  distrikId: z.string().nullable().optional(),
+  wilayahId: z.string().nullable().optional(),
+  rantingId: z.string().nullable().optional(),
   isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),

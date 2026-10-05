@@ -24,8 +24,6 @@ interface EditUserModalProps {
 
 /** `/users/:id` menyertakan relasi ranting → wilayah → distrik untuk prefill cascade. */
 interface UserDetail extends User {
-  distrikId?: string | null;
-  wilayahId?: string | null;
   ranting?: {
     id: string;
     nama: string;
