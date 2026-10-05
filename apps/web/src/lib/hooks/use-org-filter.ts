@@ -41,18 +41,6 @@ export type UseOrgFilterReturn = OrgFilterState & OrgFilterActions & OrgFilterDe
  *
  * Automatically fetches org structure from /gamification/org-structure.
  * When a higher-level filter changes, lower-level filters are reset.
- *
- * @example
- * ```tsx
- * const { distrikId, setDistrik, wilayahId, setWilayah, rantingId,
- *   setRanting, clearFilters, isActive, availableWilayahs, availableRantings,
- *   orgTree, loading } = useOrgFilter();
- *
- * <select value={distrikId} onChange={e => setDistrik(e.target.value)}>
- *   <option value="">Semua Distrik</option>
- *   {orgTree.map(d => <option key={d.id} value={d.id}>{d.nama}</option>)}
- * </select>
- * ```
  */
 export function useOrgFilter(): UseOrgFilterReturn {
   const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
@@ -61,20 +49,35 @@ export function useOrgFilter(): UseOrgFilterReturn {
   const [wilayahId, setWilayahId] = useState('');
   const [rantingId, setRantingId] = useState('');
 
-  useEffect(() => {
-    fetchOrgStructure();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const fetchOrgStructure = useCallback(async () => {
     try {
       const res = await apiClient.get('/gamification/org-structure');
-      setOrgTree(unwrap<OrgNode[]>(res) || []);
+      const tree = unwrap<OrgNode[]>(res) || [];
+      setOrgTree(tree);
+
+      // Auto-select if user only has 1 scoped option at any level
+      if (tree.length === 1) {
+        const d = tree[0];
+        setDistrikId(d.id);
+        const wils = d.wilayahs || [];
+        if (wils.length === 1) {
+          const w = wils[0];
+          setWilayahId(w.id);
+          const rants = w.rantings || [];
+          if (rants.length === 1) {
+            setRantingId(rants[0].id);
+          }
+        }
+      }
     } catch {
       // Ignore errors - tree remains empty
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchOrgStructure();
+  }, [fetchOrgStructure]);
 
   const setDistrik = useCallback((id: string) => {
     setDistrikId(id);
@@ -92,12 +95,27 @@ export function useOrgFilter(): UseOrgFilterReturn {
   }, []);
 
   const clearFilters = useCallback(() => {
-    setDistrikId('');
-    setWilayahId('');
-    setRantingId('');
-  }, []);
-
-  const isActive = distrikId !== '' || wilayahId !== '' || rantingId !== '';
+    if (orgTree.length === 1) {
+      setDistrikId(orgTree[0].id);
+      const wils = orgTree[0].wilayahs || [];
+      if (wils.length === 1) {
+        setWilayahId(wils[0].id);
+        const rants = wils[0].rantings || [];
+        if (rants.length === 1) {
+          setRantingId(rants[0].id);
+        } else {
+          setRantingId('');
+        }
+      } else {
+        setWilayahId('');
+        setRantingId('');
+      }
+    } else {
+      setDistrikId('');
+      setWilayahId('');
+      setRantingId('');
+    }
+  }, [orgTree]);
 
   const availableWilayahs = useMemo(
     () => (distrikId ? orgTree.find((d) => d.id === distrikId)?.wilayahs || [] : []),
@@ -108,6 +126,17 @@ export function useOrgFilter(): UseOrgFilterReturn {
     if (!wilayahId) return [];
     return availableWilayahs.find((w) => w.id === wilayahId)?.rantings || [];
   }, [wilayahId, availableWilayahs]);
+
+  const isActive = useMemo(() => {
+    // Active if filters differ from default scoped state
+    if (orgTree.length === 1) {
+      if (availableWilayahs.length === 1) {
+        return availableRantings.length > 1 && rantingId !== '';
+      }
+      return wilayahId !== '' || rantingId !== '';
+    }
+    return distrikId !== '' || wilayahId !== '' || rantingId !== '';
+  }, [distrikId, wilayahId, rantingId, orgTree.length, availableWilayahs.length, availableRantings.length]);
 
   return {
     distrikId,

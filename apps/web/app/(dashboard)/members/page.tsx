@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
@@ -160,35 +160,65 @@ export default function MembersPage() {
     data?: { tree?: OrgNode[] };
   }
 
-  const [distrikOptions, setDistrikOptions] = useState<{ value: string; label: string }[]>([]);
-  const [wilayahOptions, setWilayahOptions] = useState<{ value: string; label: string }[]>([]);
-  const [rantingOptions, setRantingOptions] = useState<{ value: string; label: string }[]>([]);
+  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
 
   const loadOrgChart = useCallback(async () => {
     try {
       const { data: res } = await apiClient.get<OrgChartResp>('/org-chart');
       const tree = res?.data?.tree ?? [];
-      // Assumes a single Nasional root with children = distriks
-      const distriks = tree.flatMap((n) => n.children ?? []);
-      setDistrikOptions(distriks.map((d) => ({ value: d.id, label: d.name })));
-
-      // Populate wilayahs for selected distrik
-      const selDistrik = distriks.find((d) => d.id === filters.distrikId);
-      const wil = selDistrik?.children ?? [];
-      setWilayahOptions(wil.map((w) => ({ value: w.id, label: w.name })));
-
-      // Populate rantings for selected wilayah
-      const selWilayah = wil.find((w) => w.id === filters.wilayahId);
-      const rant = selWilayah?.children ?? [];
-      setRantingOptions(rant.map((r) => ({ value: r.id, label: r.name })));
+      setOrgTree(tree);
     } catch {
       /* ignore */
     }
-  }, [filters.distrikId, filters.wilayahId]);
+  }, []);
 
   useEffect(() => {
     loadOrgChart();
   }, [loadOrgChart]);
+
+  const distriks = useMemo(() => {
+    return orgTree.flatMap((n) => n.children ?? []);
+  }, [orgTree]);
+
+  const distrikOptions = useMemo(() => {
+    return distriks.map((d) => ({ value: d.id, label: d.name }));
+  }, [distriks]);
+
+  const effectiveDistrikId = filters.distrikId || (distrikOptions.length === 1 ? distrikOptions[0].value : '');
+
+  useEffect(() => {
+    if (distrikOptions.length === 1 && !filters.distrikId) {
+      setFilter('distrikId', distrikOptions[0].value);
+    }
+  }, [distrikOptions, filters.distrikId, setFilter]);
+
+  const wilayahOptions = useMemo(() => {
+    const selDistrik = distriks.find((d) => d.id === effectiveDistrikId);
+    const wil = selDistrik?.children ?? [];
+    return wil.map((w) => ({ value: w.id, label: w.name }));
+  }, [distriks, effectiveDistrikId]);
+
+  const effectiveWilayahId = filters.wilayahId || (wilayahOptions.length === 1 ? wilayahOptions[0].value : '');
+
+  useEffect(() => {
+    if (wilayahOptions.length === 1 && !filters.wilayahId && effectiveDistrikId) {
+      setFilter('wilayahId', wilayahOptions[0].value);
+    }
+  }, [wilayahOptions, filters.wilayahId, effectiveDistrikId, setFilter]);
+
+  const rantingOptions = useMemo(() => {
+    const selDistrik = distriks.find((d) => d.id === effectiveDistrikId);
+    const wil = selDistrik?.children ?? [];
+    const selWilayah = wil.find((w) => w.id === effectiveWilayahId);
+    const rant = selWilayah?.children ?? [];
+    return rant.map((r) => ({ value: r.id, label: r.name }));
+  }, [distriks, effectiveDistrikId, effectiveWilayahId]);
+
+  useEffect(() => {
+    if (rantingOptions.length === 1 && !filters.rantingId && effectiveWilayahId) {
+      setFilter('rantingId', rantingOptions[0].value);
+    }
+  }, [rantingOptions, filters.rantingId, effectiveWilayahId, setFilter]);
 
   // ─── Fetch stats ───
   const fetchStats = useCallback(async () => {
@@ -434,7 +464,8 @@ export default function MembersPage() {
               setFilter('rantingId', '');
             }}
             options={distrikOptions}
-            placeholder="Semua Distrik"
+            placeholder={distrikOptions.length === 1 ? distrikOptions[0].label : 'Semua Distrik'}
+            disabled={distrikOptions.length <= 1}
           />
           <FilterSelect
             value={filters.wilayahId}
@@ -443,15 +474,27 @@ export default function MembersPage() {
               setFilter('rantingId', '');
             }}
             options={wilayahOptions}
-            placeholder={filters.distrikId ? 'Semua Wilayah' : 'Pilih Distrik'}
-            disabled={!filters.distrikId}
+            placeholder={
+              wilayahOptions.length === 1
+                ? wilayahOptions[0].label
+                : effectiveDistrikId
+                ? 'Semua Wilayah'
+                : 'Pilih Distrik'
+            }
+            disabled={!effectiveDistrikId || wilayahOptions.length <= 1}
           />
           <FilterSelect
             value={filters.rantingId}
             onChange={(v) => setFilter('rantingId', v)}
             options={rantingOptions}
-            placeholder={filters.wilayahId ? 'Semua Ranting' : 'Pilih Wilayah'}
-            disabled={!filters.wilayahId}
+            placeholder={
+              rantingOptions.length === 1
+                ? rantingOptions[0].label
+                : effectiveWilayahId
+                ? 'Semua Ranting'
+                : 'Pilih Wilayah'
+            }
+            disabled={!effectiveWilayahId || rantingOptions.length <= 1}
           />
           <FilterSelect
             value={filters.statusKeanggotaan}

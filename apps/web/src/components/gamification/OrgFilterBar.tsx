@@ -12,7 +12,7 @@ interface OrgFilterBarProps {
   onRantingChange: (value: string) => void;
   orgTree: OrgNode[];
   availableWilayahs: OrgNode[];
-  availableRantings: OrgNode[];
+  availableRantings: { id: string; nama: string }[];
   filterActive: boolean;
   onClearFilters: () => void;
 }
@@ -30,6 +30,10 @@ export default function OrgFilterBar({
   filterActive,
   onClearFilters,
 }: OrgFilterBarProps) {
+  const isDistrikLocked = orgTree.length === 1;
+  const isWilayahLocked = isDistrikLocked && availableWilayahs.length === 1;
+  const isRantingLocked = isWilayahLocked && availableRantings.length === 1;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -40,9 +44,10 @@ export default function OrgFilterBar({
         <select
           value={selectedDistrik}
           onChange={(e) => onDistrikChange(e.target.value)}
-          className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          disabled={isDistrikLocked}
+          className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-75 disabled:bg-gray-50"
         >
-          <option value="">Semua Distrik</option>
+          {!isDistrikLocked && <option value="">Semua Distrik</option>}
           {orgTree.map((d) => (
             <option key={d.id} value={d.id}>
               {d.nama}
@@ -54,10 +59,10 @@ export default function OrgFilterBar({
         <select
           value={selectedWilayah}
           onChange={(e) => onWilayahChange(e.target.value)}
-          disabled={!selectedDistrik}
+          disabled={!selectedDistrik || isWilayahLocked}
           className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Semua Wilayah</option>
+          {!isWilayahLocked && <option value="">Semua Wilayah</option>}
           {availableWilayahs.map((w) => (
             <option key={w.id} value={w.id}>
               {w.nama}
@@ -69,10 +74,10 @@ export default function OrgFilterBar({
         <select
           value={selectedRanting}
           onChange={(e) => onRantingChange(e.target.value)}
-          disabled={!selectedWilayah}
+          disabled={!selectedWilayah || isRantingLocked}
           className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Semua Ranting</option>
+          {!isRantingLocked && <option value="">Semua Ranting</option>}
           {availableRantings.map((r) => (
             <option key={r.id} value={r.id}>
               {r.nama}

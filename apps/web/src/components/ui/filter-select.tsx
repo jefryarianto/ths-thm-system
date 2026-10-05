@@ -22,7 +22,7 @@ export default function FilterSelect({
       disabled={disabled}
       className="px-3 py-2 border border-border rounded-md text-sm bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <option value="">{placeholder}</option>
+      {!(disabled && value) && <option value="">{placeholder}</option>}
       {options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}
