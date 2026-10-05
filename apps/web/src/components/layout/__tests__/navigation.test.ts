@@ -145,6 +145,12 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/settings');
     expect(hrefs).toHaveLength(54);
   });
+  it('admin_ranting tidak melihat Pengaturan Gamifikasi', () => {
+    const groups = filterVisibleGroups(menuGroups, optionsFor('admin_ranting'));
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).not.toContain('/gamification/settings');
+  });
+
 
   it('anggota tidak melihat item adminOnly maupun menu di atas role-nya', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('anggota'));

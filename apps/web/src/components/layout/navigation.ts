@@ -283,7 +283,7 @@ export const menuGroups: MenuGroup[] = [
         href: '/gamification/settings',
         label: 'Pengaturan Gamifikasi',
         icon: Settings,
-        minRole: 'admin_ranting',
+        minRole: 'superadmin',
       },
     ],
   },
