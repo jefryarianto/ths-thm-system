@@ -24,6 +24,8 @@ interface EditUserModalProps {
 
 /** `/users/:id` menyertakan relasi ranting → wilayah → distrik untuk prefill cascade. */
 interface UserDetail extends User {
+  distrikId?: string | null;
+  wilayahId?: string | null;
   ranting?: {
     id: string;
     nama: string;
@@ -36,6 +38,15 @@ interface UserDetail extends User {
     } | null;
   } | null;
 }
+
+/** Level organisasi minimum per role (sesuai backend ROLE_ORG_LEVEL). */
+const ROLE_ORG_LEVEL: Record<string, 'distrik' | 'wilayah' | 'ranting'> = {
+  admin_distrik: 'distrik',
+  admin_wilayah: 'wilayah',
+  admin_ranting: 'ranting',
+  admin_kegiatan: 'ranting',
+  penguji: 'ranting',
+};
 
 export default function EditUserModal({ open, onClose, onSuccess, userId }: EditUserModalProps) {
   const toast = useToast();
@@ -64,8 +75,9 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
             password: '',
           });
           setOrg({
-            distrikId: user.ranting?.wilayah?.distrik?.id ?? '',
-            wilayahId: user.ranting?.wilayah?.id ?? '',
+            distrikId:
+              user.distrikId ?? user.ranting?.wilayah?.distrik?.id ?? '',
+            wilayahId: user.wilayahId ?? user.ranting?.wilayah?.id ?? '',
             rantingId: user.rantingId ?? '',
           });
         })
@@ -92,14 +104,26 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
     setErrors((prev) => ({ ...prev, role: '', ranting: '' }));
   };
 
+  const orgLevel = form.role ? ROLE_ORG_LEVEL[form.role] : undefined;
+  const requiredOrgId =
+    orgLevel === 'distrik'
+      ? org.distrikId
+      : orgLevel === 'wilayah'
+        ? org.wilayahId
+        : orgLevel === 'ranting'
+          ? org.rantingId
+          : '';
+
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.email) errs.email = 'Email wajib diisi';
     if (!form.namaLengkap) errs.namaLengkap = 'Nama wajib diisi';
     if (!form.role) errs.role = 'Role wajib dipilih';
     if (form.password && form.password.length < 6) errs.password = 'Password minimal 6 karakter';
-    if (showOrg && !org.rantingId) {
-      errs.ranting = 'Ranting wajib dipilih untuk role selain superadmin';
+    if (showOrg && !requiredOrgId) {
+      const label =
+        orgLevel === 'distrik' ? 'Distrik' : orgLevel === 'wilayah' ? 'Wilayah' : 'Ranting';
+      errs.ranting = `${label} wajib dipilih untuk role ${form.role}`;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -116,7 +140,11 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
         role: form.role,
       };
       if (form.password) payload.password = form.password;
-      if (showOrg) payload.rantingId = org.rantingId;
+      if (showOrg) {
+        payload.distrikId = org.distrikId;
+        payload.wilayahId = org.wilayahId;
+        payload.rantingId = org.rantingId;
+      }
       await apiClient.patch(`/users/${userId}`, payload);
       toast('success', 'User berhasil diperbarui');
       setForm({ email: '', namaLengkap: '', role: '', password: '' });
@@ -177,6 +205,7 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
               <OrgCascadeSelect
                 value={org}
                 onChange={setOrg}
+                maxLevel={orgLevel}
                 error={errors.ranting}
                 disabled={loading}
                 lockDistrikId={scope.lockDistrikId}

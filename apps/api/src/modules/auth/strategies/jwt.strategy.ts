@@ -18,14 +18,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: { sub: string; email: string; role: string }) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      include: {
-        ranting: {
-          include: {
-            wilayah: {
-              select: { distrikId: true },
-            },
-          },
-        },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        namaLengkap: true,
+        isActive: true,
+        distrikId: true,
+        wilayahId: true,
+        rantingId: true,
+        // Fallback untuk record lama tanpa kolom org eksplisit.
+        ranting: { select: { wilayahId: true, wilayah: { select: { distrikId: true } } } },
       },
     });
 
@@ -33,7 +36,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User tidak aktif atau tidak ditemukan');
     }
 
-    const distrikId = user.role === 'superadmin' ? null : user.ranting?.wilayah?.distrikId;
+    const distrikId =
+      user.role === 'superadmin'
+        ? null
+        : user.distrikId ?? user.ranting?.wilayah?.distrikId ?? null;
+    const wilayahId =
+      user.role === 'superadmin'
+        ? null
+        : user.wilayahId ?? user.ranting?.wilayahId ?? null;
 
     // Set tenant context (distrikId) from user — skip for superadmin
     const ctx = requestContextStore.getStore();
@@ -48,6 +58,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: user.role,
       rantingId: user.rantingId,
       distrikId: distrikId,
+      wilayahId: wilayahId,
       namaLengkap: user.namaLengkap,
     };
   }

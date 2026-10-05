@@ -32,6 +32,14 @@ interface OrgCascadeSelectProps {
   /** Pesan error untuk field Ranting. */
   error?: string;
   disabled?: boolean;
+  /**
+   * Level organisasi minimum yang ditampilkan:
+   * - 'distrik'  → hanya Distrik (admin_distrik)
+   * - 'wilayah'  → Distrik + Wilayah (admin_wilayah)
+   * - 'ranting'  → Distrik + Wilayah + Ranting (admin_ranting)
+   * Default 'ranting'.
+   */
+  maxLevel?: 'distrik' | 'wilayah' | 'ranting';
   /** Kunci pilihan distrik (admin_distrik & admin_wilayah). */
   lockDistrikId?: string;
   /** Kunci pilihan wilayah (admin_wilayah & admin_ranting). */
@@ -58,6 +66,7 @@ export default function OrgCascadeSelect({
   required = false,
   error,
   disabled = false,
+  maxLevel,
   lockDistrikId,
   lockWilayahId,
   columns = 1,
@@ -155,6 +164,9 @@ export default function OrgCascadeSelect({
 
   const layout = columns === 3 ? 'grid grid-cols-1 sm:grid-cols-3 gap-4' : 'space-y-4';
 
+  const showWilayah = maxLevel !== 'distrik';
+  const showRanting = maxLevel === undefined || maxLevel === 'ranting';
+
   return (
     <div className={layout}>
       <FormField label="Distrik" required>
@@ -169,30 +181,34 @@ export default function OrgCascadeSelect({
         />
       </FormField>
 
-      <FormField label="Wilayah" required>
-        <Select
-          data-testid="org-cascade-wilayah"
-          aria-label="Wilayah"
-          value={wilayahId}
-          onChange={(e) => handleWilayahChange(e.target.value)}
-          options={toOptions(wilayahs, lockWilayahId, 'Wilayah')}
-          placeholder="Pilih Wilayah..."
-          disabled={disabled || !distrikId || !!lockWilayahId}
-        />
-      </FormField>
+      {showWilayah && (
+        <FormField label="Wilayah" required>
+          <Select
+            data-testid="org-cascade-wilayah"
+            aria-label="Wilayah"
+            value={wilayahId}
+            onChange={(e) => handleWilayahChange(e.target.value)}
+            options={toOptions(wilayahs, lockWilayahId, 'Wilayah')}
+            placeholder="Pilih Wilayah..."
+            disabled={disabled || !distrikId || !!lockWilayahId}
+          />
+        </FormField>
+      )}
 
-      <FormField label="Ranting" required={required}>
-        <Select
-          data-testid="org-cascade-ranting"
-          aria-label="Ranting"
-          value={rantingId}
-          onChange={(e) => handleRantingChange(e.target.value)}
-          options={rantings.map((o) => ({ value: o.id, label: o.nama }))}
-          placeholder="Pilih Ranting..."
-          disabled={disabled || !wilayahId}
-          error={error}
-        />
-      </FormField>
+      {showRanting && (
+        <FormField label="Ranting" required={required}>
+          <Select
+            data-testid="org-cascade-ranting"
+            aria-label="Ranting"
+            value={rantingId}
+            onChange={(e) => handleRantingChange(e.target.value)}
+            options={rantings.map((o) => ({ value: o.id, label: o.nama }))}
+            placeholder="Pilih Ranting..."
+            disabled={disabled || !wilayahId}
+            error={error}
+          />
+        </FormField>
+      )}
     </div>
   );
 }

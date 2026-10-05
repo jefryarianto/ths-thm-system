@@ -21,6 +21,8 @@ export interface ScopedRequest {
     id: string;
     email: string;
     role: Role;
+    distrikId?: string;
+    wilayahId?: string;
     rantingId?: string;
     namaLengkap?: string;
   };

@@ -77,13 +77,26 @@ export class ScopeGuard implements CanActivate {
       return false;
     }
 
-    // Attach scope info from user's rantingId for services to use.
-    // For admin_distrik and above, resolve the full hierarchy
-    // (ranting → wilayah → distrik) so services can scope by district.
+    // Attach scope info from user's org columns for services to use.
+    // Each admin role is scoped at its own level:
+    //   admin_distrik → distrikId
+    //   admin_wilayah → wilayahId (+ distrikId via join)
+    //   admin_ranting  → rantingId (+ wilayahId/distrikId via join)
     if (user.role === 'superadmin') {
       request.scope = {};
-    } else if (user.role === 'admin_distrik' && user.rantingId) {
-      // admin_distrik: resolve ranting → wilayah → distrik chain
+    } else if (user.role === 'admin_distrik' && user.distrikId) {
+      request.scope = { distrikId: user.distrikId };
+    } else if (user.role === 'admin_wilayah' && user.wilayahId) {
+      // admin_wilayah: scope ke wilayah, sertakan distrik untuk filter tak langsung.
+      const wilayah = await this.prisma.wilayah.findUnique({
+        where: { id: user.wilayahId },
+        select: { distrikId: true },
+      });
+      request.scope = wilayah
+        ? { wilayahId: user.wilayahId, distrikId: wilayah.distrikId }
+        : { wilayahId: user.wilayahId };
+    } else if (user.rantingId) {
+      // admin_ranting / penguji / admin_kegiatan: resolve ranting → wilayah → distrik.
       const ranting = await this.prisma.ranting.findUnique({
         where: { id: user.rantingId },
         include: { wilayah: { include: { distrik: true } } },
@@ -97,22 +110,6 @@ export class ScopeGuard implements CanActivate {
       } else {
         request.scope = { rantingId: user.rantingId };
       }
-    } else if (user.role === 'admin_wilayah' && user.rantingId) {
-      // admin_wilayah: scope to wilayah level only (not distrik)
-      const ranting = await this.prisma.ranting.findUnique({
-        where: { id: user.rantingId },
-        include: { wilayah: true },
-      });
-      if (ranting) {
-        request.scope = {
-          rantingId: user.rantingId,
-          wilayahId: ranting.wilayahId,
-        };
-      } else {
-        request.scope = { rantingId: user.rantingId };
-      }
-    } else if (user.rantingId) {
-      request.scope = { rantingId: user.rantingId };
     } else {
       request.scope = {};
     }

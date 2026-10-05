@@ -291,6 +291,9 @@ model Distrik {
   // ── Template kartu anggota per distrik (NULL = global) ──
   cardTemplates CardTemplate[]
 
+  // ── Admin bertugas di distrik ini (admin_distrik) ──
+  userScopes User[] @relation("UserDistrikScope")
+
   @@index([nasionalId])
   @@map("distrik")
 }
@@ -307,6 +310,9 @@ model Wilayah {
   distrik       Distrik        @relation(fields: [distrikId], references: [id], onDelete: Cascade)
   rantings      Ranting[]
   kepengurusans Kepengurusan[]
+
+  // ── Admin bertugas di wilayah ini (admin_wilayah) ──
+  userScopes    User[]           @relation("UserWilayahScope")
 
   @@unique([distrikId, kodeWilayah])
   @@map("wilayah")
@@ -361,6 +367,8 @@ model User {
   passwordHash       String   @map("password_hash")
   namaLengkap        String   @map("nama_lengkap")
   role               Role     @default(anggota)
+  distrikId          String?  @map("distrik_id")
+  wilayahId          String?  @map("wilayah_id")
   rantingId          String?  @map("ranting_id")
   phone              String?  @unique @map("phone")
   mustChangePassword Boolean  @default(false) @map("must_change_password")
@@ -375,6 +383,8 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
+  distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id], onDelete: SetNull)
+  wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id], onDelete: SetNull)
   ranting                     Ranting?              @relation(fields: [rantingId], references: [id], onDelete: SetNull)
   notifikasis                 Notifikasi[]
   deviceTokens                DeviceToken[]

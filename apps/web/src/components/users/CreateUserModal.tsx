@@ -14,6 +14,15 @@ import { ROLE_OPTIONS } from '@/components/users/constants';
 import { useToast } from '@/components/ui/toast';
 import { useOrgScopeLocks } from '@/hooks/use-org-scope';
 
+/** Level organisasi minimum per role (sesuai backend ROLE_ORG_LEVEL). */
+const ROLE_ORG_LEVEL: Record<string, 'distrik' | 'wilayah' | 'ranting'> = {
+  admin_distrik: 'distrik',
+  admin_wilayah: 'wilayah',
+  admin_ranting: 'ranting',
+  admin_kegiatan: 'ranting',
+  penguji: 'ranting',
+};
+
 interface CreateUserModalProps {
   open: boolean;
   onClose: () => void;
@@ -56,14 +65,26 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
     setErrors((prev) => ({ ...prev, role: '', ranting: '' }));
   };
 
+  const orgLevel = form.role ? ROLE_ORG_LEVEL[form.role] : undefined;
+  const requiredOrgId =
+    orgLevel === 'distrik'
+      ? org.distrikId
+      : orgLevel === 'wilayah'
+        ? org.wilayahId
+        : orgLevel === 'ranting'
+          ? org.rantingId
+          : '';
+
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.email) errs.email = 'Email wajib diisi';
     if (!form.namaLengkap) errs.namaLengkap = 'Nama wajib diisi';
     if (!form.role) errs.role = 'Role wajib dipilih';
     if (form.password && form.password.length < 6) errs.password = 'Password minimal 6 karakter';
-    if (showOrg && !org.rantingId) {
-      errs.ranting = 'Ranting wajib dipilih untuk role selain superadmin';
+    if (showOrg && !requiredOrgId) {
+      const label =
+        orgLevel === 'distrik' ? 'Distrik' : orgLevel === 'wilayah' ? 'Wilayah' : 'Ranting';
+      errs.ranting = `${label} wajib dipilih untuk role ${form.role}`;
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -80,7 +101,11 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
         role: form.role,
       };
       if (form.password) payload.password = form.password;
-      if (showOrg) payload.rantingId = org.rantingId;
+      if (showOrg) {
+        payload.distrikId = org.distrikId;
+        payload.wilayahId = org.wilayahId;
+        payload.rantingId = org.rantingId;
+      }
       await apiClient.post('/users', payload);
       toast('success', 'User berhasil dibuat');
       setForm({ email: '', namaLengkap: '', role: '', password: '' });
@@ -136,6 +161,7 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
             <OrgCascadeSelect
               value={org}
               onChange={setOrg}
+              maxLevel={orgLevel}
               error={errors.ranting}
               disabled={loading}
               lockDistrikId={scope.lockDistrikId}

@@ -44,6 +44,32 @@ export const ROLE_SCOPE: Record<Role, 'national' | 'district' | 'region' | 'bran
 };
 
 /**
+ * Level organisasi minimum yang harus dipilih saat membuat/mengubah user.
+ * - superadmin    → tanpa organisasi (scope nasional).
+ * - admin_distrik → cukup distrik.
+ * - admin_wilayah → distrik + wilayah.
+ * - admin_ranting → distrik + wilayah + ranting.
+ * - Role lain (admin_kegiatan, penguji, anggota) tetap dikenai ranting
+ *   seperti perilaku sebelumnya (scope level branch/self).
+ */
+export type OrgLevel = 'distrik' | 'wilayah' | 'ranting';
+
+export const ROLE_ORG_LEVEL: Record<Role, OrgLevel | null> = {
+  [ROLE.SUPERADMIN]: null,
+  [ROLE.ADMIN_DISTRIK]: 'distrik',
+  [ROLE.ADMIN_WILAYAH]: 'wilayah',
+  [ROLE.ADMIN_RANTING]: 'ranting',
+  [ROLE.ADMIN_KEGIATAN]: 'ranting',
+  [ROLE.PENGUJI]: 'ranting',
+  [ROLE.ANGGOTA]: 'ranting',
+};
+
+/** Role yang harusnya punya scope organisasi (bukan superadmin). */
+export function roleRequiresOrg(role: string): role is Role {
+  return role in ROLE_ORG_LEVEL && ROLE_ORG_LEVEL[role as Role] !== null;
+}
+
+/**
  * Check if a role has at least the required scope level
  */
 export function hasRequiredScope(

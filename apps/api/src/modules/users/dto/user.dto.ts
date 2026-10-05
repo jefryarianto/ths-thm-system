@@ -35,6 +35,16 @@ export class CreateUserDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  distrikId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  wilayahId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   rantingId?: string;
 
   @ApiPropertyOptional()
@@ -65,6 +75,16 @@ export class UpdateUserDto {
   @IsIn(ROLE_VALUES)
   @IsString()
   role?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  distrikId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  wilayahId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

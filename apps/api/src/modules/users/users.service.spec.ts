@@ -21,6 +21,12 @@ describe('UsersService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    distrik: {
+      findUnique: jest.fn(),
+    },
+    wilayah: {
+      findUnique: jest.fn(),
+    },
     ranting: {
       findUnique: jest.fn(),
     },
@@ -76,6 +82,16 @@ describe('UsersService', () => {
 
     service = module.get<UsersService>(UsersService);
     jest.clearAllMocks();
+
+    // Default org resolution untuk role level ranting: r1 → w1 → d1.
+    // Test individual dapat meng-override sesuai skenario.
+    mockPrisma.ranting.findUnique.mockResolvedValue({
+      id: 'r1',
+      wilayahId: 'w1',
+      wilayah: { distrikId: 'd1' },
+    });
+    mockPrisma.wilayah.findUnique.mockResolvedValue({ id: 'w1', distrikId: 'd1' });
+    mockPrisma.distrik.findUnique.mockResolvedValue({ id: 'd1' });
   });
 
   it('should be defined', () => {
@@ -160,13 +176,16 @@ describe('UsersService', () => {
       expect(result.data.passwordHash).toBe('hashed-password');
     });
 
-    it('should auto-assign rantingId from scope', async () => {
+    it('should auto-assign org ids from scope', async () => {
       mockPrisma.user.create.mockResolvedValue({
         id: '1',
         email: 'new@test.com',
         passwordHash: 'hashed-password',
       });
-      await service.create({ email: 'new@test.com', namaLengkap: 'New User' }, { rantingId: 'r1' });
+      await service.create(
+        { email: 'new@test.com', namaLengkap: 'New User', role: 'admin_ranting', rantingId: 'r1' },
+        { rantingId: 'r1' },
+      );
       expect(mockPrisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ rantingId: 'r1' }) }),
       );
@@ -218,6 +237,11 @@ describe('UsersService', () => {
 
     it('should allow a scoped admin to create a role at or below their level', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      mockPrisma.ranting.findUnique.mockResolvedValue({
+        id: 'r1',
+        wilayahId: 'w1',
+        wilayah: { distrikId: 'd1' },
+      });
       mockPrisma.user.create.mockResolvedValue({
         id: 'u1',
         email: 'x@y.com',
@@ -232,6 +256,16 @@ describe('UsersService', () => {
 
     it('should reject assigning a ranting outside scope on create', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      mockPrisma.ranting.findUnique.mockResolvedValue({
+        id: 'r-other',
+        wilayahId: 'w1',
+        wilayah: { distrikId: 'd-other' },
+      });
+      mockPrisma.user.create.mockResolvedValue({
+        id: 'u1',
+        email: 'x@y.com',
+        role: 'anggota',
+      });
       await expect(
         service.create(
           { email: 'x@y.com', namaLengkap: 'X', role: 'anggota', rantingId: 'r-other' },
@@ -257,13 +291,14 @@ describe('UsersService', () => {
     });
 
     it('should allow superadmin (scope {} from ScopeGuard) to create admin_distrik', async () => {
+      mockPrisma.distrik.findUnique.mockResolvedValue({ id: 'd1' });
       mockPrisma.user.create.mockResolvedValue({
         id: 'u1',
         email: 'x@y.com',
         role: 'admin_distrik',
       });
       const result = await service.create(
-        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_distrik', rantingId: 'r1' },
+        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_distrik', distrikId: 'd1' },
         {}, // ScopeGuard mengirim {} untuk superadmin (national)
         'actor-1',
         'superadmin',
@@ -272,7 +307,13 @@ describe('UsersService', () => {
     });
 
     it('should allow superadmin (scope {} from ScopeGuard) to assign admin_distrik role', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        role: 'anggota',
+        distrikId: 'd1',
+        wilayahId: 'w1',
+        rantingId: 'r1',
+      });
+      mockPrisma.distrik.findUnique.mockResolvedValue({ id: 'd1' });
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'admin_distrik' });
       const result = await service.update('u1', { role: 'admin_distrik' }, {}, 'superadmin');
       expect(result.data.role).toBe('admin_distrik');
