@@ -6,7 +6,7 @@ import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { requestContextStore } from '../../../common/utils/request-context';
 import { resolvePermissionKey } from '../../permissions/permission.registry';
 import { PermissionsService } from '../../permissions/permissions.service';
-import { PrismaService } from '@prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
