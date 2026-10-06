@@ -45,3 +45,4 @@ export { MutationsModule } from './mutations/mutations.module';
 export { MailModule } from '../mail/mail.module';
 export { CardTemplatesModule } from './card-templates/card-templates.module';
 export { RoleMenuPermissionsModule } from './role-menu-permissions/role-menu-permissions.module';
+export { PermissionsModule } from './permissions/permissions.module';

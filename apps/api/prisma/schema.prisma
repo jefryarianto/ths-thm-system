@@ -2279,3 +2279,15 @@ model RoleMenuPermission {
   @@unique([role, menuKey])
   @@map("role_menu_permissions")
 }
+
+model RolePermission {
+  id        String   @id @default(uuid())
+  role      String
+  key       String   // "module:action"
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([role, key])
+  @@map("role_permissions")
+}
+

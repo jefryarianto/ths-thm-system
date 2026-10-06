@@ -4,6 +4,9 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../../common/decorators/roles.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 import { requestContextStore } from '../../../common/utils/request-context';
+import { resolvePermissionKey } from '../../permissions/permission.registry';
+import { PermissionsService } from '../../permissions/permissions.service';
+import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -33,9 +36,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly permissionsService: PermissionsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -52,6 +59,21 @@ export class RolesGuard implements CanActivate {
     // Superadmin always has full access to all endpoints
     if (user.role === 'superadmin') return true;
 
-    return requiredRoles.includes(user.role);
+    // Check role based access
+    if (!requiredRoles.includes(user.role)) {
+      return false;
+    }
+
+    // Resolve permission key based on request path and method
+    const path = request.path;
+    const permissionKey = resolvePermissionKey(request, path);
+    if (permissionKey) {
+      const enabled = await this.permissionsService.isEnabled(user.role, permissionKey);
+      if (!enabled) return false;
+    }
+
+    return true;
   }
 }
+
+
