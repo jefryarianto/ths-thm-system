@@ -100,10 +100,31 @@ export default function KepengurusanPage() {
 
   // Load dropdowns
   useEffect(() => {
+    // First, try to get the user's scope. If the user is a district admin, the scope will contain distrikId and distrikNama.
     apiClient
-      .get('/org-structure/distrik')
-      .then(({ data }) => setDistriks(data.data || []))
-      .catch(() => {});
+      .get('/auth/scope')
+      .then(({ data }) => {
+        const scope = data?.data;
+        if (scope?.distrikId && scope?.distrikNama) {
+          // Non‑superadmin: limit dropdown to the user's district only.
+          setDistriks([{ id: scope.distrikId, nama: scope.distrikNama }]);
+        } else {
+          // Superadmin or no specific district: fetch all districts.
+          apiClient
+            .get('/org-structure/distrik')
+            .then(({ data }) => setDistriks(data.data || []))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {
+        // If scope fetch fails, fall back to fetching all districts.
+        apiClient
+          .get('/org-structure/distrik')
+          .then(({ data }) => setDistriks(data.data || []))
+          .catch(() => {});
+      });
+
+    // Load periods and jabatan (same for all roles).
     apiClient
       .get('/periode')
       .then(({ data }) => {
