@@ -1,5 +1,34 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { createHash } from 'crypto';
+
+/**
+ * Read-only session verification endpoint (Next.js proxy route gate).
+ *
+ * The proxy calls this on EVERY page navigation. It is `@Public()` so
+ * `JwtAuthGuard` short-circuits without populating `req.user`, which means the
+ * throttler would otherwise bucket it as `anonymous` **per IP**. Behind a
+ * shared office/NAT IP, several valid users + tabs exhaust that bucket fast
+ * → 429 → users appear to get "kicked" right after login.
+ *
+ * The request carries a `refreshToken` cookie, so we track a per-session bucket
+ * (keyed by a SHA-256 hash of the token) instead of a shared per-IP bucket.
+ * Calls without any token keep falling back to the per-IP `anonymous` bucket.
+ */
+const SESSION_VERIFY_PATH = '/auth/session/verify';
+
+/**
+ * Extract a stable, per-session tracker for the read-only session-verify
+ * endpoint: the SHA-256 of the `refreshToken` cookie. Never log the raw token.
+ * Returns null when no token is present (→ falls back to per-IP tracking).
+ */
+function getSessionVerifyTracker(req: Record<string, unknown>): string | null {
+  const cookieHeader =
+    (req.headers as Record<string, string | undefined> | undefined)?.cookie || '';
+  const match = /refreshToken=([^;]+)/.exec(cookieHeader);
+  if (!match) return null;
+  return createHash('sha256').update(match[1]).digest('hex');
+}
 
 /**
  * Rate limit configuration per role.
@@ -47,7 +76,18 @@ export class RoleBasedThrottlerGuard extends ThrottlerGuard {
    */
   protected async getTracker(req: Record<string, unknown>): Promise<string> {
     const user = req['user'] as { id?: string } | undefined;
-    return user?.id || (req['ip'] as string) || 'unknown';
+    if (user?.id) return user.id;
+
+    // The `@Public()` session-verify endpoint never has `req.user`. Track it
+    // per session (hashed refresh token) instead of per IP, so users sharing a
+    // NAT/office IP can't exhaust each other's bucket.
+    const url = req['url'] as string | undefined;
+    if (url?.includes(SESSION_VERIFY_PATH)) {
+      const sessionTracker = getSessionVerifyTracker(req);
+      if (sessionTracker) return sessionTracker;
+    }
+
+    return (req['ip'] as string) || 'unknown';
   }
 
   /**

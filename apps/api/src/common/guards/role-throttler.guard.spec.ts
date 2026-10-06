@@ -48,6 +48,49 @@ describe('RoleBasedThrottlerGuard', () => {
       const result = await getGuard(guard).getTracker(req);
       expect(result).toBe('user-123');
     });
+
+    it('should track /auth/session/verify per session (hashed refresh token)', async () => {
+      const req = {
+        url: '/api/auth/session/verify',
+        ip: '192.168.1.1',
+        headers: { cookie: 'refreshToken=abc-123; other=1' },
+      };
+      const result = await getGuard(guard).getTracker(req);
+      // Not the IP, and never the raw token
+      expect(result).not.toBe('192.168.1.1');
+      expect(result).not.toContain('abc-123');
+      expect(result).toHaveLength(64);
+    });
+
+    it('should give distinct session-verify trackers for distinct tokens', async () => {
+      const trackerFor = async (token: string) =>
+        getGuard(guard).getTracker({
+          url: '/auth/session/verify',
+          ip: '10.0.0.1',
+          headers: { cookie: `refreshToken=${token}` },
+        });
+      expect(await trackerFor('token-A')).not.toBe(await trackerFor('token-B'));
+    });
+
+    it('should fall back to IP for session-verify without a refresh token', async () => {
+      const req = {
+        url: '/api/auth/session/verify',
+        ip: '192.168.1.1',
+        headers: { cookie: 'foo=bar' },
+      };
+      const result = await getGuard(guard).getTracker(req);
+      expect(result).toBe('192.168.1.1');
+    });
+
+    it('should track non-session-verify public routes by IP', async () => {
+      const req = {
+        url: '/api/auth/login',
+        ip: '192.168.1.1',
+        headers: { cookie: 'refreshToken=abc-123' },
+      };
+      const result = await getGuard(guard).getTracker(req);
+      expect(result).toBe('192.168.1.1');
+    });
   });
 
   describe('handleRequest - role-based limits', () => {
