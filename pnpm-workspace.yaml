@@ -44,6 +44,41 @@ overrides:
   # tmp ^0.0.33 (external-editor) — fix hanya di 0.2.4+, API tmpNameSync kompatibel
   tmp: 0.2.7
 
+  # ── Dependabot batch: 27 alert fixable (1 critical + 13 high sisanya) ──
+  # proxy-addr CRITICAL (GHSA-jqcg-44mw-7w3h, ReDoS) — jalur express compression
+  proxy-addr: 2.0.8
+  # compression HIGH (GHSA-vc2v-76pw-4v95, DoS chunked) — direct dep apps/api
+  # compression@<1.8.2; version di apps/api/package.json sudah ^1.8.2
+  # brace-expansion: 3 GHSA × beberapa major line (semua ReDoS)
+  brace-expansion@>=4.0.0: 5.0.12
+  brace-expansion@>=3.0.0 <4.0.0: 5.0.6
+  brace-expansion@>=2.0.0 <3.0.0: 2.1.7
+  brace-expansion@>=1.0.0 <2.0.0: 1.1.21
+  # picomatch HIGH+MED (GHSA-c2c7-rcm5-vvqj / GHSA-3v7f-55p6-f55p, ReDoS)
+  picomatch: 4.0.7
+  # glob MED (GHSA-3jxr-9vmj-r5cp via brace-expansion) — pakai glob 10.5.0+
+  glob: 10.5.0
+  # browserslist HIGH ×2 (GHSA-73wf-gq98-2v4g / GHSA-c83g-rgw3-j3cx, ReDoS)
+  browserslist: 4.29.3
+  # webpack HIGH+LOW (GHSA-8/×2, ReDoS di chunk-parser)
+  # webpack HIGH+LOW (GHSA-8/×2, ReDoS di chunk-parser) — 5.104.0 MASIH rentan, pakai 5.111.1
+  webpack: 5.111.1
+  # ajv MED (GHSA-2g4f-4pwh-qvx6, prototype pollution <8.18.0)
+  'ajv@>=7.0.0 <8.18.0': 8.18.0
+  # source-map-js HIGH (GHSA-68fv-2mgg-jv7q, ReDoS <1.2.2) — jalur webpack/browserslist
+  source-map-js: 1.2.2
+  # postcss-selector-parser MED+LOW (GHSA-rj75-hqrm-r3gf / GHSA-w9m9-85wc-3x92)
+  'postcss-selector-parser@>=6.0.0 <7.0.0': 6.1.3
+  postcss-selector-parser: 7.1.6
+  # baseline-browser-mapping MED (GHSA-w5vr-8v7q-w6rv, babel traverse) — jalur browserslist
+  baseline-browser-mapping: 2.11.0
+  # vitest + @vitest/mocker MED (GHSA-82fw-gwwq-j7x9 <4.1.11) — direct dep apps/web
+  # vitest@^4.1.11 di apps/web/package.json; mocker transitive mengikuti
+  '@vitest/mocker': 4.1.11
+  # node-forge HIGH (GHSA-86w9-cpqp-85rv, <=1.4.0) — TIDAK ADA fix: rentang mencakup SEMUA
+  # versi (npm latest 1.4.0, patched=null). Diabaikan, lihat docs/SECURITY-NOTES.md.
+  # braces <=3.0.3 (patched 3.0.4) & sprintf-js <=1.1.3 (patched 1.1.4) — fix belum di-publish npm.
+
 allowBuilds:
   '@nestjs/core': true
   '@prisma/client': true
