@@ -47,6 +47,7 @@ import {
   MonitorCog,
 } from 'lucide-react';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
+import { menuKeyForHref } from '@ths-thm/shared-types';
 import type { Role } from '@/types';
 
 /**
@@ -351,6 +352,15 @@ export function getModuleKey(href: string): string | null {
 interface FilterOptions {
   isAdmin: boolean;
   hasMinRole: (role: Role) => boolean;
+  /**
+   * Izin dari tabel RoleMenuPermission (GET /role-menu-permissions/my-menus).
+   * - `null`/absen = belum termuat atau gagal memuat → hanya gerbang kode
+   *   yang berlaku (fail-open, identik dengan perilaku sebelum ada tabel).
+   * - Hanya bisa MENYEMBUNYIKAN: `false` menyembunyikan, `true` tidak pernah
+   *   menampilkan item yang sudah gugur oleh gerbang kode — baris DB tidak
+   *   bisa menaikkan hak di atas aturan di kode.
+   */
+  menuOverrides?: Record<string, boolean> | null;
 }
 
 /**
@@ -358,11 +368,12 @@ interface FilterOptions {
  * 1. adminOnly → admin-level role
  * 2. minRole → role hierarchy check
  * 3. MODULE_PERMISSIONS[module].view → fallback role minimum
+ * 4. menuOverrides (opsional) → hasil matriks superadmin, hanya bisa membatasi
  * Grup yang tidak punya item terlihat akan dibuang.
  */
 export function filterVisibleGroups(
   groups: MenuGroup[],
-  { isAdmin, hasMinRole }: FilterOptions,
+  { isAdmin, hasMinRole, menuOverrides }: FilterOptions,
 ): MenuGroup[] {
   return groups
     .map((group) => ({
@@ -377,6 +388,11 @@ export function filterVisibleGroups(
         if (moduleKey) {
           const requiredViewRole = MODULE_PERMISSIONS[moduleKey]?.view;
           if (requiredViewRole && !hasMinRole(requiredViewRole)) return false;
+        }
+        // Izin tabel role-menu-permissions (kunci = turunan href, lihat
+        // menuKeyForHref) — hanya bisa menyembunyikan, bukan mengizinkan.
+        if (menuOverrides) {
+          if (menuOverrides[menuKeyForHref(item.href)] === false) return false;
         }
         return true;
       }),

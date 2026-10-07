@@ -1,8 +1,11 @@
-import { Controller, Get, Put, Body, Param, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Put, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { MENU_KEYS, ROLE_VALUES, type Role } from '@ths-thm/shared-types';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
-import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
-import { RoleMenuPermissionsService, UpdatePermissionDto } from './role-menu-permissions.service';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RoleMenuPermissionsService } from './role-menu-permissions.service';
+import { BulkUpdateDto, UpdatePermissionDto } from './dto/role-menu-permissions.dto';
 
 @ApiTags('Role Menu Permissions')
 @Controller('role-menu-permissions')
@@ -17,15 +20,41 @@ export class RoleMenuPermissionsController {
   @Get()
   @CrudAuth('superadmin', { summary: 'Get all role-menu permissions matrix' })
   async getAll() {
-    const [permissions, menuKeys] = await Promise.all([
+    const [permissions, dbMenuKeys] = await Promise.all([
       this.service.getAllPermissions(),
       this.service.getAllMenuKeys(),
     ]);
+
+    // menuKeys = registry (menu sidebar yang sah) + key lama yang mungkin
+    // masih ada di DB. Tanpa registry, matrix kosong saat tabel belum terisi
+    // dan menu baru tidak pernah muncul. Key lama tetap disertakan agar baris
+    // legacy tidak hilang dari tampilan.
+    const menuKeys = Array.from(new Set([...MENU_KEYS, ...dbMenuKeys]));
 
     return {
       permissions,
       menuKeys,
     };
+  }
+
+  /**
+   * GET /role-menu-permissions/my-menus
+   * Izin menu milik role yang sedang login — dipakai sidebar
+   * (`useMenuOverrides` → `filterVisibleGroups`) untuk menyembunyikan menu
+   * yang dimatikan superadmin. Terbuka untuk semua role dan HANYA
+   * mengembalikan baris sendiri, sehingga user biasa tidak bisa membaca
+   * matriks penuh atau mengubah konfigurasi role lain.
+   *
+   * WAJIB dideklarasikan SEBELUM @Get(':role'): Express mencocokkan
+   * 'my-menus' sebagai :role bila urutannya terbalik (catatan sama di
+   * notifications.controller utk 'fcm-tokens').
+   */
+  @Get('my-menus')
+  @ApiOperation({ summary: 'Izin menu untuk role sendiri (dipakai sidebar)' })
+  @Roles(...ROLE_VALUES)
+  async getMyMenus(@CurrentUser() user: { id: string; role: Role }) {
+    const permissions = await this.service.getPermissionsForRole(user.role);
+    return { permissions };
   }
 
   /**
@@ -54,11 +83,8 @@ export class RoleMenuPermissionsController {
    */
   @Put('bulk/:role')
   @CrudAuth('superadmin', { summary: 'Bulk update permissions for a role' })
-  async bulkUpdate(
-    @Param('role') role: string,
-    @Body() body: { permissions: Record<string, boolean> },
-  ) {
-    const updated = await this.service.bulkUpdate(role, body.permissions);
+  async bulkUpdate(@Param('role') role: string, @Body() dto: BulkUpdateDto) {
+    const updated = await this.service.bulkUpdate(role, dto.permissions);
     return { updated };
   }
 }

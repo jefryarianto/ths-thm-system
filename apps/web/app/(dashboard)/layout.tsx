@@ -6,6 +6,7 @@ import apiClient from '@/lib/api-client';
 import { sessionManager } from '@/lib/session-manager';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
+import { useMenuOverrides } from '@/hooks/use-menu-overrides';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import Sidebar from '@/components/layout/sidebar';
 import DashboardHeader from '@/components/layout/dashboard-header';
@@ -64,13 +65,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Per-group collapse (accordion) - Set of group labels that are collapsed
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
+  // Izin menu dari tabel role-menu-permissions (hasil matriks superadmin).
+  // Hanya bisa menyembunyikan; lihat filterVisibleGroups & useMenuOverrides.
+  const menuOverrides = useMenuOverrides(user?.role, mounted);
+
   /**
    * Filter menu per role & permission (logika tidak berubah).
    * Hanya dihitung setelah mount → hydration guard.
    */
   const visibleGroups = useMemo(
-    () => (mounted ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole }) : []),
-    [mounted, isAdmin, hasMinRole],
+    () =>
+      mounted
+        ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole, menuOverrides })
+        : [],
+    [mounted, isAdmin, hasMinRole, menuOverrides],
   );
 
   const homeHref = user ? getHomePathForRole(user.role) : '/dashboard';

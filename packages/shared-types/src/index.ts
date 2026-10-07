@@ -17,6 +17,30 @@ export type Role = (typeof ROLE)[keyof typeof ROLE];
 
 export const ROLE_VALUES: Role[] = Object.values(ROLE);
 
+/**
+ * Hierarki role numerik — SEMANTIK SAMA PERSIS dengan yang dipakai sidebar
+ * (`use-auth.hasMinRole` & `filterVisibleGroups`): makin tinggi makin berkuasa.
+ *
+ * ⚠️ Jangan tertukar dengan `ROLE_HIERARCHY` di
+ * `apps/api/src/common/constants/roles.constant.ts` — itu array terurut untuk
+ * scope-based access control dengan urutan BERBEDA (admin_kegiatan di atas
+ * admin_ranting). Untuk visibilitas menu, SELALU pakai ROLE_LEVEL ini.
+ */
+export const ROLE_LEVEL: Record<Role, number> = {
+  superadmin: 7,
+  admin_distrik: 6,
+  admin_wilayah: 5,
+  admin_ranting: 4,
+  admin_kegiatan: 3,
+  penguji: 2,
+  anggota: 1,
+};
+
+/** Level terendah yang dianggap "admin" (setara `ADMIN_ROLES` di web). */
+export const ADMIN_ROLE_LEVEL = ROLE_LEVEL.admin_ranting;
+
+export * from './menu-registry';
+
 export interface User {
   id: string;
   email: string;

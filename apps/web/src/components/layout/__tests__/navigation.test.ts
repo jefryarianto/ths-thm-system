@@ -186,6 +186,61 @@ describe('filterVisibleGroups', () => {
   });
 });
 
+describe('filterVisibleGroups + menuOverrides (tabel role-menu-permissions)', () => {
+  it('override false menyembunyikan menu yang lolos seluruh gerbang kode', () => {
+    // superadmin melihat /forum pada kondisi normal (terbukti di test atas),
+    // namun superadmin tidak di-fetch — pakai admin_distrik yang juga lolos.
+    const groups = filterVisibleGroups(menuGroups, {
+      ...optionsFor('admin_distrik'),
+      menuOverrides: { forum: false },
+    });
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).not.toContain('/forum');
+    // Menu lain tidak terpengaruh.
+    expect(hrefs).toContain('/members');
+  });
+
+  it('override true TIDAK bisa menampilkan menu yang gugur gerbang kode (keamanan)', () => {
+    // anggota: /users & /monitoring butuh role di atasnya — baris DB
+    // `true` tidak boleh menaikkan hak di atas aturan di kode.
+    const groups = filterVisibleGroups(menuGroups, {
+      ...optionsFor('anggota'),
+      menuOverrides: { users: true, monitoring: true, wsMonitor: true },
+    });
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).not.toContain('/users');
+    expect(hrefs).not.toContain('/monitoring');
+    expect(hrefs).not.toContain('/ws-monitor');
+    // Menu yang memang berhak tetap ada.
+    expect(hrefs).toContain('/forum');
+  });
+
+  it('override null / record kosong = perilaku identik tanpa override', () => {
+    const baseline = filterVisibleGroups(menuGroups, optionsFor('admin_ranting'));
+    const withNull = filterVisibleGroups(menuGroups, {
+      ...optionsFor('admin_ranting'),
+      menuOverrides: null,
+    });
+    const withEmpty = filterVisibleGroups(menuGroups, {
+      ...optionsFor('admin_ranting'),
+      menuOverrides: {},
+    });
+    expect(withNull).toEqual(baseline);
+    expect(withEmpty).toEqual(baseline);
+  });
+
+  it('kunci override diturunkan dari href (menuKeyForHref) — bukan label', () => {
+    // /settings/menu-permissions → settingsMenuPermissions
+    const groups = filterVisibleGroups(menuGroups, {
+      ...optionsFor('superadmin'),
+      menuOverrides: { settingsMenuPermissions: false },
+    });
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).not.toContain('/settings/menu-permissions');
+    expect(hrefs).toContain('/settings');
+  });
+});
+
 describe('getPageTitle', () => {
   it('mengembalikan label menu untuk pathname yang cocok', () => {
     expect(getPageTitle('/dashboard')).toBe('Dashboard');
