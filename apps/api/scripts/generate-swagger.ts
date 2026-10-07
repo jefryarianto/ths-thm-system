@@ -26,4 +26,7 @@ async function generateSwaggerSpec() {
   await app.close();
 }
 
-generateSwaggerSpec();
+generateSwaggerSpec().catch(err => {
+  console.error('Error generating swagger:', err);
+  process.exit(1);
+});
