@@ -56,8 +56,11 @@ overrides:
   brace-expansion@>=1.0.0 <2.0.0: 1.1.21
   # picomatch HIGH+MED (GHSA-c2c7-rcm5-vvqj / GHSA-3v7f-55p6-f55p, ReDoS)
   picomatch: 4.0.7
-  # glob MED (GHSA-3jxr-9vmj-r5cp via brace-expansion) — pakai glob 10.5.0+
-  glob: 10.5.0
+  # glob MED (GHSA-5j98-mcp5-4vw2, command injection CLI -c/--cmd, >=10.2.0 <10.5.0).
+  # Di-scope hanya untuk dep jest (jest-config/jest-runtime butuh ^10.4.1). test-exclude
+  # (istanbul) memakai `promisify(require('glob'))` yang butuh glob == function (glob 9 API);
+  # glob 10 export object {glob, globSync, ...} -> override global memutus coverage.
+  glob@>=10.2.0 <10.5.0: 10.5.0
   # browserslist HIGH ×2 (GHSA-73wf-gq98-2v4g / GHSA-c83g-rgw3-j3cx, ReDoS)
   browserslist: 4.29.3
   # webpack HIGH+LOW (GHSA-8/×2, ReDoS di chunk-parser)
