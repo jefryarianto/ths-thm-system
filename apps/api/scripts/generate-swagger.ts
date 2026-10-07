@@ -9,7 +9,7 @@ async function generateSwaggerSpec() {
   process.env.NODE_ENV = 'development';
   // Skip DB connection when generating swagger in CI or environments without a DB
   process.env.SKIP_DB_CONNECT = 'true';
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.createApplicationContext(AppModule, { logger: false });
 
   const config = new DocumentBuilder()
     .setTitle('THS-THM API')
