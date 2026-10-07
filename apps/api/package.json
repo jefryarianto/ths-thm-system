@@ -22,7 +22,7 @@
     "prisma:f3:seed": "ts-node prisma/seed-f3.ts",
     "seed:kepengurusan": "ts-node prisma/seed-kepengurusan.ts",
     "db:seed": "prisma db seed",
-    "swagger:export": "ts-node scripts/generate-swagger.ts",
+    "swagger:export": "SKIP_SWAGGER=true ts-node scripts/generate-swagger.ts",
     "generate:client": "npx openapi-typescript ./swagger.json --output ../web/src/types/api.d.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
