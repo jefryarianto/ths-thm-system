@@ -16616,6 +16616,68 @@
           }
         ]
       }
+    },
+    "/permissions/me": {
+      "get": {
+        "operationId": "PermissionsController_getMe",
+        "parameters": [
+          {
+            "name": "role",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/permissions/matrix": {
+      "get": {
+        "operationId": "PermissionsController_getMatrix",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "patch": {
+        "operationId": "PermissionsController_toggle",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/permissions/bulk/{role}": {
+      "patch": {
+        "operationId": "PermissionsController_bulkToggle",
+        "parameters": [
+          {
+            "name": "role",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "info": {

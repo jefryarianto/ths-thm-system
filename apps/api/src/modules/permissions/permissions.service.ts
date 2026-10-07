@@ -9,8 +9,14 @@ export class PermissionsService {
   private readonly ttlMs = 60_000; // 1 minute (not used currently)
 
   constructor(private readonly prisma: PrismaService) {
-    // Load cache on init
-    this.reloadCache();
+    // Load cache on init — kecuali saat bootstrap tanpa DB (swagger:export
+    // di CI men-set SKIP_DB_CONNECT). Query ke DB yang gagal di sini bisa
+    // menjadi unhandled rejection dan mematikan proses.
+    if (process.env.SKIP_DB_CONNECT !== 'true') {
+      this.reloadCache().catch((err) =>
+        this.logger.warn(`Permissions cache load skipped: ${err?.message ?? err}`),
+      );
+    }
   }
 
   private async reloadCache(): Promise<void> {

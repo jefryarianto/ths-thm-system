@@ -3,45 +3,46 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
 import { AppModule } from '../src/app.module';
 
-async function generateSwaggerSpec() {
-  console.log('Env vars:', { SKIP_SWAGGER: process.env.SKIP_SWAGGER, GITHUB_ACTIONS: process.env.GITHUB_ACTIONS });
-  // If swagger generation is not required (e.g., in CI), create a minimal file and exit
-  if (process.env.SKIP_SWAGGER || process.env.GITHUB_ACTIONS) {
-    writeFileSync('./swagger.json', JSON.stringify({ openapi: '3.0.0', info: { title: 'Placeholder', version: '0.0.0' } }, null, 2));
-    console.log('Skipping detailed swagger generation');
-    return;
-  }
-  try {
-  // Ensure development environment for CI to avoid production env validation
-  process.env.NODE_ENV = 'development';
-  console.log('GITHUB_ACTIONS:', process.env.GITHUB_ACTIONS);
-  // In GitHub Actions, skip detailed swagger generation
-  if (process.env.GITHUB_ACTIONS) {
-    process.env.SKIP_SWAGGER = 'true';
-  }
-  // Skip DB connection when generating swagger in CI or environments without a DB
+/**
+ * Generate swagger.json untuk kontrak API (CI contract job + production gate).
+ *
+ * Tidak menyentuh DB: PrismaService.onModuleInit melewati koneksi saat
+ * SKIP_DB_CONNECT=true, jadi script ini aman dijalankan tanpa database.
+ *
+ * PENTING: jangan menulis "placeholder" saat CI/GITHUB_ACTIONS — contract
+ * job membandingkan hasil regenerasi dengan file yang di-commit lewat
+ * `git diff --exit-code`, jadi placeholder pasti gagal dan api.d.ts jadi
+ * rusak. Biarkan generasi berjalan penuh.
+ */
+async function generateSwaggerSpec(): Promise<void> {
+  // Lewati koneksi Prisma (lihat prisma.service.ts onModuleInit).
   process.env.SKIP_DB_CONNECT = 'true';
-  const app = await NestFactory.createApplicationContext(AppModule, { logger: false });
 
-  const config = new DocumentBuilder()
-    .setTitle('THS-THM API')
-    .setDescription('API Documentation for THS-THM System Manajemen')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addServer('http://localhost:3001', 'Development')
-    .addServer('https://ths-thm-api.onrender.com', 'Production')
-    .build();
+  // logger 'error', BUKAN false: NestFactory.create dengan logger false akan
+  // memanggil ExceptionsZone -> process.exit(1) tanpa mencetak apa pun bila
+  // boot gagal (mis. masalah DI) — error jadi tak terlihat di log CI.
+  const app = await NestFactory.create(AppModule, { logger: ['error'] });
 
-  const document = SwaggerModule.createDocument(app, config);
-  writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
+  try {
+    const config = new DocumentBuilder()
+      .setTitle('THS-THM API')
+      .setDescription('API Documentation for THS-THM System Manajemen')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addServer('http://localhost:3001', 'Development')
+      .addServer('https://ths-thm-api.onrender.com', 'Production')
+      .build();
 
-  console.log('swagger.json generated successfully');
-  await app.close();
-  console.log('Swagger generation completed');
+    const document = SwaggerModule.createDocument(app, config);
+    writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
+
+    console.log('swagger.json generated successfully');
+  } finally {
+    await app.close();
   }
 }
 
-generateSwaggerSpec().catch(err => {
+generateSwaggerSpec().catch((err) => {
   console.error('Error generating swagger:', err);
   process.exit(1);
 });
