@@ -95,6 +95,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
+    // Skip DB connection during CI tasks like swagger generation when a dummy DATABASE_URL is provided.
+    if (process.env.SKIP_DB_CONNECT === 'true') {
+      console.log('⚙️ Skipping Prisma DB connection as SKIP_DB_CONNECT is set');
+      return;
+    }
+
     await this.$connect();
   }
 
