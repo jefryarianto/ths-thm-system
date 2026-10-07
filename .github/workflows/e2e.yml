@@ -194,7 +194,9 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_e2e
-
+      JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+      JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+      SKIP_DB_CONNECT: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
