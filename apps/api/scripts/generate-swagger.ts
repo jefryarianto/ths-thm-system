@@ -4,6 +4,8 @@ import { writeFileSync } from 'fs';
 import { AppModule } from '../src/app.module';
 
 async function generateSwaggerSpec() {
+  // Skip DB connection when generating swagger in CI or environments without a DB
+  process.env.SKIP_DB_CONNECT = 'true';
   const app = await NestFactory.create(AppModule, { logger: false });
 
   const config = new DocumentBuilder()
