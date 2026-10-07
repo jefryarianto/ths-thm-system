@@ -4,6 +4,7 @@ import { writeFileSync } from 'fs';
 import { AppModule } from '../src/app.module';
 
 async function generateSwaggerSpec() {
+  try {
   // Ensure development environment for CI to avoid production env validation
   process.env.NODE_ENV = 'development';
   // Skip DB connection when generating swagger in CI or environments without a DB
@@ -25,6 +26,7 @@ async function generateSwaggerSpec() {
   console.log('swagger.json generated successfully');
   await app.close();
   console.log('Swagger generation completed');
+  }
 }
 
 generateSwaggerSpec().catch(err => {
