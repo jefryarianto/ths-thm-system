@@ -2,7 +2,8 @@
 
 Update 2026-10-07. Batch fix menutup **26 dari 30** alert Dependabot lewat bump
 `compression`/`vitest` + `overrides` di [pnpm-workspace.yaml](../pnpm-workspace.yaml).
-Lihat log lengkap di `git log` commit `chore(deps): batch-fix`.
+Lihat log lengkap di `git log` commit `chore(deps): batch-fix`, plus follow-up
+`fix(deps): scope override glob ke jest`.
 
 ## Status: 4 alert tersisa, semua tanpa fix upstream
 
@@ -45,6 +46,18 @@ terpenuhi.
 - **Saat upstream publish fix** (node-forge 1.4.1 / braces 3.0.4 / sprintf-js
   1.1.4): tambahkan baris `overrides` di `pnpm-workspace.yaml`, jalankan
   `pnpm install`, lalu `pnpm typecheck && pnpm lint && pnpm build && pnpm test`.
+
+> Catatan saat menambah `overrides`: beberapa package transitive punya
+> kontrak API yang berubah antar major. Override global `glob: 10.5.0`
+> sekedar memaksa `test-exclude@6.0.0` (istanbul) ke glob 10, yang export
+> object alih-alih function — `promisify(require('glob'))` melempar
+> `TypeError` dan 76 suite CI (job `test-api`, yang memakai
+> `jest --coverage`) gagal. Karena itu override glob di-scope
+> `glob@>=10.2.0 <10.5.0` agar hanya dep jest yang terkena, dan istanbul
+> kembali ke glob 7 (di luar range vulnerable). **Selalu verifikasi dengan
+> `pnpm --filter @ths-thm/api test:cov` (mode coverage), bukan hanya
+> `pnpm test`**, karena `pnpm test` tidak memakai coverage dan tidak
+> memuat jalur istanbul.
 - **@nestjs/core**: jadwalkan upgrade Nest 10 → 11 sebagai task terpisah
   (breaking-change review), bukan bagian dari batch security fix ini.
 
