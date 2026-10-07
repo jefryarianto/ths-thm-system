@@ -24,6 +24,7 @@ async function generateSwaggerSpec() {
 
   console.log('swagger.json generated successfully');
   await app.close();
+  console.log('Swagger generation completed');
 }
 
 generateSwaggerSpec().catch(err => {
