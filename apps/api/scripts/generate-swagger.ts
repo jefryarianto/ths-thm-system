@@ -4,6 +4,7 @@ import { writeFileSync } from 'fs';
 import { AppModule } from '../src/app.module';
 
 async function generateSwaggerSpec() {
+  console.log('Env vars:', { SKIP_SWAGGER: process.env.SKIP_SWAGGER, GITHUB_ACTIONS: process.env.GITHUB_ACTIONS });
   // If swagger generation is not required (e.g., in CI), create a minimal file and exit
   if (process.env.SKIP_SWAGGER || process.env.GITHUB_ACTIONS) {
     writeFileSync('./swagger.json', JSON.stringify({ openapi: '3.0.0', info: { title: 'Placeholder', version: '0.0.0' } }, null, 2));
