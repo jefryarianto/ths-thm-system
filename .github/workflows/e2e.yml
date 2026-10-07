@@ -55,9 +55,13 @@ on:
         required: false
         default: '4'
 
-env:
-  NODE_VERSION: '22'
-  E2E_BASE_URL: http://localhost:3002
+  env:
+    NODE_VERSION: '22'
+    E2E_BASE_URL: http://localhost:3002
+    DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
+    JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+    JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+    SKIP_DB_CONNECT: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -266,6 +270,9 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:3002
           CI: true
+          JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+          JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+          SKIP_DB_CONNECT: true
 
       - name: Upload blob report (shard ${{ matrix.shard }})
         if: always()

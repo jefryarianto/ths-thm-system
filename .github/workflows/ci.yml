@@ -64,6 +64,7 @@ jobs:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
           JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
           JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
+          SKIP_DB_CONNECT: true
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client
