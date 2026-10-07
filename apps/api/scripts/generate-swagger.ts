@@ -13,6 +13,7 @@ async function generateSwaggerSpec() {
   try {
   // Ensure development environment for CI to avoid production env validation
   process.env.NODE_ENV = 'development';
+  console.log('GITHUB_ACTIONS:', process.env.GITHUB_ACTIONS);
   // In GitHub Actions, skip detailed swagger generation
   if (process.env.GITHUB_ACTIONS) {
     process.env.SKIP_SWAGGER = 'true';
