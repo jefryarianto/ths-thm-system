@@ -216,6 +216,12 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
       {
+        href: '/settings/menu-permissions',
+        label: 'Hak Akses Menu',
+        icon: MonitorCog,
+        minRole: 'superadmin',
+      },
+      {
         href: '/settings#autentikasi',
         label: 'Autentikasi',
         icon: KeyRound,

@@ -36,6 +36,7 @@ const EXPECTED_HREFS = [
   '/settings/periode',
   '/settings/kepengurusan',
   '/settings/org-chart-editor',
+  '/settings/menu-permissions',
   '/documents',
   '/letters',
   '/dues',
@@ -143,7 +144,7 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    expect(hrefs).toHaveLength(54);
+    expect(hrefs).toHaveLength(55);
   });
   it('admin_ranting tidak melihat Pengaturan Gamifikasi', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('admin_ranting'));

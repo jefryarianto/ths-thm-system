@@ -137,6 +137,14 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   wsMonitor: { view: 'superadmin', admin: 'superadmin' },
   queues: { view: 'superadmin', admin: 'superadmin' },
   monitoring: { view: 'superadmin', admin: 'superadmin' },
+  // Backend (role-menu-permissions.controller): @CrudAuth('superadmin')
+  // untuk GET/PUT — hanya superadmin yang dapat melihat & mengubah matriks.
+  menuPermissions: {
+    view: 'superadmin',
+    create: 'superadmin',
+    edit: 'superadmin',
+    delete: 'superadmin',
+  },
   admin: { view: 'superadmin', admin: 'superadmin' },
 };
 
