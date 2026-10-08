@@ -24,6 +24,8 @@ test.describe('Settings — /settings (Settings Hub)', () => {
     await expect(page.locator('a[href="/settings/org-structure"]').first()).toBeVisible({
       timeout: 8000,
     });
+    // Switch to tab "Komunikasi & Dokumen"
+    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
     // Section "Sistem"
     await expect(page.locator('a[href="/settings/email"]').first()).toBeVisible({ timeout: 8000 });
     await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({
@@ -39,8 +41,8 @@ test.describe('Settings — /settings (Settings Hub)', () => {
   });
 
   test('renders hub sections (Organisasi & Sistem)', async ({ page }) => {
-    await expect(page.getByText('Organisasi').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('Sistem').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Organisasi & Distrik').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Komunikasi & Dokumen').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('Struktur Organisasi link navigates to /settings/org-structure', async ({ page }) => {
@@ -54,6 +56,7 @@ test.describe('Settings — /settings (Settings Hub)', () => {
   });
 
   test('Riwayat Email link navigates to /settings/email/logs', async ({ page }) => {
+    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
     await page
       .locator('a[href="/settings/email/logs"]')
       .first()
@@ -62,6 +65,7 @@ test.describe('Settings — /settings (Settings Hub)', () => {
   });
 
   test('Audit Log link navigates to /audit-logs', async ({ page }) => {
+    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
     await page.locator('a[href="/audit-logs"]').first().click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(/\/audit-logs/);
   });
