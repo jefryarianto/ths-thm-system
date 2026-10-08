@@ -1244,6 +1244,8 @@ model Iuran {
 
   @@index([status])
   @@index([anggotaId])
+  @@index([anggotaId, status])
+  @@index([periode, status])
   // Satu record iuran per anggota per periode — cegah input ganda di level DB.
   @@unique([anggotaId, periode])
   @@map("iuran")
@@ -1283,6 +1285,7 @@ model Notifikasi {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("notifikasi")
 }
 

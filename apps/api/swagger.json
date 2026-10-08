@@ -4476,170 +4476,7 @@
         ]
       }
     },
-    "/pendaftaran": {
-      "get": {
-        "operationId": "RegistrationsController_findAll",
-        "summary": "Daftar semua registrasi",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "post": {
-        "operationId": "RegistrationsController_create",
-        "summary": "Pendaftaran anggota baru (publik)",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateRegistrationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ]
-      }
-    },
     "/registrations/{id}": {
-      "get": {
-        "operationId": "RegistrationsController_findOne",
-        "summary": "Detail registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "RegistrationsController_update",
-        "summary": "Perbarui registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateRegistrationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "RegistrationsController_remove",
-        "summary": "Hapus registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/pendaftaran/{id}": {
       "get": {
         "operationId": "RegistrationsController_findOne",
         "summary": "Detail registrasi",
@@ -4761,65 +4598,7 @@
         ]
       }
     },
-    "/pendaftaran/{id}/verify": {
-      "post": {
-        "operationId": "RegistrationsController_verify",
-        "summary": "Verifikasi registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
     "/registrations/{id}/approve": {
-      "post": {
-        "operationId": "RegistrationsController_approve",
-        "summary": "Setujui registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/pendaftaran/{id}/approve": {
       "post": {
         "operationId": "RegistrationsController_approve",
         "summary": "Setujui registrasi",
@@ -4887,66 +4666,7 @@
         ]
       }
     },
-    "/pendaftaran/{id}/reject": {
-      "post": {
-        "operationId": "RegistrationsController_reject",
-        "summary": "Tolak registrasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RejectRegistrationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
     "/registrations/import": {
-      "post": {
-        "operationId": "RegistrationsController_importCsv",
-        "summary": "Impor data registrasi",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Registrations"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/pendaftaran/import": {
       "post": {
         "operationId": "RegistrationsController_importCsv",
         "summary": "Impor data registrasi",
@@ -16544,6 +16264,36 @@
         "operationId": "RoleMenuPermissionsController_update",
         "summary": "Update a single permission",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePermissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Role Menu Permissions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/role-menu-permissions/my-menus": {
+      "get": {
+        "operationId": "RoleMenuPermissionsController_getMyMenus",
+        "summary": "Izin menu untuk role sendiri (dipakai sidebar)",
+        "parameters": [],
         "responses": {
           "200": {
             "description": ""
@@ -16602,6 +16352,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
@@ -18919,6 +18679,56 @@
         },
         "required": [
           "email"
+        ]
+      },
+      "UpdatePermissionDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "superadmin",
+              "admin_distrik",
+              "admin_wilayah",
+              "admin_ranting",
+              "admin_kegiatan",
+              "penguji",
+              "anggota"
+            ],
+            "example": "admin_ranting"
+          },
+          "menuKey": {
+            "type": "string",
+            "example": "members"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "role",
+          "menuKey",
+          "isEnabled"
+        ]
+      },
+      "BulkUpdateDto": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "object",
+            "description": "Objek menuKey → isEnabled yang disimpan untuk role ini",
+            "example": {
+              "members": true,
+              "reports": false
+            },
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": [
+          "permissions"
         ]
       }
     }

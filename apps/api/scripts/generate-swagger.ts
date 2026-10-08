@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
+import { resolve } from 'path';
 import { AppModule } from '../src/app.module';
 
 /**
@@ -34,9 +35,10 @@ async function generateSwaggerSpec(): Promise<void> {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
+    const outputPath = resolve(__dirname, '../swagger.json');
+    writeFileSync(outputPath, JSON.stringify(document, null, 2));
 
-    console.log('swagger.json generated successfully');
+    console.log(`swagger.json generated successfully at ${outputPath}`);
   } finally {
     await app.close();
   }

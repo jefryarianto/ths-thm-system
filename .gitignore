@@ -30,6 +30,10 @@ NUL
 # Temp / test artifacts
 apps/api/storage/
 apps/api/nul
+apps/api/tmp/
+apps/web/tmp/
+tmp/
+*.pid
 test-results/
 apps/web/test-results/
 

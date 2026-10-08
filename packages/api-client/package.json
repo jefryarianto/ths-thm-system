@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "generate": "openapi-typescript http://localhost:3001/api-json -o src/index.ts",
+    "generate": "openapi-typescript ../../apps/api/swagger.json -o src/index.ts",
+    "generate:live": "openapi-typescript http://localhost:3001/api-json -o src/index.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "dev": "tsc -w"
   },
   "dependencies": {

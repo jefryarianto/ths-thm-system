@@ -7,7 +7,7 @@ async function main() {
   console.log('Seeding database...');
 
   // Create admin user — password matches E2E smoke test login
-  const passwordHash = await bcrypt.hash('admin123', 12);
+  const passwordHash = await bcrypt.hash('5tr6w1nG#1', 12);
 
   const admin = await prisma.user.upsert({
     where: { email: 'superadmin@ths-thm.org' },
