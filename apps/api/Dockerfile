@@ -75,12 +75,9 @@ COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-ty
 # di-flatten ke `/app/dist` (tanpa prefix apps/api). Salin ke root container.
 COPY --from=builder /app/packages/card-design /packages/card-design
 RUN rm -rf node_modules/@ths-thm/shared-types && \
-    mkdir -p node_modules/@ths-thm/shared-types/dist && \
+    mkdir -p node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/package.json node_modules/@ths-thm/shared-types/ && \
-    cp packages/shared-types/dist/index.js node_modules/@ths-thm/shared-types/dist/ && \
-    cp packages/shared-types/dist/index.d.ts node_modules/@ths-thm/shared-types/dist/ && \
-    cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
-    cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
+    cp -r packages/shared-types/dist node_modules/@ths-thm/shared-types/
 
 # Copy startup wrapper
 COPY apps/api/start.sh /app/start.sh
