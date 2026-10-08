@@ -33,7 +33,7 @@ export class ContentController {
   // ── Berita CRUD ──
 
   @Get('berita')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Ambil semua berita',
   })
@@ -42,7 +42,7 @@ export class ContentController {
   }
 
   @Get('berita/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Ambil berita by ID',
   })
@@ -51,7 +51,7 @@ export class ContentController {
   }
 
   @Post('berita')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Tambah berita baru',
   })
@@ -77,6 +77,7 @@ export class ContentController {
   @Post('berita/submit')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -104,6 +105,7 @@ export class ContentController {
   @Get('berita/mine')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -122,7 +124,7 @@ export class ContentController {
     return this.contentService.getMyBeritaSubmissions(req.user.id);
   }
   @Patch('berita/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Perbarui berita',
   })
@@ -142,7 +144,7 @@ export class ContentController {
   }
 
   @Delete('berita/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Hapus berita',
   })
@@ -151,7 +153,7 @@ export class ContentController {
   }
 
   @Post('berita/:id/image')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Upload gambar berita',
   })

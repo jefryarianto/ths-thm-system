@@ -20,6 +20,15 @@ import bcrypt from 'bcryptjs';
 
 /** Role yang boleh ditetapkan oleh admin per-level (superadmin bebas). */
 const ASSIGNABLE_BY_LEVEL: Record<string, string[]> = {
+  national: [
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  ],
   district: [
     'admin_distrik',
     'admin_wilayah',
@@ -75,7 +84,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
    * "superadmin bebas" vs "admin ter-scope dibatasi hierarki" tetap akurat.
    */
   private normalizeScope(scope: UserScope | undefined, actorRole?: string): UserScope | undefined {
-    return actorRole === 'superadmin' ? undefined : scope;
+    return actorRole === 'superadmin' || actorRole === 'admin_nasional' ? undefined : scope;
   }
 
   /**

@@ -22,7 +22,8 @@ import type { Role } from '@/types';
  */
 
 const LEVELS: Record<Role, number> = {
-  superadmin: 7,
+  superadmin: 8,
+  admin_nasional: 7,
   admin_distrik: 6,
   admin_wilayah: 5,
   admin_ranting: 4,
@@ -31,10 +32,17 @@ const LEVELS: Record<Role, number> = {
   anggota: 1,
 };
 
-const ADMIN_ROLES: Role[] = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+const ADMIN_ROLES: Role[] = [
+  'superadmin',
+  'admin_nasional',
+  'admin_distrik',
+  'admin_wilayah',
+  'admin_ranting',
+];
 
 const ALL_ROLES: Role[] = [
   'superadmin',
+  'admin_nasional',
   'admin_distrik',
   'admin_wilayah',
   'admin_ranting',

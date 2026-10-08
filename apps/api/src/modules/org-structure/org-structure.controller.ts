@@ -31,6 +31,7 @@ export class OrgStructureController {
   @Get('nasional')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -45,6 +46,7 @@ export class OrgStructureController {
   @Get('distrik')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -57,25 +59,25 @@ export class OrgStructureController {
   }
 
   @Get('distrik/:id')
-  @CrudAuth('superadmin', { summary: 'Detail distrik' })
+  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Detail distrik' })
   getDistrik(@Param('id') id: string) {
     return this.service.getDistrik(id);
   }
 
   @Post('distrik')
-  @CrudAuth('superadmin', { summary: 'Tambah distrik baru' })
+  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Tambah distrik baru' })
   createDistrik(@Body() dto: CreateDistrikDto) {
     return this.service.createDistrik(dto);
   }
 
   @Patch('distrik/:id')
-  @CrudAuth('superadmin', { summary: 'Update distrik' })
+  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Update distrik' })
   updateDistrik(@Param('id') id: string, @Body() dto: UpdateDistrikDto) {
     return this.service.updateDistrik(id, dto);
   }
 
   @Delete('distrik/:id')
-  @CrudAuth('superadmin', { summary: 'Hapus distrik' })
+  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Hapus distrik' })
   deleteDistrik(@Param('id') id: string) {
     return this.service.deleteDistrik(id);
   }
@@ -88,6 +90,7 @@ export class OrgStructureController {
   })
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -100,25 +103,25 @@ export class OrgStructureController {
   }
 
   @Get('wilayah/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Detail wilayah' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Detail wilayah' })
   getWilayah(@Param('id') id: string) {
     return this.service.getWilayah(id);
   }
 
   @Post('wilayah')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Tambah wilayah baru' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Tambah wilayah baru' })
   createWilayah(@Body() dto: CreateWilayahDto) {
     return this.service.createWilayah(dto);
   }
 
   @Patch('wilayah/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Update wilayah' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Update wilayah' })
   updateWilayah(@Param('id') id: string, @Body() dto: UpdateWilayahDto) {
     return this.service.updateWilayah(id, dto);
   }
 
   @Delete('wilayah/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Hapus wilayah' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Hapus wilayah' })
   deleteWilayah(@Param('id') id: string) {
     return this.service.deleteWilayah(id);
   }
@@ -131,6 +134,7 @@ export class OrgStructureController {
   })
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -143,31 +147,31 @@ export class OrgStructureController {
   }
 
   @Get('ranting/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Detail ranting' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Detail ranting' })
   getRanting(@Param('id') id: string) {
     return this.service.getRanting(id);
   }
 
   @Post('ranting')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Tambah ranting baru' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Tambah ranting baru' })
   createRanting(@Body() dto: CreateRantingDto) {
     return this.service.createRanting(dto);
   }
 
   @Patch('ranting/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Update ranting' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Update ranting' })
   updateRanting(@Param('id') id: string, @Body() dto: UpdateRantingDto) {
     return this.service.updateRanting(id, dto);
   }
 
   @Delete('ranting/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Hapus ranting' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Hapus ranting' })
   deleteRanting(@Param('id') id: string) {
     return this.service.deleteRanting(id);
   }
 
   @Get('tree')
-  @CrudAuth('superadmin', { summary: 'Pohon organisasi (distrik → wilayah → ranting)' })
+  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Pohon organisasi (distrik → wilayah → ranting)' })
   getOrgTree() {
     return this.service.getOrgTree();
   }
@@ -179,7 +183,7 @@ export class OrgStructureController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_nasional', {
     summary: 'Import data organisasi (distrik, wilayah, ranting) dari list',
   })
   @ApiBody({ description: 'Array baris import { distrik, wilayah?, ranting?, lokasiLatihan? }' })

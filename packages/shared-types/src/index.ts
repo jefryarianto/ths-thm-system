@@ -5,6 +5,7 @@ import { z } from 'zod';
  */
 export const ROLE = {
   SUPERADMIN: 'superadmin',
+  ADMIN_NASIONAL: 'admin_nasional',
   ADMIN_DISTRIK: 'admin_distrik',
   ADMIN_WILAYAH: 'admin_wilayah',
   ADMIN_RANTING: 'admin_ranting',
@@ -27,7 +28,8 @@ export const ROLE_VALUES: Role[] = Object.values(ROLE);
  * admin_ranting). Untuk visibilitas menu, SELALU pakai ROLE_LEVEL ini.
  */
 export const ROLE_LEVEL: Record<Role, number> = {
-  superadmin: 7,
+  superadmin: 8,
+  admin_nasional: 7,
   admin_distrik: 6,
   admin_wilayah: 5,
   admin_ranting: 4,

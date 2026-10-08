@@ -59,7 +59,7 @@ export const MENU_REGISTRY = [
   { menuKey: 'approvals', label: 'Persetujuan', href: '/approvals', minRole: 'admin_ranting' },
   { menuKey: 'orgDocuments', label: 'Dokumen Organisasi', href: '/org-documents', minRole: 'anggota' },
   { menuKey: 'settingsJabatan', label: 'Jabatan', href: '/settings/jabatan', minRole: 'admin_distrik' },
-  { menuKey: 'settingsPeriode', label: 'Periode', href: '/settings/periode', minRole: 'superadmin' },
+  { menuKey: 'settingsPeriode', label: 'Periode', href: '/settings/periode', minRole: 'admin_nasional' },
   { menuKey: 'settingsKepengurusan', label: 'Kepengurusan', href: '/settings/kepengurusan', minRole: 'admin_wilayah' },
   { menuKey: 'settingsOrgChartEditor', label: 'Editor Org Chart', href: '/settings/org-chart-editor', minRole: 'admin_wilayah' },
   { menuKey: 'payments', label: 'Pembayaran', href: '/payments', minRole: 'admin_ranting' },
@@ -73,8 +73,8 @@ export const MENU_REGISTRY = [
   { menuKey: 'settingsMenuPermissions', label: 'Hak Akses Menu', href: '/settings/menu-permissions', minRole: 'superadmin' },
   { menuKey: 'settingsEmail', label: 'Email Admin', href: '/settings/email', minRole: 'admin_distrik' },
   { menuKey: 'settingsPenandatangan', label: 'Penandatangan', href: '/settings/penandatangan', minRole: 'admin_distrik' },
-  { menuKey: 'settingsKartu', label: 'Template Kartu', href: '/settings/kartu', minRole: 'admin_distrik' },
-  { menuKey: 'settingsDokumen', label: 'Template Dokumen', href: '/settings/dokumen', minRole: 'superadmin' },
+  { menuKey: 'settingsKartu', label: 'Template Kartu', href: '/settings/kartu', minRole: 'admin_nasional' },
+  { menuKey: 'settingsDokumen', label: 'Template Dokumen', href: '/settings/dokumen', minRole: 'admin_nasional' },
   { menuKey: 'settingsFcmTest', label: 'Pengujian FCM', href: '/settings/fcm-test', minRole: 'superadmin' },
   { menuKey: 'settingsSessions', label: 'Manajemen Sesi', href: '/settings/sessions', minRole: 'superadmin' },
   { menuKey: 'settingsBackup', label: 'Database Backup', href: '/settings/backup', minRole: 'superadmin' },
@@ -83,8 +83,8 @@ export const MENU_REGISTRY = [
   { menuKey: 'gamificationScoreboard', label: 'Scoreboard', href: '/gamification/scoreboard', minRole: 'admin_kegiatan' },
   { menuKey: 'gamificationReport', label: 'Laporan Gamifikasi', href: '/gamification/report', minRole: 'admin_ranting' },
   { menuKey: 'scanStats', label: 'Statistik Scan', href: '/scan-stats', minRole: 'admin_ranting' },
-  { menuKey: 'contentSejarah', label: 'Sejarah', href: '/content/sejarah', minRole: 'superadmin' },
-  { menuKey: 'contentOrganisasi', label: 'Konten Web Organisasi', href: '/content/organisasi', minRole: 'superadmin' },
+  { menuKey: 'contentSejarah', label: 'Sejarah', href: '/content/sejarah', minRole: 'admin_nasional' },
+  { menuKey: 'contentOrganisasi', label: 'Konten Web Organisasi', href: '/content/organisasi', minRole: 'admin_nasional' },
 ] as const satisfies readonly MenuItemDef[];
 
 /** Tipe union seluruh menuKey yang sah. */

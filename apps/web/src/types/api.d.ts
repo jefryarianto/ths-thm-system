@@ -4849,7 +4849,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Perbarui pengaturan organisasi (bulk via key-value) */
+        /** Perbarui pengaturan organisasi & template dokumen (bulk via key-value) */
         patch: operations["SettingsController_updateSettings"];
         trace?: never;
     };
@@ -4896,7 +4896,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Ambil daftar tanda tangan (superadmin: semua; lainnya: distriknya + global) */
+        /** Ambil daftar tanda tangan (superadmin/admin_nasional: semua; lainnya: distriknya + global) */
         get: operations["SettingsController_getSignatures"];
         put?: never;
         /** Upload tanda tangan (gambar) */
@@ -4931,7 +4931,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Ambil daftar stempel (superadmin: semua; lainnya: distriknya + global) */
+        /** Ambil daftar stempel (superadmin/admin_nasional: semua; lainnya: distriknya + global) */
         get: operations["SettingsController_getStamps"];
         put?: never;
         post?: never;
@@ -7067,7 +7067,7 @@ export interface paths {
         /** Daftar template kartu (superadmin: semua; lainnya: distriknya + global) */
         get: operations["CardTemplatesController_findAll"];
         put?: never;
-        /** Buat template kartu + upload desain depan/belakang (PNG/JPG rasio 856:540) */
+        /** Buat template kartu + upload desain depan/belakang (Tingkat Nasional) */
         post: operations["CardTemplatesController_create"];
         delete?: never;
         options?: never;
@@ -7086,11 +7086,11 @@ export interface paths {
         get: operations["CardTemplatesController_findOne"];
         put?: never;
         post?: never;
-        /** Hapus template non-aktif (admin hanya milik distriknya) */
+        /** Hapus template non-aktif (Tingkat Nasional) */
         delete: operations["CardTemplatesController_remove"];
         options?: never;
         head?: never;
-        /** Update label/overlayConfig/gambar template (admin hanya milik distriknya) */
+        /** Update label/overlayConfig/gambar template (Tingkat Nasional) */
         patch: operations["CardTemplatesController_update"];
         trace?: never;
     };
@@ -7107,7 +7107,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Set template aktif pada scope-nya (menonaktifkan template lain scope yg sama) */
+        /** Set template aktif pada scope-nya (Tingkat Nasional) */
         patch: operations["CardTemplatesController_activate"];
         trace?: never;
     };
@@ -7384,7 +7384,7 @@ export interface components {
             /** @example Ahmad Fauzi */
             namaLengkap: string;
             /** @enum {string} */
-            role: "superadmin" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7395,7 +7395,7 @@ export interface components {
             password?: string;
             namaLengkap?: string;
             /** @enum {string} */
-            role?: "superadmin" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role?: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7966,7 +7966,7 @@ export interface components {
              * @example admin_ranting
              * @enum {string}
              */
-            role: "superadmin" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
             /** @example members */
             menuKey: string;
             /** @example true */

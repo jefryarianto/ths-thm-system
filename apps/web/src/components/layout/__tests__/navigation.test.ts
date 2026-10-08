@@ -69,7 +69,8 @@ const EXPECTED_HREFS = [
 ];
 
 const LEVELS: Record<Role, number> = {
-  superadmin: 7,
+  superadmin: 8,
+  admin_nasional: 7,
   admin_distrik: 6,
   admin_wilayah: 5,
   admin_ranting: 4,
@@ -78,7 +79,13 @@ const LEVELS: Record<Role, number> = {
   anggota: 1,
 };
 
-const ADMIN_ROLES: Role[] = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+const ADMIN_ROLES: Role[] = [
+  'superadmin',
+  'admin_nasional',
+  'admin_distrik',
+  'admin_wilayah',
+  'admin_ranting',
+];
 
 function optionsFor(role: Role) {
   return {
@@ -89,6 +96,7 @@ function optionsFor(role: Role) {
 
 const ALL_ROLES: Role[] = [
   'superadmin',
+  'admin_nasional',
   'admin_distrik',
   'admin_wilayah',
   'admin_ranting',
@@ -123,7 +131,7 @@ describe('navigation config', () => {
     expect(new Set(labels).size).toBe(10);
   });
 
-  it('DEFAULT_OPEN_GROUPS mencakup seluruh 7 role', () => {
+  it('DEFAULT_OPEN_GROUPS mencakup seluruh 8 role', () => {
     for (const role of ALL_ROLES) {
       expect(Array.isArray(DEFAULT_OPEN_GROUPS[role])).toBe(true);
       expect(DEFAULT_OPEN_GROUPS[role].length).toBeGreaterThan(0);
@@ -142,6 +150,25 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/settings');
     expect(hrefs).toHaveLength(49);
   });
+
+  it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {
+    const groups = filterVisibleGroups(menuGroups, optionsFor('admin_nasional'));
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).toContain('/settings/kartu');
+    expect(hrefs).toContain('/settings/dokumen');
+    expect(hrefs).toContain('/settings/periode');
+    expect(hrefs).not.toContain('/monitoring');
+    expect(hrefs).not.toContain('/settings/sessions');
+    expect(hrefs).not.toContain('/settings/backup');
+  });
+
+  it('admin_distrik tidak melihat template kartu/dokumen tingkat nasional', () => {
+    const groups = filterVisibleGroups(menuGroups, optionsFor('admin_distrik'));
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).not.toContain('/settings/kartu');
+    expect(hrefs).not.toContain('/settings/dokumen');
+  });
+
   it('admin_ranting tidak melihat Monitoring', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('admin_ranting'));
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));

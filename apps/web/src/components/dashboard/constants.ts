@@ -457,5 +457,6 @@ export const ROLE_LABELS: Record<string, string> = {
   admin_ranting: 'Admin Ranting',
   admin_distrik: 'Admin Distrik',
   admin_wilayah: 'Admin Wilayah',
+  admin_nasional: 'Admin Nasional',
   superadmin: 'Superadmin',
 };

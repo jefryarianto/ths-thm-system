@@ -94,6 +94,17 @@ export const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
     'Gamifikasi',
     'Lainnya',
   ],
+  admin_nasional: [
+    'Utama',
+    'Keanggotaan',
+    'Pelatihan',
+    'Organisasi',
+    'Keuangan',
+    'Pengguna',
+    'Pengaturan',
+    'Gamifikasi',
+    'Lainnya',
+  ],
   admin_distrik: [
     'Utama',
     'Keanggotaan',
@@ -164,7 +175,7 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/org-documents', label: 'Dokumen Organisasi', icon: Archive, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: IdCard, minRole: 'admin_distrik' },
-      { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'superadmin' },
+      { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'admin_nasional' },
       {
         href: '/settings/kepengurusan',
         label: 'Kepengurusan',
@@ -219,12 +230,12 @@ export const menuGroups: MenuGroup[] = [
         icon: PenLine,
         minRole: 'admin_distrik',
       },
-      { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_distrik' },
+      { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_nasional' },
       {
         href: '/settings/dokumen',
         label: 'Template Dokumen',
         icon: Printer,
-        minRole: 'superadmin',
+        minRole: 'admin_nasional',
       },
       {
         href: '/settings/fcm-test',
@@ -264,12 +275,12 @@ export const menuGroups: MenuGroup[] = [
     label: 'Lainnya',
     items: [
       { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
-      { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
+      { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'admin_nasional' },
       {
         href: '/content/organisasi',
         label: 'Konten Web Organisasi',
         icon: Globe,
-        minRole: 'superadmin',
+        minRole: 'admin_nasional',
       },
     ],
   },

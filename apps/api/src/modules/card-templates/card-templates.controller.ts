@@ -61,8 +61,8 @@ export class CardTemplatesController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Buat template kartu + upload desain depan/belakang (PNG/JPG rasio 856:540)',
+  @CrudAuth('superadmin', 'admin_nasional', {
+    summary: 'Buat template kartu + upload desain depan/belakang (Tingkat Nasional)',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -83,14 +83,14 @@ export class CardTemplatesController {
     return this.service.create(
       { name: body.name, label: body.label, overlayConfig: body.overlayConfig },
       { front: files?.front?.[0], back: files?.back?.[0] },
-      // superadmin bebas menentukan scope; admin_distrik terkunci ke distriknya.
+      // superadmin & admin_nasional bebas menentukan scope.
       resolveWriteDistrikId(req, body.distrikId ?? null),
     );
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Update label/overlayConfig/gambar template (admin hanya milik distriknya)',
+  @CrudAuth('superadmin', 'admin_nasional', {
+    summary: 'Update label/overlayConfig/gambar template (Tingkat Nasional)',
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -117,16 +117,16 @@ export class CardTemplatesController {
   }
 
   @Patch(':id/activate')
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Set template aktif pada scope-nya (menonaktifkan template lain scope yg sama)',
+  @CrudAuth('superadmin', 'admin_nasional', {
+    summary: 'Set template aktif pada scope-nya (Tingkat Nasional)',
   })
   activate(@Req() req: ScopedRequest, @Param('id') id: string) {
     return this.service.activate(id, { role: req?.user?.role, distrikId: req?.scope?.distrikId });
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Hapus template non-aktif (admin hanya milik distriknya)',
+  @CrudAuth('superadmin', 'admin_nasional', {
+    summary: 'Hapus template non-aktif (Tingkat Nasional)',
   })
   remove(@Req() req: ScopedRequest, @Param('id') id: string) {
     return this.service.remove(id, { role: req?.user?.role, distrikId: req?.scope?.distrikId });

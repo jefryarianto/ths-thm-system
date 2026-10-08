@@ -13,7 +13,7 @@ import { paginate } from '../../common/utils/pagination';
 @Injectable()
 export class ForumService {
   private readonly logger = new Logger(ForumService.name);
-  private readonly ADMIN_ROLES = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+  private readonly ADMIN_ROLES = ['superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
 
   constructor(
     private readonly prisma: PrismaService,

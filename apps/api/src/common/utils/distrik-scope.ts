@@ -13,7 +13,7 @@ export function resolveWriteDistrikId(
   req: ScopedRequest | undefined,
   requested?: string | null,
 ): string | null {
-  if (req?.user?.role === 'superadmin') return requested ?? null;
+  if (req?.user?.role === 'superadmin' || req?.user?.role === 'admin_nasional') return requested ?? null;
   const own = req?.scope?.distrikId;
   if (!own) throw new ForbiddenException('Cakupan distrik tidak tersedia untuk peran Anda');
   if (requested && requested !== own) {
@@ -22,11 +22,11 @@ export function resolveWriteDistrikId(
   return own;
 }
 
-/** DistrikId efektif untuk operasi baca: non-superadmin mengikuti scope-nya. */
+/** DistrikId efektif untuk operasi baca: non-superadmin / non-nasional mengikuti scope-nya. */
 export function resolveReadDistrikId(
   req: ScopedRequest | undefined,
   requested?: string | null,
 ): string | null {
-  if (req?.user?.role === 'superadmin') return requested ?? null;
+  if (req?.user?.role === 'superadmin' || req?.user?.role === 'admin_nasional') return requested ?? null;
   return req?.scope?.distrikId ?? requested ?? null;
 }

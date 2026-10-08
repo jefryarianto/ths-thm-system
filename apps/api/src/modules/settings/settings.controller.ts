@@ -80,16 +80,16 @@ export class SettingsController {
   }
 
   @Patch()
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_nasional', {
     scope: 'national',
-    summary: 'Perbarui pengaturan organisasi (bulk via key-value)',
+    summary: 'Perbarui pengaturan organisasi & template dokumen (bulk via key-value)',
   })
   async updateSettings(@Body() dto: Record<string, unknown>) {
     return this.settingsService.updateSettings(dto);
   }
 
   @Get('periods')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     scope: 'national',
     summary: 'Ambil daftar periode',
   })
@@ -98,26 +98,26 @@ export class SettingsController {
   }
 
   @Post('periods')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Tambah periode baru' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Tambah periode baru' })
   async createPeriod(@Body() dto: CreatePeriodDto) {
     return this.settingsService.createPeriod(dto);
   }
 
   @Patch('periods/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui periode' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Perbarui periode' })
   async updatePeriod(@Param('id') id: string, @Body() dto: UpdatePeriodDto) {
     return this.settingsService.updatePeriod(id, dto);
   }
 
   @Delete('periods/:id')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Hapus periode' })
+  @CrudAuth('superadmin', 'admin_nasional', { scope: 'national', summary: 'Hapus periode' })
   async deletePeriod(@Param('id') id: string) {
     return this.settingsService.deletePeriod(id);
   }
 
   @Get('signatures')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
-    summary: 'Ambil daftar tanda tangan (superadmin: semua; lainnya: distriknya + global)',
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil daftar tanda tangan (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
   })
   async getSignatures(@Req() req: ScopedRequest) {
     return this.settingsService.getSignatures({
@@ -127,7 +127,7 @@ export class SettingsController {
   }
 
   @Delete('signatures/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary: 'Hapus tanda tangan (admin hanya milik distriknya)',
   })
   async deleteSignature(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -138,8 +138,8 @@ export class SettingsController {
   }
 
   @Get('stamps')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
-    summary: 'Ambil daftar stempel (superadmin: semua; lainnya: distriknya + global)',
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Ambil daftar stempel (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
   })
   async getStamps(@Req() req: ScopedRequest) {
     return this.settingsService.getStamps({
@@ -149,7 +149,7 @@ export class SettingsController {
   }
 
   @Delete('stamp/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary: 'Hapus stempel (admin hanya milik distriknya)',
   })
   async deleteStamp(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -160,7 +160,7 @@ export class SettingsController {
   }
 
   @Get('stamp')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil stempel aktif (distrik → global)',
   })
   async getStamp(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
@@ -169,7 +169,7 @@ export class SettingsController {
 
   @Post('signatures')
   @ApiConsumes('multipart/form-data')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary: 'Upload tanda tangan (gambar)',
   })
   @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('signature')))
@@ -203,7 +203,7 @@ export class SettingsController {
 
   @Post('stamp')
   @ApiConsumes('multipart/form-data')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Upload stempel (gambar)' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', { summary: 'Upload stempel (gambar)' })
   @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('stamp')))
   async uploadStamp(
     @UploadedFile() file: Express.Multer.File | undefined,

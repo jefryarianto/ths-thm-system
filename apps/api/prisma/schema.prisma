@@ -18,6 +18,7 @@ enum TipeUnitLatihan {
 
 enum Role {
   superadmin
+  admin_nasional
   admin_distrik
   admin_wilayah
   admin_ranting

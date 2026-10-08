@@ -102,7 +102,7 @@ export class CardTemplatesService {
     template: { distrikId?: string | null },
     scope?: { role?: string; distrikId?: string | null },
   ) {
-    if (scope?.role && scope.role !== 'superadmin') {
+    if (scope?.role && scope.role !== 'superadmin' && scope.role !== 'admin_nasional') {
       if (!scope.distrikId || (template.distrikId ?? null) !== scope.distrikId) {
         throw new ForbiddenException(
           'Anda hanya dapat mengelola template kartu distrik Anda sendiri',

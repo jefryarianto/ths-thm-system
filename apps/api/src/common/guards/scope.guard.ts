@@ -11,6 +11,7 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 const ROLE_SCOPE: Record<string, ScopeLevel> = {
   superadmin: 'national',
+  admin_nasional: 'national',
   admin_distrik: 'district',
   admin_wilayah: 'region',
   admin_ranting: 'branch',

@@ -1,6 +1,7 @@
 export const ROLE_OPTIONS = [
   { value: '', label: 'Semua Role' },
   { value: 'superadmin', label: 'Superadmin' },
+  { value: 'admin_nasional', label: 'Admin Nasional' },
   { value: 'admin_distrik', label: 'Admin Distrik' },
   { value: 'admin_wilayah', label: 'Admin Wilayah' },
   { value: 'admin_ranting', label: 'Admin Ranting' },
@@ -11,6 +12,7 @@ export const ROLE_OPTIONS = [
 
 export const ROLE_BADGES: Record<string, string> = {
   superadmin: 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400',
+  admin_nasional: 'bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-400',
   admin_distrik: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
   admin_wilayah: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400',
   admin_ranting: 'bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-400',
@@ -21,6 +23,7 @@ export const ROLE_BADGES: Record<string, string> = {
 
 export const ROLE_LABELS: Record<string, string> = {
   superadmin: 'Superadmin',
+  admin_nasional: 'Admin Nasional',
   admin_distrik: 'Admin Distrik',
   admin_wilayah: 'Admin Wilayah',
   admin_ranting: 'Admin Ranting',

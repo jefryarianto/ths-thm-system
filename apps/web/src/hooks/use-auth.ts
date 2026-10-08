@@ -10,7 +10,8 @@ import { sessionManager } from '@/lib/session-manager';
  * admin_kegiatan (3) > penguji (2) > anggota (1)
  */
 const ROLE_HIERARCHY: Record<Role, number> = {
-  superadmin: 7,
+  superadmin: 8,
+  admin_nasional: 7,
   admin_distrik: 6,
   admin_wilayah: 5,
   admin_ranting: 4,
@@ -24,6 +25,7 @@ const ROLE_HIERARCHY: Record<Role, number> = {
  */
 export const ADMIN_ROLES: Role[] = [
   'superadmin',
+  'admin_nasional',
   'admin_distrik',
   'admin_wilayah',
   'admin_ranting',

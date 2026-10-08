@@ -11188,7 +11188,7 @@
       },
       "patch": {
         "operationId": "SettingsController_updateSettings",
-        "summary": "Perbarui pengaturan organisasi (bulk via key-value)",
+        "summary": "Perbarui pengaturan organisasi & template dokumen (bulk via key-value)",
         "parameters": [],
         "responses": {
           "200": {
@@ -11322,7 +11322,7 @@
     "/settings/signatures": {
       "get": {
         "operationId": "SettingsController_getSignatures",
-        "summary": "Ambil daftar tanda tangan (superadmin: semua; lainnya: distriknya + global)",
+        "summary": "Ambil daftar tanda tangan (superadmin/admin_nasional: semua; lainnya: distriknya + global)",
         "parameters": [],
         "responses": {
           "200": {
@@ -11389,7 +11389,7 @@
     "/settings/stamps": {
       "get": {
         "operationId": "SettingsController_getStamps",
-        "summary": "Ambil daftar stempel (superadmin: semua; lainnya: distriknya + global)",
+        "summary": "Ambil daftar stempel (superadmin/admin_nasional: semua; lainnya: distriknya + global)",
         "parameters": [],
         "responses": {
           "200": {
@@ -16112,7 +16112,7 @@
       },
       "post": {
         "operationId": "CardTemplatesController_create",
-        "summary": "Buat template kartu + upload desain depan/belakang (PNG/JPG rasio 856:540)",
+        "summary": "Buat template kartu + upload desain depan/belakang (Tingkat Nasional)",
         "parameters": [],
         "responses": {
           "201": {
@@ -16159,7 +16159,7 @@
       },
       "patch": {
         "operationId": "CardTemplatesController_update",
-        "summary": "Update label/overlayConfig/gambar template (admin hanya milik distriknya)",
+        "summary": "Update label/overlayConfig/gambar template (Tingkat Nasional)",
         "parameters": [
           {
             "name": "id",
@@ -16186,7 +16186,7 @@
       },
       "delete": {
         "operationId": "CardTemplatesController_remove",
-        "summary": "Hapus template non-aktif (admin hanya milik distriknya)",
+        "summary": "Hapus template non-aktif (Tingkat Nasional)",
         "parameters": [
           {
             "name": "id",
@@ -16215,7 +16215,7 @@
     "/card-templates/{id}/activate": {
       "patch": {
         "operationId": "CardTemplatesController_activate",
-        "summary": "Set template aktif pada scope-nya (menonaktifkan template lain scope yg sama)",
+        "summary": "Set template aktif pada scope-nya (Tingkat Nasional)",
         "parameters": [
           {
             "name": "id",
@@ -16879,6 +16879,7 @@
             "type": "string",
             "enum": [
               "superadmin",
+              "admin_nasional",
               "admin_distrik",
               "admin_wilayah",
               "admin_ranting",
@@ -16922,6 +16923,7 @@
             "type": "string",
             "enum": [
               "superadmin",
+              "admin_nasional",
               "admin_distrik",
               "admin_wilayah",
               "admin_ranting",
@@ -18688,6 +18690,7 @@
             "type": "string",
             "enum": [
               "superadmin",
+              "admin_nasional",
               "admin_distrik",
               "admin_wilayah",
               "admin_ranting",
