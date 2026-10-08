@@ -15,61 +15,57 @@ import type { Role } from '@/types';
  * dan logika filter role tidak berubah.
  */
 
-/** Seluruh href yang harus tetap ada (hasil audit Tahap 0). */
+/** Seluruh href yang harus ada di navigasi terstruktur. */
 const EXPECTED_HREFS = [
   '/dashboard',
+  '/activities',
+  '/calendar',
+  '/forum',
+  '/notifications',
+  '/org-chart',
+  '/documents',
+  '/dues',
+  '/content/berita',
+  '/reports',
   '/members',
   '/members/mutasi',
   '/candidates',
   '/registrations',
   '/claims',
+  '/letters',
   '/trainings',
   '/graduations',
   '/examiners',
   '/assessments',
-  '/activities',
-  '/calendar',
   '/approvals',
-  '/org-chart',
   '/org-documents',
   '/settings/jabatan',
   '/settings/periode',
   '/settings/kepengurusan',
   '/settings/org-chart-editor',
-  '/settings/menu-permissions',
-  '/documents',
-  '/letters',
-  '/dues',
   '/payments',
-  '/gamification',
-  '/gamification/admin',
-  '/gamification/scoreboard',
-  '/gamification/report',
-  '/gamification/settings',
-  '/forum',
-  '/notifications',
-  '/notifications/report',
-  '/reports',
-  '/scan-stats',
-  '/content/berita',
-  '/content/sejarah',
-  '/content/organisasi',
   '/users',
   '/monitoring',
   '/monitoring/alerts',
   '/monitoring/incidents',
+  '/ws-monitor',
+  '/admin/queues',
   '/settings',
-  '/settings#autentikasi',
+  '/settings/menu-permissions',
   '/settings/email',
-  '/settings/email/logs',
   '/settings/penandatangan',
   '/settings/kartu',
   '/settings/dokumen',
-  '/admin/queues',
   '/settings/fcm-test',
   '/settings/sessions',
   '/settings/backup',
-  '/ws-monitor',
+  '/gamification',
+  '/gamification/admin',
+  '/gamification/scoreboard',
+  '/gamification/report',
+  '/scan-stats',
+  '/content/sejarah',
+  '/content/organisasi',
 ];
 
 const LEVELS: Record<Role, number> = {
@@ -121,10 +117,10 @@ describe('navigation config', () => {
     }
   });
 
-  it('11 grup navigasi dengan label unik', () => {
+  it('10 grup navigasi dengan label unik', () => {
     const labels = menuGroups.map((g) => g.label);
-    expect(labels).toHaveLength(11);
-    expect(new Set(labels).size).toBe(11);
+    expect(labels).toHaveLength(10);
+    expect(new Set(labels).size).toBe(10);
   });
 
   it('DEFAULT_OPEN_GROUPS mencakup seluruh 7 role', () => {
@@ -139,17 +135,17 @@ describe('filterVisibleGroups', () => {
   it('superadmin melihat semua grup, termasuk item adminOnly', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('superadmin'));
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
-    expect(groups).toHaveLength(11);
+    expect(groups).toHaveLength(10);
     expect(hrefs).toContain('/admin/queues');
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    expect(hrefs).toHaveLength(55);
+    expect(hrefs).toHaveLength(49);
   });
-  it('admin_ranting tidak melihat Pengaturan Gamifikasi', () => {
+  it('admin_ranting tidak melihat Monitoring', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('admin_ranting'));
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
-    expect(hrefs).not.toContain('/gamification/settings');
+    expect(hrefs).not.toContain('/monitoring');
   });
 
 

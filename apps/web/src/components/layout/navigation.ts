@@ -82,26 +82,27 @@ export interface AssignedKegiatan {
 
 /** Grup yang terbuka secara default saat login pertama (belum ada preferensi tersimpan) */
 export const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
-  // System admins live in Keanggotaan + Pengaturan / Sistem daily.
   superadmin: [
     'Utama',
     'Keanggotaan',
+    'Pelatihan',
+    'Organisasi',
     'Keuangan',
     'Pengguna',
-    'Pemantauan',
+    'Sistem & Monitoring',
     'Pengaturan',
-    'Cadangan & Sesi',
     'Gamifikasi',
     'Lainnya',
   ],
   admin_distrik: [
     'Utama',
     'Keanggotaan',
+    'Pelatihan',
+    'Organisasi',
     'Keuangan',
     'Pengguna',
-    'Pemantauan',
+    'Sistem & Monitoring',
     'Pengaturan',
-    'Cadangan & Sesi',
     'Gamifikasi',
     'Lainnya',
   ],
@@ -126,20 +127,8 @@ export const menuGroups: MenuGroup[] = [
       { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
       { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
       { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
-      {
-        href: '/content/berita/submit',
-        label: 'Pengajuan Berita',
-        icon: Newspaper,
-        minRole: 'anggota',
-      },
-      {
-        href: '/content/berita/submit/status',
-        label: 'Status Pengajuan Berita',
-        icon: FileCheck,
-        minRole: 'anggota',
-      },
-      { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
       { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
+      { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
     ],
   },
   {
@@ -199,7 +188,7 @@ export const menuGroups: MenuGroup[] = [
     items: [{ href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' }],
   },
   {
-    label: 'Pemantauan',
+    label: 'Sistem & Monitoring',
     items: [
       { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'superadmin' },
       {
@@ -210,6 +199,7 @@ export const menuGroups: MenuGroup[] = [
       },
       { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'superadmin' },
       { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
+      { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
     ],
   },
   {
@@ -222,19 +212,7 @@ export const menuGroups: MenuGroup[] = [
         icon: MonitorCog,
         minRole: 'superadmin',
       },
-      {
-        href: '/settings#autentikasi',
-        label: 'Autentikasi',
-        icon: KeyRound,
-        minRole: 'superadmin',
-      },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
-      {
-        href: '/settings/email/logs',
-        label: 'Riwayat Email',
-        icon: History,
-        minRole: 'admin_distrik',
-      },
       {
         href: '/settings/penandatangan',
         label: 'Penandatangan',
@@ -248,12 +226,6 @@ export const menuGroups: MenuGroup[] = [
         icon: Printer,
         minRole: 'superadmin',
       },
-      { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
-    ],
-  },
-  {
-    label: 'Cadangan & Sesi',
-    items: [
       {
         href: '/settings/fcm-test',
         label: 'Pengujian FCM',
@@ -263,7 +235,7 @@ export const menuGroups: MenuGroup[] = [
       {
         href: '/settings/sessions',
         label: 'Manajemen Sesi',
-        icon: MonitorCog,
+        icon: KeyRound,
         minRole: 'superadmin',
       },
       { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
@@ -286,24 +258,12 @@ export const menuGroups: MenuGroup[] = [
         icon: ChartNoAxesColumn,
         minRole: 'admin_ranting',
       },
-      {
-        href: '/gamification/settings',
-        label: 'Pengaturan Gamifikasi',
-        icon: Settings,
-        minRole: 'superadmin',
-      },
     ],
   },
   {
     label: 'Lainnya',
     items: [
       { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
-      {
-        href: '/notifications/report',
-        label: 'Lap. Notifikasi',
-        icon: Megaphone,
-        minRole: 'admin_ranting',
-      },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
       {
         href: '/content/organisasi',
