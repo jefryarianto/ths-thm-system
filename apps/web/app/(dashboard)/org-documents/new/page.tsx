@@ -4,7 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { ArrowLeft, Save, Upload, FileText, X } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -51,7 +51,7 @@ export default function NewOrgDocumentPage() {
     const fetchCategories = async () => {
       try {
         const res = await apiClient.get('/org-documents/categories');
-        setCategories(res.data?.data ?? []);
+        setCategories(unwrap<Category[]>(res) ?? []);
       } catch {
         toast('error', 'Gagal memuat kategori');
       } finally {
@@ -97,12 +97,12 @@ export default function NewOrgDocumentPage() {
     try {
       const formData = new FormData();
       formData.append('file', f);
-      const res = await apiClient.post('/org-documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const filePath = res.data?.data?.filePath ?? res.data?.filePath;
-      if (!filePath) throw new Error('filePath tidak diterima dari server');
-      setUploadedPath(filePath);
+        const res = await apiClient.post('/org-documents/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const payload = unwrap<{ filePath: string; originalName: string; size: number }>(res);
+        if (!payload?.filePath) throw new Error('filePath tidak diterima dari server');
+        setUploadedPath(payload.filePath);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

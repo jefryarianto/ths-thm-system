@@ -95,10 +95,10 @@ export default function EditOrgDocumentPage() {
       const res = await apiClient.post('/org-documents/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const filePath = res.data?.data?.filePath ?? res.data?.filePath;
-      if (!filePath) throw new Error('filePath tidak diterima dari server');
+      const payload = unwrap<{ filePath: string; originalName: string; size: number }>(res);
+      if (!payload?.filePath) throw new Error('filePath tidak diterima dari server');
       setNewFile(f);
-      setForm((prev) => ({ ...prev, filePath }));
+      setForm((prev) => ({ ...prev, filePath: payload.filePath }));
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

@@ -9536,135 +9536,41 @@
         ]
       }
     },
-    "/org-documents/{id}": {
-      "get": {
-        "operationId": "OrgDocumentsController_findOne",
-        "summary": "Ambil detail dokumen organisasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Org-Documents"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "OrgDocumentsController_update",
-        "summary": "Perbarui dokumen organisasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOrgDocumentDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Org-Documents"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "OrgDocumentsController_remove",
-        "summary": "Hapus dokumen organisasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Org-Documents"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/org-documents/{id}/download": {
-      "get": {
-        "operationId": "OrgDocumentsController_download",
-        "summary": "Download file dokumen organisasi",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Org-Documents"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/org-documents/categories/list": {
+    "/org-documents/categories": {
       "get": {
         "operationId": "OrgDocumentsController_getCategories",
         "summary": "Ambil semua kategori dokumen",
         "parameters": [],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Org-Documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "OrgDocumentsController_createCategory",
+        "summary": "Tambah kategori dokumen baru",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -9771,23 +9677,154 @@
         ]
       }
     },
-    "/org-documents/categories": {
+    "/org-documents/upload": {
       "post": {
-        "operationId": "OrgDocumentsController_createCategory",
-        "summary": "Tambah kategori dokumen baru",
+        "operationId": "OrgDocumentsController_uploadFile",
+        "summary": "Upload file dokumen organisasi",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateCategoryDto"
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
               }
             }
           }
         },
         "responses": {
           "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Org-Documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/org-documents/{id}": {
+      "get": {
+        "operationId": "OrgDocumentsController_findOne",
+        "summary": "Ambil detail dokumen organisasi",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Org-Documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "OrgDocumentsController_update",
+        "summary": "Perbarui dokumen organisasi",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrgDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Org-Documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "OrgDocumentsController_remove",
+        "summary": "Hapus dokumen organisasi",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Org-Documents"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/org-documents/{id}/download": {
+      "get": {
+        "operationId": "OrgDocumentsController_downloadFile",
+        "summary": "Download file dokumen organisasi",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": ""
           }
         },
@@ -18017,49 +18054,6 @@
           "nama"
         ]
       },
-      "CreateOrgDocumentDto": {
-        "type": "object",
-        "properties": {
-          "kategoriId": {
-            "type": "string"
-          },
-          "judul": {
-            "type": "string"
-          },
-          "deskripsi": {
-            "type": "string"
-          },
-          "filePath": {
-            "type": "string"
-          },
-          "uploadedBy": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "kategoriId",
-          "judul",
-          "filePath",
-          "uploadedBy"
-        ]
-      },
-      "UpdateOrgDocumentDto": {
-        "type": "object",
-        "properties": {
-          "judul": {
-            "type": "string"
-          },
-          "deskripsi": {
-            "type": "string"
-          },
-          "filePath": {
-            "type": "string"
-          },
-          "kategoriId": {
-            "type": "string"
-          }
-        }
-      },
       "CreateCategoryDto": {
         "type": "object",
         "properties": {
@@ -18089,6 +18083,48 @@
           },
           "order": {
             "type": "number"
+          }
+        }
+      },
+      "CreateOrgDocumentDto": {
+        "type": "object",
+        "properties": {
+          "kategoriId": {
+            "type": "string"
+          },
+          "judul": {
+            "type": "string"
+          },
+          "deskripsi": {
+            "type": "string"
+          },
+          "filePath": {
+            "type": "string"
+          },
+          "uploadedBy": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kategoriId",
+          "judul",
+          "filePath"
+        ]
+      },
+      "UpdateOrgDocumentDto": {
+        "type": "object",
+        "properties": {
+          "judul": {
+            "type": "string"
+          },
+          "deskripsi": {
+            "type": "string"
+          },
+          "filePath": {
+            "type": "string"
+          },
+          "kategoriId": {
+            "type": "string"
           }
         }
       },
