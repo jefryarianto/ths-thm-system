@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -46,6 +46,27 @@ export class OrgDocumentsService extends BaseCrudService<
     this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');
   }
 
+  /**
+   * Override beforeCreate: selalu inject `uploadedBy` dari userId yang
+   * terautentikasi (lebih aman daripada mempercayai input client).
+   */
+  protected async beforeCreate(
+    dto: CreateOrgDocumentDto,
+    _scope?: unknown,
+    userId?: string,
+  ): Promise<Record<string, unknown>> {
+    if (!userId) {
+      throw new BadRequestException('User tidak terautentikasi');
+    }
+    return {
+      judul: dto.judul,
+      deskripsi: dto.deskripsi ?? null,
+      kategoriId: dto.kategoriId,
+      filePath: dto.filePath,
+      uploadedBy: userId,
+    };
+  }
+
   // ── CRUD Overrides ──────────────────────────────────
 
   async findAll(query: OrgDocumentFilterDto) {
@@ -75,8 +96,8 @@ export class OrgDocumentsService extends BaseCrudService<
     });
   }
 
-  async create(dto: CreateOrgDocumentDto) {
-    return this.baseCreate(dto, undefined, undefined, 'Dokumen berhasil diupload');
+  async create(dto: CreateOrgDocumentDto, userId?: string) {
+    return this.baseCreate(dto, undefined, userId, 'Dokumen berhasil diupload');
   }
 
   async update(id: string, dto: UpdateOrgDocumentDto) {

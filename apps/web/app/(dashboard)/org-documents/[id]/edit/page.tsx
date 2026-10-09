@@ -7,14 +7,26 @@ import { useParams, useRouter } from 'next/navigation';
 import apiClient, { unwrap } from '@/lib/api-client';
 import FormField from '@/components/ui/form-field';
 import { DetailSkeleton, ErrorPage, FormLayout } from '@/components/crud';
+import { Upload, FileText, X } from 'lucide-react';
 
-interface _DocDetail {
-  id: string;
-  judul: string;
-  deskripsi: string | null;
-  kategoriId: string;
-  filePath: string | null;
-  kategori?: { id: string; nama: string };
+const ACCEPTED_EXTENSIONS = [
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.txt',
+  '.rtf',
+  '.zip',
+];
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function EditOrgDocumentPage() {
@@ -29,6 +41,8 @@ export default function EditOrgDocumentPage() {
 
   const [form, setForm] = useState({ judul: '', deskripsi: '', kategoriId: '', filePath: '' });
   const [categories, setCategories] = useState<Array<{ id: string; nama: string }>>([]);
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -37,9 +51,14 @@ export default function EditOrgDocumentPage() {
       try {
         const [docRes, catRes] = await Promise.all([
           apiClient.get(`/org-documents/${id}`),
-          apiClient.get('/org-documents/categories/list'),
+          apiClient.get('/org-documents/categories'),
         ]);
-        const d = unwrap<{ judul: string; deskripsi?: string | null; kategoriId?: string | null; filePath?: string | null }>(docRes);
+        const d = unwrap<{
+          judul: string;
+          deskripsi?: string | null;
+          kategoriId?: string | null;
+          filePath?: string | null;
+        }>(docRes);
         setForm({
           judul: d.judul,
           deskripsi: d.deskripsi || '',
@@ -53,6 +72,42 @@ export default function EditOrgDocumentPage() {
       setLoading(false);
     })();
   }, [id]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+
+    const name = f.name.toLowerCase();
+    if (!ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(ext))) {
+      setError(`Ekstensi tidak diizinkan. Gunakan: ${ACCEPTED_EXTENSIONS.join(', ')}`);
+      return;
+    }
+    if (f.size > MAX_FILE_SIZE) {
+      setError(`Ukuran file melebihi batas 25MB (file: ${formatBytes(f.size)})`);
+      return;
+    }
+
+    setError('');
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', f);
+      const res = await apiClient.post('/org-documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const filePath = res.data?.data?.filePath ?? res.data?.filePath;
+      if (!filePath) throw new Error('filePath tidak diterima dari server');
+      setNewFile(f);
+      setForm((prev) => ({ ...prev, filePath }));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Gagal mengupload file';
+      setError(msg);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +126,7 @@ export default function EditOrgDocumentPage() {
         judul: form.judul,
         deskripsi: form.deskripsi || undefined,
         kategoriId: form.kategoriId,
+        filePath: form.filePath || undefined,
       });
       router.push(`/org-documents/${id}`);
     } catch (err: unknown) {
@@ -130,19 +186,70 @@ export default function EditOrgDocumentPage() {
           />
         </FormField>
 
-        {form.filePath && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-xl text-sm">
-            <p className="font-medium text-blue-700 dark:text-blue-400">File saat ini:</p>
-            <a
-              href={`/api/uploads/${form.filePath}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-300 hover:underline text-xs"
-            >
-              {form.filePath}
-            </a>
-          </div>
-        )}
+        {/* File dokumen */}
+        <FormField label="File Dokumen">
+          {form.filePath && !newFile ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+                <FileText size={20} className="text-blue-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {form.filePath.split('/').pop() || form.filePath}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">File saat ini</p>
+                </div>
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
+                <Upload size={14} />
+                Ganti file
+                <input
+                  type="file"
+                  accept={ACCEPTED_EXTENSIONS.join(',')}
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {newFile && (
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+                  <FileText size={20} className="text-blue-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{newFile.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatBytes(newFile.size)} • file baru
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewFile(null);
+                      // Kembalikan ke file lama tidak dimungkinkan tanpa refetch,
+                      // jadi user harus refresh; kosongkan saja pilihan baru.
+                    }}
+                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+                    aria-label="Batal ganti file"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              <label className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">
+                <Upload size={14} />
+                {uploading ? 'Mengupload...' : newFile ? 'Ganti file lain' : 'Upload file'}
+                <input
+                  type="file"
+                  accept={ACCEPTED_EXTENSIONS.join(',')}
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          )}
+        </FormField>
       </FormLayout>
     </PermissionGuard>
   );

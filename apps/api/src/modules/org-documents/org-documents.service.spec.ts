@@ -108,18 +108,34 @@ describe('OrgDocumentsService', () => {
 
   describe('create', () => {
     it('should create a document and notify admins', async () => {
-      const dto = { judul: 'AD/ART', kategoriId: 'cat1' };
+      const dto = {
+        judul: 'AD/ART',
+        kategoriId: 'cat1',
+        filePath: 'uploads/org-documents/test.pdf',
+      };
       mockPrisma.dokumenOrganisasi.create.mockResolvedValue({ id: '1', ...dto });
       mockPrisma.user.findMany.mockResolvedValue([
         { email: 'admin@test.com', namaLengkap: 'Admin' },
       ]);
 
-      const result = await service.create(dto);
+      const result = await service.create(dto, 'user-1');
       expect(result.data.judul).toBe('AD/ART');
+      expect(mockPrisma.dokumenOrganisasi.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ uploadedBy: 'user-1' }) }),
+      );
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'admin@test.com' }),
       );
+    });
+
+    it('should reject create without authenticated user', async () => {
+      const dto = {
+        judul: 'AD/ART',
+        kategoriId: 'cat1',
+        filePath: 'uploads/org-documents/test.pdf',
+      };
+      await expect(service.create(dto)).rejects.toThrow();
     });
   });
 

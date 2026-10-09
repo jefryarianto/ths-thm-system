@@ -10,7 +10,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, FolderOpen, Eye, Download, Trash2 } from 'lucide-react';
+import { Plus, FolderOpen, Eye, Download, Trash2, Tags } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -57,7 +57,7 @@ export default function OrgDocumentsPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const { data: res } = await apiClient.get('/org-documents/categories/list');
+      const { data: res } = await apiClient.get('/org-documents/categories');
       setCategories(res.data || []);
     } catch {
       // Categories not critical
@@ -76,6 +76,14 @@ export default function OrgDocumentsPage() {
     <PermissionGuard module="org-documents" action="view">
       <PageContainer>
         <PageHeader title="Dokumen Organisasi" onRefresh={refetch}>
+          <Can module="org-documents" action="create">
+            <button
+              onClick={() => router.push('/org-documents/categories')}
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Tags size={14} /> Kelola Kategori
+            </button>
+          </Can>
           <Can module="org-documents" action="create">
             <button
               onClick={() => router.push('/org-documents/new')}
@@ -152,36 +160,23 @@ export default function OrgDocumentsPage() {
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem('accessToken');
-                          const response = await fetch(`/api/org-documents/${row.id}`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          if (!response.ok) {
-                            toast('error', 'Gagal memuat dokumen');
+                          const dlResponse = await fetch(
+                            `/api/org-documents/${row.id}/download`,
+                            {
+                              headers: { Authorization: `Bearer ${token}` },
+                            },
+                          );
+                          if (!dlResponse.ok) {
+                            toast('error', 'Dokumen tidak tersedia untuk didownload');
                             return;
                           }
-                          const data = await response.json();
-                          if (data?.data?.fileUrl) {
-                            window.open(data.data.fileUrl, '_blank');
-                          } else {
-                            const token2 = localStorage.getItem('accessToken');
-                            const dlResponse = await fetch(
-                              `/api/org-documents/${row.id}/download`,
-                              {
-                                headers: { Authorization: `Bearer ${token2}` },
-                              },
-                            );
-                            if (!dlResponse.ok) {
-                              toast('error', 'Dokumen tidak tersedia untuk didownload');
-                              return;
-                            }
-                            const blob = await dlResponse.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `${row.judul}.pdf`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                          }
+                          const blob = await dlResponse.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${row.judul}`;
+                          a.click();
+                          URL.revokeObjectURL(url);
                         } catch {
                           toast('error', 'Gagal mendownload dokumen');
                         }

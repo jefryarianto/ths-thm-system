@@ -95,11 +95,26 @@ export default function OrgDocumentDetailPage() {
     }
   };
 
-  const handleDownload = () => {
-    if (doc?.fileUrl) {
-      window.open(doc.fileUrl, '_blank');
-    } else {
-      toast('error', 'File dokumen tidak tersedia untuk didownload');
+  const handleDownload = async () => {
+    if (!doc) return;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`/api/org-documents/${doc.id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        toast('error', 'File dokumen tidak tersedia untuk didownload');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.judul || 'dokumen';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast('error', 'Gagal mendownload dokumen');
     }
   };
 

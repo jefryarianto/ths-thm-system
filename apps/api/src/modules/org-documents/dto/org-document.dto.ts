@@ -20,9 +20,14 @@ export class CreateOrgDocumentDto {
   @IsString()
   filePath: string;
 
-  @ApiProperty()
+  /**
+   * Diisi otomatis dari `req.user.id` di server (lihat `beforeCreate` di
+   * OrgDocumentsService). Tetap dikirimkan untuk kompatibilitas.
+   */
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  uploadedBy: string;
+  uploadedBy?: string;
 }
 
 export class UpdateOrgDocumentDto {

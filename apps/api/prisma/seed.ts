@@ -44,6 +44,29 @@ async function main() {
   }
   console.log('Approval levels created');
 
+  // Create default document categories (reference data untuk modul org-documents)
+  const kategoriDokumen = [
+    { nama: 'AD/ART', deskripsi: 'Anggaran Dasar dan Rumah Tangga' },
+    { nama: 'Surat Keputusan', deskripsi: 'Surat keputusan pengurus dan kepanitiaan' },
+    { nama: 'Notulensi Rapat', deskripsi: 'Catatan hasil rapat pengurus' },
+    { nama: 'Laporan Kegiatan', deskripsi: 'Laporan pelaksanaan kegiatan organisasi' },
+    { nama: 'Sertifikat', deskripsi: 'Sertifikat dan piagam penghargaan' },
+    { nama: 'Dokumen Umum', deskripsi: 'Dokumen organisasi lainnya' },
+  ];
+
+  for (const kategori of kategoriDokumen) {
+    await prisma.kategoriDokumen.upsert({
+      where: { id: `kategori-dokumen-${kategori.nama.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` },
+      update: {},
+      create: {
+        id: `kategori-dokumen-${kategori.nama.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        nama: kategori.nama,
+        deskripsi: kategori.deskripsi,
+      },
+    });
+  }
+  console.log(`${kategoriDokumen.length} kategori dokumen created`);
+
   console.log('Seeding completed!');
 }
 
