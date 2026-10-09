@@ -4124,6 +4124,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/org-documents/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ambil semua kategori dokumen */
+        get: operations["OrgDocumentsController_getCategories"];
+        put?: never;
+        /** Tambah kategori dokumen baru */
+        post: operations["OrgDocumentsController_createCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/org-documents/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ambil detail kategori dokumen */
+        get: operations["OrgDocumentsController_getCategory"];
+        put?: never;
+        post?: never;
+        /** Hapus kategori dokumen */
+        delete: operations["OrgDocumentsController_deleteCategory"];
+        options?: never;
+        head?: never;
+        /** Perbarui kategori dokumen */
+        patch: operations["OrgDocumentsController_updateCategory"];
+        trace?: never;
+    };
+    "/org-documents/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload file dokumen organisasi */
+        post: operations["OrgDocumentsController_uploadFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/org-documents/{id}": {
         parameters: {
             query?: never;
@@ -4151,62 +4205,9 @@ export interface paths {
             cookie?: never;
         };
         /** Download file dokumen organisasi */
-        get: operations["OrgDocumentsController_download"];
+        get: operations["OrgDocumentsController_downloadFile"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/org-documents/categories/list": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Ambil semua kategori dokumen */
-        get: operations["OrgDocumentsController_getCategories"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/org-documents/categories/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Ambil detail kategori dokumen */
-        get: operations["OrgDocumentsController_getCategory"];
-        put?: never;
-        post?: never;
-        /** Hapus kategori dokumen */
-        delete: operations["OrgDocumentsController_deleteCategory"];
-        options?: never;
-        head?: never;
-        /** Perbarui kategori dokumen */
-        patch: operations["OrgDocumentsController_updateCategory"];
-        trace?: never;
-    };
-    "/org-documents/categories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Tambah kategori dokumen baru */
-        post: operations["OrgDocumentsController_createCategory"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7751,19 +7752,6 @@ export interface components {
             filePath?: string;
             tipe?: string;
         };
-        CreateOrgDocumentDto: {
-            kategoriId: string;
-            judul: string;
-            deskripsi?: string;
-            filePath: string;
-            uploadedBy: string;
-        };
-        UpdateOrgDocumentDto: {
-            judul?: string;
-            deskripsi?: string;
-            filePath?: string;
-            kategoriId?: string;
-        };
         CreateCategoryDto: {
             nama: string;
             deskripsi?: string;
@@ -7774,6 +7762,19 @@ export interface components {
             nama?: string;
             deskripsi?: string;
             order?: number;
+        };
+        CreateOrgDocumentDto: {
+            kategoriId: string;
+            judul: string;
+            deskripsi?: string;
+            filePath: string;
+            uploadedBy?: string;
+        };
+        UpdateOrgDocumentDto: {
+            judul?: string;
+            deskripsi?: string;
+            filePath?: string;
+            kategoriId?: string;
         };
         CreateIncomingLetterDto: {
             nomorSurat: string;
@@ -13956,86 +13957,6 @@ export interface operations {
             };
         };
     };
-    OrgDocumentsController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrgDocumentsController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrgDocumentsController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateOrgDocumentDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    OrgDocumentsController_download: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     OrgDocumentsController_getCategories: {
         parameters: {
             query?: never;
@@ -14046,6 +13967,27 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrgDocumentsController_createCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14114,7 +14056,7 @@ export interface operations {
             };
         };
     };
-    OrgDocumentsController_createCategory: {
+    OrgDocumentsController_uploadFile: {
         parameters: {
             query?: never;
             header?: never;
@@ -14123,11 +14065,94 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateCategoryDto"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
             };
         };
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrgDocumentsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrgDocumentsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrgDocumentsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrgDocumentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    OrgDocumentsController_downloadFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
