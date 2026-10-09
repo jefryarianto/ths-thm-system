@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Shield, Clock } from 'lucide-react';
 import { proactivelyRefresh } from '@/lib/api-client';
 import { sessionManager } from '@/lib/session-manager';
@@ -24,29 +24,38 @@ export function SessionWarningToast({
   const [remaining, setRemaining] = useState(initial);
   const [refreshing, setRefreshing] = useState(false);
   const dismissToast = useDismissToast();
+  // Progress bar denominator. Grows if the token is refreshed mid-toast so
+  // the bar never exceeds 100% (a refreshed token lives longer than the
+  // original warning window).
+  const spanRef = useRef(initial);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- dismissToast is stable; adding it would reset the interval
   const dismiss = useCallback(() => dismissToast(toastId), [dismissToast, toastId]);
 
+  // Re-anchor the countdown to the live access token's exp claim on every
+  // tick. Without this, the toast counts down from the stale `expiresInSeconds`
+  // prop, so a background refresh (another tab, proactive refresh elsewhere)
+  // would leave the toast showing a wrong countdown — and if the token was
+  // refreshed, the toast could expire a session that is actually still valid.
   useEffect(() => {
     if (remaining <= 0) {
       dismiss();
       return;
     }
     const timer = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          dismiss();
-          return 0;
-        }
-        return prev - 1;
-      });
+      const live = sessionManager.getRemainingSeconds();
+      if (live <= 0) {
+        clearInterval(timer);
+        dismiss();
+        return;
+      }
+      if (live > spanRef.current) spanRef.current = live;
+      setRemaining(live);
     }, 1000);
     return () => clearInterval(timer);
   }, [remaining, dismiss]);
 
-  const progressPercent = Math.max(0, Math.min(100, (remaining / initial) * 100));
+  const progressPercent = Math.max(0, Math.min(100, (remaining / spanRef.current) * 100));
   const isUrgent = remaining <= 60;
 
   const handleExtend = async () => {
@@ -88,8 +97,16 @@ export function SessionWarningToast({
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1.5 rounded-full bg-surface-variant overflow-hidden">
+      <div
+        className="w-full h-1.5 rounded-full bg-surface-variant overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={spanRef.current}
+        aria-valuenow={Math.round(remaining)}
+        aria-label="Waktu sesi tersisa"
+      >
         <div
+          data-testid="session-progress-fill"
           className={`h-full rounded-full transition-all duration-1000 ease-linear ${
             isUrgent ? 'bg-error-500 dark:bg-error-400' : 'bg-warning-500 dark:bg-warning-400'
           }`}

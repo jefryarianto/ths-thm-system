@@ -127,6 +127,19 @@ class SessionManager {
     this.scheduleExpiryWarning(accessToken);
   }
 
+  /**
+   * Get remaining seconds until the current access token expires.
+   * Returns 0 if no valid token is present.
+   */
+  getRemainingSeconds(): number {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return 0;
+    const payload = decodeJwtPayload(token);
+    if (!payload || typeof payload.exp !== 'number') return 0;
+    const nowSec = Math.floor(Date.now() / 1000);
+    return Math.max(payload.exp - nowSec, 0);
+  }
+
   private _fireExpiringSoon(secondsRemaining: number) {
     if (this._expiryWarningFired || this._isExpired) return;
     this._expiryWarningFired = true;

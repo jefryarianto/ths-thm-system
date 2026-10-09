@@ -155,3 +155,53 @@ describe('SessionManager — sesi berulang regression', () => {
     unsubscribe();
   });
 });
+
+// ─── getRemainingSeconds() ──────────────────────────────────────────────
+// Token palsu: header/payload base64url + '.sig' — decodeJwtPayload hanya
+// membaca bagian payload, jadi signature tidak perlu valid.
+const b64url = (input: string) =>
+  btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+const makeFakeToken = (payload: Record<string, unknown>) =>
+  `${b64url(JSON.stringify({ alg: 'none', typ: 'JWT' }))}.${b64url(JSON.stringify(payload))}.sig`;
+
+describe('SessionManager — getRemainingSeconds()', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    const { sessionManager } = await import('@/lib/session-manager');
+    sessionManager.logout();
+  });
+
+  it('mengembalikan 0 bila tidak ada access token', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    expect(sessionManager.getRemainingSeconds()).toBe(0);
+  });
+
+  it('mengembalikan sisa detik hingga exp untuk token valid', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const exp = Math.floor(Date.now() / 1000) + 300;
+    localStorage.setItem('accessToken', makeFakeToken({ sub: 'user-1', exp }));
+    const remaining = sessionManager.getRemainingSeconds();
+    expect(remaining).toBeGreaterThan(290);
+    expect(remaining).toBeLessThanOrEqual(300);
+  });
+
+  it('mengembalikan 0 bila token tidak memiliki klaim exp', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    localStorage.setItem('accessToken', makeFakeToken({ sub: 'user-1' }));
+    expect(sessionManager.getRemainingSeconds()).toBe(0);
+  });
+
+  it('mengembalikan 0 bila token bukan JWT yang dapat didecode', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    localStorage.setItem('accessToken', 'not-a-jwt');
+    expect(sessionManager.getRemainingSeconds()).toBe(0);
+  });
+
+  it('mengembalikan 0 bila token sudah kedaluwarsa', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const exp = Math.floor(Date.now() / 1000) - 10;
+    localStorage.setItem('accessToken', makeFakeToken({ sub: 'user-1', exp }));
+    expect(sessionManager.getRemainingSeconds()).toBe(0);
+  });
+});
