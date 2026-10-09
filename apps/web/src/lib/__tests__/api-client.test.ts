@@ -89,12 +89,16 @@ describe('api-client', () => {
   });
 
   describe('clearTokens', () => {
-    it('removes both tokens from localStorage', () => {
+    it('removes both tokens and the cached user from localStorage', () => {
       localStorage.setItem('accessToken', 'something');
       localStorage.setItem('refreshToken', 'something');
+      localStorage.setItem('user', JSON.stringify({ role: 'admin_distrik' }));
       clearTokens();
       expect(localStorage.getItem('accessToken')).toBeNull();
       expect(localStorage.getItem('refreshToken')).toBeNull();
+      // Stale cached user keeps `useAuth().isAuthenticated` true even after the
+      // server session is gone — it must be dropped together with the tokens.
+      expect(localStorage.getItem('user')).toBeNull();
     });
 
     it('does not throw when tokens are not present', () => {

@@ -181,7 +181,12 @@ class SessionManager {
     console.debug('[session-manager] Session expired', { shouldRedirect });
     this._isExpired = true;
     this.cancelExpiryWarning();
+    // Also drop the cached user: useAuth() reads localStorage['user'], and a
+    // stale user object keeps `isAuthenticated` true (and app/page.tsx's
+    // role-redirect) even though the server session is gone — bouncing the
+    // user off the public landing page into a /login?session_invalid=1 loop.
     this.clearTokens();
+    localStorage.removeItem('user');
     if (shouldRedirect) {
       localStorage.setItem('session-expired', 'true');
     }
@@ -191,6 +196,7 @@ class SessionManager {
   clearTokens() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
   }
 
   /**

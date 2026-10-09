@@ -302,6 +302,7 @@ const AUTH_ENDPOINT_PATTERNS = [
   '/auth/reset',
   '/auth/verify',
   '/auth/oauth',
+  '/auth/session/verify',
 ];
 
 function isAuthEndpoint(url?: string): boolean {
