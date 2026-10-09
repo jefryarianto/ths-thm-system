@@ -40,6 +40,9 @@ class SessionManager {
   private _expiryWarningTimer: ReturnType<typeof setTimeout> | undefined;
   private _expiryWarningFired = false;
   private _inactivityTimer: ReturnType<typeof setTimeout> | undefined;
+  // Handler global activity yang sedang terdaftar di window — disimpan agar
+  // bisa dilepas (removeEventListener) saat tracking dihentikan.
+  private _activityHandler: (() => void) | undefined;
   private _lastActivityAt = Date.now();
 
   private constructor() {}
@@ -156,12 +159,21 @@ class SessionManager {
 
   /** Start tracking activity (called after login) */
   startInactivityTracking() {
+    // BUG FIX: fungsi ini mendaftarkan listener window tapi tidak pernah
+    // melepasnya, dan dipanggil ulang setiap kali objek `user` berganti
+    // (useAuth membuat state baru tiap render → useEffect [user] re-run).
+    // Listener lama terus aktif & bertumpuk, memanggil trackActivity() pada
+    // timer yang sudah seharusnya mati. Lepas dulu listener sebelumnya
+    // (idempotent) baru pasang yang bersih.
+    this.stopInactivityTracking();
+
     this._lastActivityAt = Date.now();
     this.resetInactivityTimer();
 
     // Listen for user activity
     const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     const handler = () => this.trackActivity();
+    this._activityHandler = handler;
     events.forEach((event) => window.addEventListener(event, handler, { passive: true }));
   }
 
@@ -170,6 +182,17 @@ class SessionManager {
     if (this._inactivityTimer) {
       clearTimeout(this._inactivityTimer);
       this._inactivityTimer = undefined;
+    }
+    // BUG FIX: lepas listener window yang dipasang startInactivityTracking,
+    // bukan hanya menghentikan timernya. Tanpa ini listener terus mendaftar
+    // event mouse/keyboard dan memanggil resetInactivityTimer() bahkan setelah
+    // sesi berakhir, yang merestart countdown di luar kendali login state.
+    if (this._activityHandler) {
+      const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+      events.forEach((event) =>
+        window.removeEventListener(event, this._activityHandler as EventListener),
+      );
+      this._activityHandler = undefined;
     }
   }
 
@@ -181,6 +204,13 @@ class SessionManager {
     console.debug('[session-manager] Session expired', { shouldRedirect });
     this._isExpired = true;
     this.cancelExpiryWarning();
+    // BUG FIX: hentikan tracking activity. Tanpa ini, listener mouse/keyboard
+    // tetap aktif setelah sesi berakhir, memanggil trackActivity() ->
+    // resetInactivityTimer() yang menjadwalkan timeout baru, sementara
+    // _isExpired sudah true. Timer itu memicu expire() lagi (di-guard, tidak
+    // melakukan apa-apa) TAPI inilah sumber "toast sesi berakhir" yang
+    // muncul berulang dan jeda aneh saat user sudah ada di halaman publik.
+    this.stopInactivityTracking();
     // Also drop the cached user: useAuth() reads localStorage['user'], and a
     // stale user object keeps `isAuthenticated` true (and app/page.tsx's
     // role-redirect) even though the server session is gone — bouncing the
@@ -223,6 +253,13 @@ class SessionManager {
     this._isExpired = false;
     this._expiryWarningFired = false;
     this.cancelExpiryWarning();
+    // BUG FIX (loop "sesi berulang"): reset() TIDAK membatalkan timer
+    // ketidakaktifan. Setelah login ulang, timer lama tetap berjalan dan
+    // memicu expire() lagi → toast "sesi berakhir" + redirect, lalu self-healing
+    // interceptor berhasil refresh (cookie 14 hari masih ada) → reset() lagi.
+    // Siklus ini membuat pengguna ditarik pulang-pergi landing ↔ dashboard
+    // tanpa henti. Hentikan semua timer sesi sebelum memberi tahu subscriber.
+    this.stopInactivityTracking();
     localStorage.removeItem('session-expired');
     this.listeners.forEach((l) => l());
   }
