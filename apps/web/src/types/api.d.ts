@@ -5065,6 +5065,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/doc-template/{type}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload gambar latar template dokumen per tipe */
+        post: operations["SettingsController_uploadDocTemplateImage"];
+        /** Hapus gambar latar template dokumen per tipe */
+        delete: operations["SettingsController_removeDocTemplateImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/settings/{key}": {
         parameters: {
             query?: never;
@@ -15449,6 +15467,44 @@ export interface operations {
         requestBody?: never;
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SettingsController_uploadDocTemplateImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SettingsController_removeDocTemplateImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

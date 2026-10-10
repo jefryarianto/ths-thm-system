@@ -11673,6 +11673,62 @@
         ]
       }
     },
+    "/settings/doc-template/{type}/image": {
+      "post": {
+        "operationId": "SettingsController_uploadDocTemplateImage",
+        "summary": "Upload gambar latar template dokumen per tipe",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Settings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SettingsController_removeDocTemplateImage",
+        "summary": "Hapus gambar latar template dokumen per tipe",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Settings"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/settings/{key}": {
       "get": {
         "operationId": "SettingsController_getSetting",
