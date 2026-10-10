@@ -256,18 +256,25 @@ const styles = StyleSheet.create({
     opacity: 0.045,
   },
   watermarkCircle: {
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    borderWidth: 25,
+    width: 430,
+    height: 430,
+    borderRadius: 215,
+    borderWidth: 30,
     borderColor: BLUE_900,
     alignItems: 'center',
     justifyContent: 'center',
   },
   watermarkText: {
-    fontSize: 80,
+    fontSize: 90,
     fontWeight: 'black',
     color: BLUE_900,
+  },
+  qrImage: {
+    position: 'absolute',
+    right: 56,
+    bottom: 60,
+    width: 90,
+    height: 90,
   },
   // Back side
   backTitle: {
@@ -504,28 +511,30 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
           h(Text, { style: styles.watermarkText }, watermarkLabel),
         ),
       ),
-      h(View, { style: styles.innerBorder1 }),
-      h(View, { style: styles.innerBorder2 }),
       // Header
       h(
         View,
         { style: styles.headerSection },
+        // Logo kiri
         h(
           View,
           { style: styles.logoCircle },
           h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
         ),
+        // Nama organisasi & distrik (tengah)
         h(
           View,
           { style: { flex: 1, alignItems: 'center' } },
           h(Text, { style: styles.orgName }, orgName),
           h(Text, { style: styles.districtName }, `KOORDINATORAT DISTRIK ${distrik.toUpperCase()}`),
         ),
-        h(
-          View,
-          { style: styles.logoCircle },
-          h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
-        ),
+        // QR verifikasi (kanan)
+        qrDataUrl
+          ? h(
+              Image,
+              { src: qrDataUrl, style: styles.qrImage },
+            )
+          : null,
       ),
       // Title
       h(
