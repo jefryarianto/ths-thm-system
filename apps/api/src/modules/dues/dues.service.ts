@@ -472,7 +472,8 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       data: {
         status: 'menunggu_verifikasi',
         metodeBayar: 'transfer',
-        buktiBayarPath: dto.catatan || null,
+        buktiBayarPath: dto.buktiBayarPath || dto.catatan || null,
+        tanggalBayar: new Date(),
       },
     });
 

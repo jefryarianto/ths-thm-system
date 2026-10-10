@@ -29,6 +29,11 @@ export class CreateDueDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()
+  dueDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
   tanggalBayar?: string;
 
   @ApiPropertyOptional({ enum: Object.values(MetodeBayar) })
@@ -102,6 +107,11 @@ export class DueFilterDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  buktiBayarPath?: string;
+
   @IsString()
   periode?: string;
 }
@@ -122,6 +132,11 @@ export class BatchPaymentDto {
 }
 
 export class PaymentConfirmationDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  buktiBayarPath?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

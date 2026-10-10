@@ -60,8 +60,8 @@ enum StatusCalon {
 }
 
 enum TipeKlaim {
-  keanggotaan  // Klaim keanggotaan baru (belum terdaftar)
-  dokumen      // Klaim dokumen (sudah terdaftar)
+  keanggotaan // Klaim keanggotaan baru (belum terdaftar)
+  dokumen // Klaim dokumen (sudah terdaftar)
 }
 
 enum StatusKlaim {
@@ -320,7 +320,7 @@ model Wilayah {
   kepengurusans Kepengurusan[]
 
   // ── Admin bertugas di wilayah ini (admin_wilayah) ──
-  userScopes    User[]           @relation("UserWilayahScope")
+  userScopes User[] @relation("UserWilayahScope")
 
   @@unique([distrikId, kodeWilayah])
   @@map("wilayah")
@@ -370,26 +370,26 @@ model UnitLatihan {
 // ── Users & Members ───────────────────────────────────────
 
 model User {
-  id                 String   @id @default(uuid())
-  email              String   @unique
-  passwordHash       String   @map("password_hash")
-  namaLengkap        String   @map("nama_lengkap")
-  role               Role     @default(anggota)
-  distrikId          String?  @map("distrik_id")
-  wilayahId          String?  @map("wilayah_id")
-  rantingId          String?  @map("ranting_id")
-  phone              String?  @unique @map("phone")
-  mustChangePassword Boolean  @default(false) @map("must_change_password")
-  fcmToken           String?  @map("fcm_token")
-  refreshToken       String?  @map("refresh_token")
-  isActive           Boolean  @default(true) @map("is_active")
-  failedLoginAttempts Int     @default(0) @map("failed_login_attempts")
-  lockedUntil        DateTime? @map("locked_until")
-  totpSecret         String?  @map("totp_secret")
-  totpEnabled        Boolean  @default(false) @map("totp_enabled")
-  totpVerifiedAt     DateTime? @map("totp_verified_at")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  namaLengkap         String    @map("nama_lengkap")
+  role                Role      @default(anggota)
+  distrikId           String?   @map("distrik_id")
+  wilayahId           String?   @map("wilayah_id")
+  rantingId           String?   @map("ranting_id")
+  phone               String?   @unique @map("phone")
+  mustChangePassword  Boolean   @default(false) @map("must_change_password")
+  fcmToken            String?   @map("fcm_token")
+  refreshToken        String?   @map("refresh_token")
+  isActive            Boolean   @default(true) @map("is_active")
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until")
+  totpSecret          String?   @map("totp_secret")
+  totpEnabled         Boolean   @default(false) @map("totp_enabled")
+  totpVerifiedAt      DateTime? @map("totp_verified_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id], onDelete: SetNull)
   wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id], onDelete: SetNull)
@@ -413,11 +413,11 @@ model User {
   auditLogs                   AuditLog[]
   kepengurusans               Kepengurusan[]
   userSessions                UserSession[]
-  dataRevisions               DataRevision[] @relation("DataRevisionChangedBy")
-  importBatches               ImportBatch[]  @relation("ImportBatchImportedBy")
-  anggotaCreated              Anggota[]      @relation("AnggotaCreatedBy")
-  anggotaUpdated              Anggota[]      @relation("AnggotaUpdatedBy")
-  kegiatanUpdated             Kegiatan[]     @relation("KegiatanUpdatedBy")
+  dataRevisions               DataRevision[]        @relation("DataRevisionChangedBy")
+  importBatches               ImportBatch[]         @relation("ImportBatchImportedBy")
+  anggotaCreated              Anggota[]             @relation("AnggotaCreatedBy")
+  anggotaUpdated              Anggota[]             @relation("AnggotaUpdatedBy")
+  kegiatanUpdated             Kegiatan[]            @relation("KegiatanUpdatedBy")
 
   @@index([role])
   @@index([rantingId])
@@ -527,10 +527,10 @@ model CalonAnggota {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  ranting          Ranting           @relation(fields: [rantingId], references: [id], onDelete: Cascade)
-  usulOlehUser     User              @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
-  nilaiPendadarans NilaiPendadaran[]
-  hasilPendadarans HasilPendadaran[]
+  ranting            Ranting             @relation(fields: [rantingId], references: [id], onDelete: Cascade)
+  usulOlehUser       User                @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
+  nilaiPendadarans   NilaiPendadaran[]
+  hasilPendadarans   HasilPendadaran[]
   pesertaPendadarans PesertaPendadaran[]
   sesiUjianPesertas  SesiUjianPeserta[]
 
@@ -567,34 +567,34 @@ model Pendaftaran {
 // ── Claims ────────────────────────────────────────────────
 
 model Klaim {
-  id              String      @id @default(uuid())
-  tipe            TipeKlaim
-  status          StatusKlaim @default(pending)
-  catatan         String?
+  id           String      @id @default(uuid())
+  tipe         TipeKlaim
+  status       StatusKlaim @default(pending)
+  catatan      String?
   // ── Data diri pelapor (untuk klaim keanggotaan baru) ──
-  anggotaId       String?     @map("anggota_id")  // Opsional: ada jika klaim dokumen
-  namaLengkap     String?     @map("nama_lengkap")
-  jenisKelamin    String?     @map("jenis_kelamin")  // L atau P
-  tempatLahir     String?     @map("tempat_lahir")
-  tanggalLahir    DateTime?   @map("tanggal_lahir")
-  tempatDadar     String?     @map("tempat_dadar")
-  tahunDadar      String?     @map("tahun_dadar")
-  alamat          String?
-  noHp            String?     @map("no_hp")
-  email           String?
-  rantingId       String?     @map("ranting_id")  // Ranting asal keanggotaan
+  anggotaId    String?     @map("anggota_id") // Opsional: ada jika klaim dokumen
+  namaLengkap  String?     @map("nama_lengkap")
+  jenisKelamin String?     @map("jenis_kelamin") // L atau P
+  tempatLahir  String?     @map("tempat_lahir")
+  tanggalLahir DateTime?   @map("tanggal_lahir")
+  tempatDadar  String?     @map("tempat_dadar")
+  tahunDadar   String?     @map("tahun_dadar")
+  alamat       String?
+  noHp         String?     @map("no_hp")
+  email        String?
+  rantingId    String?     @map("ranting_id") // Ranting asal keanggotaan
   // ── Bukti dokumen ──
-  buktiDokumen    Json?       @map("bukti_dokumen")  // [{tipe: 'sertifikat'|'kartu_anggota', url: string}]
+  buktiDokumen Json?       @map("bukti_dokumen") // [{tipe: 'sertifikat'|'kartu_anggota', url: string}]
   // ── Tracking ──
-  approvedBy      String?     @map("approved_by")
-  approvedAt      DateTime?   @map("approved_at")
+  approvedBy   String?     @map("approved_by")
+  approvedAt   DateTime?   @map("approved_at")
   // ── Metadata ──
-  version         Int         @default(0) @map("version")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  version      Int         @default(0) @map("version")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
-  anggota         Anggota?    @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  ranting         Ranting?    @relation(fields: [rantingId], references: [id])
+  anggota Anggota? @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  ranting Ranting? @relation(fields: [rantingId], references: [id])
 
   @@index([anggotaId])
   @@index([rantingId])
@@ -620,21 +620,21 @@ model Kegiatan {
   createdAt          DateTime       @default(now()) @map("created_at")
   updatedAt          DateTime       @updatedAt @map("updated_at")
 
-  creator           User                 @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
-  updatedBy         User?                @relation("KegiatanUpdatedBy", fields: [updatedById], references: [id])
-  adminKegiatanId   String?              @map("admin_kegiatan_id")
-  adminKegiatan     User?                @relation("AdminKegiatan", fields: [adminKegiatanId], references: [id])
-  latihans          Latihan[]
-  peserta           KegiatanPeserta[]
-  presensi          PresensiKegiatan[]
-  dokumenKegiatan   DokumenKegiatan[]
-  penugasanPengujis PenugasanPenguji[]
-  ujianPrakteks     UjianPraktek[]
-  nilaiPendadarans  NilaiPendadaran[]
-  hasilPendadarans  HasilPendadaran[]
-  checkIns          CheckIn[]
-  undangans         UndanganPendadaran[]
-  aspekPenilaians   AspekPenilaian[]     @relation("AspekPenilaianKegiatan")
+  creator            User                 @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
+  updatedBy          User?                @relation("KegiatanUpdatedBy", fields: [updatedById], references: [id])
+  adminKegiatanId    String?              @map("admin_kegiatan_id")
+  adminKegiatan      User?                @relation("AdminKegiatan", fields: [adminKegiatanId], references: [id])
+  latihans           Latihan[]
+  peserta            KegiatanPeserta[]
+  presensi           PresensiKegiatan[]
+  dokumenKegiatan    DokumenKegiatan[]
+  penugasanPengujis  PenugasanPenguji[]
+  ujianPrakteks      UjianPraktek[]
+  nilaiPendadarans   NilaiPendadaran[]
+  hasilPendadarans   HasilPendadaran[]
+  checkIns           CheckIn[]
+  undangans          UndanganPendadaran[]
+  aspekPenilaians    AspekPenilaian[]     @relation("AspekPenilaianKegiatan")
   pesertaPendadarans PesertaPendadaran[]
 
   @@index([scopeType, scopeId])
@@ -711,7 +711,7 @@ model MateriLatihan {
   createdAt DateTime       @default(now()) @map("created_at")
   updatedAt DateTime       @updatedAt @map("updated_at")
 
-  latihan   Latihan        @relation(fields: [latihanId], references: [id], onDelete: Cascade)
+  latihan Latihan @relation(fields: [latihanId], references: [id], onDelete: Cascade)
 
   @@index([latihanId])
   @@map("materi_latihan")
@@ -933,11 +933,11 @@ model UjianPraktek {
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
-  kegiatan      Kegiatan              @relation(fields: [kegiatanId], references: [id])
-  penilais      UjianPraktekPenilai[]
-  items         UjianPraktekItem[]
-  penilaians    NilaiPendadaran[]
-  sesiPesertas  SesiUjianPeserta[]
+  kegiatan     Kegiatan              @relation(fields: [kegiatanId], references: [id])
+  penilais     UjianPraktekPenilai[]
+  items        UjianPraktekItem[]
+  penilaians   NilaiPendadaran[]
+  sesiPesertas SesiUjianPeserta[]
 
   @@index([kegiatanId])
   @@map("ujian_praktek")
@@ -1046,7 +1046,7 @@ model Dokumen {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
-  anggota      Anggota       @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  anggota       Anggota        @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
   qrValidations QRValidation[]
 
   @@index([anggotaId])
@@ -1062,18 +1062,18 @@ enum QrSource {
 }
 
 model QRValidation {
-  id               String    @id @default(uuid())
-  dokumenId        String    @map("dokumen_id")
-  token            String    @unique
-  isValid          Boolean   @default(true) @map("is_valid")
-  scannedAt        DateTime? @map("scanned_at")
-  scanCount        Int       @default(0) @map("scan_count")
-  source           QrSource  @default(digital)
-  verificationUrl  String?   @map("verification_url")
-  reason           String?   @map("reason")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(uuid())
+  dokumenId       String    @map("dokumen_id")
+  token           String    @unique
+  isValid         Boolean   @default(true) @map("is_valid")
+  scannedAt       DateTime? @map("scanned_at")
+  scanCount       Int       @default(0) @map("scan_count")
+  source          QrSource  @default(digital)
+  verificationUrl String?   @map("verification_url")
+  reason          String?   @map("reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  dokumen Dokumen @relation(fields: [dokumenId], references: [id], onDelete: Cascade)
+  dokumen Dokumen  @relation(fields: [dokumenId], references: [id], onDelete: Cascade)
   qrScans QrScan[]
 
   @@index([dokumenId])
@@ -1082,12 +1082,12 @@ model QRValidation {
 
 /// Riwayat pemindaian QR per penerbitan kartu/dokumen (audit anti-fotokopi).
 model QrScan {
-  id             String     @id @default(uuid())
-  qrValidationId String     @map("qr_validation_id")
-  scannedAt      DateTime   @default(now()) @map("scanned_at")
-  ipAddress      String?    @map("ip_address")
-  userAgent      String?    @map("user_agent")
-  createdAt      DateTime   @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  qrValidationId String   @map("qr_validation_id")
+  scannedAt      DateTime @default(now()) @map("scanned_at")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   qrValidation QRValidation @relation(fields: [qrValidationId], references: [id], onDelete: Cascade)
 
@@ -1233,10 +1233,12 @@ model BankInfo {
 }
 
 model Iuran {
-  id               String      @id @default(uuid())
-  anggotaId        String      @map("anggota_id")
-  periode          String
-  jumlah           Decimal     @db.Decimal(10, 2)
+  id        String   @id @default(uuid())
+  anggotaId String   @map("anggota_id")
+  periode   String
+  jumlah    Decimal  @db.Decimal(10, 2)
+  dueDate   DateTime? @map("due_date")
+
   tanggalBayar     DateTime?   @map("tanggal_bayar")
   metodeBayar      MetodeBayar @default(manual) @map("metode_bayar")
   status           StatusIuran @default(belum_dibayar)
@@ -1250,12 +1252,12 @@ model Iuran {
   verifikator User?                @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
   payments    PaymentTransaction[]
 
+  // Satu record iuran per anggota per periode — cegah input ganda di level DB.
+  @@unique([anggotaId, periode])
   @@index([status])
   @@index([anggotaId])
   @@index([anggotaId, status])
   @@index([periode, status])
-  // Satu record iuran per anggota per periode — cegah input ganda di level DB.
-  @@unique([anggotaId, periode])
   @@map("iuran")
 }
 
@@ -1355,15 +1357,15 @@ model AuditLog {
 // ── Import Logs (Audit Trail) ───────────────────────────
 
 model DataRevision {
-  id        String   @id @default(uuid())
-  entity    String // model name lowercase, e.g. 'anggota', 'klaim', 'iuran'
-  entityId  String   @map("entity_id")
-  action    String   @default("UPDATE") // 'UPDATE' | 'RESTORE'
-  before    Json? // data sebelum perubahan
-  after     Json? // data setelah perubahan
-  diff      Json? // daftar perubahan field: [{ field, before, after }]
-  changedById String? @map("changed_by_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  entity      String // model name lowercase, e.g. 'anggota', 'klaim', 'iuran'
+  entityId    String   @map("entity_id")
+  action      String   @default("UPDATE") // 'UPDATE' | 'RESTORE'
+  before      Json? // data sebelum perubahan
+  after       Json? // data setelah perubahan
+  diff        Json? // daftar perubahan field: [{ field, before, after }]
+  changedById String?  @map("changed_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   changedBy User? @relation("DataRevisionChangedBy", fields: [changedById], references: [id])
 
@@ -1372,21 +1374,21 @@ model DataRevision {
 }
 
 model ImportBatch {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   module       String // 'members' | 'candidates' | ...
-  fileName     String?  @map("file_name")
-  totalRows    Int      @map("total_rows")
-  processed    Int      @default(0)
-  success      Int      @default(0)
-  errors       Int      @default(0)
-  status       String   @default("pending") // pending | processing | completed | completed_with_errors
+  fileName     String?   @map("file_name")
+  totalRows    Int       @map("total_rows")
+  processed    Int       @default(0)
+  success      Int       @default(0)
+  errors       Int       @default(0)
+  status       String    @default("pending") // pending | processing | completed | completed_with_errors
   scope        Json? // scope pengimpor (ranting/wilayah/distrik) untuk dipakai saat proses baris
   details      Json? // ringkasan error
-  importedById String?  @map("imported_by_id")
-  createdAt    DateTime @default(now()) @map("created_at")
+  importedById String?   @map("imported_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
   completedAt  DateTime? @map("completed_at")
 
-  importedBy User?              @relation("ImportBatchImportedBy", fields: [importedById], references: [id])
+  importedBy User?             @relation("ImportBatchImportedBy", fields: [importedById], references: [id])
   items      ImportBatchItem[]
 
   @@index([module])
@@ -1477,17 +1479,17 @@ model WebhookEvent {
 }
 
 model EmailLog {
-  id        String   @id @default(uuid())
-  to        String
-  subject   String
-  status    String // 'sent' | 'failed' | 'skipped'
-  provider  String? // 'resend' | 'smtp' | 'dev'
-  error     String?
-  content   String? // HTML/text body for retry capability
-  metadata  Json? // { module?: string, template?: string, userId?: string }
-  retryCount Int      @default(0) @map("retry_count") // jumlah percobaan retry (guard anti-loop)
+  id          String    @id @default(uuid())
+  to          String
+  subject     String
+  status      String // 'sent' | 'failed' | 'skipped'
+  provider    String? // 'resend' | 'smtp' | 'dev'
+  error       String?
+  content     String? // HTML/text body for retry capability
+  metadata    Json? // { module?: string, template?: string, userId?: string }
+  retryCount  Int       @default(0) @map("retry_count") // jumlah percobaan retry (guard anti-loop)
   lastRetryAt DateTime? @map("last_retry_at") // waktu percobaan retry terakhir (untuk backoff)
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   events EmailEvent[]
 
@@ -1591,22 +1593,22 @@ model Jabatan {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   pengurus Kepengurusan[]
-  distrik  Distrik?        @relation(fields: [distrikId], references: [id], onDelete: Cascade)
+  distrik  Distrik?       @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
   @@index([distrikId])
   @@map("jabatan")
 }
 
 model Kepengurusan {
-  id         String    @id @default(uuid())
-  userId     String    @map("user_id")
-  jabatanId  String    @map("jabatan_id")
-  periodeId  String    @map("periode_id")
-  nasionalId String?   @map("nasional_id")
-  distrikId  String?   @map("distrik_id")
-  wilayahId  String?   @map("wilayah_id")
-  rantingId  String?   @map("ranting_id")
-  parentId   String?   @map("parent_id")
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  jabatanId       String    @map("jabatan_id")
+  periodeId       String    @map("periode_id")
+  nasionalId      String?   @map("nasional_id")
+  distrikId       String?   @map("distrik_id")
+  wilayahId       String?   @map("wilayah_id")
+  rantingId       String?   @map("ranting_id")
+  parentId        String?   @map("parent_id")
   startDate       DateTime? @map("start_date")
   endDate         DateTime? @map("end_date")
   status          String    @default("approved") @map("status")
@@ -1616,10 +1618,10 @@ model Kepengurusan {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  user    User    @relation(fields: [userId], references: [id])
-  jabatan Jabatan @relation(fields: [jabatanId], references: [id])
-  periode Periode @relation(fields: [periodeId], references: [id])
-  parent  Kepengurusan? @relation("KepengurusanHierarchy", fields: [parentId], references: [id])
+  user     User           @relation(fields: [userId], references: [id])
+  jabatan  Jabatan        @relation(fields: [jabatanId], references: [id])
+  periode  Periode        @relation(fields: [periodeId], references: [id])
+  parent   Kepengurusan?  @relation("KepengurusanHierarchy", fields: [parentId], references: [id])
   children Kepengurusan[] @relation("KepengurusanHierarchy")
 
   nasional Nasional? @relation(fields: [nasionalId], references: [id])
@@ -2095,12 +2097,12 @@ model MonitoringAlert {
 // ── Queue Uptime Events (Persistent Disconnect Tracking) ─
 
 model QueueUptimeEvent {
-  id         String    @id @default(uuid())
-  startTime  DateTime  @map("start_time")
-  endTime    DateTime? @map("end_time")
-  durationMs Int?      @map("duration_ms")
-  notes      String? // Root cause / notes from admin
-  component  String?   @default("queue") // 'queue' | 'api' | 'database' | 'other'
+  id              String    @id @default(uuid())
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime? @map("end_time")
+  durationMs      Int?      @map("duration_ms")
+  notes           String? // Root cause / notes from admin
+  component       String?   @default("queue") // 'queue' | 'api' | 'database' | 'other'
   status          String    @default("approved") @map("status")
   approvedBy      String?   @map("approved_by")
   approvedAt      DateTime? @map("approved_at")
@@ -2294,11 +2296,11 @@ model RoleMenuPermission {
 model RolePermission {
   id        String   @id @default(uuid())
   role      String
-  key       String   // "module:action"
+  key       String // "module:action"
   isEnabled Boolean  @default(true) @map("is_enabled")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
   @@unique([role, key])
   @@map("role_permissions")
 }
-
