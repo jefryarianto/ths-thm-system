@@ -128,6 +128,17 @@ test.describe('Users Dashboard Page', () => {
           isActive: true,
           createdAt: '2024-06-15T00:00:00Z',
         },
+        {
+          id: '20',
+          namaLengkap: 'Admin Ranting Aktif',
+          email: 'ranting-aktif@ths-thm.or.id',
+          role: 'admin_ranting',
+          isActive: true,
+          createdAt: '2024-07-01T00:00:00Z',
+          distrikId: 'd1',
+          wilayahId: 'w1',
+          rantingId: 'r1',
+        },
       ];
 
       if (search) {
@@ -143,7 +154,7 @@ test.describe('Users Dashboard Page', () => {
       }
 
       const pageNum = parseInt(pageParam);
-      const limit = 10;
+      const limit = 20;
       const start = (pageNum - 1) * limit;
       const paginated = data.slice(start, start + limit);
 
@@ -310,5 +321,58 @@ test.describe('Users Dashboard Page', () => {
 
     await page.getByTestId('user-role').selectOption('superadmin');
     await expect(page.getByTestId('org-cascade-distrik')).toHaveCount(0);
+  });
+
+  test('edit admin_ranting mempertahankan ranting ter-prefill (tidak ter-reset)', async ({
+    page,
+  }) => {
+    await mockOrgStructure(page);
+    await mockSuperadminScope(page);
+
+    // User yang diedit sudah punya ranting r1 (wilayah w1, distrik d1).
+    const EDIT_USER = {
+      id: '20',
+      namaLengkap: 'Admin Ranting Aktif',
+      email: 'ranting-aktif@ths-thm.or.id',
+      role: 'admin_ranting',
+      isActive: true,
+      createdAt: '2024-07-01T00:00:00Z',
+      distrikId: 'd1',
+      wilayahId: 'w1',
+      rantingId: 'r1',
+      ranting: {
+        id: 'r1',
+        nama: 'Ranting Menteng',
+        wilayahId: 'w1',
+        wilayah: { id: 'w1', nama: 'Wilayah Jakarta Pusat', distrikId: 'd1', distrik: { id: 'd1', nama: 'Distrik Jakarta' } },
+      },
+    };
+
+    await page.route('**/api/users/20', (route) => route.fulfill(json({ success: true, data: EDIT_USER })));
+
+    let patchBody: Record<string, unknown> | null = null;
+    await page.route('**/api/users/20', async (route) => {
+      if (route.request().method() === 'PATCH') {
+        patchBody = route.request().postDataJSON() as Record<string, unknown>;
+        await route.fulfill(json({ success: true, data: EDIT_USER, message: 'User berhasil diperbarui' }));
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.goto('/users');
+    // Buka menu aksi user yang diedit (aria-label = "Opsi <namaLengkap>").
+    await page.getByRole('button', { name: 'Opsi Admin Ranting Aktif' }).click();
+    await page.getByText('Edit User').click();
+
+    // Cascade ranting ter-prefill dan TIDAK boleh ter-reset menjadi kosong.
+    await expect(page.getByTestId('org-cascade-ranting')).toHaveValue('r1');
+    await expect(page.getByTestId('org-cascade-wilayah')).toHaveValue('w1');
+    await expect(page.getByTestId('org-cascade-distrik')).toHaveValue('d1');
+
+    // Simpan tanpa menyentuh cascade → rantingId harus tetap terkirim.
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect.poll(() => patchBody).not.toBeNull();
+    expect(patchBody).toMatchObject({ role: 'admin_ranting', rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' });
   });
 });

@@ -152,12 +152,27 @@ export default function OrgCascadeSelect({
   };
 
   // Selaraskan nilai dengan kunci scope (admin_distrik/wilayah/ranting) agar
-  // select yang disabled tidak pernah tampil kosong. Ranting dikosongkan karena
-  // perubahan parent selalu membatalkan pilihan anak.
+  // select yang disabled tidak pernah tampil kosong.
+  //
+  // PENTING (perbaikan "pilihan ranting tidak valid" saat edit): ranting HANYA
+  // dikosongkan ketika parent (distrik/wilayah) benar-benar BERUBAH dari nilai
+  // sebelumnya. Sebelumnya effect ini mengosongkan ranting setiap kali
+  // `lockWilayahId`/`lockDistrikId` termuat async (setelah prefill edit), sehingga
+  // ranting yang sudah ter-prefill dari server ikut terhapus dan form memaksa
+  // pengguna memilih ulang → backend menolak dengan "Ranting wajib dipilih".
+  const prevParent = useRef({ distrikId: '', wilayahId: '' });
   useEffect(() => {
     const nextDistrikId = distrikId || lockDistrikId || '';
     const nextWilayahId = wilayahId || lockWilayahId || '';
-    if (nextDistrikId !== distrikId || nextWilayahId !== wilayahId) {
+    const parentChanged =
+      nextDistrikId !== prevParent.current.distrikId ||
+      nextWilayahId !== prevParent.current.wilayahId;
+    prevParent.current = { distrikId: nextDistrikId, wilayahId: nextWilayahId };
+
+    // Saat parent berganti, pilihan ranting lama tidak lagi valid → reset.
+    // Jika hanya lock yang "mengisi" parent yang sudah ter-prefill (edit),
+    // ranting yang sudah dipilih dipertahankan.
+    if (parentChanged && (nextDistrikId !== distrikId || nextWilayahId !== wilayahId)) {
       onChange({ distrikId: nextDistrikId, wilayahId: nextWilayahId, rantingId: '' });
     }
   }, [lockDistrikId, lockWilayahId, distrikId, wilayahId, onChange]);
