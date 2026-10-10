@@ -192,6 +192,20 @@ export class DocumentsService {
       const { buildAwardPdf } = require('./pdf-templates/award');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildCertificatePdf } = require('./pdf-templates/certificate');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildSertifikatTingkatanPdf } = require('./pdf-templates/sertifikat_tingkatan');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildSertifikatPelatihPdf } = require('./pdf-templates/sertifikat_pelatih');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildSertifikatWasitDanJuriPdf } = require('./pdf-templates/sertifikat_wasit_dan_juri');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildSertifikatPengujiPdf } = require('./pdf-templates/sertifikat_penguji');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildPiagamSerojaPdf } = require('./pdf-templates/piagam_seroja');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildPiagamMelatiPdf } = require('./pdf-templates/piagam_melati');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildPiagamMawarPdf } = require('./pdf-templates/piagam_mawar');
 
       let PdfDoc: unknown = null;
       if (dto.type === 'piagam_prestasi') {
@@ -202,6 +216,94 @@ export class DocumentsService {
           signers,
           qrDataUrl,
           watermarkText: 'THS',
+          template,
+        });
+      } else if (dto.type === 'sertifikat_tingkatan') {
+        PdfDoc = buildSertifikatTingkatanPdf({
+          recipientName: member?.namaLengkap || '-',
+          certificateNumber: nomorDokumen,
+          previousLevel: '-',
+          currentLevel: member?.tingkat || '-',
+          predikat: '-',
+          examDate: issuedDate,
+          examLocation: member?.ranting?.wilayah?.nama || '-',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'sertifikat_pelatih') {
+        PdfDoc = buildSertifikatPelatihPdf({
+          recipientName: member?.namaLengkap || '-',
+          certificateNumber: nomorDokumen,
+          trainingTitle: '-',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'sertifikat_wasit_dan_juri') {
+        PdfDoc = buildSertifikatWasitDanJuriPdf({
+          recipientName: member?.namaLengkap || '-',
+          certificateNumber: nomorDokumen,
+          competitionTitle: '-',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'sertifikat_penguji') {
+        PdfDoc = buildSertifikatPengujiPdf({
+          recipientName: member?.namaLengkap || '-',
+          certificateNumber: nomorDokumen,
+          examLevel: '-',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'piagam_seroja') {
+        PdfDoc = buildPiagamSerojaPdf({
+          recipientName: member?.namaLengkap || '-',
+          awardNumber: nomorDokumen,
+          activityDetail: 'panitia kegiatan',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'piagam_melati') {
+        PdfDoc = buildPiagamMelatiPdf({
+          recipientName: member?.namaLengkap || '-',
+          awardNumber: nomorDokumen,
+          melatiLevel: 1,
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
+          template,
+        });
+      } else if (dto.type === 'piagam_mawar') {
+        PdfDoc = buildPiagamMawarPdf({
+          recipientName: member?.namaLengkap || '-',
+          awardNumber: nomorDokumen,
+          contributionDetail: 'pendampingan, pembimbingan, dan pembinaan',
+          issuedDate,
+          ranting: member?.ranting?.nama || '-',
+          districtName: member?.ranting?.wilayah?.distrik?.nama || '-',
+          signers,
+          qrDataUrl,
           template,
         });
       } else if (dto.type === 'sertifikat_pelatihan') {

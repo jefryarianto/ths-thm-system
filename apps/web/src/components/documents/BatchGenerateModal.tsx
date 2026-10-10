@@ -36,10 +36,52 @@ const DOCUMENT_TYPES = [
     icon: '📋',
   },
   {
+    value: 'sertifikat_tingkatan',
+    label: 'Sertifikat Tingkatan (Lampiran 3)',
+    description: 'Kenaikan tingkat — Koordinatorat Nasional',
+    icon: '🎖️',
+  },
+  {
+    value: 'sertifikat_pelatih',
+    label: 'Sertifikat Pelatih (Lampiran 4)',
+    description: 'Kualifikasi pelatih tingkat Nasional',
+    icon: '👨‍🏫',
+  },
+  {
+    value: 'sertifikat_wasit_dan_juri',
+    label: 'Sertifikat Wasit & Juri (Lampiran 5)',
+    description: 'Kualifikasi wasit/juri tingkat Nasional',
+    icon: '🏅',
+  },
+  {
+    value: 'sertifikat_penguji',
+    label: 'Sertifikat Penguji (Lampiran 6)',
+    description: 'Kualifikasi penguji — Dewan Pendiri + Nasional',
+    icon: '⚖️',
+  },
+  {
     value: 'piagam_prestasi',
     label: 'Piagam Prestasi',
     description: 'Piagam penghargaan prestasi',
     icon: '🏆',
+  },
+  {
+    value: 'piagam_seroja',
+    label: 'Piagam Seroja (Lambang Perjuangan)',
+    description: 'Panitia kegiatan Distrik/Keuskupan/Nasional',
+    icon: '🌸',
+  },
+  {
+    value: 'piagam_melati',
+    label: 'Piagam Melati T1–T5 (Kesetiaan)',
+    description: 'Masa aktif 5/10/20/30/40 tahun',
+    icon: '🌼',
+  },
+  {
+    value: 'piagam_mawar',
+    label: 'Piagam Mawar (Kesucian & Kemuliaan)',
+    description: 'Jasa besar — Sidang Nasional tiap 5 tahun',
+    icon: '🌹',
   },
 ];
 

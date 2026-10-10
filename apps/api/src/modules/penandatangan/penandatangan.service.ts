@@ -16,7 +16,14 @@ export const DOKUMEN_SIGNER_TYPES = [
   { type: 'kartu_anggota', label: 'Kartu Anggota (KTA)' },
   { type: 'sertifikat_pendadaran', label: 'Sertifikat Pendadaran' },
   { type: 'sertifikat_pelatihan', label: 'Sertifikat Pelatihan' },
+  { type: 'sertifikat_tingkatan', label: 'Sertifikat Tingkatan' },
+  { type: 'sertifikat_pelatih', label: 'Sertifikat Pelatih' },
+  { type: 'sertifikat_wasit_dan_juri', label: 'Sertifikat Wasit dan Juri' },
+  { type: 'sertifikat_penguji', label: 'Sertifikat Penguji' },
   { type: 'piagam_prestasi', label: 'Piagam Prestasi' },
+  { type: 'piagam_seroja', label: 'Piagam Seroja' },
+  { type: 'piagam_melati', label: 'Piagam Melati' },
+  { type: 'piagam_mawar', label: 'Piagam Mawar' },
 ] as const;
 
 @Injectable()

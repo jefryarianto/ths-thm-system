@@ -118,6 +118,13 @@ enum TipeDokumen {
   sertifikat_pendadaran
   sertifikat_pelatihan
   piagam_prestasi
+  sertifikat_tingkatan
+  sertifikat_pelatih
+  sertifikat_wasit_dan_juri
+  sertifikat_penguji
+  piagam_seroja
+  piagam_melati
+  piagam_mawar
 }
 
 enum StatusDokumen {

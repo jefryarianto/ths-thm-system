@@ -73,7 +73,14 @@ const docTypeLabels: Record<string, string> = {
   kartu_anggota: 'KARTU ANGGOTA',
   sertifikat_pendadaran: 'SERTIFIKAT PENDADARAN',
   sertifikat_pelatihan: 'SERTIFIKAT PELATIHAN',
+  sertifikat_tingkatan: 'SERTIFIKAT TINGKATAN',
+  sertifikat_pelatih: 'SERTIFIKAT PELATIH',
+  sertifikat_wasit_dan_juri: 'SERTIFIKAT WASIT DAN JURI',
+  sertifikat_penguji: 'SERTIFIKAT PENGUJI',
   piagam_prestasi: 'PIAGAM PRESTASI',
+  piagam_seroja: 'PIAGAM PENGHARGAAN SEROJA',
+  piagam_melati: 'PIAGAM PENGHARGAAN MELATI',
+  piagam_mawar: 'PIAGAM PENGHARGAAN MAWAR',
 };
 
 interface PdfDocProps {
