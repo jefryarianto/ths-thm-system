@@ -21,6 +21,10 @@ const ROLE_ORG_LEVEL: Record<string, 'distrik' | 'wilayah' | 'ranting'> = {
   admin_ranting: 'ranting',
   admin_kegiatan: 'ranting',
   penguji: 'ranting',
+  // Backend: anggota juga wajib punya ranting (ROLE_ORG_LEVEL.anggota='ranting').
+  // Tanpa entri ini, orgLevel jadi undefined → validasi selalu menolak
+  // walaupun ranting sudah dipilih.
+  anggota: 'ranting',
 };
 
 interface CreateUserModalProps {

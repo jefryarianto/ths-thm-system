@@ -139,6 +139,17 @@ test.describe('Users Dashboard Page', () => {
           wilayahId: 'w1',
           rantingId: 'r1',
         },
+        {
+          id: '21',
+          namaLengkap: 'Distrik Jadi Anggota',
+          email: 'to-anggota@ths-thm.or.id',
+          role: 'admin_distrik',
+          isActive: true,
+          createdAt: '2024-07-02T00:00:00Z',
+          distrikId: 'd1',
+          wilayahId: '',
+          rantingId: '',
+        },
       ];
 
       if (search) {
@@ -374,5 +385,62 @@ test.describe('Users Dashboard Page', () => {
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect.poll(() => patchBody).not.toBeNull();
     expect(patchBody).toMatchObject({ role: 'admin_ranting', rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' });
+  });
+
+  test('edit user menjadi anggota menerima ranting yang dipilih (tidak selalu invalid)', async ({
+    page,
+  }) => {
+    await mockOrgStructure(page);
+    await mockSuperadminScope(page);
+
+    // User diedit ber-role admin_distrik (belum punya ranting).
+    const EDIT_USER = {
+      id: '21',
+      namaLengkap: 'Distrik Jadi Anggota',
+      email: 'to-anggota@ths-thm.or.id',
+      role: 'admin_distrik',
+      isActive: true,
+      createdAt: '2024-07-02T00:00:00Z',
+      distrikId: 'd1',
+      wilayahId: '',
+      rantingId: '',
+      ranting: null,
+    };
+
+    await page.route('**/api/users/21', (route) =>
+      route.fulfill(json({ success: true, data: EDIT_USER })),
+    );
+    let patchBody: Record<string, unknown> | null = null;
+    await page.route('**/api/users/21', async (route) => {
+      if (route.request().method() === 'PATCH') {
+        patchBody = route.request().postDataJSON() as Record<string, unknown>;
+        await route.fulfill(
+          json({ success: true, data: EDIT_USER, message: 'User berhasil diperbarui' }),
+        );
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.goto('/users');
+    await page.getByRole('button', { name: 'Opsi Distrik Jadi Anggota' }).click();
+    await page.getByText('Edit User').click();
+
+    // Ubah role menjadi anggota → cascade tetap tampil & ranting WAJIB
+    // (backend ROLE_ORG_LEVEL.anggota = 'ranting').
+    await page.getByTestId('user-role').selectOption('anggota');
+
+    // Pilih ranting secara eksplisit.
+    await page.getByTestId('org-cascade-distrik').selectOption('d1');
+    await page.getByTestId('org-cascade-wilayah').selectOption('w1');
+    await page.getByTestId('org-cascade-ranting').selectOption('r1');
+
+    await page.getByRole('button', { name: 'Simpan' }).click();
+
+    // Sebelum perbaikan: muncul "Ranting wajib dipilih untuk role anggota" dan
+    // submit ditolak walaupun ranting sudah dipilih. Sekarang harus terkirim.
+    await expect(page.getByText('Ranting wajib dipilih untuk role anggota')).toHaveCount(0);
+    await expect.poll(() => patchBody).not.toBeNull();
+    expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1' });
   });
 });
