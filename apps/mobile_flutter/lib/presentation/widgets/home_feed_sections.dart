@@ -117,14 +117,16 @@ class _AgendaCard extends StatelessWidget {
                       children: [
                         Icon(Icons.calendar_today, size: 14, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppTheme.space4),
-                        Text(kegiatan.nama,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                height: 1.25,
-                                color: theme.colorScheme.onSurface)),
+                        Expanded(
+                          child: Text(kegiatan.nama,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.25,
+                                  color: theme.colorScheme.onSurface)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -250,13 +252,15 @@ class _BeritaCard extends StatelessWidget {
                     children: [
                       Icon(Icons.article_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
                       const SizedBox(width: AppTheme.space4),
-                      Text(berita.judul,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            height: 1.25,
-                          )),
+                      Expanded(
+                        child: Text(berita.judul,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              height: 1.25,
+                            )),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),

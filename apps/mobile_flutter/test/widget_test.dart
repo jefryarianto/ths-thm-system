@@ -1,13 +1,25 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_flutter/core/theme/app_theme.dart';
 import 'package:mobile_flutter/core/utils/formatters.dart';
+import 'package:mobile_flutter/data/models/berita.dart';
 import 'package:mobile_flutter/data/models/due.dart';
+import 'package:mobile_flutter/data/models/kegiatan.dart';
+import 'package:mobile_flutter/logic/home_feed/home_feed_bloc.dart';
 import 'package:mobile_flutter/presentation/screens/verification_result_screen.dart';
 import 'package:mobile_flutter/presentation/widgets/app_loading_spinner.dart';
 import 'package:mobile_flutter/presentation/widgets/due_item_card.dart';
+import 'package:mobile_flutter/presentation/widgets/home_feed_sections.dart';
 import 'package:mobile_flutter/presentation/widgets/secure_kta_wrapper.dart';
+
+/// Bloc sungguhan dengan state awal yang bisa disuntikkan langsung, sehingga
+/// [BeritaFeedSection] & [AgendaSection] dapat diuji tanpa jaringan
+/// (`bloc_test`/`mocktail` tidak tersedia di dev_dependencies proyek).
+class _SeededHomeFeedBloc extends HomeFeedBloc {
+  void seed(HomeFeedState state) => emit(state);
+}
 
 void main() {
   testWidgets('AppLoadingSpinner default merender logo di tengah busur berputar', (tester) async {
@@ -416,6 +428,90 @@ void main() {
       expect(find.textContaining('Token QR tidak valid'), findsOneWidget);
       expect(find.text('Coba Lagi'), findsOneWidget);
       expect(find.text('Verifikasi Ulang'), findsNothing);
+    });
+  });
+
+  group('Home feed overflow guard', () {
+    // Judul sangat panjang (banyak kata + satu token tanpa spasi) untuk memaksa
+    // teks melewati lebar kartu — regresi layout lama (Text tanpa Expanded di
+    // dalam Row) akan memicu RenderFlex overflow exception di sini.
+    const judulPanjang =
+        'Pengumuman Penting Mengenai Pelaksanaan Kegiatan Kepemudaan Gereja '
+        'TUNGGALHATISEMINARITUNGGALHATIMARIADISTRIKDIKIAKHIRTAHUN2026 '
+        'yang diikuti seluruh ranting se-wilayah tanpa kecuali';
+
+    Berita beritaPanjang() => Berita(
+          id: 'b1',
+          judul: judulPanjang,
+          ringkasan: 'Ringkasan singkat berita',
+          konten: 'Isi berita',
+          gambar: null, // tanpa gambar → tidak ada panggilan jaringan di test
+          tanggal: DateTime(2026, 10, 10),
+          slug: 'berita-panjang',
+        );
+
+    Kegiatan kegiatanPanjang() => Kegiatan(
+          id: 'k1',
+          nama: judulPanjang,
+          tipe: 'kegiatan',
+          lokasi: 'Aula Gereja',
+          tanggalMulai: DateTime(2026, 10, 10),
+          status: 'published',
+        );
+
+    testWidgets('BeritaFeedSection tidak overflow walau judul sangat panjang',
+        (tester) async {
+      final bloc = _SeededHomeFeedBloc();
+      addTearDown(bloc.close);
+      bloc.seed(HomeFeedLoaded(
+        berita: [beritaPanjang()],
+        kegiatan: const [],
+      ));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: BlocProvider<HomeFeedBloc>.value(
+              value: bloc,
+              child: const BeritaFeedSection(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Berita'), findsOneWidget);
+      expect(find.byType(BeritaFeedSection), findsOneWidget);
+      // Tidak ada RenderFlex overflow (teks melewati border) saat render.
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('AgendaSection tidak overflow walau nama kegiatan sangat panjang',
+        (tester) async {
+      final bloc = _SeededHomeFeedBloc();
+      addTearDown(bloc.close);
+      bloc.seed(HomeFeedLoaded(
+        berita: const [],
+        kegiatan: [kegiatanPanjang()],
+      ));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: BlocProvider<HomeFeedBloc>.value(
+              value: bloc,
+              child: const AgendaSection(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Agenda'), findsOneWidget);
+      expect(find.byType(AgendaSection), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }
