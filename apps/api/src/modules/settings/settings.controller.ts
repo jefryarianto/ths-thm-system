@@ -25,6 +25,7 @@ import {
   CreateSignatureDto,
   CreateStampDto,
 } from './dto/setting.dto';
+import { resolve, relative, isAbsolute } from 'path';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
@@ -33,6 +34,37 @@ import {
 } from '../../common/utils/image-upload.util';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { resolveWriteDistrikId, resolveReadDistrikId } from '../../common/utils/distrik-scope';
+
+/**
+ * Tipe dokumen yang mendukung gambar latar (background) — selaras dengan
+ * kelompok field di halaman Settings → Template Dokumen (`/settings/dokumen`).
+ * Desain kartu anggota diatur terpisah di halaman Template Kartu.
+ */
+const DOC_TEMPLATE_TYPES = ['sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] as const;
+
+type DocTemplateType = (typeof DOC_TEMPLATE_TYPES)[number];
+
+/** Validasi tipe → menghasilkan key setting gambar latar `docTemplate.<type>.image`. */
+function docTemplateImageKey(type: string): string {
+  if (!DOC_TEMPLATE_TYPES.includes(type as DocTemplateType)) {
+    throw new BadRequestException(
+      `Tipe dokumen tidak valid. Gunakan: ${DOC_TEMPLATE_TYPES.join(', ')}`,
+    );
+  }
+  return `docTemplate.${type}.image`;
+}
+
+/**
+ * Path absolut file hasil upload di UPLOAD_DIR — menolak path traversal
+ * (filename dengan `..` atau path absolut di luar direktori upload).
+ */
+function resolveUploadedFile(filename: string): string | undefined {
+  const uploadDir = resolve(process.env.UPLOAD_DIR || './uploads');
+  const full = resolve(uploadDir, filename);
+  const rel = relative(uploadDir, full);
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) return undefined;
+  return full;
+}
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -309,6 +341,76 @@ export class SettingsController {
       create: { key: 'branding', value: body },
       update: { value: body },
     });
+  }
+
+  // ── Template Dokumen: gambar latar (background) ─────────────────────────
+  // Menyimpan filename ke setting `docTemplate.<type>.image`; dipakai oleh
+  // PDF generator sebagai latar halaman (lihat documents.service).
+
+  @Post('doc-template/:type/image')
+  @ApiConsumes('multipart/form-data')
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'national',
+    summary: 'Upload gambar latar template dokumen per tipe',
+  })
+  @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('doc-template')))
+  async uploadDocTemplateImage(
+    @Param('type') type: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    const key = docTemplateImageKey(type);
+    if (!file) {
+      throw new BadRequestException('File gambar latar harus diupload');
+    }
+    if (!validateImageMagicBytes(file.path)) {
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
+    }
+
+    // Ganti gambar lama → catat dulu sebelum upsert, hapus file lama setelahnya.
+    const existing = await this.prisma.setting.findUnique({ where: { key } });
+    const oldFile = typeof existing?.value === 'string' ? existing.value : '';
+
+    await this.settingsService.updateSettings({ [key]: file.filename });
+
+    if (oldFile && oldFile !== file.filename) {
+      const oldPath = resolveUploadedFile(oldFile);
+      if (oldPath) {
+        try {
+          unlinkSync(oldPath);
+        } catch {
+          /* best-effort cleanup */
+        }
+      }
+    }
+    return { key, filename: file.filename, url: `/api/uploads/${file.filename}` };
+  }
+
+  @Delete('doc-template/:type/image')
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'national',
+    summary: 'Hapus gambar latar template dokumen per tipe',
+  })
+  async removeDocTemplateImage(@Param('type') type: string) {
+    const key = docTemplateImageKey(type);
+    const existing = await this.prisma.setting.findUnique({ where: { key } });
+    const oldFile = typeof existing?.value === 'string' ? existing.value : '';
+    if (oldFile) {
+      await this.settingsService.updateSettings({ [key]: '' });
+      const oldPath = resolveUploadedFile(oldFile);
+      if (oldPath) {
+        try {
+          unlinkSync(oldPath);
+        } catch {
+          /* best-effort cleanup */
+        }
+      }
+    }
+    return { success: true };
   }
 
   @Get(':key')

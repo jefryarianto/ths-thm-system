@@ -173,20 +173,67 @@ export class DocumentsService {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { buildPdfDocument } = require('./pdf-generator');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
       const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
       const signers = await this.penandatanganService.resolveSigners(dto.type, distrikId);
-      const PdfDoc = buildPdfDocument({
-        type: dto.type,
-        nomorDokumen,
-        member,
-        qrDataUrl,
-        signers,
-        template: await this.resolveTemplateTexts(dto.type),
+      const template = await this.resolveTemplateTexts(dto.type);
+      const issuedDate = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
       });
+
+      // Piagam & sertifikat pelatihan memakai tata letak lanskap (A4 horizontal)
+      // yang berbeda dari dokumen potret bawaan, mengikuti contoh di packages/templates.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildPdfDocument } = require('./pdf-generator');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildAwardPdf } = require('./pdf-templates/award');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildCertificatePdf } = require('./pdf-templates/certificate');
+
+      let PdfDoc: unknown = null;
+      if (dto.type === 'piagam_prestasi') {
+        PdfDoc = buildAwardPdf({
+          recipientName: member?.namaLengkap || '-',
+          awardNumber: nomorDokumen,
+          issuedDate,
+          signers,
+          qrDataUrl,
+          watermarkText: 'THS',
+          template,
+        });
+      } else if (dto.type === 'sertifikat_pelatihan') {
+        PdfDoc = buildCertificatePdf({
+          recipientName: member?.namaLengkap || '-',
+          certificateNumber: nomorDokumen,
+          eventTitle: (member?.ranting?.nama || '-') as string,
+          location: member?.ranting?.wilayah?.nama || '-',
+          ranting: member?.ranting?.nama || '-',
+          wilayah: member?.ranting?.wilayah?.nama || '-',
+          distrik: member?.ranting?.wilayah?.distrik?.nama || '-',
+          finalScore: '-',
+          predicate: '-',
+          status: 'Lulus',
+          issuedDate,
+          signers,
+          aspects: [],
+          qrDataUrl,
+          variant: 'pelatihan',
+          hideBack: true,
+          template,
+        });
+      } else {
+        PdfDoc = buildPdfDocument({
+          type: dto.type,
+          nomorDokumen,
+          member,
+          qrDataUrl,
+          signers,
+          template,
+        });
+      }
 
       if (PdfDoc) {
         const pdfStream = await ReactPDF.renderToStream(PdfDoc);
@@ -478,6 +525,8 @@ export class DocumentsService {
   /**
    * Baca override teks template dokumen dari tabel `settings`
    * (halaman Settings → Template Dokumen). Nilai kosong → pakai bawaan template.
+   * Termasuk body/isi dokumen (`docTemplate.<type>.body`) dan gambar latar
+   * (`docTemplate.<type>.image`) — gambar di-resolve ke path absolut untuk renderer PDF.
    */
   private async resolveTemplateTexts(type: string) {
     const keys = [
@@ -486,6 +535,8 @@ export class DocumentsService {
       'docTemplate.footer',
       `docTemplate.${type}.judul`,
       `docTemplate.${type}.subJudul`,
+      `docTemplate.${type}.body`,
+      `docTemplate.${type}.image`,
     ];
     const rows = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
     const map: Record<string, string> = {};
@@ -498,7 +549,22 @@ export class DocumentsService {
       footer: map['docTemplate.footer'] || undefined,
       judul: map[`docTemplate.${type}.judul`] || undefined,
       subJudul: map[`docTemplate.${type}.subJudul`] || undefined,
+      body: map[`docTemplate.${type}.body`] || undefined,
+      background: this.resolveUploadFile(map[`docTemplate.${type}.image`]),
     };
+  }
+
+  /**
+   * Path absolut file gambar latar di UPLOAD_DIR — menolak path traversal
+   * dan mengembalikan undefined bila file tidak ada.
+   */
+  private resolveUploadFile(filename?: string): string | undefined {
+    if (!filename) return undefined;
+    const uploadDir = path.resolve(process.env.UPLOAD_DIR || './uploads');
+    const full = path.resolve(uploadDir, filename);
+    const rel = path.relative(uploadDir, full);
+    if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return undefined;
+    return fs.existsSync(full) ? full : undefined;
   }
 
   // ── Generate Certificate (Sertifikat Pendadaran) ──
@@ -712,7 +778,7 @@ export class DocumentsService {
     // Generate PDF using existing pdf-generator with piagam type
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { buildPdfDocument } = require('./pdf-generator');
+      const { buildAwardPdf } = require('./pdf-templates/award');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
@@ -720,17 +786,19 @@ export class DocumentsService {
       const signers = dto.signerName
         ? [{ signerName: dto.signerName, signerTitle: dto.signerTitle || '' }]
         : await this.penandatanganService.resolveSigners('piagam_prestasi', distrikId);
-      const PdfDoc = buildPdfDocument({
-        type: 'piagam_prestasi',
-        nomorDokumen,
-        member: {
-          namaLengkap: member.namaLengkap,
-          nomorAnggota: member.nomorAnggota,
-          tingkat: member.tingkat,
-          ranting: member.ranting,
-        },
-        qrDataUrl,
+      const PdfDoc = buildAwardPdf({
+        recipientName: member.namaLengkap,
+        awardNumber: nomorDokumen,
+        predicate: dto.awardTitle,
+        description: dto.description,
+        issuedDate: new Date().toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
         signers,
+        qrDataUrl,
+        watermarkText: 'THS',
         template: await this.resolveTemplateTexts('piagam_prestasi'),
       });
 

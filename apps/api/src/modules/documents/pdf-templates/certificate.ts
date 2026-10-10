@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const React = require('react');
 const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
+import { fillTemplateText } from './template-text';
 
 const BLUE_900 = '#1e3a5f';
 const BLUE_950 = '#0f1f3a';
@@ -15,6 +16,15 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: WHITE,
     position: 'relative',
+  },
+  /** Gambar latar (background) — menutupi seluruh halaman, di bawah konten. */
+  backgroundImage: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: 1188,
+    height: 840,
+    objectFit: 'fill',
   },
   innerBorder1: {
     position: 'absolute',
@@ -139,6 +149,14 @@ const styles = StyleSheet.create({
     color: '#475569',
     marginTop: 24,
     lineHeight: 1.6,
+  },
+  /** Body/isi dari pengaturan (Template Dokumen → Isi Dokumen). */
+  bodyTemplateText: {
+    fontSize: 15,
+    color: '#475569',
+    marginTop: 24,
+    lineHeight: 1.6,
+    textAlign: 'center',
   },
   infoGrid: {
     position: 'absolute',
@@ -372,6 +390,8 @@ interface CertificatePdfProps {
   aspects: AspectScore[];
   qrDataUrl?: string;
   hideBack?: boolean;
+  /** Varian sertifikat — menentukan sub-judul & judul sisi belakang bawaan. */
+  variant?: 'pendadaran' | 'pelatihan';
   watermarkText?: string;
   watermarkOpacity?: number;
   /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
@@ -379,6 +399,10 @@ interface CertificatePdfProps {
     orgNama?: string;
     judul?: string;
     subJudul?: string;
+    /** Body/isi dokumen dengan placeholder {{nama}}, {{kegiatan}}, dst. */
+    body?: string;
+    /** Path absolut gambar latar — dirender sebagai background halaman. */
+    background?: string;
   };
 }
 
@@ -400,6 +424,8 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     signers,
     aspects,
     qrDataUrl,
+    hideBack,
+    variant,
     watermarkText,
     watermarkOpacity,
     template,
@@ -407,9 +433,27 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
 
   const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const judulText = template?.judul || 'SERTIFIKAT';
-  const subJudulText = template?.subJudul || 'PENDADARAN';
+  const subJudulText = template?.subJudul || (variant === 'pelatihan' ? 'PELATIHAN' : 'PENDADARAN');
+  const backTitleText = variant === 'pelatihan' ? 'RINCIAN PENILAIAN PELATIHAN' : 'RINCIAN PENILAIAN PENDADARAN';
   const watermarkLabel = watermarkText || 'THS';
   const watermarkAlpha = watermarkOpacity ?? 0.045;
+  // Body/isi dari pengaturan — menggantikan keterangan bawaan bila diisi.
+  const bodyText = template?.body
+    ? fillTemplateText(template.body, {
+        nama: recipientName,
+        nomor: certificateNumber,
+        kegiatan: eventTitle,
+        lokasi: location,
+        ranting,
+        wilayah,
+        distrik,
+        nilai: finalScore,
+        predikat: predicate,
+        status,
+        tanggal: issuedDate,
+      })
+    : undefined;
+  const background = template?.background;
 
   const signerBlocks = (signers || []).map((s, i) =>
     h(
@@ -447,6 +491,10 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     h(
       Page,
       { size: [1188, 840], style: styles.page, key: 'front' },
+      // Latar (background) opsional dari pengaturan Template Dokumen
+      background
+        ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage })
+        : null,
       h(
         View,
         { style: { ...styles.watermark, opacity: watermarkAlpha } },
@@ -493,11 +541,13 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
         { style: styles.bodySection },
         h(Text, { style: styles.diberikanText }, 'Diberikan kepada'),
         h(View, { style: styles.namaBox }, h(Text, { style: styles.namaText }, recipientName)),
-        h(
-          Text,
-          { style: styles.keteranganLulus },
-          `atas kelulusan dalam kegiatan ${eventTitle} di ${location}`,
-        ),
+        bodyText
+          ? h(Text, { style: styles.bodyTemplateText }, bodyText)
+          : h(
+              Text,
+              { style: styles.keteranganLulus },
+              `atas kelulusan dalam kegiatan ${eventTitle} di ${location}`,
+            ),
       ),
       // Info Grid
       h(
@@ -578,6 +628,10 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     h(
       Page,
       { size: [1188, 840], style: styles.page, key: 'back' },
+      // Latar (background) opsional — sama dengan sisi depan
+      background
+        ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage })
+        : null,
       h(
         View,
         { style: { ...styles.watermark, opacity: watermarkAlpha } },
@@ -589,7 +643,7 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
       ),
       h(View, { style: styles.innerBorder1 }),
       h(View, { style: styles.innerBorder2 }),
-      h(Text, { style: styles.backTitle }, 'RINCIAN PENILAIAN PENDADARAN'),
+      h(Text, { style: styles.backTitle }, backTitleText),
       h(
         Text,
         { style: styles.backSubtitle },
@@ -643,5 +697,6 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     ),
   ];
 
-  return h(Document, null, pages);
+  // hideBack: cetak satu sisi saja (depan) — dipakai sertifikat pelatihan.
+  return h(Document, null, hideBack ? [pages[0]] : pages);
 }

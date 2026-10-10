@@ -17,6 +17,10 @@ jest.mock('./pdf-templates/certificate', () => ({
   buildCertificatePdf: jest.fn().mockReturnValue({}),
 }));
 
+jest.mock('./pdf-templates/award', () => ({
+  buildAwardPdf: jest.fn().mockReturnValue({}),
+}));
+
 jest.mock('@react-pdf/renderer', () => ({
   renderToStream: jest.fn().mockResolvedValue({
     pipe: jest.fn((writeStream) => {

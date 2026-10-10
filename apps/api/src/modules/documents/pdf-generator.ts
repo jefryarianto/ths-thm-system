@@ -1,12 +1,25 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const React = require('react');
 const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
+import { fillTemplateText } from './pdf-templates/template-text';
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 12, fontFamily: 'Helvetica', position: 'relative' as const },
+  /** Gambar latar (background) — menutupi seluruh halaman, di bawah konten. */
+  backgroundImage: {
+    position: 'absolute' as const,
+    left: 0,
+    top: 0,
+    width: 595,
+    height: 842,
+    objectFit: 'fill' as const,
+  },
   header: { marginBottom: 20, textAlign: 'center' as const },
   title: { fontSize: 18, fontWeight: 'bold' as const, marginBottom: 8 },
   subtitle: { fontSize: 14, marginBottom: 4, color: '#555' },
+  /** Body/isi dokumen dari pengaturan (Template Dokumen → Isi Dokumen). */
+  bodyBlock: { marginBottom: 16 },
+  bodyText: { fontSize: 11, lineHeight: 1.7, color: '#334155', textAlign: 'center' as const },
   section: { marginBottom: 16 },
   label: { fontSize: 10, color: '#888', marginBottom: 2 },
   value: { fontSize: 12, marginBottom: 8 },
@@ -89,6 +102,10 @@ interface PdfDocProps {
     orgAlamat?: string;
     judul?: string;
     footer?: string;
+    /** Body/isi dokumen dengan placeholder {{nama}}, {{nomor}}, dst. */
+    body?: string;
+    /** Path absolut gambar latar — dirender sebagai background halaman. */
+    background?: string;
   };
 }
 
@@ -113,6 +130,22 @@ export function buildPdfDocument({
     'Dokumen ini valid dan terverifikasi. Diterbitkan oleh THS-THM System Manajemen.';
   const watermarkLabel = watermarkText || 'THS-THM';
   const watermarkAlpha = watermarkOpacity ?? 0.04;
+  // Body/isi dokumen dari pengaturan — placeholder diisi dari data dokumen.
+  const bodyText = template?.body
+    ? fillTemplateText(template.body, {
+        nama: member?.namaLengkap,
+        nomor: nomorDokumen,
+        tingkat: member?.tingkat ?? undefined,
+        ranting: member?.ranting?.nama ?? undefined,
+        judul,
+        orgNama,
+        tanggal: new Date().toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        }),
+      })
+    : undefined;
 
   return h(
     Document,
@@ -120,6 +153,10 @@ export function buildPdfDocument({
     h(
       Page,
       { size: 'A4', style: styles.page },
+      // Latar (background) opsional dari pengaturan Template Dokumen
+      template?.background
+        ? h(Image, { key: 'bg', src: template.background, style: styles.backgroundImage })
+        : null,
       // Security Watermark
       h(
         View,
@@ -142,6 +179,16 @@ export function buildPdfDocument({
           : []),
         h(Text, { style: styles.subtitle }, judul),
       ),
+      // Body/isi dokumen (opsional — bila kosong, tata letak bawaan dipertahankan)
+      ...(bodyText
+        ? [
+            h(
+              View,
+              { key: 'body-template', style: styles.bodyBlock },
+              h(Text, { style: styles.bodyText }, bodyText),
+            ),
+          ]
+        : []),
       // Nomor Dokumen
       h(
         View,
