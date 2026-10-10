@@ -443,4 +443,68 @@ test.describe('Users Dashboard Page', () => {
     await expect.poll(() => patchBody).not.toBeNull();
     expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1' });
   });
+
+  test('mengubah role TIDAK mereset penempatan organisasi yang sudah ter-prefill', async ({
+    page,
+  }) => {
+    await mockOrgStructure(page);
+    await mockSuperadminScope(page);
+
+    // User admin_ranting sudah punya ranting r1 (wilayah w1, distrik d1).
+    const EDIT_USER = {
+      id: '20',
+      namaLengkap: 'Admin Ranting Aktif',
+      email: 'ranting-aktif@ths-thm.or.id',
+      role: 'admin_ranting',
+      isActive: true,
+      createdAt: '2024-07-01T00:00:00Z',
+      distrikId: 'd1',
+      wilayahId: 'w1',
+      rantingId: 'r1',
+      ranting: {
+        id: 'r1',
+        nama: 'Ranting Menteng',
+        wilayahId: 'w1',
+        wilayah: {
+          id: 'w1',
+          nama: 'Wilayah Jakarta Pusat',
+          distrikId: 'd1',
+          distrik: { id: 'd1', nama: 'Distrik Jakarta' },
+        },
+      },
+    };
+
+    await page.route('**/api/users/20', (route) =>
+      route.fulfill(json({ success: true, data: EDIT_USER })),
+    );
+    let patchBody: Record<string, unknown> | null = null;
+    await page.route('**/api/users/20', async (route) => {
+      if (route.request().method() === 'PATCH') {
+        patchBody = route.request().postDataJSON() as Record<string, unknown>;
+        await route.fulfill(
+          json({ success: true, data: EDIT_USER, message: 'User berhasil diperbarui' }),
+        );
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.goto('/users');
+    await page.getByRole('button', { name: 'Opsi Admin Ranting Aktif' }).click();
+    await page.getByText('Edit User').click();
+
+    // Prefill terisi.
+    await expect(page.getByTestId('org-cascade-ranting')).toHaveValue('r1');
+
+    // Ganti role → penempatan lama HARUS tetap (bukan ter-reset kosong).
+    await page.getByTestId('user-role').selectOption('anggota');
+    await expect(page.getByTestId('org-cascade-distrik')).toHaveValue('d1');
+    await expect(page.getByTestId('org-cascade-wilayah')).toHaveValue('w1');
+    await expect(page.getByTestId('org-cascade-ranting')).toHaveValue('r1');
+
+    // Simpan → ranting lama tetap terkirim tanpa perlu memilih ulang.
+    await page.getByRole('button', { name: 'Simpan' }).click();
+    await expect.poll(() => patchBody).not.toBeNull();
+    expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' });
+  });
 });

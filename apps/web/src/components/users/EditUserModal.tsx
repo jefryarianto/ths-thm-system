@@ -101,8 +101,12 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
 
   const handleRoleChange = (role: string) => {
     setForm((prev) => ({ ...prev, role }));
-    // Ganti role = ganti kebutuhan organisasi → reset cascade.
-    setOrg(EMPTY_ORG_SELECTION);
+    // JANGAN reset cascade saat ganti role — pertahankan penempatan lama.
+    // Backend `resolveOrgScope` sudah menurunkan ranting→wilayah→distrik dan
+    // membersihkan id di bawah level role (mis. ranting dikosongkan saat
+    // turun ke admin_distrik), jadi data lama aman dipertahankan. Mereset di
+    // sini membuat pengguna kehilangan pilihan ranting/wilayah yang sudah ada
+    // dan memaksa mengisi ulang dari awal setiap kali hanya mengubah role.
     setErrors((prev) => ({ ...prev, role: '', ranting: '' }));
   };
 
