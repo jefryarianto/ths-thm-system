@@ -31,6 +31,8 @@ test.describe('Settings — /settings (Settings Hub)', () => {
     await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({
       timeout: 8000,
     });
+    // Audit Log tinggal di tab "Autentikasi & Keamanan" (section Sistem).
+    await page.getByRole('button', { name: /Autentikasi & Keamanan/i }).click();
     await expect(page.locator('a[href="/audit-logs"]').first()).toBeVisible({ timeout: 8000 });
   });
 
@@ -65,7 +67,8 @@ test.describe('Settings — /settings (Settings Hub)', () => {
   });
 
   test('Audit Log link navigates to /audit-logs', async ({ page }) => {
-    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
+    // Audit Log berada di tab "Autentikasi & Keamanan" (section Sistem).
+    await page.getByRole('button', { name: /Autentikasi & Keamanan/i }).click();
     await page.locator('a[href="/audit-logs"]').first().click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(/\/audit-logs/);
   });
