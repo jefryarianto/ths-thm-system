@@ -225,6 +225,12 @@ export const menuGroups: MenuGroup[] = [
       },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       {
+        href: '/settings/email/logs',
+        label: 'Riwayat Email',
+        icon: History,
+        minRole: 'admin_distrik',
+      },
+      {
         href: '/settings/penandatangan',
         label: 'Penandatangan',
         icon: PenLine,

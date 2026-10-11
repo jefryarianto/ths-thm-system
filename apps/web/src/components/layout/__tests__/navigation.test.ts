@@ -148,7 +148,8 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    expect(hrefs).toHaveLength(49);
+    // 49 item + "Riwayat Email" (/settings/email/logs) di grup Pengaturan.
+    expect(hrefs).toHaveLength(50);
   });
 
   it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {

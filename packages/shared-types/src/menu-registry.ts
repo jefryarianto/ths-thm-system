@@ -72,6 +72,7 @@ export const MENU_REGISTRY = [
   { menuKey: 'settings', label: 'Pengaturan', href: '/settings', minRole: 'admin_ranting' },
   { menuKey: 'settingsMenuPermissions', label: 'Hak Akses Menu', href: '/settings/menu-permissions', minRole: 'superadmin' },
   { menuKey: 'settingsEmail', label: 'Email Admin', href: '/settings/email', minRole: 'admin_distrik' },
+  { menuKey: 'settingsEmailLogs', label: 'Riwayat Email', href: '/settings/email/logs', minRole: 'admin_distrik' },
   { menuKey: 'settingsPenandatangan', label: 'Penandatangan', href: '/settings/penandatangan', minRole: 'admin_distrik' },
   { menuKey: 'settingsKartu', label: 'Template Kartu', href: '/settings/kartu', minRole: 'admin_nasional' },
   { menuKey: 'settingsDokumen', label: 'Template Dokumen', href: '/settings/dokumen', minRole: 'admin_nasional' },
