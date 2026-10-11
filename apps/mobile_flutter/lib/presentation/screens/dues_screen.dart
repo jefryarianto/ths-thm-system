@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/due.dart';
 import '../../logic/dues/dues_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
@@ -47,19 +49,27 @@ class _DuesScreenState extends State<DuesScreen> {
           if (state is DuesError) {
             return _Error(message: state.message);
           }
-          if (state is! DuesLoaded) {
+          // State unggah bukti juga membawa daftar iuran — perlakukan seperti
+          // data ter-load agar layar tidak berkedip ke tampilan kosong.
+          final List<Due> dues;
+          if (state is DuesLoaded) {
+            dues = state.dues;
+          } else if (state is DuesProofUploading) {
+            dues = state.dues;
+          } else if (state is DuesProofUploadSuccess) {
+            dues = state.dues;
+          } else {
             return const EmptyStateView(
               icon: Icons.account_balance_wallet_outlined,
               title: 'Belum ada data iuran',
               message: 'Riwayat iuran Anda akan muncul di sini.',
             );
           }
-          final dues = state.dues;
           final lunas = dues.where((d) => _isPaid(d.status)).length;
           return Column(
             children: [
               _SummaryBar(total: dues.length, lunas: lunas),
-              if (state.isStale)
+              if (state is DuesLoaded && state.isStale)
                 StaleDataBanner(
                   errorMessage: state.errorMessage,
                   onRefresh: () => context
@@ -212,19 +222,99 @@ class _SummaryBar extends StatelessWidget {
 /// Bagian "Bukti Pembayaran" pada detail iuran — menampilkan gambar bukti dari
 /// `iuran.buktiBayarPath` (mis. `/api/uploads/proofs/...`). Tap gambar membuka
 /// viewer layar penuh (zoom). Tanpa bukti → placeholder sesuai status.
-class _ProofSection extends StatelessWidget {
+class _ProofSection extends StatefulWidget {
   final Due due;
   const _ProofSection({required this.due});
 
   @override
+  State<_ProofSection> createState() => _ProofSectionState();
+}
+
+class _ProofSectionState extends State<_ProofSection> {
+  final _imagePicker = ImagePicker();
+  bool _uploading = false;
+
+  bool get _paid => widget.due.status.toLowerCase().contains('lunas') ||
+      widget.due.status.toLowerCase() == 'paid';
+
+  bool get _canUpload => !_paid;
+
+  /// Pilih gambar bukti (kamera/galeri) lalu kirim ke bloc untuk diunggah ke
+  /// `POST /payments/:id/upload-proof`. Ukuran dibatasi agar hemat kuota dan
+  /// sesuai limit 5MB di server.
+  Future<void> _pickAndUpload() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: AppTheme.space8),
+            const Text('Unggah Bukti Pembayaran',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined,
+                  color: AppTheme.info),
+              title: const Text('Ambil Foto (Kamera)',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: AppTheme.info),
+              title: const Text('Pilih dari Galeri',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Penyimpanan internal perangkat'),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    try {
+      final result = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (result == null || !mounted) return;
+      setState(() => _uploading = true);
+      context.read<DuesBloc>().add(DuesUploadProofRequested(
+            iuranId: widget.due.id,
+            filePath: result.path,
+          ));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _uploading = false);
+        showCenteredSnackBar(context, 'Gagal memilih gambar: $e');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final url = due.buktiUrl;
-    final paid = due.status.toLowerCase().contains('lunas') ||
-        due.status.toLowerCase() == 'paid';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final url = widget.due.buktiUrl;
+    final paid = _paid;
+    return BlocListener<DuesBloc, DuesState>(
+      listener: (context, state) {
+        if (state is DuesProofUploadSuccess) {
+          setState(() => _uploading = false);
+          showCenteredSnackBar(context, state.message);
+          Navigator.of(context).pop();
+        } else if (state is DuesError) {
+          setState(() => _uploading = false);
+          showCenteredSnackBar(context, state.message);
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         const Divider(),
         const SizedBox(height: AppTheme.space8),
         Row(children: [
@@ -298,8 +388,56 @@ class _ProofSection extends StatelessWidget {
                     TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
           ),
         ],
-      ],
+        if (_canUpload) ..._buildUploadArea(theme),
+        ],
+      ),
     );
+  }
+
+  /// Tombol unggah bukti + keterangan status verifikasi. Hanya tampil untuk
+  /// iuran yang belum lunas (`_canUpload`).
+  List<Widget> _buildUploadArea(ThemeData theme) {
+    final waiting =
+        widget.due.status.toLowerCase().contains('verifikasi');
+    return [
+      const SizedBox(height: AppTheme.space12),
+      SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: _uploading ? null : _pickAndUpload,
+          icon: _uploading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Icons.upload_file_outlined, size: 20),
+          label: Text(
+            waiting
+                ? 'Ganti Bukti Pembayaran'
+                : _uploading
+                    ? 'Mengunggah…'
+                    : 'Unggah Bukti Pembayaran',
+          ),
+        ),
+      ),
+      if (waiting) ...[
+        const SizedBox(height: AppTheme.space8),
+        Row(children: [
+          Icon(Icons.schedule_outlined,
+              size: 14, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Bukti terkirim, menunggu verifikasi admin.',
+              style: TextStyle(
+                  fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        ]),
+      ],
+    ];
   }
 
   void _openViewer(BuildContext context, String url) {

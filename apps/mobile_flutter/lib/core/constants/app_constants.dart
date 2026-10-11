@@ -67,6 +67,8 @@ class AppConstants {
 
   // Iuran
   static const String duesMe = '$baseUrl/dues/members/me';
+  static String duesUploadProof(String id) =>
+      '$baseUrl/payments/$id/upload-proof';
 
   // Dokumen
   static String memberDocuments(String id) => '$baseUrl/members/$id/documents';

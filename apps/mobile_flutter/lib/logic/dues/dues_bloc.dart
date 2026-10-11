@@ -13,10 +13,22 @@ part 'dues_state.dart';
 class DuesBloc extends Bloc<DuesEvent, DuesState> {
   DuesBloc() : super(DuesInitial()) {
     on<DuesLoadRequested>(_onDuesLoadRequested);
+    on<DuesUploadProofRequested>(_onDuesUploadProofRequested);
     on<DuesLogoutRequested>(_onDuesLogoutRequested);
   }
 
   final ApiClient _apiClient = ApiClient();
+
+  /// Ambil daftar iuran terbaru dari `GET /dues/members/me`, segarkan cache,
+  /// dan kembalikan daftar hasil parse. Dipakai baik saat load awal maupun
+  /// setelah unggah bukti berhasil. Melempar `DioException` bila gagal.
+  Future<List<Due>> _fetchDues() async {
+    final response = await _apiClient.dio.get(AppConstants.duesMe);
+    final dynamic raw = response.data['data'];
+    final List<dynamic> data = raw is List ? raw : [];
+    await ApiCache.instance.set(CacheKeys.dues, data);
+    return data.map((json) => Due.fromJson(json)).toList();
+  }
 
   Future<void> _onDuesLoadRequested(
     DuesLoadRequested event,
@@ -43,11 +55,7 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     }
 
     try {
-      final response = await _apiClient.dio.get(AppConstants.duesMe);
-      final dynamic raw = response.data['data'];
-      final List<dynamic> data = raw is List ? raw : [];
-      final dues = data.map((json) => Due.fromJson(json)).toList();
-      await ApiCache.instance.set(CacheKeys.dues, data);
+      final dues = await _fetchDues();
       emit(DuesLoaded(dues: dues));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
@@ -60,6 +68,58 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
           isStale: true,
           errorMessage: _messageFromError(e),
         ));
+      } else {
+        emit(DuesError(message: _messageFromError(e)));
+      }
+    } catch (e) {
+      emit(DuesError(message: e.toString()));
+    }
+  }
+
+  /// Unggah bukti pembayaran (multipart/form-data, field `bukti`) ke
+  /// `POST /payments/:id/upload-proof`. Hanya untuk iuran milik sendiri
+  /// (server memvalidasi via scope `self`). Setelah sukses, daftar iuran
+  /// di-reload dan state menjadi `DuesProofUploadSuccess`.
+  Future<void> _onDuesUploadProofRequested(
+    DuesUploadProofRequested event,
+    Emitter<DuesState> emit,
+  ) async {
+    final token = await _apiClient.getAccessToken();
+    if (token == null || token.isEmpty) {
+      emit(DuesInitial());
+      return;
+    }
+
+    // Pertahankan daftar saat ini agar kartu tidak hilang saat loading.
+    final currentDues =
+        state is DuesLoaded ? (state as DuesLoaded).dues : <Due>[];
+    emit(DuesProofUploading(dues: currentDues, iuranId: event.iuranId));
+
+    try {
+      final fileName = event.filePath.split(RegExp(r'[\\/]')).last;
+      final formData = FormData.fromMap({
+        'bukti': await MultipartFile.fromFile(
+          event.filePath,
+          filename: fileName,
+        ),
+        if (event.catatan != null && event.catatan!.isNotEmpty)
+          'catatan': event.catatan,
+      });
+
+      await _apiClient.dio.post(
+        AppConstants.duesUploadProof(event.iuranId),
+        data: formData,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+
+      final dues = await _fetchDues();
+      emit(DuesProofUploadSuccess(
+        dues: dues,
+        message: 'Bukti pembayaran terkirim, menunggu verifikasi admin.',
+      ));
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        emit(DuesInitial());
       } else {
         emit(DuesError(message: _messageFromError(e)));
       }
