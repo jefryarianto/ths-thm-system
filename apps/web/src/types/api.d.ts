@@ -7656,7 +7656,7 @@ export interface components {
         GenerateDocumentDto: {
             memberId: string;
             /** @enum {string} */
-            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
             signatureId?: string;
             stampId?: string;
         };
@@ -7664,7 +7664,7 @@ export interface components {
             /** @description Daftar ID anggota (opsional jika range dipakai) */
             memberIds?: string[];
             /** @enum {string} */
-            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
             /**
              * @description Rentang anggota untuk resolve memberIds otomatis
              * @enum {string}
@@ -7853,6 +7853,7 @@ export interface components {
             anggotaId: string;
             periode: string;
             jumlah: number;
+            dueDate?: string;
             tanggalBayar?: string;
             /** @enum {string} */
             metodeBayar?: "manual" | "transfer" | "online";
@@ -7876,6 +7877,7 @@ export interface components {
             jumlah: number;
         };
         PaymentConfirmationDto: {
+            buktiBayarPath?: string;
             catatan?: string;
         };
         CreatePeriodDto: {
@@ -12744,7 +12746,7 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
-                tipe?: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+                tipe?: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
                 anggotaId?: string;
             };
             header?: never;

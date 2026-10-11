@@ -7542,7 +7542,14 @@
                 "kartu_anggota",
                 "sertifikat_pendadaran",
                 "sertifikat_pelatihan",
-                "piagam_prestasi"
+                "piagam_prestasi",
+                "sertifikat_tingkatan",
+                "sertifikat_pelatih",
+                "sertifikat_wasit_dan_juri",
+                "sertifikat_penguji",
+                "piagam_seroja",
+                "piagam_melati",
+                "piagam_mawar"
               ],
               "type": "string"
             }
@@ -17745,7 +17752,14 @@
               "kartu_anggota",
               "sertifikat_pendadaran",
               "sertifikat_pelatihan",
-              "piagam_prestasi"
+              "piagam_prestasi",
+              "sertifikat_tingkatan",
+              "sertifikat_pelatih",
+              "sertifikat_wasit_dan_juri",
+              "sertifikat_penguji",
+              "piagam_seroja",
+              "piagam_melati",
+              "piagam_mawar"
             ]
           },
           "signatureId": {
@@ -17776,7 +17790,14 @@
               "kartu_anggota",
               "sertifikat_pendadaran",
               "sertifikat_pelatihan",
-              "piagam_prestasi"
+              "piagam_prestasi",
+              "sertifikat_tingkatan",
+              "sertifikat_pelatih",
+              "sertifikat_wasit_dan_juri",
+              "sertifikat_penguji",
+              "piagam_seroja",
+              "piagam_melati",
+              "piagam_mawar"
             ]
           },
           "range": {
@@ -18363,6 +18384,9 @@
           "jumlah": {
             "type": "number"
           },
+          "dueDate": {
+            "type": "string"
+          },
           "tanggalBayar": {
             "type": "string"
           },
@@ -18452,6 +18476,9 @@
       "PaymentConfirmationDto": {
         "type": "object",
         "properties": {
+          "buktiBayarPath": {
+            "type": "string"
+          },
           "catatan": {
             "type": "string"
           }
