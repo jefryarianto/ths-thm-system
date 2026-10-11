@@ -52,6 +52,10 @@ const PUBLIC_PAGES: PublicPage[] = [
   // tidak menerbitkan token, sehingga proxy tidak boleh menendang balik.
   { path: '/force-change-password', heading: /THS-THM/ },
   { path: '/public/leaderboard', heading: /Leaderboard/i },
+  // Landing verifikasi publik (form input kode/token) — halaman induk dari
+  // /verify/<token>. Tanpa entri ini, cross-check routes-manifest akan
+  // mendeteksi /verify sebagai route top-level yang belum terklasifikasi.
+  { path: '/verify', heading: /Verifikasi Kartu & Dokumen/i },
 ];
 
 /**
