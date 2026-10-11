@@ -107,11 +107,6 @@ export class DueFilterDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  buktiBayarPath?: string;
-
   @IsString()
   periode?: string;
 }
