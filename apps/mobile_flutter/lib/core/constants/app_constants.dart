@@ -70,6 +70,9 @@ class AppConstants {
   static String duesUploadProof(String id) =>
       '$baseUrl/payments/$id/upload-proof';
 
+  // Rekening tujuan pembayaran (GET /payments/bank-info, scope member)
+  static const String paymentsBankInfo = '$baseUrl/payments/bank-info';
+
   // Dokumen
   static String memberDocuments(String id) => '$baseUrl/members/$id/documents';
   static String documentFile(String id) => '$baseUrl/documents/$id/file';

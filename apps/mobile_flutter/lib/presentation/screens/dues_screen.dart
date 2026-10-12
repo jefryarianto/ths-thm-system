@@ -7,6 +7,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/due.dart';
+import '../../data/models/bank_info.dart';
+import '../../core/constants/app_constants.dart';
+import '../../core/api/api_client.dart';
 import '../../logic/dues/dues_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -23,12 +26,47 @@ class DuesScreen extends StatefulWidget {
 }
 
 class _DuesScreenState extends State<DuesScreen> {
+  /// Data rekening tujuan (sumber: `GET /payments/bank-info`).
+  List<BankInfo>? _bankInfos;
+  bool _bankInfosLoaded = false;
+  String? _bankInfosError;
+
   @override
   void initState() {
     super.initState();
     final state = context.read<DuesBloc>().state;
     if (state is! DuesLoaded && state is! DuesLoading) {
       context.read<DuesBloc>().add(const DuesLoadRequested());
+    }
+    _fetchBankInfo();
+  }
+
+  /// Ambil rekening tujuan dari API agar daftar iuran bisa menunjuk target
+  /// pembayaran tanpa membuat iuran sendiri menyimpan akun bank.
+  Future<void> _fetchBankInfo() async {
+    try {
+      final response = await ApiClient().dio.get(AppConstants.paymentsBankInfo);
+      final dynamic data = response.data?['data'];
+      if (data is! List) return;
+      final infos = <BankInfo>[];
+      for (final item in data) {
+        if (item is Map<String, dynamic>) {
+          infos.add(BankInfo.fromJson(item));
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _bankInfos = infos;
+          _bankInfosLoaded = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _bankInfosError = e.toString();
+          _bankInfosLoaded = true;
+        });
+      }
     }
   }
 
@@ -76,6 +114,22 @@ class _DuesScreenState extends State<DuesScreen> {
                       .read<DuesBloc>()
                       .add(const DuesLoadRequested()),
                 ),
+              if (!_bankInfosLoaded)
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppTheme.space12,
+                    vertical: AppTheme.space4,
+                  ),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_bankInfos != null && _bankInfos!.isNotEmpty)
+                _BankInfoPanel(bankInfos: _bankInfos!)
+              else if (_bankInfosError != null)
+                _BankInfoError(message: _bankInfosError!)
+              else
+                const SizedBox.shrink(),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async =>
@@ -100,6 +154,9 @@ class _DuesScreenState extends State<DuesScreen> {
                           itemBuilder: (context, i) => DueItemCard(
                             due: dues[i],
                             onTap: () => _showDueDetail(context, dues[i]),
+                            onUpload: _dueCanUpload(dues[i])
+                                ? () => _showDueDetail(context, dues[i])
+                                : null,
                           ),
                         ),
                 ),
@@ -115,6 +172,8 @@ class _DuesScreenState extends State<DuesScreen> {
     return status.toLowerCase().contains('lunas') ||
         status.toLowerCase() == 'paid';
   }
+
+  bool _dueCanUpload(Due due) => !_isPaid(due.status);
 
   /// Buka detail iuran (bottom sheet) — dipanggil dari `DueItemCard.onTap`.
   void _showDueDetail(BuildContext context, Due due) {
@@ -222,6 +281,128 @@ class _SummaryBar extends StatelessWidget {
 /// Bagian "Bukti Pembayaran" pada detail iuran — menampilkan gambar bukti dari
 /// `iuran.buktiBayarPath` (mis. `/api/uploads/proofs/...`). Tap gambar membuka
 /// viewer layar penuh (zoom). Tanpa bukti → placeholder sesuai status.
+
+/// Panel rekening tujuan — tampil di atas daftar iuran.
+class _BankInfoPanel extends StatelessWidget {
+  final List<BankInfo> bankInfos;
+
+  const _BankInfoPanel({required this.bankInfos});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.space12),
+      padding: const EdgeInsets.all(AppTheme.space16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.account_balance_wallet_outlined,
+                  size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: AppTheme.space8),
+              Text('Rekening Tujuan Pembayaran',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface)),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space12),
+          ...bankInfos.map((info) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppTheme.space8,
+                  horizontal: AppTheme.space4,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${info.bankName} • ${info.accountNumber}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        if (info.accountName.isNotEmpty)
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Ats. ${info.accountName}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (info.qrisImageUrl != null && info.qrisImageUrl!.isNotEmpty)
+                      SizedBox(
+                        height: 16,
+                        child: Text(
+                          'QRIS: ${info.qrisImageUrl}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tadapan ringan bila endpoint rekening tujuan tidak tersedia.
+class _BankInfoError extends StatelessWidget {
+  final String message;
+
+  const _BankInfoError({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.space12),
+      padding: const EdgeInsets.all(AppTheme.space12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline,
+              size: 18, color: theme.colorScheme.onErrorContainer),
+          const SizedBox(width: AppTheme.space8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProofSection extends StatefulWidget {
   final Due due;
   const _ProofSection({required this.due});

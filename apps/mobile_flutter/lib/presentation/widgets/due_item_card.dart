@@ -19,6 +19,7 @@ class DueItemCard extends StatelessWidget {
     super.key,
     required this.due,
     this.onTap,
+    this.onUpload,
   });
 
   /// Data iuran (periode, nominal, status, tanggal pembayaran).
@@ -26,6 +27,10 @@ class DueItemCard extends StatelessWidget {
 
   /// Dipanggil saat kartu diketuk (mis. membuka detail / bukti pembayaran).
   final VoidCallback? onTap;
+
+  /// Dipanggil saat tombol "Unggah Bukti Pembayaran" pada kartu ditekan.
+  /// Null → tombol tidak ditampilkan (mis. iuran sudah lunas).
+  final VoidCallback? onUpload;
 
   /// Status "lunas" — dianggap lunas bila mengandung kata lunas/paid.
   bool get _isPaid =>
@@ -51,9 +56,12 @@ class DueItemCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.space16),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // ── Kiri: ikon centang hijau lembut (penanda status) ────
               Container(
                 width: 44,
@@ -102,6 +110,21 @@ class DueItemCard extends StatelessWidget {
                       color: theme.colorScheme.outline),
                 ],
               ),
+                ],
+              ),
+              if (!_isPaid && onUpload != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppTheme.space12),
+                  child: SizedBox(
+                    height: 44,
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: onUpload,
+                      icon: const Icon(Icons.upload_file_outlined, size: 20),
+                      label: const Text('Unggah Bukti Pembayaran'),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
