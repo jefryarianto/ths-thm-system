@@ -8,7 +8,6 @@ import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import {
   Save,
   RotateCcw,
-  IdCard,
   FileText,
   Award,
   FileCheck2,
@@ -73,15 +72,6 @@ const FIELD_GROUPS: TemplateGroup[] = [
         placeholder: 'Dokumen ini valid dan terverifikasi?',
         textarea: true,
       },
-    ],
-  },
-  {
-    key: 'kartu_anggota',
-    title: 'Kartu Anggota (KTA)',
-    icon: IdCard,
-    description: 'Judul dokumen kartu tanda anggota.',
-    fields: [
-      { key: 'docTemplate.kartu_anggota.judul', label: 'Judul', placeholder: 'KARTU ANGGOTA' },
     ],
   },
   {
