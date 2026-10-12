@@ -130,4 +130,48 @@ describe('pdf-templates pedoman kesekretariatan (Lampiran 3–6 + Bab VI)', () =
     expect(text).toContain('Ibu Maria Sumiyarti Rahadi');
     expect(text).toContain('MAWAR');
   });
+
+  it('mendukung kustomisasi judul, subJudul, dan body placeholder pada sertifikat dan piagam', () => {
+    const docTingkatan = buildSertifikatTingkatanPdf({
+      recipientName: 'Anastasia Kappipang',
+      certificateNumber: '03-3-056',
+      previousLevel: 'III',
+      currentLevel: 'IV',
+      predikat: 'Baik',
+      examDate: '1 Desember 2003',
+      examLocation: 'Tanatoraja',
+      issuedDate: BERLINANG,
+      ranting: 'Ranting Kare',
+      districtName: 'Makassar',
+      signers: [],
+      template: {
+        judul: 'SERTIFIKAT KUSTOM',
+        subJudul: 'UKT KHUSUS',
+        body: 'Selamat {{nama}} no {{nomor}} lulus UKT dari {{tingkatSebelumnya}} ke {{tingkatSaatIni}} di {{tempat}} tgl {{tanggal}}.',
+      },
+    });
+    const textTingkatan = collectText(docTingkatan);
+    expect(textTingkatan).toContain('SERTIFIKAT KUSTOM');
+    expect(textTingkatan).toContain('UKT KHUSUS');
+    expect(textTingkatan).toContain('Selamat Anastasia Kappipang no 03-3-056 lulus UKT dari III ke IV di Tanatoraja tgl 1 Desember 2003.');
+
+    const docSeroja = buildPiagamSerojaPdf({
+      recipientName: 'Budi Santoso',
+      awardNumber: 'SRJ-001',
+      activityDetail: 'Panitia Natal',
+      issuedDate: BERLINANG,
+      ranting: 'Ranting A',
+      districtName: 'Distrik B',
+      signers: [],
+      template: {
+        judul: 'PENGHARGAAN JUANG',
+        subJudul: 'SEROJA EMAS',
+        body: 'Diberikan ke {{nama}} nomor {{nomor}} atas jasa {{kegiatan}} pada {{tanggal}} di {{ranting}}.',
+      },
+    });
+    const textSeroja = collectText(docSeroja);
+    expect(textSeroja).toContain('PENGHARGAAN JUANG');
+    expect(textSeroja).toContain('SEROJA EMAS');
+    expect(textSeroja).toContain('Diberikan ke Budi Santoso nomor SRJ-001 atas jasa Panitia Natal pada Jakarta, 10 Oktober 2026 di Ranting A.');
+  });
 });

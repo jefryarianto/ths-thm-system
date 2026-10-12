@@ -218,6 +218,7 @@ interface SertifikatTingkatanProps {
     orgNama?: string;
     orgAlamat?: string;
     judul?: string;
+    subJudul?: string;
     body?: string;
     background?: string;
   };
@@ -244,12 +245,14 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
 
   const orgNama = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const orgAlamat = template?.orgAlamat;
-  const judulText = template?.judul || 'SERTIFIKAT TINGKATAN';
+  const judulText = template?.judul || 'SERTIFIKAT';
+  const subJudulText = template?.subJudul || 'TINGKATAN';
   const background = template?.background;
 
   const bodyText = template?.body
     ? fillTemplateText(template.body, {
         nama: recipientName,
+        nomor: certificateNumber,
         tingkatSebelumnya: previousLevel,
         tingkatSaatIni: currentLevel,
         predikat,
@@ -289,8 +292,8 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
       h(
         View,
         { style: styles.titleSection },
-        h(Text, { style: styles.sertifikatText }, 'SERTIFIKAT' ),
-        h(Text, { style: styles.tingkatanText }, 'TINGKATAN' ),
+        h(Text, { style: styles.sertifikatText }, judulText),
+        h(Text, { style: styles.tingkatanText }, subJudulText),
         h(Text, { style: styles.nomorText }, `Nomor: ${certificateNumber}`),
       ),
       // Badan isi

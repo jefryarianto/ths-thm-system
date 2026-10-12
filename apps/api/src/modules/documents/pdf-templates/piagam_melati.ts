@@ -65,7 +65,7 @@ interface PiagamMelatiProps {
   districtName: string;
   signers: Array<{ signerName: string; signerTitle: string }>;
   qrDataUrl?: string;
-  template?: { orgNama?: string; orgAlamat?: string; judul?: string; body?: string; background?: string };
+  template?: { orgNama?: string; orgAlamat?: string; judul?: string; subJudul?: string; body?: string; background?: string };
 }
 
 const h = React.createElement;
@@ -76,8 +76,10 @@ export function buildPiagamMelatiPdf(props: PiagamMelatiProps) {
   const background = template?.background;
   const levelText = (LEVEL_LABELS[melatiLevel] ?? LEVEL_LABELS[1]) as string;
   const yearsText = (LEVEL_YEARS[melatiLevel] ?? LEVEL_YEARS[1]) as string;
+  const judulText = template?.judul || 'PIAGAM MELATI';
+  const subJudulText = template?.subJudul || levelText;
   const bodyText = template?.body
-    ? fillTemplateText(template.body, { nama: recipientName, tingkat: String(melatiLevel), ranting, distrik: districtName })
+    ? fillTemplateText(template.body, { nama: recipientName, nomor: awardNumber, tingkat: String(melatiLevel), ranting, distrik: districtName, tanggal: issuedDate })
     : undefined;
   const signerSectionChildren = (signers || []).map((s, i) => h(View, { key: `signer-${i}`, style: styles.signerBlock }, s.signerName ? h(Text, { style: { fontSize: 13, fontWeight: 'bold', color: BLUE_950 } }, s.signerName) : null, s.signerTitle ? h(Text, { style: { fontSize: 11, color: '#64748b', marginTop: 2 } }, s.signerTitle) : null));
 
@@ -89,8 +91,8 @@ export function buildPiagamMelatiPdf(props: PiagamMelatiProps) {
         h(Text, { style: styles.orgName }, orgNama),
         h(Text, { style: styles.districtName }, districtName)),
       h(View, { style: styles.titleSection },
-        h(Text, { style: styles.piagamText }, 'PIAGAM MELATI'),
-        h(Text, { style: styles.melatiText }, levelText),
+        h(Text, { style: styles.piagamText }, judulText),
+        h(Text, { style: styles.melatiText }, subJudulText),
         h(Text, { style: styles.nomorText }, `Nomor: ${awardNumber}`)),
       h(View, { style: styles.bodySection },
         h(Text, { style: styles.gloriaText }, 'Gloria.'),

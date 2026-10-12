@@ -48,7 +48,7 @@ interface PiagamSerojaProps {
   districtName: string;
   signers: Array<{ signerName: string; signerTitle: string }>;
   qrDataUrl?: string;
-  template?: { orgNama?: string; orgAlamat?: string; judul?: string; body?: string; background?: string };
+  template?: { orgNama?: string; orgAlamat?: string; judul?: string; subJudul?: string; body?: string; background?: string };
 }
 
 const h = React.createElement;
@@ -57,8 +57,10 @@ export function buildPiagamSerojaPdf(props: PiagamSerojaProps) {
   const { recipientName, awardNumber, activityDetail, issuedDate, ranting, districtName, signers, qrDataUrl, template } = props;
   const orgNama = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const background = template?.background;
+  const judulText = template?.judul || 'PIAGAM PENGHARGAAN';
+  const subJudulText = template?.subJudul || 'SEROJA - LAMBANG PERJUANGAN';
   const bodyText = template?.body
-    ? fillTemplateText(template.body, { nama: recipientName, kegiatan: activityDetail, ranting, distrik: districtName })
+    ? fillTemplateText(template.body, { nama: recipientName, nomor: awardNumber, kegiatan: activityDetail, ranting, distrik: districtName, tanggal: issuedDate })
     : undefined;
   const signerSectionChildren = (signers || []).map((s, i) => h(View, { key: `signer-${i}`, style: styles.signerBlock }, s.signerName ? h(Text, { style: { fontSize: 14, fontWeight: 'bold', color: BLUE_950 } }, s.signerName) : null, s.signerTitle ? h(Text, { style: { fontSize: 12, color: '#64748b', marginTop: 2 } }, s.signerTitle) : null));
 
@@ -70,8 +72,8 @@ export function buildPiagamSerojaPdf(props: PiagamSerojaProps) {
         h(Text, { style: styles.orgName }, orgNama),
         h(Text, { style: styles.districtName }, districtName)),
       h(View, { style: styles.titleSection },
-        h(Text, { style: styles.piagamText }, 'PIAGAM PENGHARGAAN'),
-        h(Text, { style: styles.serojaText }, 'SEROJA - LAMBANG PERJUANGAN'),
+        h(Text, { style: styles.piagamText }, judulText),
+        h(Text, { style: styles.serojaText }, subJudulText),
         h(Text, { style: styles.nomorText }, `Nomor: ${awardNumber}`)),
       h(View, { style: styles.bodySection },
         h(Text, { style: styles.diberikanText }, 'Diberikan dengan bangga kepada'),

@@ -50,7 +50,7 @@ interface PiagamMawarProps {
   districtName: string;
   signers: Array<{ signerName: string; signerTitle: string }>;
   qrDataUrl?: string;
-  template?: { orgNama?: string; orgAlamat?: string; judul?: string; body?: string; background?: string };
+  template?: { orgNama?: string; orgAlamat?: string; judul?: string; subJudul?: string; body?: string; background?: string };
 }
 
 const h = React.createElement;
@@ -59,8 +59,10 @@ export function buildPiagamMawarPdf(props: PiagamMawarProps) {
   const { recipientName, awardNumber, contributionDetail, issuedDate, ranting, districtName, signers, qrDataUrl, template } = props;
   const orgNama = template?.orgNama || 'KELUARGA BESAR TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const background = template?.background;
+  const judulText = template?.judul || 'PENGHARGAAN MAWAR';
+  const subJudulText = template?.subJudul || 'LAMBANG KESUCIAN DAN KEMULIAAN';
   const bodyText = template?.body
-    ? fillTemplateText(template.body, { nama: recipientName, jasa: contributionDetail, ranting, distrik: districtName })
+    ? fillTemplateText(template.body, { nama: recipientName, nomor: awardNumber, jasa: contributionDetail, ranting, distrik: districtName, tanggal: issuedDate })
     : undefined;
   const signerSectionChildren = (signers || []).map((s, i) => h(View, { key: `signer-${i}`, style: styles.signerBlock }, s.signerName ? h(Text, { style: { fontSize: 13, fontWeight: 'bold', color: BLUE_950 } }, s.signerName) : null, s.signerTitle ? h(Text, { style: { fontSize: 11, color: '#64748b', marginTop: 2 } }, s.signerTitle) : null));
 
@@ -72,8 +74,8 @@ export function buildPiagamMawarPdf(props: PiagamMawarProps) {
         h(Text, { style: styles.orgName }, orgNama),
         h(Text, { style: styles.districtName }, districtName)),
       h(View, { style: styles.titleSection },
-        h(Text, { style: styles.piagamText }, 'PENGHARGAAN MAWAR'),
-        h(Text, { style: styles.mawarText }, 'LAMBANG KESUCIAN DAN KEMULIAAN'),
+        h(Text, { style: styles.piagamText }, judulText),
+        h(Text, { style: styles.mawarText }, subJudulText),
         h(Text, { style: styles.quoteText }, '"Kurangkai mawar yang harum semerbak, lambang kasihku padamu, Bunda. Ave Maria!"'),
         h(Text, { style: styles.nomorText }, `Nomor: ${awardNumber}`)),
       h(View, { style: styles.bodySection },

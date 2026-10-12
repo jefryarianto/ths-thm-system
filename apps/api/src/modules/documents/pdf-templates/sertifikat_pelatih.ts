@@ -53,7 +53,7 @@ interface SertifikatPelatihProps {
   qrDataUrl?: string;
   watermarkText?: string;
   watermarkOpacity?: number;
-  template?: { orgNama?: string; orgAlamat?: string; judul?: string; body?: string; background?: string };
+  template?: { orgNama?: string; orgAlamat?: string; judul?: string; subJudul?: string; body?: string; background?: string };
 }
 
 const h = React.createElement;
@@ -62,9 +62,11 @@ export function buildSertifikatPelatihPdf(props: SertifikatPelatihProps) {
   const { recipientName, certificateNumber, trainingTitle, issuedDate, ranting, districtName, signers, qrDataUrl, template } = props;
   const orgNama = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const orgAlamat = template?.orgAlamat;
+  const judulText = template?.judul || 'SERTIFIKAT';
+  const subJudulText = template?.subJudul || 'PELATIH';
   const background = template?.background;
   const bodyText = template?.body
-    ? fillTemplateText(template.body, { nama: recipientName, pelatihan: trainingTitle, ranting, distrik: districtName })
+    ? fillTemplateText(template.body, { nama: recipientName, nomor: certificateNumber, pelatihan: trainingTitle, ranting, distrik: districtName, tanggal: issuedDate })
     : undefined;
   const signerSectionChildren = (signers || []).map((s, i) => h(View, { key: `signer-${i}`, style: styles.signerBlock }, s.signerName ? h(Text, { style: { fontSize: 15, fontWeight: 'bold', color: BLUE_950 } }, s.signerName) : null, s.signerTitle ? h(Text, { style: { fontSize: 12, color: '#64748b', marginTop: 2 } }, s.signerTitle) : null));
 
@@ -76,8 +78,8 @@ export function buildSertifikatPelatihPdf(props: SertifikatPelatihProps) {
         h(Text, { style: styles.orgName }, orgNama),
         h(Text, { style: styles.districtName }, 'KOORDINATORAT NASIONAL')),
       h(View, { style: styles.titleSection },
-        h(Text, { style: styles.sertifikatText }, 'SERTIFIKAT'),
-        h(Text, { style: styles.pelatihText }, 'PELATIH'),
+        h(Text, { style: styles.sertifikatText }, judulText),
+        h(Text, { style: styles.pelatihText }, subJudulText),
         h(Text, { style: styles.nomorText }, `Nomor: ${certificateNumber}`)),
       h(View, { style: styles.bodySection },
         h(Text, { style: styles.diberikanText }, 'Sertifikat ini diberikan kepada'),
