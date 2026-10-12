@@ -1239,10 +1239,10 @@ export class AuthService {
     refreshToken: string;
   } {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(payload as any);
+    const refreshToken = this.jwtService.sign(payload as any, {
       secret: this.envConfig.jwtRefreshSecret,
-      expiresIn: this.envConfig.jwtRefreshExpiresIn,
+      expiresIn: this.envConfig.jwtRefreshExpiresIn as `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`,
     });
     return { accessToken, refreshToken };
   }

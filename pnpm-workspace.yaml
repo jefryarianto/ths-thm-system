@@ -78,9 +78,8 @@ overrides:
   # vitest + @vitest/mocker MED (GHSA-82fw-gwwq-j7x9 <4.1.11) — direct dep apps/web
   # vitest@^4.1.11 di apps/web/package.json; mocker transitive mengikuti
   '@vitest/mocker': 4.1.11
-  # node-forge HIGH (GHSA-86w9-cpqp-85rv, <=1.4.0) — TIDAK ADA fix: rentang mencakup SEMUA
-  # versi (npm latest 1.4.0, patched=null). Diabaikan, lihat docs/SECURITY-NOTES.md.
-  # braces <=3.0.3 (patched 3.0.4) & sprintf-js <=1.1.3 (patched 1.1.4) — fix belum di-publish npm.
+  # Handlebar advisory patched; published package versions for other advisories are still vulnerable.
+  handlebars: 4.7.10
 
 allowBuilds:
   '@nestjs/core': true
