@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PublicLayout } from '@/components';
 import {
-  Shield,
   ScanLine,
   ArrowRight,
   Camera,
@@ -138,18 +137,27 @@ export default function VerifyIndexPage() {
   }, [scanOpen]);
   return (
     <PublicLayout>
-      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
-        <div className="max-w-md w-full mx-auto px-4">
-        {/* Logo / Brand */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-3">
-            <Shield size={28} className="text-white" />
+      {/* Page Header — pola yang sama dengan /berita, /daftar, dsb. */}
+      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+            <a href="/" className="hover:text-white transition-colors">
+              Beranda
+            </a>
+            <span aria-hidden="true">›</span>
+            <span className="text-gold-400">Verifikasi</span>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">Verifikasi Kartu &amp; Dokumen</h1>
-          <p className="text-xs text-gray-500 mt-0.5">THS-THM Verification</p>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold">Verifikasi Kartu &amp; Dokumen</h1>
+          <p className="text-white/70 text-sm sm:text-base mt-2 max-w-xl">
+            Pindai QR code pada KTA/sertifikat/piagam, atau tempelkan kode/link verifikasi.
+          </p>
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
+      </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+      <section className="bg-gray-50 dark:bg-gray-950 py-10 sm:py-14">
+        <div className="max-w-md w-full mx-auto px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
           {/* ── Area Scanner (saat kamera aktif) ── */}
           {scanOpen && (
             <div className="mb-6">
@@ -190,21 +198,21 @@ export default function VerifyIndexPage() {
           {!scanOpen && (
             <>
               <div className="flex justify-center mb-5">
-                <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-                  <ScanLine size={32} className="text-blue-500" />
+                <div className="w-16 h-16 rounded-2xl bg-navy-100 dark:bg-navy-900/30 flex items-center justify-center">
+                  <ScanLine size={32} className="text-navy-800 dark:text-gold-400" />
                 </div>
               </div>
-              <h2 className="text-base font-semibold text-gray-900 text-center mb-1">
+              <h2 className="text-base font-semibold text-navy-900 dark:text-white text-center mb-1">
                 Masukkan Kode Verifikasi
               </h2>
-              <p className="text-xs text-gray-500 text-center mb-5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-5">
                 Pindai QR code pada KTA/sertifikat/piagam, atau tempelkan kode/link verifikasi di
                 bawah ini.
               </p>
               <button
                 type="button"
                 onClick={() => setScanOpen(true)}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-700 transition shadow-lg"
               >
                 <Camera size={18} />
                 Pindai QR Code
@@ -237,10 +245,10 @@ export default function VerifyIndexPage() {
                 }}
                 placeholder="Tempel token atau URL /verify/…"
                 className={
-                  'w-full pl-10 pr-4 py-3 rounded-xl border text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition ' +
+                  'w-full pl-10 pr-4 py-3 rounded-xl border text-sm text-navy-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition ' +
                   (error
                     ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-200 focus:ring-blue-200 focus:border-blue-400')
+                    : 'border-gray-200 dark:border-gray-700 focus:ring-navy-200 focus:border-navy-400')
                 }
               />
             </div>
@@ -249,7 +257,7 @@ export default function VerifyIndexPage() {
 
             <button
               type="submit"
-              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-700 transition shadow-lg"
             >
               Verifikasi Sekarang
               <ArrowRight size={16} />

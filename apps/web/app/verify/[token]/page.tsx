@@ -99,7 +99,7 @@ function photoUrl(fotoPath?: string | null) {
 function VerificationSkeleton() {
   return (
     <PublicLayout>
-      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
+      <section className="bg-gray-50 dark:bg-gray-950 py-10 sm:py-14">
         <div className="max-w-md w-full mx-auto px-4">
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 animate-pulse">
             <div className="flex justify-center mb-6">
@@ -172,16 +172,30 @@ export default function VerifyDocumentPage() {
 
   return (
     <PublicLayout>
-      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
-        <div className="max-w-md w-full mx-auto px-4">
-        {/* Logo / Brand */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-3">
-            <Shield size={28} className="text-white" />
+      {/* Page Header — pola yang sama dengan /berita, /daftar, dsb. */}
+      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+            <a href="/" className="hover:text-white transition-colors">
+              Beranda
+            </a>
+            <span aria-hidden="true">›</span>
+            <a href="/verify" className="hover:text-white transition-colors">
+              Verifikasi
+            </a>
+            <span aria-hidden="true">›</span>
+            <span className="text-gold-400">Hasil</span>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">Verifikasi Kartu &amp; Dokumen</h1>
-          <p className="text-xs text-gray-500 mt-0.5">THS-THM Verification</p>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold">Verifikasi Kartu &amp; Dokumen</h1>
+          <p className="text-white/70 text-sm sm:text-base mt-2 max-w-xl">
+            Hasil pemeriksaan keaslian terhadap sistem THS-THM.
+          </p>
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
+      </div>
+
+      <section className="bg-gray-50 dark:bg-gray-950 py-10 sm:py-14">
+        <div className="max-w-md w-full mx-auto px-4">
 
         {/* Error State */}
         {error && (
@@ -193,7 +207,7 @@ export default function VerifyDocumentPage() {
             <p className="text-sm text-gray-500 mb-4">{error}</p>
             <button
               onClick={verify}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-navy-800 text-white rounded-xl text-sm font-medium hover:bg-navy-700 transition shadow-lg"
             >
               <RefreshCw size={16} />
               Coba Lagi
