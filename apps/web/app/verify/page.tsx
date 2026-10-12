@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PublicLayout } from '@/components';
 import {
   Shield,
   ScanLine,
@@ -136,8 +137,9 @@ export default function VerifyIndexPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanOpen]);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <PublicLayout>
+      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
+        <div className="max-w-md w-full mx-auto px-4">
         {/* Logo / Brand */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-3">
@@ -258,8 +260,9 @@ export default function VerifyIndexPage() {
         <p className="text-center text-2xs text-gray-400 mt-4">
           Keaslian dokumen diverifikasi langsung terhadap sistem THS-THM.
         </p>
-      </div>
-    </div>
+        </div>
+      </section>
+    </PublicLayout>
   );
 }
 

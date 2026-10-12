@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { PublicLayout } from '@/components';
 import apiClient from '@/lib/api-client';
 import {
   Shield,
@@ -97,20 +98,22 @@ function photoUrl(fotoPath?: string | null) {
 
 function VerificationSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 animate-pulse">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-gray-200 rounded-2xl" />
-          </div>
-          <div className="space-y-3 text-center">
-            <div className="h-6 bg-gray-200 rounded w-48 mx-auto" />
-            <div className="h-4 bg-gray-200 rounded w-64 mx-auto" />
-            <div className="h-10 bg-gray-200 rounded-xl w-full mt-6" />
+    <PublicLayout>
+      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
+        <div className="max-w-md w-full mx-auto px-4">
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 animate-pulse">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-gray-200 rounded-2xl" />
+            </div>
+            <div className="space-y-3 text-center">
+              <div className="h-6 bg-gray-200 rounded w-48 mx-auto" />
+              <div className="h-4 bg-gray-200 rounded w-64 mx-auto" />
+              <div className="h-10 bg-gray-200 rounded-xl w-full mt-6" />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </PublicLayout>
   );
 }
 
@@ -168,8 +171,9 @@ export default function VerifyDocumentPage() {
   const title = isKta ? 'Kartu Anggota' : 'Dokumen';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <PublicLayout>
+      <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-10 sm:py-14">
+        <div className="max-w-md w-full mx-auto px-4">
         {/* Logo / Brand */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-3">
@@ -468,7 +472,8 @@ export default function VerifyDocumentPage() {
             THS-THM System - Sistem Verifikasi Kartu &amp; Dokumen
           </div>
         </div>
-      </div>
-    </div>
+        </div>
+      </section>
+    </PublicLayout>
   );
 }
