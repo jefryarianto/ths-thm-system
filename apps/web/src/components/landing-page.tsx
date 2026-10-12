@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { getHomePathForRole } from '@/lib/role-redirect';
 import { PublicLayout } from '@/components';
 import {
   Calendar,
@@ -39,6 +41,7 @@ interface Stats {
 }
 
 export function LandingPageContent() {
+  const { isAuthenticated, role } = useAuth();
   const { t } = useI18n();
   const [news, setNews] = useState<Berita[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -153,10 +156,10 @@ export function LandingPageContent() {
                   <ArrowRight size={18} />
                 </Link>
                 <Link
-                  href="/login"
+                  href={isAuthenticated ? getHomePathForRole(role) : '/login'}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/30 text-white px-6 py-3.5 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-200"
                 >
-                  Masuk ke Dashboard
+                  {isAuthenticated ? 'Buka Dashboard' : 'Masuk ke Dashboard'}
                 </Link>
               </div>
             </div>

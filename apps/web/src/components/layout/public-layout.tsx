@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useI18n } from '@/i18n/context';
+import { useAuth } from '@/hooks/use-auth';
+import { getHomePathForRole } from '@/lib/role-redirect';
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -46,6 +48,7 @@ interface NavDropdown {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   const { locale, t, setLocale } = useI18n();
+  const { isAuthenticated, role } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -194,8 +197,11 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <Globe size={12} aria-hidden="true" className="text-gold-400" />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
             </button>
-            <Link href="/login" className="hover:text-gold-400 transition-colors">
-              {t.nav.login}
+            <Link
+              href={isAuthenticated ? getHomePathForRole(role) : '/login'}
+              className="hover:text-gold-400 transition-colors"
+            >
+              {isAuthenticated ? 'Buka Dashboard' : t.nav.login}
             </Link>
           </div>
         </div>
