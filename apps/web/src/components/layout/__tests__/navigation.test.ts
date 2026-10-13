@@ -18,6 +18,8 @@ import type { Role } from '@/types';
 /** Seluruh href yang harus ada di navigasi terstruktur. */
 const EXPECTED_HREFS = [
   '/dashboard',
+  '/galeri/upload',
+  '/galeri/manage',
   '/activities',
   '/calendar',
   '/forum',
@@ -148,8 +150,8 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    // 49 item + "Riwayat Email" (/settings/email/logs) di grup Pengaturan.
-    expect(hrefs).toHaveLength(50);
+    // 50 item + "Riwayat Email" (/settings/email/logs) di grup Pengaturan.
+    expect(hrefs).toHaveLength(52);
   });
 
   it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {
