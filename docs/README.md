@@ -2,6 +2,12 @@
 
 Kumpulan dokumen perencanaan, spesifikasi, dan referensi pengembangan.
 
+## Dokumen Referensi Organisasi (root `docs/`)
+
+| Dokumen                                        | Isi                                             |
+| ---------------------------------------------- | ----------------------------------------------- |
+| `2 Pedoman Administrasi Kesekretariatan.pdf`   | Pedoman administrasi & kesekretariatan THS-THM  |
+
 ## Folder Perencanaan & Spesifikasi
 
 | Folder       | Deskripsi                                                   |
