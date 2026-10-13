@@ -3,7 +3,13 @@ import type { NextRequest } from 'next/server';
 
 // Exact-match public paths. JANGAN masukkan '/' ke daftar startsWith di
 // bawah — startsWith('/') mencocokkan SEMUA route dan mematikan proteksi auth.
-const publicExactPaths = ['/'];
+//
+// '/galeri' HARUS exact-match: route turunannya ('/galeri/upload',
+// '/galeri/manage') adalah halaman dashboard yang butuh login + role
+// (anggota / admin_ranting). Memasukkannya ke publicPaths membuat
+// startsWith('/galeri') mencocokkan keduanya pula → proteksi auth proxy
+// mati untuk halaman upload dan moderasi.
+const publicExactPaths = ['/', '/galeri'];
 
 const publicPaths = [
   '/login',
@@ -20,7 +26,6 @@ const publicPaths = [
   '/kepengurusan',
   '/struktur-organisasi',
   '/berita',
-  '/galeri',
   '/donasi',
 ];
 

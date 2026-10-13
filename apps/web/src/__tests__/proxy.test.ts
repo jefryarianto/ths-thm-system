@@ -96,6 +96,27 @@ describe('proxy (auth gate)', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it('allows /galeri (public gallery) through without a session', async () => {
+    const req = makeRequest({ pathname: '/galeri', cookieValue: null });
+    const res = await proxy(req);
+    expect(res).toEqual({ type: 'next' });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('protects /galeri/upload — galeri child routes are dashboard pages, not public', async () => {
+    // Bug nyata: '/galeri' duluan masuk daftar startsWith (publicPaths), yang
+    // juga mencocokkan '/galeri/upload' dan '/galeri/manage' → halaman upload
+    // & moderasi bisa dibuka tanpa login. '/galeri' harus exact-match.
+    for (const pathname of ['/galeri/upload', '/galeri/manage']) {
+      const req = makeRequest({ pathname, cookieValue: null });
+      const res = await proxy(req);
+      expect(res.type).toBe('redirect');
+      expect(String(res.url)).toContain('/login');
+      expect(String(res.url)).toContain('session_invalid=1');
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it('allows the page through when the backend verify returns 200 (valid session)', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
     const req = makeRequest({ pathname: '/dashboard', cookieValue: 'valid-token' });
