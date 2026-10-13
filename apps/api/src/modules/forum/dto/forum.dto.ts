@@ -23,6 +23,13 @@ export class CreatePostDto {
   @IsString()
   @IsNotEmpty()
   konten: string;
+
+  @ApiPropertyOptional({
+    description: 'ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa.',
+  })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
 }
 
 export class UpdateThreadDto {

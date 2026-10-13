@@ -231,6 +231,28 @@ export class ForumController {
     return this.service.createPost(id, dto, user);
   }
 
+  @Post('posts/:id/replies')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Membalas komentar tertentu (reply bersarang)' },
+  )
+  @ApiParam({ name: 'id', description: 'ID Post induk yang dibalas', required: true })
+  @ApiBody({ type: CreatePostDto, description: 'Konten balasan' })
+  @ApiCreatedResponse({ description: 'Balasan bersarang berhasil dikirim' })
+  replyToPost(
+    @Param('id') id: string,
+    @Body() dto: CreatePostDto,
+    @CurrentUser() user: { id: string; role: string },
+  ) {
+    return this.service.replyToPost(id, dto, user);
+  }
+
   @Patch('posts/:id')
   @CrudAuth(
     'superadmin',

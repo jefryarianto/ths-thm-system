@@ -10,6 +10,24 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { paginate } from '../../common/utils/pagination';
 
+type PostAuthor = { id: string; namaLengkap: string; nomorAnggota: string };
+
+/** Flat ForumPost row including its author (as returned by Prisma). */
+type ForumPostWithAuthor = {
+  id: string;
+  threadId: string;
+  authorId: string;
+  parentId: string | null;
+  konten: string;
+  isSolution: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  author: PostAuthor;
+};
+
+/** ForumPostWithAuthor with its nested replies (recursive tree node). */
+type ForumPostTreeNode = ForumPostWithAuthor & { children: ForumPostTreeNode[] };
+
 @Injectable()
 export class ForumService {
   private readonly logger = new Logger(ForumService.name);
@@ -76,6 +94,34 @@ export class ForumService {
 
   private isAdmin(role?: string): boolean {
     return !!role && this.ADMIN_ROLES.includes(role);
+  }
+
+  /**
+   * Convert a flat list of posts into a nested tree.
+   *
+   * The schema stores `parentId` (self-reference); we build the tree in-memory
+   * so consumers receive `children: Post[]` on every post. Orphan replies —
+   * whose parent was deleted (FK is ON DELETE SET NULL) — are treated as
+   * top-level posts so the thread stays fully readable.
+   */
+  private buildPostTree(posts: ForumPostWithAuthor[]): ForumPostTreeNode[] {
+    const nodes = new Map<string, ForumPostTreeNode>();
+    for (const post of posts) {
+      nodes.set(post.id, { ...post, children: [] });
+    }
+
+    const roots: ForumPostTreeNode[] = [];
+    for (const post of posts) {
+      const node = nodes.get(post.id)!;
+      const parent = post.parentId ? nodes.get(post.parentId) : undefined;
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return roots;
   }
 
   // ─────────────────────────────────────────────────────────
@@ -148,7 +194,7 @@ export class ForumService {
       },
     });
 
-    return { ...thread, posts };
+    return { ...thread, posts: this.buildPostTree(posts) };
   }
 
   async createThread(dto: CreateThreadDto, user: { id: string; role?: string }) {
@@ -248,12 +294,44 @@ export class ForumService {
       throw new ForbiddenException('Data keanggotaan Anda tidak ditemukan. Tidak dapat membalas.');
     }
 
+    // Reply bersarang: pastikan post induk ada & merupakan bagian thread ini.
+    let parentPost: { id: string; authorId: string; threadId: string } | null = null;
+    if (dto.parentId) {
+      parentPost = await this.prisma.forumPost.findUnique({
+        where: { id: dto.parentId },
+        select: { id: true, authorId: true, threadId: true },
+      });
+      if (!parentPost) throw new NotFoundException('Post induk tidak ditemukan');
+      if (parentPost.threadId !== threadId) {
+        throw new ForbiddenException('Post induk tidak termasuk dalam thread ini');
+      }
+      if (parentPost.authorId === authorId) {
+        throw new ForbiddenException('Tidak dapat membalas post sendiri');
+      }
+    }
+
     const post = await this.prisma.forumPost.create({
-      data: { threadId, authorId, konten: dto.konten },
+      data: { threadId, authorId, parentId: dto.parentId ?? null, konten: dto.konten },
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
-    if (thread.authorId !== authorId) {
+    if (parentPost) {
+      // Notifikasi ke pembuat post induk (bila bukan dirinya sendiri)
+      const parentAuthorUserId = await this.resolveUserIdByAnggotaId(parentPost.authorId);
+      if (parentAuthorUserId) {
+        try {
+          await this.notificationsService.send(parentAuthorUserId, {
+            userId: parentAuthorUserId,
+            judul: 'Membalas Komentar Anda',
+            isi: `${post.author.namaLengkap} membalas komentar Anda di thread "${thread.judul}"`,
+            tipe: 'forum_reply',
+            data: { threadId, postId: post.id, parentId: parentPost.id },
+          });
+        } catch (error) {
+          this.logger.warn(`Gagal kirim notifikasi balasan forum: ${error}`);
+        }
+      }
+    } else if (thread.authorId !== authorId) {
       const threadAuthorUserId = await this.resolveUserIdByAnggotaId(thread.authorId);
       if (threadAuthorUserId) {
         try {
@@ -271,6 +349,21 @@ export class ForumService {
     }
 
     return post;
+  }
+
+  /**
+   * Membalas komentar tertentu (reply bersarang).
+   * Endpoint khusus: `POST /forum/posts/:id/replies`.
+   * Mendelegasikan ke createPost dengan parentId yang sudah ditetapkan.
+   */
+  async replyToPost(postId: string, dto: CreatePostDto, user: { id: string; role?: string }) {
+    const parentPost = await this.prisma.forumPost.findUnique({
+      where: { id: postId },
+      select: { id: true, threadId: true },
+    });
+    if (!parentPost) throw new NotFoundException('Post induk tidak ditemukan');
+
+    return this.createPost(parentPost.threadId, { ...dto, parentId: parentPost.id }, user);
   }
 
   async updatePost(id: string, dto: UpdatePostDto, user: { id: string; role?: string }) {

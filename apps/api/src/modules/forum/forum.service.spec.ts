@@ -39,6 +39,7 @@ describe('ForumService', () => {
     id: 'post1',
     threadId: 'thread1',
     authorId: 'user1',
+    parentId: null,
     konten: 'Test post',
     isSolution: false,
     createdAt: new Date(),
@@ -264,6 +265,120 @@ describe('ForumService', () => {
         tipe: 'forum_reply',
         data: { threadId: 'thread1', postId: expect.any(String) },
       });
+    });
+  });
+
+  describe('nested replies (replyToPost / parentId)', () => {
+    it('should create a nested reply under an existing post', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
+      mockPrisma.forumPost.findUnique.mockResolvedValue({
+        id: 'post1',
+        threadId: 'thread1',
+        authorId: 'user1',
+      });
+      const created = { ...mockPost, id: 'post2', parentId: 'post1', authorId: 'user2' };
+      mockPrisma.forumPost.create.mockResolvedValue(created);
+
+      const result = await service.replyToPost('post1', { konten: 'nested reply' }, otherUser);
+
+      expect(result.parentId).toBe('post1');
+      expect(mockPrisma.forumPost.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ parentId: 'post1', threadId: 'thread1' }),
+        }),
+      );
+    });
+
+    it('should notify parent post author on nested reply', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
+      mockPrisma.forumPost.findUnique.mockResolvedValue({
+        id: 'post1',
+        threadId: 'thread1',
+        authorId: 'user1',
+      });
+      mockPrisma.forumPost.create.mockResolvedValue({
+        ...mockPost,
+        id: 'post2',
+        parentId: 'post1',
+        authorId: 'user2',
+        author: { id: 'user2', namaLengkap: 'Replyer', nomorAnggota: '002' },
+      });
+
+      await service.replyToPost('post1', { konten: 'nested reply' }, otherUser);
+
+      expect(mockNotificationsService.send).toHaveBeenCalledWith('user1', {
+        userId: 'user1',
+        judul: 'Membalas Komentar Anda',
+        isi: 'Replyer membalas komentar Anda di thread "Test Thread"',
+        tipe: 'forum_reply',
+        data: { threadId: 'thread1', postId: 'post2', parentId: 'post1' },
+      });
+    });
+
+    it('should throw NotFoundException when parent post does not exist', async () => {
+      mockPrisma.forumPost.findUnique.mockResolvedValue(null);
+      await expect(
+        service.replyToPost('missing', { konten: 'reply' }, otherUser),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when parent post belongs to another thread', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
+      mockPrisma.forumPost.findUnique.mockResolvedValue({
+        id: 'postX',
+        threadId: 'thread-lain',
+        authorId: 'user1',
+      });
+      await expect(
+        service.createPost('thread1', { konten: 'reply', parentId: 'postX' }, otherUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException when replying to own post', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
+      mockPrisma.forumPost.findUnique.mockResolvedValue({
+        id: 'post1',
+        threadId: 'thread1',
+        authorId: 'user1',
+      });
+      await expect(
+        service.createPost('thread1', { konten: 'reply', parentId: 'post1' }, author),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('getThread - nested tree', () => {
+    it('should return posts as a nested tree', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
+      const t0 = new Date('2026-01-01T00:00:00Z');
+      const t1 = new Date('2026-01-02T00:00:00Z');
+      const t2 = new Date('2026-01-03T00:00:00Z');
+      mockPrisma.forumPost.findMany.mockResolvedValue([
+        { ...mockPost, id: 'p1', parentId: null, createdAt: t0 },
+        { ...mockPost, id: 'p2', parentId: 'p1', createdAt: t1 },
+        { ...mockPost, id: 'p3', parentId: 'p2', createdAt: t2 },
+        { ...mockPost, id: 'p4', parentId: null, createdAt: t1 },
+      ]);
+
+      const result = await service.getThread('thread1');
+
+      expect(result.posts).toHaveLength(2);
+      expect(result.posts.map((p: { id: string }) => p.id)).toEqual(['p1', 'p4']);
+      expect(result.posts[0].children[0].id).toBe('p2');
+      expect(result.posts[0].children[0].children[0].id).toBe('p3');
+      expect(result.posts[1].children).toHaveLength(0);
+    });
+
+    it('should treat orphan replies (deleted parent) as top-level posts', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
+      mockPrisma.forumPost.findMany.mockResolvedValue([
+        { ...mockPost, id: 'p1', parentId: null },
+        { ...mockPost, id: 'p2', parentId: 'deleted-parent' },
+      ]);
+
+      const result = await service.getThread('thread1');
+
+      expect(result.posts.map((p: { id: string }) => p.id).sort()).toEqual(['p1', 'p2']);
     });
   });
 

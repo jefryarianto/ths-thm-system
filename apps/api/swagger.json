@@ -12435,6 +12435,47 @@
         ]
       }
     },
+    "/forum/posts/{id}/replies": {
+      "post": {
+        "operationId": "ForumController_replyToPost",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Post induk yang dibalas",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Konten balasan",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Balasan bersarang berhasil dikirim"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Membalas komentar tertentu (reply bersarang)",
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
     "/forum/posts/{id}": {
       "patch": {
         "operationId": "ForumController_updatePost",
@@ -18744,6 +18785,10 @@
         "properties": {
           "konten": {
             "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa."
           }
         },
         "required": [
