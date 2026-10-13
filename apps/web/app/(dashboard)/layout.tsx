@@ -7,7 +7,10 @@ import { sessionManager } from '@/lib/session-manager';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useMenuOverrides } from '@/hooks/use-menu-overrides';
-import { getHomePathForRole } from '@/lib/role-redirect';
+import {
+  getHomePathForRole,
+  getAdminDashboardRedirect,
+} from '@/lib/role-redirect';
 import Sidebar from '@/components/layout/sidebar';
 import DashboardHeader from '@/components/layout/dashboard-header';
 import {
@@ -48,13 +51,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, isAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } =
     useAuth();
 
-  // Redirect non-admin users (anggota) to forum
+  // Gate `/dashboard` (admin landing) untuk role non-admin.
+  //
+  // NOTE: route group `(dashboard)` BUKAN penanda halaman admin — ia hanya
+  // pengelompokan folder, dan banyak halaman di dalamnya (forum, galeri, chat,
+  // kalender, dll) sah untuk `anggota`. Versi lama memakai
+  // hasMinRole('penguji') secara global sehingga `/forum` — landing utama
+  // anggota — terusir setiap kali layout ini render => infinite refresh loop.
+  //
+  // Sekarang logikanya ada di getAdminDashboardRedirect() (mudah diuji) dan
+  // hanya men-gate route `/dashboard`. Penegakan per-halaman tetap dilakukan
+  // oleh <PermissionGuard> di masing-masing page.
   useEffect(() => {
     if (!user) return;
-    if (!hasMinRole('penguji')) {
-      window.location.replace('/forum');
-    }
-  }, [user, hasMinRole]);
+    const target = getAdminDashboardRedirect(pathname, user.role);
+    if (target) window.location.replace(target);
+  }, [user, pathname]);
 
   // Scope badge state
   const [scopeName, setScopeName] = useState<string | null>(null);
