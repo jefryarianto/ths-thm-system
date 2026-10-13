@@ -130,7 +130,10 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
     items: [
+
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'penguji' },
+      { href: '/galeri/upload', label: 'Kirim Foto Galeri', icon: Globe, minRole: 'anggota' },
+      { href: '/galeri/manage', label: 'Moderasi Galeri', icon: ClipboardCheck, minRole: 'admin_ranting' },
       { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
       { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
       { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },

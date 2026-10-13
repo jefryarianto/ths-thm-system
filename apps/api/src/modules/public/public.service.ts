@@ -28,7 +28,7 @@ export class PublicService {
 
   async getGaleri() {
     return this.prisma.galeri.findMany({
-      where: { isVisible: true },
+      where: { isVisible: true, status: 'APPROVED' },
       orderBy: { tanggal: 'desc' },
     });
   }

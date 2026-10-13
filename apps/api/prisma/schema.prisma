@@ -51,6 +51,12 @@ enum StatusValidasi {
   rejected
 }
 
+enum StatusGaleri {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum StatusCalon {
   diusulkan
   mengikuti_pendadaran
@@ -203,12 +209,25 @@ model Berita {
 model Galeri {
   id        String   @id @default(uuid())
   judul     String
-  gambar    String
-  tanggal   DateTime @default(now())
-  isVisible Boolean  @default(true) @map("is_visible")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  gambar         String
+  tanggal        DateTime      @default(now())
+  isVisible      Boolean       @default(false) @map("is_visible")
+  status         StatusGaleri  @default(PENDING)
+  storageKey     String?       @unique @map("storage_key")
+  fileName       String?       @map("file_name")
+  mimeType       String?       @map("mime_type")
+  ukuranBytes    Int?          @map("ukuran_bytes")
+  uploaderId     String?       @map("uploader_id")
+  reviewerId     String?       @map("reviewer_id")
+  rejectedReason String?       @map("rejected_reason") @db.Text
+  reviewedAt     DateTime?     @map("reviewed_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  uploader       User?         @relation("GaleriUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+  reviewer       User?         @relation("GaleriReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
 
+  @@index([status, isVisible, tanggal])
+  @@index([uploaderId])
   @@map("galeri")
 }
 
@@ -393,6 +412,8 @@ model User {
 
   distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id], onDelete: SetNull)
   wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id], onDelete: SetNull)
+  galeriUploads               Galeri[]              @relation("GaleriUploader")
+  galeriReviewed              Galeri[]              @relation("GaleriReviewer")
   ranting                     Ranting?              @relation(fields: [rantingId], references: [id], onDelete: SetNull)
   notifikasis                 Notifikasi[]
   deviceTokens                DeviceToken[]

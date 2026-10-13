@@ -36,6 +36,8 @@ export interface MenuItemDef {
 
 /** Seluruh menu sidebar, dalam urutan navigasi. */
 export const MENU_REGISTRY = [
+  { menuKey: 'galeriUpload', label: 'Kirim Foto Galeri', href: '/galeri/upload', minRole: 'anggota' },
+  { menuKey: 'galeriManage', label: 'Moderasi Galeri', href: '/galeri/manage', minRole: 'admin_ranting' },
   { menuKey: 'dashboard', label: 'Dashboard', href: '/dashboard', minRole: 'penguji' },
   { menuKey: 'activities', label: 'Kegiatan', href: '/activities', minRole: 'anggota' },
   { menuKey: 'calendar', label: 'Kalender', href: '/calendar', minRole: 'anggota' },

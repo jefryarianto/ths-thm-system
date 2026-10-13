@@ -40,6 +40,9 @@ const DEFAULT_MODULE: ModulePermission = {
 };
 
 export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
+  galeri: { view: 'anggota', create: 'anggota', edit: 'admin_ranting', delete: 'admin_ranting', approve: 'admin_ranting' },
+  galeriUpload: { view: 'anggota', create: 'anggota' },
+  galeriManage: { view: 'admin_ranting', edit: 'admin_ranting', delete: 'admin_ranting', approve: 'admin_ranting' },
   members: { ...DEFAULT_MODULE },
   // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
   candidates: { ...DEFAULT_MODULE, create: 'admin_kegiatan' },

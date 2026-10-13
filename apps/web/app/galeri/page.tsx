@@ -16,6 +16,8 @@ import Link from 'next/link';
 import { logError } from '@/lib/error-logger';
 import { LogoSpinner } from '@/components/ui/logo-spinner';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 interface GambarGaleri {
   id: string;
   url: string;
@@ -35,7 +37,7 @@ export default function GaleriPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch('/api/public/galeri');
+        const res = await fetch(`${API_URL}/api/public/galeri`);
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
         setData(json.data || []);
@@ -184,7 +186,7 @@ export default function GaleriPage() {
                 >
                   {item.url ? (
                     <img
-                      src={item.url.startsWith('/') ? item.url : `/api/uploads/${item.url}`}
+                      src={`${API_URL}/api/galeri/${item.id}/image`}
                       alt={item.judul}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -295,11 +297,7 @@ export default function GaleriPage() {
             <div className="relative max-h-[70vh] bg-black flex items-center justify-center overflow-hidden">
               {currentLightboxPhoto.url ? (
                 <img
-                  src={
-                    currentLightboxPhoto.url.startsWith('/')
-                      ? currentLightboxPhoto.url
-                      : `/api/uploads/${currentLightboxPhoto.url}`
-                  }
+                  src={`${API_URL}/api/galeri/${currentLightboxPhoto.id}/image`}
                   alt={currentLightboxPhoto.judul}
                   className="max-h-[70vh] w-auto max-w-full object-contain"
                 />
