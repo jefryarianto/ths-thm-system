@@ -125,7 +125,7 @@ export async function mockAuth(
   });
 
   // API catch-all: unmocked API calls get an empty success response
-  await page.route(`${E2E_BASE_URL}/api/**`, async (route) => {
+  await page.route(`${process.env.NEXT_PUBLIC_API_URL}/api/**`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
