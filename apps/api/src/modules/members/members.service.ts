@@ -17,7 +17,7 @@ import {
   escapeHtml,
 } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
-import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { normalizePhone } from '../../common/utils/phone.util';
@@ -73,6 +73,8 @@ export class MembersService
         notFound: 'Anggota tidak ditemukan',
         softDelete: true,
         scopeStrategy: 'ranting',
+        // Anggota *is* the row, so its own id identifies the owner.
+        selfScopeField: 'id',
       },
       persistentAudit,
       revisions,
@@ -169,14 +171,21 @@ export class MembersService
     // untuk ranting/wilayah, tetapi admin ter-scope penuh (mis. admin_distrik
     // tanpa rantingId) dan superadmin sama-sama punya rantingId undefined;
     // tanpa fallback wilayah/distrik mereka berbagi bucket 'all' (bocor lintas tenant).
+    // Self scope (anggota/penguji) butuh segment sendiri agar tidak berbagi
+    // bucket dengan anggota lain di ranting yang sama.
     const scopeBucket = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
-    const cacheKey = `members:list:${scopeBucket}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}:${filter.tanpaFoto || ''}`;
+    const selfSeg = this.scopeHelper.selfCacheSegment(scope);
+    const cacheKey = `members:list:${scopeBucket}:${selfSeg}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}:${filter.tanpaFoto || ''}`;
 
     return this.baseFindAll(
       cacheKey,
       async () => {
         const scopeFilter = this.buildScopeFilter(scope);
         const where: Prisma.AnggotaWhereInput = { deletedAt: null, ...scopeFilter };
+        // SECURITY: anggota/penguji hanya boleh melihat record dirinya sendiri.
+        if (isSelfScope(scope)) {
+          where.id = scope.selfMemberId;
+        }
 
         if (filter.search) {
           where.OR = [

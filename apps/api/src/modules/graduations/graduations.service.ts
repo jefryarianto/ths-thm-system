@@ -482,15 +482,19 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   // ═══════════════════════════════════════════════════════════
 
   async findAll(query: GraduationFilterDto, scope?: UserScope, userId?: string, role?: string) {
+    // Penguji adalah role scope 'self': sekarang `scope` selalu terdefinisi untuk
+    // mereka, jadi kita harus menggunakan penugasan mereka (bukan hierarki
+    // rantingnya) sebagai dasar filter — jika tidak, kegiatan yang diujiinya di
+    // ranting lain akan disembunyikan.
     return this.baseFindAll(
-      `graduations:list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || 'all'}`,
+      `graduations:list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${
+        role === 'penguji' && userId ? `penguji:${userId}` : ''
+      }:${query.page || 1}:${query.limit || 10}:${query.status || 'all'}`,
       async () => {
         const where: Record<string, unknown> = { tipe: 'pendadaran' };
 
-        // Apply kegiatan-based scope filter
-        Object.assign(where, await this.buildKegiatanScopeFilter(scope));
-
-        // Activity-scoped roles: filter by assignments
+        // Activity-scoped roles: filter by assignments (takes precedence over the
+        // org-hierarchy filter for penguji, who may examine outside their ranting).
         if (role === 'admin_kegiatan' && userId) {
           where.adminKegiatanId = userId;
         } else if (role === 'penguji' && userId) {
@@ -501,6 +505,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
           });
           const kegiatanIds = assignments.map((a) => a.kegiatanId);
           where.id = { in: kegiatanIds };
+        } else {
+          // Apply kegiatan-based scope filter for org-hierarchy roles only
+          Object.assign(where, await this.buildKegiatanScopeFilter(scope));
         }
 
         if (query.status) where.status = query.status;

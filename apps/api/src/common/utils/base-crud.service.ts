@@ -12,7 +12,7 @@ import { ScopeHelper } from './scope-helpers';
 import { CacheService } from '../services/cache.service';
 import { PersistentAuditService } from '../services/persistent-audit.service';
 import { RevisionService } from '../services/revision.service';
-import { UserScope } from '../interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../interfaces/user-scope.interface';
 import { paginate } from './pagination';
 
 /**
@@ -57,6 +57,9 @@ export type CrudScopeStrategy = 'ranting' | 'kegiatan' | 'anggota_indirect';
  * @property notFound      - Default "not found" error message
  * @property softDelete    - If true, `remove()` sets `deletedAt` instead of hard-deleting
  * @property scopeStrategy - How scope verification is performed (default: 'ranting')
+ * @property selfScopeField - Column identifying the owner row for `self` scope users.
+ *                           Defaults to `'anggotaId'` (iuran, dokumen, klaim…). For the
+ *                           `anggota` model itself use `'id'`, because the member *is* the row.
  */
 export interface CrudConfig {
   model: string;
@@ -64,6 +67,7 @@ export interface CrudConfig {
   notFound?: string;
   softDelete?: boolean;
   scopeStrategy?: CrudScopeStrategy;
+  selfScopeField?: string;
 }
 
 /**
@@ -152,6 +156,14 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     return this.config.scopeStrategy ?? 'ranting';
   }
 
+  /**
+   * Column that identifies the owner of a row, used to isolate `self` scope
+   * (anggota/penguji) users from other members' rows.
+   */
+  protected get selfScopeField(): string {
+    return this.config.selfScopeField ?? 'anggotaId';
+  }
+
   // ── Scope helpers ───────────────────────────────────────
 
   /**
@@ -202,6 +214,12 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       if (!entity) {
         throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
       }
+      // SECURITY: anggota/penguji (scope 'self') hanya boleh mengakses baris
+      // miliknya sendiri. Cek hierarki saja tidak cukup — mereka bisa melihat
+      // data anggota lain di ranting/wilayahnya.
+      if (isSelfScope(scope) && entity.anggotaId !== scope.selfMemberId) {
+        throw new ForbiddenException('Akses ditolak: Anda hanya dapat mengakses data milik sendiri');
+      }
       const hasAccess = await this.scopeHelper.hasAccessToResourceAsync(
         this.prisma,
         scope,
@@ -214,6 +232,23 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     }
 
     // Default: 'ranting' strategy
+    // SECURITY: sama seperti di atas — scope 'self' membatasi ke baris sendiri.
+    if (isSelfScope(scope)) {
+      const selfValue = scope.selfMemberId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const entity = await this.prismaDelegate.findUnique({
+        where: { id },
+        select: { [this.selfScopeField]: true },
+      });
+      if (!entity) {
+        throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
+      }
+      if (entity[this.selfScopeField] !== selfValue) {
+        throw new ForbiddenException('Akses ditolak: Anda hanya dapat mengakses data milik sendiri');
+      }
+      return;
+    }
+
     await this.scopeHelper.verifyResourceAccess(
       this.prisma,
       scope,
@@ -260,51 +295,9 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
    * - National level: no filter
    */
   protected async buildKegiatanScopeFilter(scope?: UserScope): Promise<Record<string, unknown>> {
-    if (!scope) return {};
-
-    if (scope.rantingId) {
-      return {
-        OR: [
-          { scopeType: 'ranting', scopeId: scope.rantingId },
-          { scopeType: 'unit_latihan', scopeId: scope.rantingId },
-        ],
-      };
-    }
-    if (scope.wilayahId) {
-      // Tenant safety: arm ranting dibatasi ke ranting dalam wilayah ini —
-      // bukan seluruh ranting se-nasional.
-      const rantings = await this.prisma.ranting.findMany({
-        where: { wilayahId: scope.wilayahId },
-        select: { id: true },
-      });
-      return {
-        OR: [
-          { scopeType: 'wilayah', scopeId: scope.wilayahId },
-          { scopeType: 'ranting', scopeId: { in: rantings.map((r) => r.id) } },
-        ],
-      };
-    }
-    if (scope.distrikId) {
-      // Tenant safety: arm wilayah/ranting dibatasi ke entitas dalam distrik ini —
-      // bukan seluruh wilayah/ranting se-nasional.
-      const wilayahs = await this.prisma.wilayah.findMany({
-        where: { distrikId: scope.distrikId },
-        select: { id: true },
-      });
-      const wilayahIds = wilayahs.map((w) => w.id);
-      const rantings = await this.prisma.ranting.findMany({
-        where: { wilayahId: { in: wilayahIds } },
-        select: { id: true },
-      });
-      return {
-        OR: [
-          { scopeType: 'distrik', scopeId: scope.distrikId },
-          { scopeType: 'wilayah', scopeId: { in: wilayahIds } },
-          { scopeType: 'ranting', scopeId: { in: rantings.map((r) => r.id) } },
-        ],
-      };
-    }
-    return {};
+    // Delegates to ScopeHelper so Kegiatan-style filtering stays in one place
+    // (also used by CalendarService, which does not extend this class).
+    return this.scopeHelper.buildKegiatanScopeFilter(scope, this.prisma);
   }
 
   /**

@@ -1,5 +1,6 @@
 import { ScopeGuard } from './scope.guard';
 import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
+import { UserScope } from '../interfaces/user-scope.interface';
 
 describe('ScopeGuard', () => {
   let guard: ScopeGuard;
@@ -9,9 +10,16 @@ describe('ScopeGuard', () => {
     user: { findUnique: jest.Mock };
     ranting: { findUnique: jest.Mock };
     wilayah: { findUnique: jest.Mock };
+    anggota: { findFirst: jest.Mock; findMany: jest.Mock };
   };
 
-  const mockRequest = (user: { id: string; email?: string; role: string; rantingId?: string }) => ({
+  const mockRequest = (user: {
+    id: string;
+    email?: string;
+    role: string;
+    rantingId?: string;
+    namaLengkap?: string;
+  }) => ({
     user,
     scope: undefined,
     method: 'GET',
@@ -33,8 +41,12 @@ describe('ScopeGuard', () => {
     mockAuditService = { logScopeViolation: jest.fn() };
     mockPrismaService = {
       user: { findUnique: jest.fn() },
-      ranting: { findUnique: jest.fn() },
-      wilayah: { findUnique: jest.fn() },
+      ranting: { findUnique: jest.fn().mockResolvedValue(null) },
+      wilayah: { findUnique: jest.fn().mockResolvedValue(null) },
+      anggota: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
     guard = new ScopeGuard(
       reflector as never,
@@ -205,38 +217,102 @@ describe('ScopeGuard', () => {
       expect(req.scope).toEqual({ rantingId: 'r1' });
     });
 
-    it('should deny access to branch-level endpoints and log violation', async () => {
+    it('should allow access to branch-level endpoints (self satisfies branch)', async () => {
+      // Regression: anggota used to be rejected at every @RequireScope('branch')
+      // endpoint because 'self' sat last in SCOPE_ORDER. The guard now lets them
+      // through; row-level isolation is enforced by the service layer.
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'anggota@test.com', role: 'anggota' });
-      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
-      expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: 'u1',
-          userRole: 'anggota',
-          requiredScope: 'branch',
-        }),
-      );
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(mockAuditService.logScopeViolation).not.toHaveBeenCalled();
     });
 
-    it('should deny access to district-level endpoints and log violation', async () => {
+    it('should allow access to district-level endpoints (self satisfies any level)', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'anggota@test.com', role: 'anggota' });
-      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
-      expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: 'u1',
-          userRole: 'anggota',
-          requiredScope: 'district',
-        }),
-      );
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(mockAuditService.logScopeViolation).not.toHaveBeenCalled();
+    });
+
+    it('should attach selfMemberId resolved from the member email', async () => {
+      mockPrismaService.anggota.findFirst.mockResolvedValue({
+        id: 'member-self',
+        rantingId: 'r1',
+      });
+      mockPrismaService.ranting.findUnique.mockResolvedValue({
+        wilayahId: 'w1',
+        wilayah: { distrikId: 'd1' },
+      });
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('self' as ScopeLevel) : undefined,
+        );
+      const req = mockRequest({
+        id: 'u1',
+        email: 'anggota@test.com',
+        role: 'anggota',
+      });
+      await guard.canActivate(mockExecutionContext(req));
+      expect(req.scope).toEqual({
+        selfMemberId: 'member-self',
+        rantingId: 'r1',
+        wilayahId: 'w1',
+        distrikId: 'd1',
+      });
+    });
+
+    it('should fall back to the user rantingId hierarchy when no member record matches the email', async () => {
+      mockPrismaService.anggota.findFirst.mockResolvedValue(null);
+      mockPrismaService.anggota.findMany.mockResolvedValue([]);
+      mockPrismaService.ranting.findUnique.mockResolvedValue({
+        wilayahId: 'w1',
+        wilayah: { distrikId: 'd1' },
+      });
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
+        );
+      const req = mockRequest({
+        id: 'u1',
+        email: 'orphan@test.com',
+        role: 'penguji',
+        rantingId: 'r1',
+      });
+      await guard.canActivate(mockExecutionContext(req));
+      expect(req.scope).toEqual({
+        rantingId: 'r1',
+        wilayahId: 'w1',
+        distrikId: 'd1',
+      });
+      // No member found → no selfMemberId, so this user is NOT treated as self
+      // scope by the services (isSelfScope() must stay false).
+      expect((req.scope as UserScope | undefined)?.selfMemberId).toBeUndefined();
+    });
+
+    it('should never treat an unresolved anggota as national scope', async () => {
+      // Even when nothing can be resolved, the scope object must remain a plain
+      // empty object (selfMemberId absent) — identical to what the guard already
+      // produced for unknown roles, and services must still gate by @Roles.
+      mockPrismaService.anggota.findFirst.mockResolvedValue(null);
+      mockPrismaService.anggota.findMany.mockResolvedValue([]);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
+        );
+      const req = mockRequest({ id: 'u1', email: 'ghost@test.com', role: 'anggota' });
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(req.scope).toEqual({});
     });
   });
 

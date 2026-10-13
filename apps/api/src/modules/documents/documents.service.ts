@@ -14,7 +14,7 @@ import {
   BatchGenerateDocumentDto,
   DocumentFilterDto,
 } from './dto/document.dto';
-import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
@@ -83,15 +83,30 @@ export class DocumentsService {
   }
 
   async findAll(query: DocumentFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.anggotaId || ''}`;
+    // Self-scope (anggota/penguji) harus punya cache bucket sendiri — sebelumnya
+    // mereka jatuh ke bucket yang sama dengan admin ter-scope (bisa berbagi bucket
+    // 'all') dan, yang lebih buruk, bucket ranting member lain.
+    const selfSeg = this.scopeHelper.selfCacheSegment(scope);
+    const orgSeg = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
+    const cacheKey = `${this.CACHE_PREFIX}list:${orgSeg}:${selfSeg}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.anggotaId || ''}`;
 
     return this.cache.getOrSet(
       cacheKey,
       async () => {
         const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-        const where: Record<string, unknown> = { ...scopeFilter };
+        // SECURITY: anggota/penguji hanya boleh melihat dokumen miliknya sendiri
+        // (KTA, sertifikat, dsb). Tanpa ini, scope self yang kini lolos guard
+        // akan membuka dokumen seluruh anggota di rantingnya.
+        const selfFilter = this.scopeHelper.buildSelfScopeFilter(scope, 'anggotaId');
+        const where: Record<string, unknown> = { ...scopeFilter, ...selfFilter };
         if (query.tipe) where.tipe = query.tipe;
-        if (query.anggotaId) where.anggotaId = query.anggotaId;
+        if (query.anggotaId) {
+          // Filter klien hanya boleh mempersempit, tidak boleh menimpa self filter.
+          if (selfFilter.anggotaId && query.anggotaId !== selfFilter.anggotaId) {
+            throw new ForbiddenException('Akses ditolak: Anda hanya dapat melihat dokumen milik sendiri');
+          }
+          where.anggotaId = query.anggotaId;
+        }
 
         return paginate(this.prisma.dokumen, where, {
           page: query.page,
@@ -122,6 +137,13 @@ export class DocumentsService {
       },
     });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+    // SECURITY: anggota/penguji hanya boleh mengakses dokumen miliknya sendiri.
+    // hasAccessToResourceAsync hanya memeriksa hierarki organisasi — untuk scope
+    // 'self' ia kini mengembalikan false, sehingga baris di bawah hanya mencegah
+    // akses lintas ranting; cek kepemilikan eksplisit tetap diperlukan.
+    if (isSelfScope(scope) && doc.anggotaId !== scope.selfMemberId) {
+      throw new ForbiddenException('Akses ditolak: Anda hanya dapat melihat dokumen milik sendiri');
+    }
     if (
       scope &&
       !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, doc.anggota?.rantingId))

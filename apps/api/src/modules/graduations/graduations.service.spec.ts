@@ -125,6 +125,10 @@ describe('GraduationsService', () => {
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyKegiatanScope: jest.fn(),
+    buildKegiatanScopeFilter: jest.fn().mockResolvedValue({}),
+    buildSelfScopeFilter: jest.fn().mockReturnValue({}),
+    isOwnMemberRow: jest.fn().mockReturnValue(true),
+    selfCacheSegment: jest.fn().mockReturnValue(''),
   };
 
   const mockMailService = {

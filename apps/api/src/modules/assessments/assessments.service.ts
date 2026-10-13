@@ -8,7 +8,7 @@ import {
   ScoreFilterDto,
   AssessmentFilterDto,
 } from './dto/assessment.dto';
-import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { paginate } from '../../common/utils/pagination';
@@ -466,7 +466,11 @@ export class AssessmentsService {
       }
       where.kegiatanId = query.kegiatanId;
     } else if (role === 'penguji' && userId) {
-      // Penguji can only see scores for kegiatan they're assigned to
+      // Penguji can only see scores for kegiatan they're assigned to.
+      // Note: penguji is a 'self' scope role, so `scope` is always defined for
+      // them now — this branch must be checked before the generic scope filter
+      // below, otherwise they would be limited to a single ranting instead of
+      // to their assigned kegiatan (and could see other examiners' scores).
       const assignments = await this.prisma.penugasanPenguji.findMany({
         where: { pengujiUserId: userId, status: 'approved' },
         select: { kegiatanId: true },
@@ -480,7 +484,7 @@ export class AssessmentsService {
         };
       }
       where.kegiatanId = { in: kegiatanIds };
-    } else if (scope) {
+    } else if (scope && !isSelfScope(scope)) {
       if (scope.rantingId) {
         where.kegiatan = { scopeType: 'ranting', scopeId: scope.rantingId };
       } else if (scope.wilayahId) {

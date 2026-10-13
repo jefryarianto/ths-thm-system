@@ -11,7 +11,32 @@ export interface UserScope {
   wilayahId?: string;
   /** The resolved distrik ID (district level) */
   distrikId?: string;
+  /**
+   * The member ID of the authenticated user, set only when their scope is 'self'
+   * (role `anggota` or `penguji`).
+   *
+   * Services MUST treat this as a row-level restriction: when present, the user
+   * may only access rows that belong to this member (plus the examiner exemption
+   * for kegiatan-related modules — see buildSelfScopeFilter).
+   *
+   * SECURITY: `selfMemberId` is *not* the same as an empty scope. A national
+   * admin has no scope fields at all (unrestricted), whereas a `self` user has
+   * `selfMemberId` set but no org hierarchy — so any access check that only
+   * looks at rantingId/wilayahId/distrikId would wrongly grant them everything.
+   * Use `isSelfScope(scope)` or `buildSelfScopeFilter()` instead of raw checks.
+   */
+  selfMemberId?: string;
 }
+
+/**
+ * True when the scope belongs to an `anggota`/`penguji` who must be restricted
+ * to their own rows. Note this is deliberately NOT `!scope.rantingId && ...`,
+ * because superadmin also has an empty scope.
+ */
+export function isSelfScope(scope?: UserScope | null): scope is UserScope & { selfMemberId: string } {
+  return !!scope?.selfMemberId;
+}
+
 
 /**
  * Extended request with user scope information.
@@ -31,3 +56,4 @@ export interface ScopedRequest {
   url?: string;
   ip?: string;
 }
+

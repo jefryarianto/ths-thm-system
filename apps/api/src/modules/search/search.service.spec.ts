@@ -19,6 +19,9 @@ describe('SearchService', () => {
     scopeHelper = {
       buildScopeFilter: jest.fn().mockReturnValue({}),
       buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
+      buildSelfScopeFilter: jest.fn().mockReturnValue({}),
+      isOwnMemberRow: jest.fn().mockReturnValue(true),
+      selfCacheSegment: jest.fn().mockReturnValue(''),
     };
     service = new SearchService(prisma as never, scopeHelper as never);
   });
@@ -69,5 +72,34 @@ describe('SearchService', () => {
     await service.search('and', undefined, ['members'], 999);
     const call = prisma.anggota.findMany.mock.calls[0][0];
     expect(call.take).toBe(50);
+  });
+
+  describe('self-scope isolation (anggota/penguji)', () => {
+    // Regression: an anggota used to find other members (email, no HP) via
+    // search because only the org-hierarchy filter was applied.
+    const selfScope = {
+      selfMemberId: 'member-a',
+      rantingId: 'r1',
+      wilayahId: 'w1',
+      distrikId: 'd1',
+    };
+
+    beforeEach(() => {
+      scopeHelper.buildSelfScopeFilter.mockImplementation((scope: any, field = 'anggotaId') =>
+        scope?.selfMemberId ? { [field]: scope.selfMemberId } : {},
+      );
+    });
+
+    it('should restrict member results to the requesting member', async () => {
+      await service.search('budi', selfScope, ['members']);
+      const where = prisma.anggota.findMany.mock.calls[0][0].where;
+      expect(where.id).toBe('member-a');
+    });
+
+    it('should restrict document results to the requesting member', async () => {
+      await service.search('KT-0012', selfScope, ['documents']);
+      const where = prisma.dokumen.findMany.mock.calls[0][0].where;
+      expect(where.anggotaId).toBe('member-a');
+    });
   });
 });

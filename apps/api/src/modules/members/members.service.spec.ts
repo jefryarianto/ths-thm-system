@@ -74,6 +74,9 @@ describe('MembersService', () => {
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyResourceAccess: jest.fn().mockResolvedValue(undefined),
     verifyKegiatanScope: jest.fn(),
+    buildSelfScopeFilter: jest.fn().mockReturnValue({}),
+    isOwnMemberRow: jest.fn().mockReturnValue(true),
+    selfCacheSegment: jest.fn().mockReturnValue(''),
   };
 
   const mockCache = {
@@ -604,6 +607,44 @@ describe('MembersService', () => {
         service.create({ namaLengkap: 'X', rantingId: 'r-other' }, { distrikId: 'd1' }),
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('self-scope isolation (anggota/penguji)', () => {
+    // Regression for the scope-guard fix: 'self' now passes the guard, so an
+    // anggota must never see another member's record.
+    const selfScope = {
+      selfMemberId: 'member-a',
+      rantingId: 'r1',
+      wilayahId: 'w1',
+      distrikId: 'd1',
+    };
+
+    it('findAll should restrict the query to the requesting member', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([{ id: 'member-a' }]);
+      mockPrisma.anggota.count.mockResolvedValue(1);
+      mockScopeHelper.selfCacheSegment.mockReturnValue('member-a');
+      mockScopeHelper.buildScopeFilter.mockReturnValue({});
+
+      await service.findAll({ page: 1, limit: 10 } as any, selfScope);
+
+      const whereArg = mockPrisma.anggota.findMany.mock.calls[0][0].where;
+      expect(whereArg.id).toBe('member-a');
+    });
+
+    it('findOne should deny another member record', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'member-b', rantingId: 'r1' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+
+      await expect(service.findOne('member-b', selfScope)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('findOne should allow the requesting member own record', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'member-a', rantingId: 'r1' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+
+      const member = await service.findOne('member-a', selfScope);
+      expect(member.id).toBe('member-a');
     });
   });
 });

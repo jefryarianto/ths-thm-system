@@ -32,13 +32,17 @@ export class CalendarService {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    // Latihan terhubung langsung ke ranting (buildScopeFilter), sedangkan
+    // kegiatan memakai scopeType/scopeId — filternya berbeda dan sebelumnya
+    // salah dipakai bersama, yang baru terlihat saat anggota (scope self)
+    // mulai diizinkan mengakses endpoint ini.
+    const trainingScope = this.scopeHelper.buildScopeFilter(scope || {});
 
     // Get trainings in this month
     const trainings = await this.prisma.latihan.findMany({
       where: {
         hariTanggal: { gte: startDate, lte: endDate },
-        ...scopeFilter,
+        ...trainingScope,
       },
       select: {
         id: true,
@@ -50,13 +54,15 @@ export class CalendarService {
       orderBy: { hariTanggal: 'asc' },
     });
 
+    const kegiatanScope = await this.scopeHelper.buildKegiatanScopeFilter(scope, this.prisma);
+
     // Get activities/events in this month
     const activities = await this.prisma.kegiatan.findMany({
       where: {
         tanggalMulai: { gte: startDate },
         tanggalSelesai: { lte: endDate },
         status: { not: 'cancelled' },
-        ...scopeFilter,
+        ...kegiatanScope,
       },
       select: {
         id: true,
@@ -75,7 +81,7 @@ export class CalendarService {
         tipe: 'pendadaran',
         tanggalMulai: { gte: startDate, lte: endDate },
         status: { not: 'cancelled' },
-        ...scopeFilter,
+        ...kegiatanScope,
       },
       select: {
         id: true,

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { DocumentBatchService } from './document-batch.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -72,6 +72,9 @@ describe('DocumentsService', () => {
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyKegiatanScope: jest.fn(),
+    buildSelfScopeFilter: jest.fn().mockReturnValue({}),
+    isOwnMemberRow: jest.fn().mockReturnValue(true),
+    selfCacheSegment: jest.fn().mockReturnValue(''),
   };
 
   const mockCache = {
@@ -179,6 +182,56 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockPrisma.dokumen.findUnique.mockResolvedValue(null);
       await expect(service.findOne('d1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('self-scope isolation (anggota/penguji)', () => {
+    // Regression for the scope-guard fix: 'self' now passes the guard, so the
+    // service must keep an anggota from reading another member's documents.
+    const selfScope = {
+      selfMemberId: 'member-a',
+      rantingId: 'r1',
+      wilayahId: 'w1',
+      distrikId: 'd1',
+    };
+
+    it('findAll should filter documents to the requesting member only', async () => {
+      mockScopeHelper.buildSelfScopeFilter.mockReturnValueOnce({ anggotaId: 'member-a' });
+      mockScopeHelper.selfCacheSegment.mockReturnValueOnce('member-a');
+      mockPrisma.dokumen.findMany.mockResolvedValue([{ id: 'd1', anggotaId: 'member-a' }]);
+      mockPrisma.dokumen.count.mockResolvedValue(1);
+
+      await service.findAll({ page: 1, limit: 10 }, selfScope);
+
+      expect(mockScopeHelper.buildSelfScopeFilter).toHaveBeenCalledWith(selfScope, 'anggotaId');
+      const whereArg = mockPrisma.dokumen.findMany.mock.calls[0][0].where;
+      expect(whereArg.anggotaId).toBe('member-a');
+    });
+
+    it('findAll should reject an anggotaId query for a different member', async () => {
+      mockScopeHelper.buildSelfScopeFilter.mockReturnValueOnce({ anggotaId: 'member-a' });
+      await expect(
+        service.findAll({ page: 1, limit: 10, anggotaId: 'member-b' }, selfScope),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('findOne should deny a document belonging to another member', async () => {
+      mockPrisma.dokumen.findUnique.mockResolvedValue({
+        id: 'd2',
+        anggotaId: 'member-b',
+        anggota: { id: 'member-b', rantingId: 'r1' },
+      });
+      await expect(service.findOne('d2', selfScope)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('findOne should allow a document belonging to the requesting member', async () => {
+      mockPrisma.dokumen.findUnique.mockResolvedValue({
+        id: 'd1',
+        anggotaId: 'member-a',
+        anggota: { id: 'member-a', rantingId: 'r1' },
+      });
+      const doc = await service.findOne('d1', selfScope);
+      expect(doc.id).toBe('d1');
     });
   });
 

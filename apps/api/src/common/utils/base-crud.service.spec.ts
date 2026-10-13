@@ -244,6 +244,10 @@ describe('BaseCrudService buildKegiatanScopeFilter (district tenant safety)', ()
     const scopeHelper = {
       verifyResourceAccess: jest.fn(),
       hasAccessToResourceAsync: jest.fn(),
+      // Delegate to the real implementation so the tenant-safety lookups
+      // (wilayah/ranting expansion) are exercised against the prisma mock.
+      buildKegiatanScopeFilter: (scope: any, p?: any) =>
+        new ScopeHelper().buildKegiatanScopeFilter(scope, p),
     };
     const cache = {
       getOrSet: jest.fn((_k: string, f: () => unknown) => f()),

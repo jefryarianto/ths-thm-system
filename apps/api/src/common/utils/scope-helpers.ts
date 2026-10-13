@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { UserScope } from '../interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../interfaces/user-scope.interface';
 
 /**
  * Helper to extract scope from request and build Prisma where clauses.
@@ -127,6 +127,13 @@ export class ScopeHelper {
    * Call without prisma for simple branch-level checks.
    */
   hasAccessToResource(scope: UserScope, resourceRantingId?: string): boolean {
+    // SECURITY: a 'self' scope user (anggota/penguji) has no org hierarchy, but
+    // is NOT a national admin. Row-level checks must be done by the caller via
+    // resolveOwnMemberId/assertSelfMember; this method only answers the
+    // hierarchy question, so we deny rather than default-allow.
+    if (isSelfScope(scope)) {
+      return !!scope.rantingId && scope.rantingId === resourceRantingId;
+    }
     if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
       return true; // National level — full access
     }
@@ -160,6 +167,12 @@ export class ScopeHelper {
     scope: UserScope,
     resourceRantingId?: string,
   ): Promise<boolean> {
+    // SECURITY: same reasoning as hasAccessToResource — a 'self' scope user is
+    // not a national admin even though they carry no org hierarchy. Callers
+    // must additionally enforce row-level ownership (assertSelfMember).
+    if (isSelfScope(scope)) {
+      return !!scope.rantingId && scope.rantingId === resourceRantingId;
+    }
     if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
       return true;
     }
@@ -248,4 +261,116 @@ export class ScopeHelper {
 
     return resource;
   }
+
+  // ── Self-scope (anggota / penguji) row-level filtering ────────────────────
+
+  /**
+   * Build a Prisma `where` fragment that restricts rows to the authenticated
+   * member, for endpoints reached by an `anggota`/`penguji` (scope 'self').
+   *
+   * Returns `{}` for non-self scopes — callers must AND it with their existing
+   * org scope filter, e.g.:
+   *
+   * ```ts
+   * where: { ...this.scopeHelper.buildIndirectScopeFilter(scope, 'anggota'),
+   *          ...this.scopeHelper.buildSelfScopeFilter(scope, 'anggota') }
+   * ```
+   *
+   * @param scope      The request scope (may be undefined → no restriction)
+   * @param column     Column holding the member id. Use `'anggotaId'` for tables
+   *                   that store it directly, or `'anggota'`-style relation paths
+   *                   via `relationPath`.
+   * @param relationPath Optional nested path, e.g. `'anggota'` → `{ anggota: { id } }`
+   *                     for iuran/dokumen.
+   */
+  buildSelfScopeFilter(
+    scope: UserScope | undefined,
+    column: string = 'anggotaId',
+    relationPath?: string,
+  ): Record<string, unknown> {
+    if (!isSelfScope(scope)) return {};
+    const id = scope.selfMemberId as string;
+    if (relationPath) return { [relationPath]: { id } };
+    return { [column]: id };
+  }
+
+  /**
+   * True when a given member id is within a self-scoped user's own rows.
+   * Convenience for single-resource services (e.g. `findOne`).
+   */
+  isOwnMemberRow(scope: UserScope | undefined, anggotaId?: string | null): boolean {
+    if (!isSelfScope(scope)) return true; // admins: filtered elsewhere by hierarchy
+    return !!anggotaId && anggotaId === scope.selfMemberId;
+  }
+
+  /**
+   * Cache bucket segment unique to the requesting member, so that self-scoped
+   * users never share a cache entry with another member or with an admin.
+   */
+  selfCacheSegment(scope: UserScope | undefined): string {
+    return isSelfScope(scope) ? (scope.selfMemberId as string) : '';
+  }
+
+  // ── Kegiatan (scopeType / scopeId) filtering ──────────────────────────────
+
+  /**
+   * Build a Prisma `where` fragment for models that store their organizational
+   * placement in `scopeType`/`scopeId` columns (Kegiatan, Pendadaran) rather
+   * than a direct `rantingId` FK.
+   *
+   * IMPORTANT: do NOT use `buildScopeFilter` for those models — `{ ranting: ... }`
+   * is not a valid relation on `kegiatan` and Prisma throws at runtime.
+   */
+  async buildKegiatanScopeFilter(
+    scope: UserScope | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    prisma?: any,
+  ): Promise<Record<string, unknown>> {
+    if (!scope) return {};
+
+    if (scope.rantingId) {
+      return {
+        OR: [
+          { scopeType: 'ranting', scopeId: scope.rantingId },
+          { scopeType: 'unit_latihan', scopeId: scope.rantingId },
+        ],
+      };
+    }
+    if (scope.wilayahId && prisma) {
+      // Tenant safety: arm ranting dibatasi ke ranting dalam wilayah ini —
+      // bukan seluruh ranting se-nasional.
+      const rantings = await prisma.ranting.findMany({
+        where: { wilayahId: scope.wilayahId },
+        select: { id: true },
+      });
+      return {
+        OR: [
+          { scopeType: 'wilayah', scopeId: scope.wilayahId },
+          { scopeType: 'ranting', scopeId: { in: rantings.map((r: { id: string }) => r.id) } },
+        ],
+      };
+    }
+    if (scope.distrikId && prisma) {
+      // Tenant safety: arm wilayah/ranting dibatasi ke entitas dalam distrik ini —
+      // bukan seluruh wilayah/ranting se-nasional.
+      const wilayahs = await prisma.wilayah.findMany({
+        where: { distrikId: scope.distrikId },
+        select: { id: true },
+      });
+      const wilayahIds = wilayahs.map((w: { id: string }) => w.id);
+      const rantings = await prisma.ranting.findMany({
+        where: { wilayahId: { in: wilayahIds } },
+        select: { id: true },
+      });
+      return {
+        OR: [
+          { scopeType: 'distrik', scopeId: scope.distrikId },
+          { scopeType: 'wilayah', scopeId: { in: wilayahIds } },
+          { scopeType: 'ranting', scopeId: { in: rantings.map((r: { id: string }) => r.id) } },
+        ],
+      };
+    }
+    return {};
+  }
 }
+

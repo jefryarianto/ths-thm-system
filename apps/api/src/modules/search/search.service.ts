@@ -48,12 +48,18 @@ export class SearchService {
     const prisma: any = this.prisma;
 
     const membersScope = this.scopeHelper.buildScopeFilter(scope ?? {}, 'ranting');
+    // SECURITY: scope 'self' (anggota/penguji) harus dibatasi ke baris miliknya
+    // sendiri — sebelumnya search memakai hanya filter hierarki, sehingga anggota
+    // dapat menemukan anggota lain beserta email/no HP-nya.
+    const selfFilter = this.scopeHelper.buildSelfScopeFilter(scope, 'id');
+    const selfDocFilter = this.scopeHelper.buildSelfScopeFilter(scope, 'anggotaId');
 
     if (wanted('members')) {
       const rows = await prisma.anggota.findMany({
         where: {
           deletedAt: null,
           ...membersScope,
+          ...selfFilter,
           OR: [
             { namaLengkap: { contains: q, mode: 'insensitive' } },
             { nomorAnggota: { contains: q, mode: 'insensitive' } },
@@ -182,6 +188,7 @@ export class SearchService {
       const rows = await prisma.dokumen.findMany({
         where: {
           ...this.scopeHelper.buildIndirectScopeFilter(scope ?? {}, 'anggota'),
+          ...selfDocFilter,
           nomorDokumen: { contains: q, mode: 'insensitive' },
         },
         select: {

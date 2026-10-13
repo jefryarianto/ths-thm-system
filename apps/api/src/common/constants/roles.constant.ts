@@ -34,6 +34,10 @@ export const ROLE_HIERARCHY: Role[] = [
  * Mapping of role to minimum scope level.
  * Used by ScopeGuard for authorization decisions.
  * Must match the mapping in prisma/schema.prisma ScopeType enum.
+ *
+ * Note: penguji & anggota both map to 'self'. Although a penguji is allowed to
+ * see kegiatan they examine (an exception enforced in the services), their
+ * scope level is self because they hold no organizational authority.
  */
 export const ROLE_SCOPE: Record<Role, 'national' | 'district' | 'region' | 'branch' | 'self'> = {
   [ROLE.SUPERADMIN]: 'national',
@@ -42,7 +46,7 @@ export const ROLE_SCOPE: Record<Role, 'national' | 'district' | 'region' | 'bran
   [ROLE.ADMIN_WILAYAH]: 'region',
   [ROLE.ADMIN_RANTING]: 'branch',
   [ROLE.ADMIN_KEGIATAN]: 'branch',
-  [ROLE.PENGUJI]: 'branch',
+  [ROLE.PENGUJI]: 'self',
   [ROLE.ANGGOTA]: 'self',
 };
 
@@ -80,6 +84,12 @@ export function hasRequiredScope(
   userRole: Role,
   requiredScope: 'national' | 'district' | 'region' | 'branch' | 'self',
 ): boolean {
+  const userScope = ROLE_SCOPE[userRole];
+  // SECURITY: a 'self' scope (anggota/penguji) passes every scope gate — the
+  // row-level restriction is enforced by the services. Without this, 'self'
+  // (last in the order) can never satisfy a 'branch' requirement and those
+  // endpoints reject the role entirely. Kept in sync with ScopeGuard.
+  if (userScope === 'self') return true;
   const scopeOrder: ('national' | 'district' | 'region' | 'branch' | 'self')[] = [
     'national',
     'district',
@@ -87,7 +97,6 @@ export function hasRequiredScope(
     'branch',
     'self',
   ];
-  const userScope = ROLE_SCOPE[userRole];
   return scopeOrder.indexOf(userScope) <= scopeOrder.indexOf(requiredScope);
 }
 
