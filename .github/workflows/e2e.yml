@@ -169,6 +169,16 @@ jobs:
           retention-days: 1
           compression-level: 0
 
+      - name: Start API server (NestJS)
+        run: |
+          cd apps/api
+          pnpm install --no-frozen-lockfile
+          npm run prisma:generate
+          # Start NestJS server in background
+          npm run start:dev &
+          # Wait for health endpoint (assuming /health) up to 60s
+          timeout 60 sh -c 'until curl -s http://localhost:3001/health || curl -s http://localhost:3001/api/health; do sleep 2; done'
+
   # ─── E2E Tests (Matrix — one job per shard) ────────────────────
   test:
     name: E2E — Shard ${{ matrix.shard }}/${{ strategy.job-total }}
