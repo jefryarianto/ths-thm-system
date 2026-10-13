@@ -5327,6 +5327,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/forum/posts/{id}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Membalas komentar tertentu (reply bersarang) */
+        post: operations["ForumController_replyToPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/forum/posts/{id}": {
         parameters: {
             query?: never;
@@ -8015,6 +8032,8 @@ export interface components {
         };
         CreatePostDto: {
             konten: string;
+            /** @description ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa. */
+            parentId?: string;
         };
         UpdatePostDto: {
             konten?: string;
@@ -16075,6 +16094,32 @@ export interface operations {
         };
         responses: {
             /** @description Balasan berhasil dikirim */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ForumController_replyToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Post induk yang dibalas */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Konten balasan */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Balasan bersarang berhasil dikirim */
             201: {
                 headers: {
                     [name: string]: unknown;
