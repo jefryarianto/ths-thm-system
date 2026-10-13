@@ -16550,6 +16550,180 @@
           "Permissions"
         ]
       }
+    },
+    "/galeri/upload": {
+      "post": {
+        "operationId": "GaleriController_upload",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/mine": {
+      "get": {
+        "operationId": "GaleriController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/admin/{id}/image": {
+      "get": {
+        "operationId": "GaleriController_adminImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/admin": {
+      "get": {
+        "operationId": "GaleriController_adminList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/{id}/review": {
+      "patch": {
+        "operationId": "GaleriController_review",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewGaleriDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/{id}": {
+      "delete": {
+        "operationId": "GaleriController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/{id}/image": {
+      "get": {
+        "operationId": "GaleriController_image",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Galeri"
+        ]
+      }
     }
   },
   "info": {
@@ -18863,6 +19037,25 @@
         },
         "required": [
           "permissions"
+        ]
+      },
+      "ReviewGaleriDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }
