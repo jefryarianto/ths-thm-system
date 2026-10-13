@@ -124,8 +124,14 @@ export async function mockAuth(
     }
   });
 
-  // API catch-all: unmocked API calls get an empty success response
-  await page.route(`${process.env.NEXT_PUBLIC_API_URL}/api/**`, async (route) => {
+  // API catch-all: unmocked API calls get an empty success response.
+  // NOTE: pattern must match the ORIGIN the browser actually calls. apiClient
+  // uses a relative `baseURL: '/api'`, so requests hit E2E_BASE_URL (the Next
+  // app), NOT NEXT_PUBLIC_API_URL (the backend origin — which is also unset in
+  // the Playwright test-runner process). Keying this to NEXT_PUBLIC_API_URL made
+  // the catch-all never match, so unmocked calls fell through to the dead-port
+  // rewrite (500) and broke pages whose data load (Promise.all) needs them.
+  await page.route(`${E2E_BASE_URL}/api/**`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

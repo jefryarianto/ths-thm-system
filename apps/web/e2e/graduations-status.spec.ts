@@ -19,6 +19,8 @@ const DETAIL_BASE = {
  * - GET  /graduations          → list (1 row)
  * - GET  /graduations/grad-1   → detail (status evolves on PATCH)
  * - PATCH /graduations/grad-1  → echoes new status
+ * - GET  /graduations/grad-1/participants → [] (needed by detail fetchData)
+ * - GET  /graduations/grad-1/results      → [] (needed by detail fetchData)
  * Everything else falls back to the auth helper's catch-all /api/** mock.
  */
 async function registerGraduationMocks(page: Page, initialStatus: string) {
@@ -62,6 +64,25 @@ async function registerGraduationMocks(page: Page, initialStatus: string) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ success: true, data: { ...DETAIL_BASE, status: currentStatus } }),
+    });
+  });
+
+  // Detail page's fetchData() runs Promise.all over three endpoints; the two
+  // below aren't covered by the detail route above. Mock them explicitly so
+  // the Promise.all resolves and the success header (<h1>{nama}</h1> + status
+  // badge) renders instead of the error state.
+  await page.route(new RegExp(`/api/graduations/${GRAD_ID}/participants(\\?|$)`), async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+  await page.route(new RegExp(`/api/graduations/${GRAD_ID}/results(\\?|$)`), async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
     });
   });
 }
