@@ -87,15 +87,27 @@ test.describe('Forum redirect bug (anggota role)', () => {
   test('anggota di /forum tidak di-redirect ke /forum (bukan self-redirect)', async ({
     page,
   }) => {
-    const responses: string[] = [];
-    page.on('response', (res) => responses.push(res.url()));
+    // Hitung HANYA document request (navigasi halaman). Respons API seperti
+    // /api/forum/categories JUGA mengandung '/forum' tapi bukan redirect —
+    // menghitungnya membuat assertion ini racy: lolos/gagal tergantung apakah
+    // XHR (di-fulfill instan oleh page.route) sampai sebelum assert dijalankan.
+    // Itu sebabnya test ini pernah lulus lokal tapi gagal di CI.
+    const forumDocs: string[] = [];
+    page.on('response', (res) => {
+      if (res.request().resourceType() === 'document' && res.url().includes('/forum')) {
+        forumDocs.push(res.url());
+      }
+    });
 
     await page.goto('/forum');
     await expect(page).toHaveURL(/\/forum/);
 
-    // Self-redirect adalah tanda loop; tidak boleh ada redirect ke /forum.
-    const forumRedirects = responses.filter((url) => url.includes('/forum'));
-    expect(forumRedirects.length).toBeLessThanOrEqual(1);
+    // Beri kesempatan self-redirect bila bug kembali (konsisten dgn test di atas).
+    await page.waitForTimeout(2500);
+
+    // Self-redirect adalah tanda loop; tidak boleh ada document request ke /forum
+    // selain permintaan awal (page.goto).
+    expect(forumDocs.length).toBeLessThanOrEqual(1);
   });
 
   test('anggota dialihkan dari /dashboard ke home path (/forum)', async ({ page }) => {
