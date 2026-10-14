@@ -83,8 +83,8 @@ export class DuesController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
     summary: 'Daftar iuran per anggota',
   })
-  getMemberDues(@Param('memberId') memberId: string) {
-    return this.service.getMemberDues(memberId);
+  getMemberDues(@Param('memberId') memberId: string, @Req() req: ScopedRequest) {
+    return this.service.getMemberDues(memberId, req.user);
   }
 
   @Get('arrears')

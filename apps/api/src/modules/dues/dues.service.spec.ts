@@ -26,12 +26,16 @@ describe('DuesService', () => {
     anggota: {
       count: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
   };
 
   const mockScopeHelper = {
     buildScopeFilter: jest.fn().mockReturnValue({}),
     buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
+    buildSelfScopeFilter: jest.fn().mockReturnValue({}),
+    selfCacheSegment: jest.fn().mockReturnValue(''),
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyKegiatanScope: jest.fn(),
@@ -74,6 +78,8 @@ describe('DuesService', () => {
     service = module.get<DuesService>(DuesService);
     jest.clearAllMocks();
     mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({});
+    mockScopeHelper.buildSelfScopeFilter.mockReturnValue({});
+    mockScopeHelper.selfCacheSegment.mockReturnValue('');
     mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
     mockCache.invalidatePrefix.mockClear();
   });
@@ -96,6 +102,44 @@ describe('DuesService', () => {
       mockPrisma.iuran.count.mockResolvedValue(0);
       await service.findAll({ status: 'lunas', periode: '2026-01' });
       expect(mockPrisma.iuran.findMany).toHaveBeenCalled();
+    });
+
+    it('should restrict self-scope (anggota) to their own dues and own cache bucket', async () => {
+      mockPrisma.iuran.findMany.mockResolvedValue([]);
+      mockPrisma.iuran.count.mockResolvedValue(0);
+      const selfScope = { selfMemberId: 'member-a', rantingId: 'r1' };
+      mockScopeHelper.selfCacheSegment.mockReturnValue('member-a');
+      mockScopeHelper.buildSelfScopeFilter.mockReturnValue({ anggotaId: 'member-a' });
+
+      await service.findAll({ page: 1, limit: 10 }, selfScope);
+
+      // Self filter ikut masuk where → anggota hanya melihat baris miliknya.
+      expect(mockScopeHelper.buildSelfScopeFilter).toHaveBeenCalledWith(selfScope, 'anggotaId');
+      expect(mockPrisma.iuran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ anggotaId: 'member-a' }),
+        }),
+      );
+      // Bucket cache harus menyertakan segmen self agar tidak berbagi dengan
+      // bucket admin ranting yang sama (mencegah cache-hit daftar milik admin).
+      expect(mockCache.getOrSet).toHaveBeenCalledWith(
+        expect.stringContaining(':member-a:'),
+        expect.any(Function),
+        expect.any(Number),
+      );
+    });
+
+    it('should not apply self filter for admin scope (no selfMemberId)', async () => {
+      mockPrisma.iuran.findMany.mockResolvedValue([]);
+      mockPrisma.iuran.count.mockResolvedValue(0);
+      const adminScope = { rantingId: 'r1' };
+
+      await service.findAll({ page: 1, limit: 10 }, adminScope);
+
+      // buildSelfScopeFilter tetap dipanggil tapi mengembalikan {} untuk admin.
+      expect(mockScopeHelper.buildSelfScopeFilter).toHaveBeenCalledWith(adminScope, 'anggotaId');
+      const where = mockPrisma.iuran.findMany.mock.calls[0][0].where;
+      expect(where.anggotaId).toBeUndefined();
     });
   });
 
@@ -199,6 +243,35 @@ describe('DuesService', () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1', jumlah: 100000 }]);
       const result = await service.getMemberDues('a1');
       expect(result).toHaveLength(1);
+    });
+
+    it('should forbid anggota from viewing another member dues', async () => {
+      // assertSelfMember resolve id anggota milik user login (dari email);
+      // hasil 'own-member' berbeda dengan memberId yang diminta ('a1').
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'own-member' });
+      const user = { email: 'other@test.com', role: 'anggota' };
+
+      await expect(service.getMemberDues('a1', user)).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.iuran.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should allow anggota to view their own dues', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1' }]);
+      const user = { email: 'me@test.com', role: 'anggota' };
+
+      const result = await service.getMemberDues('a1', user);
+      expect(result).toHaveLength(1);
+    });
+
+    it('should allow admin to view any member dues (role check skipped)', async () => {
+      mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1' }]);
+      const user = { email: 'admin@test.com', role: 'superadmin' };
+
+      const result = await service.getMemberDues('a1', user);
+      expect(result).toHaveLength(1);
+      // Tidak ada resolusi anggota untuk role admin.
+      expect(mockPrisma.anggota.findFirst).not.toHaveBeenCalled();
     });
   });
 

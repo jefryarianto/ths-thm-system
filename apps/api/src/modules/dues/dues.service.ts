@@ -157,13 +157,24 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
   // ── CRUD Overrides ──────────────────────────────────────
 
   async findAll(query: DueFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
+    // SECURITY: anggota/penguji (scope self) harus punya bucket cache sendiri.
+    // Tanpa segmen ini mereka berbagi kunci dengan admin di ranting yang sama
+    // (ScopeGuard tetap melampirkan rantingId milik anggota), sehingga bisa
+    // terisi daftar lengkap milik admin — self filter di bawah tak sempat
+    // berlaku karena request justru cache-hit. Pola sama dengan
+    // documents.service.findAll + selfCacheSegment.
+    const selfSeg = this.scopeHelper.selfCacheSegment(scope);
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${selfSeg}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
 
     return this.baseFindAll(
       cacheKey,
       async () => {
         const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
-        const where: Record<string, unknown> = { ...scopeFilter };
+        // SECURITY: anggota/penguji hanya boleh melihat iuran miliknya sendiri.
+        // Tanpa ini, scope self yang lolos guard akan membuka iuran seluruh
+        // anggota di rantingnya.
+        const selfFilter = this.scopeHelper.buildSelfScopeFilter(scope, 'anggotaId');
+        const where: Record<string, unknown> = { ...scopeFilter, ...selfFilter };
         if (query.status) where.status = query.status;
         if (query.periode) where.periode = query.periode;
         return where;
@@ -235,7 +246,11 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   // ── Domain Methods ──────────────────────────────────────
 
-  async getMemberDues(memberId: string) {
+  async getMemberDues(memberId: string, user?: SelfScopeUser) {
+    // SECURITY: endpoint ini menerima memberId bebas dari klien, sehingga
+    // anggota/penguji dapat meminta iuran anggota lain. assertSelfMember
+    // melempar Forbidden bila bukan milik sendiri (role admin dilewati).
+    await assertSelfMember(this.prisma, user, memberId);
     const dues = await this.prisma.iuran.findMany({
       where: { anggotaId: memberId },
       orderBy: { periode: 'desc' },

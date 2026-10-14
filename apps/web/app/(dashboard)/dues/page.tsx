@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { formatDate, formatPeriode, formatRupiah } from '@/lib/format';
 import { usePaginatedList } from '@/lib/hooks/use-api';
@@ -69,6 +70,9 @@ export default function DuesPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
+  // Anggota/penguji hanya boleh melihat datanya sendiri. Widget global di
+  // bawah (statistik & tren bulanan) hanya relevan bagi role admin.
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState<DuesStats | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
   const { page, setPage } = useFilters();
@@ -100,9 +104,13 @@ export default function DuesPage() {
   }, []);
 
   useEffect(() => {
+    // Non-admin tidak memanggil endpoint agregat global sama sekali:
+    // /dues/dashboard/stats & /reports/dashboard hanya untuk role admin (403
+    // bagi anggota), sehingga tanpa guard ini stat cards akan skeleton selamanya.
+    if (!isAdmin) return;
     fetchStats();
     fetchMonthlyTrend();
-  }, [fetchStats, fetchMonthlyTrend]);
+  }, [fetchStats, fetchMonthlyTrend, isAdmin]);
 
   const handleRefresh = async () => {
     await Promise.all([fetchStats(), fetchMonthlyTrend(), refetch()]);
@@ -113,9 +121,12 @@ export default function DuesPage() {
       <PageContainer>
         {/* ── Header ── */}
         <PageHeader title="Manajemen Iuran" onRefresh={handleRefresh}>
-          <CanExport module="dues">
-            <ExportMenu serverType="dues" filename="iuran-export" />
-          </CanExport>
+          {/* Ekspor server menghasilkan laporan global (hanya role admin). */}
+          {isAdmin && (
+            <CanExport module="dues">
+              <ExportMenu serverType="dues" filename="iuran-export" />
+            </CanExport>
+          )}
           <CanCreate module="dues">
             <button
               onClick={() => router.push('/dues/new')}
@@ -126,11 +137,11 @@ export default function DuesPage() {
           </CanCreate>
         </PageHeader>
 
-        {/* ── Stat Cards ── */}
-        {!stats ? <StatCardGridSkeleton count={4} /> : <DuesStatCards stats={stats} />}
+        {/* ── Stat Cards (hanya admin — anggota tidak punya akses statistik global) ── */}
+        {isAdmin && (!stats ? <StatCardGridSkeleton count={4} /> : <DuesStatCards stats={stats} />)}
 
-        {/* ── Charts Row ── */}
-        <DuesCharts stats={stats} monthlyTrend={monthlyTrend} />
+        {/* ── Charts Row (hanya admin) ── */}
+        {isAdmin && <DuesCharts stats={stats} monthlyTrend={monthlyTrend} />}
 
         {/* ── Dues Table ── */}
         <DataTable
