@@ -6439,7 +6439,7 @@ export interface paths {
         /** Daftar jabatan (superadmin: semua; lainnya: distriknya + global) */
         get: operations["JabatanController_findAll"];
         put?: never;
-        /** Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya) */
+        /** Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional) */
         post: operations["JabatanController_create"];
         delete?: never;
         options?: never;
@@ -6458,11 +6458,11 @@ export interface paths {
         get: operations["JabatanController_findOne"];
         put?: never;
         post?: never;
-        /** Hapus jabatan (admin hanya milik distriknya) */
+        /** Hapus jabatan (admin hanya milik distriknya; admin_nasional: nasional) */
         delete: operations["JabatanController_remove"];
         options?: never;
         head?: never;
-        /** Update jabatan (admin hanya milik distriknya) */
+        /** Update jabatan (admin hanya milik distriknya; admin_nasional: nasional) */
         patch: operations["JabatanController_update"];
         trace?: never;
     };

@@ -14815,7 +14815,7 @@
             "bearer": []
           }
         ],
-        "summary": "Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya)",
+        "summary": "Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional)",
         "tags": [
           "Jabatan"
         ]
@@ -14871,7 +14871,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update jabatan (admin hanya milik distriknya)",
+        "summary": "Update jabatan (admin hanya milik distriknya; admin_nasional: nasional)",
         "tags": [
           "Jabatan"
         ]
@@ -14898,7 +14898,7 @@
             "bearer": []
           }
         ],
-        "summary": "Hapus jabatan (admin hanya milik distriknya)",
+        "summary": "Hapus jabatan (admin hanya milik distriknya; admin_nasional: nasional)",
         "tags": [
           "Jabatan"
         ]
