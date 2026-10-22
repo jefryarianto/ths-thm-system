@@ -185,8 +185,13 @@ export class ExportService {
   }
 
   private async getGraduationData(scope?: UserScope) {
+    const where: Record<string, unknown> = { status: 'lulus' };
+    if (scope?.rantingId) where.rantingId = scope.rantingId;
+    else if (scope?.wilayahId) where.ranting = { wilayahId: scope.wilayahId };
+    else if (scope?.distrikId) where.ranting = { wilayah: { distrikId: scope.distrikId } };
+
     const members = await this.prisma.calonAnggota.findMany({
-      where: { status: 'lulus' },
+      where,
       orderBy: { updatedAt: 'desc' },
     });
 
@@ -202,7 +207,14 @@ export class ExportService {
   }
 
   private async getAssessmentData(scope?: UserScope) {
+    const where: Record<string, unknown> = {};
+    if (scope?.rantingId) where.calonAnggota = { rantingId: scope.rantingId };
+    else if (scope?.wilayahId) where.calonAnggota = { ranting: { wilayahId: scope.wilayahId } };
+    else if (scope?.distrikId)
+      where.calonAnggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
+
     const scores = await this.prisma.nilaiPendadaran.findMany({
+      where,
       include: {
         calonAnggota: { select: { namaLengkap: true } },
         itemPenilaian: { select: { namaItem: true } },

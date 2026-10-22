@@ -22,6 +22,7 @@ export class JabatanController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -39,6 +40,7 @@ export class JabatanController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -51,8 +53,8 @@ export class JabatanController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya)',
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_nasional', {
+    summary: 'Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional)',
   })
   create(
     @Req() req: ScopedRequest,
@@ -62,8 +64,8 @@ export class JabatanController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Update jabatan (admin hanya milik distriknya)',
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_nasional', {
+    summary: 'Update jabatan (admin hanya milik distriknya; admin_nasional: nasional)',
   })
   update(
     @Req() req: ScopedRequest,
@@ -74,8 +76,8 @@ export class JabatanController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', {
-    summary: 'Hapus jabatan (admin hanya milik distriknya)',
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_nasional', {
+    summary: 'Hapus jabatan (admin hanya milik distriknya; admin_nasional: nasional)',
   })
   remove(@Req() req: ScopedRequest, @Param('id') id: string) {
     return this.service.remove(req, id);

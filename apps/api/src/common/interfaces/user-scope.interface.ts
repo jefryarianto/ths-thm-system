@@ -12,6 +12,23 @@ export interface UserScope {
   /** The resolved distrik ID (district level) */
   distrikId?: string;
   /**
+   * Role pengguna — digunakan untuk membezakan superadmin, admin_nasional,
+   *   dan role org-hierarchy lainnya.
+   *   - 'superadmin': scope kosong, akses penuh national
+   *   - 'admin_nasional': scope kosong tapi role terbatas (bukan superadmin)
+   *   - 'admin_distrik'/`admin_wilayah`/'admin_ranting'/'admin_kegiatan': punya hierarki
+   *   - 'anggota'/'penguji': self scope dengan selfMemberId
+   */
+  role?:
+    | 'superadmin'
+    | 'admin_nasional'
+    | 'admin_distrik'
+    | 'admin_wilayah'
+    | 'admin_ranting'
+    | 'admin_kegiatan'
+    | 'anggota'
+    | 'penguji';
+  /**
    * The member ID of the authenticated user, set only when their scope is 'self'
    * (role `anggota` or `penguji`).
    *
@@ -33,10 +50,11 @@ export interface UserScope {
  * to their own rows. Note this is deliberately NOT `!scope.rantingId && ...`,
  * because superadmin also has an empty scope.
  */
-export function isSelfScope(scope?: UserScope | null): scope is UserScope & { selfMemberId: string } {
+export function isSelfScope(
+  scope?: UserScope | null,
+): scope is UserScope & { selfMemberId: string } {
   return !!scope?.selfMemberId;
 }
-
 
 /**
  * Extended request with user scope information.
@@ -56,4 +74,3 @@ export interface ScopedRequest {
   url?: string;
   ip?: string;
 }
-

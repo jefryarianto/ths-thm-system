@@ -92,10 +92,18 @@ export class ScopeGuard implements CanActivate {
     //   admin_distrik → distrikId
     //   admin_wilayah → wilayahId (+ distrikId via join)
     //   admin_ranting  → rantingId (+ wilayahId/distrikId via join)
+    // Role ikut dilampirkan ke scope: service perlu membedakan superadmin
+    // (nasional penuh) dari admin_nasional (nasional terbatas) — keduanya tidak
+    // membawa id hierarki, sehingga scope kosong saja tidak cukup.
+    const role = user.role as UserScope['role'];
+
     if (user.role === 'superadmin') {
-      request.scope = {};
+      request.scope = { role };
+    } else if (user.role === 'admin_nasional') {
+      // Admin nasional: tanpa organisasi, akses tingkat nasional.
+      request.scope = { role };
     } else if (user.role === 'admin_distrik' && user.distrikId) {
-      request.scope = { distrikId: user.distrikId };
+      request.scope = { role, distrikId: user.distrikId };
     } else if (user.role === 'admin_wilayah' && user.wilayahId) {
       // admin_wilayah: scope ke wilayah, sertakan distrik untuk filter tak langsung.
       const wilayah = await this.prisma.wilayah.findUnique({
@@ -103,8 +111,8 @@ export class ScopeGuard implements CanActivate {
         select: { distrikId: true },
       });
       request.scope = wilayah
-        ? { wilayahId: user.wilayahId, distrikId: wilayah.distrikId }
-        : { wilayahId: user.wilayahId };
+        ? { role, wilayahId: user.wilayahId, distrikId: wilayah.distrikId }
+        : { role, wilayahId: user.wilayahId };
     } else if (user.role === 'anggota' || user.role === 'penguji') {
       // anggota & penguji berscope 'self': mereka hanya boleh melihat baris milik
       // anggota dirinya sendiri (ditambah pengecualian penguji untuk peserta
@@ -121,15 +129,16 @@ export class ScopeGuard implements CanActivate {
       });
       if (ranting) {
         request.scope = {
+          role,
           rantingId: user.rantingId,
           wilayahId: ranting.wilayahId,
           distrikId: ranting.wilayah?.distrikId,
         };
       } else {
-        request.scope = { rantingId: user.rantingId };
+        request.scope = { role, rantingId: user.rantingId };
       }
     } else {
-      request.scope = {};
+      request.scope = { role };
     }
 
     return true;
@@ -142,7 +151,7 @@ export class ScopeGuard implements CanActivate {
    * user is never treated as a national admin.
    */
   private async resolveSelfScope(user: ScopedRequest['user']): Promise<UserScope> {
-    const scope: UserScope = {};
+    const scope: UserScope = { role: user.role as UserScope['role'] };
 
     if (user.email) {
       const own = await this.prisma.anggota.findFirst({

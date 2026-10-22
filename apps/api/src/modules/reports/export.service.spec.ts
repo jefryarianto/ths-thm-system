@@ -43,6 +43,47 @@ describe('ExportService', () => {
     expect(result.rowCount).toBe(1);
   });
 
+  describe('scope filtering (graduations & assessments)', () => {
+    it('should scope graduations to the requesting wilayah', async () => {
+      await service.exportData('graduations', 'csv', { wilayahId: 'w1' });
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'lulus',
+            ranting: { wilayahId: 'w1' },
+          }),
+        }),
+      );
+    });
+
+    it('should scope graduations to the requesting ranting', async () => {
+      await service.exportData('graduations', 'csv', { rantingId: 'r1' });
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'lulus', rantingId: 'r1' }),
+        }),
+      );
+    });
+
+    it('should scope assessments to the requesting district', async () => {
+      await service.exportData('assessments', 'csv', { distrikId: 'd1' });
+      expect(prisma.nilaiPendadaran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            calonAnggota: { ranting: { wilayah: { distrikId: 'd1' } } },
+          }),
+        }),
+      );
+    });
+
+    it('should not add a hierarchy filter for national scope', async () => {
+      await service.exportData('graduations', 'csv', {});
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { status: 'lulus' } }),
+      );
+    });
+  });
+
   it('should reject unknown export type', async () => {
     await expect(service.exportData('nope', 'xlsx')).rejects.toThrow('Unknown export type');
   });

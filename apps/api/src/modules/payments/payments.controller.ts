@@ -57,7 +57,7 @@ export class PaymentsController {
   }
 
   @Get('bank-info/all')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin',
   })
   getAllBankInfo() {
@@ -65,7 +65,7 @@ export class PaymentsController {
   }
 
   @Post('bank-info')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Tambah rekening bank baru — Admin',
   })
   createBankInfo(@Body() dto: CreateBankInfoDto) {
@@ -73,7 +73,7 @@ export class PaymentsController {
   }
 
   @Patch('bank-info/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Ubah rekening bank — Admin',
   })
   updateBankInfo(@Param('id') id: string, @Body() dto: UpdateBankInfoDto) {
@@ -81,7 +81,7 @@ export class PaymentsController {
   }
 
   @Delete('bank-info/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Hapus rekening bank — Admin',
   })
   deleteBankInfo(@Param('id') id: string) {
@@ -91,7 +91,7 @@ export class PaymentsController {
   // ── Payment Flow ──
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Ambil detail pembayaran iuran',
   })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -133,7 +133,7 @@ export class PaymentsController {
   }
 
   @Patch(':id/verify')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Verifikasi pembayaran (admin)',
   })
   verifyPayment(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -141,7 +141,7 @@ export class PaymentsController {
   }
 
   @Patch(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Tolak pembayaran (admin)',
   })
   rejectPayment(@Param('id') id: string, @Req() req: ScopedRequest) {

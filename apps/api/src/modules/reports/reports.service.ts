@@ -14,16 +14,22 @@ export class ReportsService {
     private readonly cache: CacheService,
   ) {}
 
-  async getMembersOverTime() {
+  async getMembersOverTime(scope?: UserScope) {
     // Return daily count of members created over last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Scope hierarki: admin hanya melihat pertumbuhan anggota di cakupannya.
+    const where: Record<string, unknown> = {
+      createdAt: { gte: thirtyDaysAgo },
+      deletedAt: null,
+    };
+    if (scope?.rantingId) where.rantingId = scope.rantingId;
+    else if (scope?.wilayahId) where.ranting = { wilayahId: scope.wilayahId };
+    else if (scope?.distrikId) where.ranting = { wilayah: { distrikId: scope.distrikId } };
+
     const raw = await this.prisma.anggota.groupBy({
       by: ['createdAt'],
-      where: {
-        createdAt: { gte: thirtyDaysAgo },
-        deletedAt: null,
-      },
+      where,
       _count: true,
       orderBy: { createdAt: 'asc' },
     });

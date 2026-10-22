@@ -96,13 +96,17 @@ describe('DuesController', () => {
 
     it('should delegate submitPaymentConfirmation to service', async () => {
       const dto = { catatan: 'Bukti transfer via BCA' };
+      // Controller meneruskan user yang login agar service bisa menegakkan
+      // kepemilikan baris (assertSelfMember) untuk anggota/penguji.
+      const user = { id: 'u1', email: 'anggota@test.com', role: 'anggota' };
+      const req = { user } as never;
       mockDuesService.submitPaymentConfirmation.mockResolvedValue({
         id: 'due-1',
         status: 'menunggu_verifikasi',
       });
 
-      const result = await controller.submitPaymentConfirmation('due-1', dto);
-      expect(service.submitPaymentConfirmation).toHaveBeenCalledWith('due-1', dto);
+      const result = await controller.submitPaymentConfirmation('due-1', dto, req);
+      expect(service.submitPaymentConfirmation).toHaveBeenCalledWith('due-1', dto, user);
       expect(result).toEqual({ id: 'due-1', status: 'menunggu_verifikasi' });
     });
   });

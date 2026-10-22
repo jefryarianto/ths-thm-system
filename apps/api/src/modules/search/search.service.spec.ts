@@ -43,7 +43,7 @@ describe('SearchService', () => {
     prisma.user.findMany.mockResolvedValue([
       { id: 'u1', namaLengkap: 'Budi', email: 'budi@x.org', role: 'anggota' },
     ]);
-    const result = await service.search('and');
+    const result = await service.search('and', undefined, ['all'], 8, 'superadmin');
     expect(result.query).toBe('and');
     expect(prisma.anggota.findMany).toHaveBeenCalled();
     expect(prisma.kegiatan.findMany).toHaveBeenCalled();
@@ -66,6 +66,30 @@ describe('SearchService', () => {
     expect(prisma.anggota.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
     );
+  });
+
+  describe('user directory visibility', () => {
+    it('should include the users group for admin roles', async () => {
+      await service.search('and', undefined, ['users'], 8, 'admin_distrik');
+      expect(prisma.user.findMany).toHaveBeenCalled();
+    });
+
+    it('should expose the users group for admin_nasional too', async () => {
+      await service.search('and', undefined, ['users'], 8, 'admin_nasional');
+      expect(prisma.user.findMany).toHaveBeenCalled();
+    });
+
+    it('should hide the users group from anggota (no email/role enumeration)', async () => {
+      const result = await service.search('and', undefined, ['users'], 8, 'anggota');
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+      expect(result.groups.users).toBeUndefined();
+    });
+
+    it('should hide the users group from penguji and admin_kegiatan', async () => {
+      await service.search('and', undefined, ['users'], 8, 'penguji');
+      await service.search('and', undefined, ['users'], 8, 'admin_kegiatan');
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
   });
 
   it('should cap limit between 1 and 50', async () => {

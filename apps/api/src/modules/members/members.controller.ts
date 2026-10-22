@@ -40,6 +40,7 @@ export class MembersController {
     'penguji',
     'admin_kegiatan',
     'admin_ranting',
+    'admin_nasional',
     'admin_wilayah',
     'admin_distrik',
     'superadmin',
@@ -60,6 +61,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -74,7 +76,7 @@ export class MembersController {
   }
 
   @Get('incomplete')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Ambil anggota dengan data tidak lengkap',
   })
   getIncompleteMembers(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
@@ -82,7 +84,7 @@ export class MembersController {
   }
 
   @Get('incomplete/stats')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Statistik data tidak lengkap',
   })
   getIncompleteStats(@Req() req: ScopedRequest) {
@@ -90,17 +92,33 @@ export class MembersController {
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    summary: 'Ambil semua anggota',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'anggota',
+    {
+      summary: 'Ambil semua anggota',
+    },
+  )
   findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
     return this.membersService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    summary: 'Ambil detail anggota',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'anggota',
+    {
+      summary: 'Ambil detail anggota',
+    },
+  )
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.findOne(id, req.scope);
   }
@@ -235,6 +253,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -250,6 +269,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -265,6 +285,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -280,6 +301,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -314,6 +336,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -356,6 +379,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -437,6 +461,7 @@ export class MembersController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',

@@ -19,6 +19,19 @@ export interface SearchResults {
 const DEFAULT_LIMIT = 8;
 
 /**
+ * Role yang boleh melihat direktori user (email & role) pada hasil pencarian.
+ * Sebelumnya grup ini terbuka untuk semua role yang lolos @Roles, sehingga
+ * anggota dapat meng-enumerasi email/role seluruh pengguna.
+ */
+const USER_DIRECTORY_ROLES = new Set([
+  'superadmin',
+  'admin_nasional',
+  'admin_distrik',
+  'admin_wilayah',
+  'admin_ranting',
+]);
+
+/**
  * Pencarian gabungan lintas entitas (anggota, calon, kegiatan, latihan, user,
  * dokumen) memakai ILIKE (`contains` + `mode: insensitive`) — setara full-text
  * sederhana di PostgreSQL. Hasil dikelompokkan per tipe untuk UI.
@@ -35,6 +48,7 @@ export class SearchService {
     scope?: UserScope,
     types: string[] = ['all'],
     limit: number = DEFAULT_LIMIT,
+    role?: string,
   ): Promise<SearchResults> {
     const q = (query || '').trim();
     if (q.length < 2) {
@@ -159,7 +173,7 @@ export class SearchService {
       };
     }
 
-    if (wanted('users')) {
+    if (wanted('users') && USER_DIRECTORY_ROLES.has(role ?? '')) {
       const rows = await prisma.user.findMany({
         where: {
           isActive: true,

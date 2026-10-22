@@ -81,7 +81,7 @@ describe('ScopeGuard', () => {
     it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'superadmin' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({});
+      expect(req.scope).toEqual({ role: 'superadmin' });
     });
 
     it('should allow access to district-level endpoints', async () => {
@@ -107,7 +107,7 @@ describe('ScopeGuard', () => {
     it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_distrik', rantingId: 'r1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'admin_distrik', rantingId: 'r1' });
     });
 
     it('should allow access to district-level endpoints', async () => {
@@ -151,7 +151,7 @@ describe('ScopeGuard', () => {
     it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_wilayah', rantingId: 'r1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'admin_wilayah', rantingId: 'r1' });
     });
 
     it('should deny access to district-level endpoints and log violation', async () => {
@@ -184,7 +184,7 @@ describe('ScopeGuard', () => {
     it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_ranting', rantingId: 'r1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'admin_ranting', rantingId: 'r1' });
     });
 
     it('should deny access to region-level endpoints and log violation', async () => {
@@ -214,7 +214,7 @@ describe('ScopeGuard', () => {
         );
       const req = mockRequest({ id: 'u1', role: 'anggota', rantingId: 'r1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'anggota', rantingId: 'r1' });
     });
 
     it('should allow access to branch-level endpoints (self satisfies branch)', async () => {
@@ -263,6 +263,7 @@ describe('ScopeGuard', () => {
       });
       await guard.canActivate(mockExecutionContext(req));
       expect(req.scope).toEqual({
+        role: 'anggota',
         selfMemberId: 'member-self',
         rantingId: 'r1',
         wilayahId: 'w1',
@@ -290,6 +291,7 @@ describe('ScopeGuard', () => {
       });
       await guard.canActivate(mockExecutionContext(req));
       expect(req.scope).toEqual({
+        role: 'penguji',
         rantingId: 'r1',
         wilayahId: 'w1',
         distrikId: 'd1',
@@ -312,7 +314,31 @@ describe('ScopeGuard', () => {
         );
       const req = mockRequest({ id: 'u1', email: 'ghost@test.com', role: 'anggota' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({});
+      expect(req.scope).toEqual({ role: 'anggota' });
+    });
+  });
+
+  describe('admin_nasional (national scope, tanpa organisasi)', () => {
+    it('should attach role but no hierarchy ids', async () => {
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
+        );
+      const req = mockRequest({ id: 'u1', role: 'admin_nasional' });
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(req.scope).toEqual({ role: 'admin_nasional' });
+    });
+
+    it('should allow access to national-level endpoints', async () => {
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('national' as ScopeLevel) : undefined,
+        );
+      const req = mockRequest({ id: 'u1', role: 'admin_nasional' });
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(mockAuditService.logScopeViolation).not.toHaveBeenCalled();
     });
   });
 
@@ -343,7 +369,7 @@ describe('ScopeGuard', () => {
         );
       const req = mockRequest({ id: 'u1', role: 'superadmin' });
       await guard.canActivate(mockExecutionContext(req));
-      expect(req.scope).toEqual({});
+      expect(req.scope).toEqual({ role: 'superadmin' });
     });
 
     it('should set rantingId in scope for admin_ranting', async () => {
@@ -354,7 +380,7 @@ describe('ScopeGuard', () => {
         );
       const req = mockRequest({ id: 'u1', role: 'admin_ranting', rantingId: 'r123' });
       await guard.canActivate(mockExecutionContext(req));
-      expect(req.scope).toEqual({ rantingId: 'r123' });
+      expect(req.scope).toEqual({ role: 'admin_ranting', rantingId: 'r123' });
     });
   });
 });

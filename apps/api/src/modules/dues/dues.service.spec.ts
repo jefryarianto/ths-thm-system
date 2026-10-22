@@ -275,6 +275,73 @@ describe('DuesService', () => {
     });
   });
 
+  describe('submitPaymentConfirmation', () => {
+    const dto = { buktiBayarPath: 'bukti.jpg' };
+
+    it('should forbid anggota from confirming another member dues payment', async () => {
+      // Iuran milik anggota lain ('a1'); user login resolve ke 'own-member'
+      // yang berbeda → Forbidden, dan status TIDAK boleh diubah.
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: 'dues-1',
+        anggotaId: 'a1',
+        status: 'belum_dibayar',
+        anggota: { id: 'a1', rantingId: 'r1' },
+      });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'own-member' });
+      const user = { email: 'me@test.com', role: 'anggota' };
+
+      await expect(service.submitPaymentConfirmation('dues-1', dto, user)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockPrisma.iuran.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow anggota to confirm their own dues payment', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: 'dues-1',
+        anggotaId: 'a1',
+        status: 'belum_dibayar',
+        anggota: { id: 'a1', rantingId: 'r1' },
+      });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.iuran.update.mockResolvedValue({
+        id: 'dues-1',
+        status: 'menunggu_verifikasi',
+      });
+      const user = { email: 'me@test.com', role: 'anggota' };
+
+      const result = await service.submitPaymentConfirmation('dues-1', dto, user);
+      expect(result.status).toBe('menunggu_verifikasi');
+      expect(mockPrisma.iuran.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('should allow admin to confirm any dues payment (role check skipped)', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: 'dues-1',
+        anggotaId: 'a1',
+        status: 'belum_dibayar',
+        anggota: { id: 'a1', rantingId: 'r1' },
+      });
+      mockPrisma.iuran.update.mockResolvedValue({ id: 'dues-1', status: 'menunggu_verifikasi' });
+      const user = { email: 'admin@test.com', role: 'superadmin' };
+
+      const result = await service.submitPaymentConfirmation('dues-1', dto, user);
+      expect(result.status).toBe('menunggu_verifikasi');
+      // Role admin: assertSelfMember dilewati → tanpa resolusi anggota.
+      expect(mockPrisma.anggota.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFound when dues does not exist', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue(null);
+      const user = { email: 'me@test.com', role: 'anggota' };
+
+      await expect(service.submitPaymentConfirmation('missing', dto, user)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrisma.iuran.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getArrears', () => {
     it('should return arrears data', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([

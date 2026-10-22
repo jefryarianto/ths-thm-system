@@ -24,6 +24,7 @@ export class ActivitiesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
     { summary: 'Ambil semua kegiatan' },
@@ -38,6 +39,7 @@ export class ActivitiesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
     { summary: 'Ambil detail kegiatan' },
@@ -47,23 +49,39 @@ export class ActivitiesController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Tambah kegiatan baru',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Tambah kegiatan baru',
+    },
+  )
   create(@Body() dto: CreateActivityDto, @Req() req: ScopedRequest) {
     return this.service.create(dto, req.scope, req.user.id);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Perbarui kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Perbarui kegiatan',
+    },
+  )
   update(@Param('id') id: string, @Body() dto: UpdateActivityDto, @Req() req: ScopedRequest) {
     return this.service.update(id, dto, req.scope);
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Hapus kegiatan',
   })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -71,25 +89,49 @@ export class ActivitiesController {
   }
 
   @Post(':id/participants')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Tambah peserta kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Tambah peserta kegiatan',
+    },
+  )
   addParticipant(@Param('id') id: string, @Body() dto: AddParticipantDto) {
     return this.service.addParticipant(id, dto);
   }
 
   @Delete(':id/participants/:pid')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Hapus peserta kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Hapus peserta kegiatan',
+    },
+  )
   removeParticipant(@Param('id') id: string, @Param('pid') pid: string) {
     return this.service.removeParticipant(id, pid);
   }
 
   @Post(':id/participants/import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Impor peserta kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Impor peserta kegiatan',
+    },
+  )
   importParticipants(
     @Param('id') id: string,
     @Body() importDto: { data: Array<{ anggotaId?: string; memberId?: string }> },
@@ -103,6 +145,7 @@ export class ActivitiesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
     { summary: 'Ambil presensi kegiatan' },
@@ -112,9 +155,17 @@ export class ActivitiesController {
   }
 
   @Post(':id/presence')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Catat presensi kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Catat presensi kegiatan',
+    },
+  )
   recordPresence(@Param('id') id: string, @Body() dto: RecordPresenceDto) {
     return this.service.recordPresence(id, dto);
   }
@@ -125,6 +176,7 @@ export class ActivitiesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
     { summary: 'Ambil dokumen kegiatan' },
@@ -134,9 +186,17 @@ export class ActivitiesController {
   }
 
   @Post(':id/documents')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Unggah dokumen kegiatan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    {
+      summary: 'Unggah dokumen kegiatan',
+    },
+  )
   uploadDocument(@Param('id') id: string, @Body() dto: UploadActivityDocumentDto) {
     return this.service.uploadDocument(id, dto);
   }

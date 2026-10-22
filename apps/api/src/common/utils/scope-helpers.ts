@@ -20,19 +20,27 @@ export class ScopeHelper {
   buildScopeFilter(scope: UserScope, basePath: string = 'ranting'): Record<string, unknown> {
     if (!scope) return {};
 
-    if (scope.rantingId) {
-      return { [basePath]: { id: scope.rantingId } };
+    // Admin nasional: akses tingkat nasional — tanpa filter hierarki.
+    // (Sebelumnya mengembalikan { role: 'nasional' } yang bukan field model.)
+    if (scope.role === 'admin_nasional') {
+      return {};
     }
 
-    if (scope.wilayahId) {
-      return { [basePath]: { wilayahId: scope.wilayahId } };
+    // National level (empty scope / superadmin) — no filter
+    if (!scope.rantingId && !scope.wilayahId && !scope.distrikId) {
+      return {};
     }
 
-    if (scope.distrikId) {
-      return { [basePath]: { wilayah: { distrikId: scope.distrikId } } };
-    }
+    // Build filter with ALL applicable scope levels ANDed together
+    // (e.g. distrik + wilayah + ranting all apply simultaneously).
+    // Disusun sekali jalan: Object.assign dangkal tidak boleh dipakai untuk
+    // menumpuk level, karena bisa menimpa objek yang sudah terbentuk.
+    const relation: Record<string, unknown> = {};
+    if (scope.rantingId) relation.id = scope.rantingId;
+    if (scope.wilayahId) relation.wilayahId = scope.wilayahId;
+    if (scope.distrikId) relation.wilayah = { distrikId: scope.distrikId };
 
-    return {};
+    return Object.keys(relation).length ? { [basePath]: relation } : {};
   }
 
   /**
@@ -45,19 +53,30 @@ export class ScopeHelper {
   buildIndirectScopeFilter(scope: UserScope, relationPath: string): Record<string, unknown> {
     if (!scope) return {};
 
-    if (scope.rantingId) {
-      return { [relationPath]: { rantingId: scope.rantingId } };
+    // Admin nasional: akses tingkat nasional — tanpa filter hierarki.
+    // (Sebelumnya mengembalikan key literal `relationPath` + field `role`.)
+    if (scope.role === 'admin_nasional') {
+      return {};
     }
 
-    if (scope.wilayahId) {
-      return { [relationPath]: { ranting: { wilayahId: scope.wilayahId } } };
+    // National level (empty scope / superadmin) — no filter
+    if (!scope.rantingId && !scope.wilayahId && !scope.distrikId) {
+      return {};
     }
 
-    if (scope.distrikId) {
-      return { [relationPath]: { ranting: { wilayah: { distrikId: scope.distrikId } } } };
-    }
+    // Build filter with ALL applicable scope levels ANDed together.
+    // Nested `ranting` disusun sekali jalan: sebelumnya Object.assign dangkal
+    // menimpa objek ranting sehingga wilayahId hilang ketika scope memuat
+    // wilayahId + distrikId (admin_wilayah) — filter melebar ke seluruh distrik.
+    const relation: Record<string, unknown> = {};
+    if (scope.rantingId) relation.rantingId = scope.rantingId;
 
-    return {};
+    const ranting: Record<string, unknown> = {};
+    if (scope.wilayahId) ranting.wilayahId = scope.wilayahId;
+    if (scope.distrikId) ranting.wilayah = { distrikId: scope.distrikId };
+    if (Object.keys(ranting).length) relation.ranting = ranting;
+
+    return Object.keys(relation).length ? { [relationPath]: relation } : {};
   }
 
   /**
@@ -173,6 +192,14 @@ export class ScopeHelper {
     if (isSelfScope(scope)) {
       return !!scope.rantingId && scope.rantingId === resourceRantingId;
     }
+
+    // Admin nasional: akses tingkat nasional penuh (setara superadmin) untuk
+    // resource mana pun, termasuk yang berada di bawah ranting. Tanpa ini
+    // findOne/update/verify untuk admin_nasional akan selalu 403.
+    if (scope.role === 'admin_nasional') {
+      return true;
+    }
+
     if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
       return true;
     }
@@ -197,15 +224,36 @@ export class ScopeHelper {
     // could read or modify national accounts (e.g. superadmin without ranting).
     if (!ranting.wilayahId) return false;
 
-    if (scope.wilayahId) {
-      return ranting.wilayahId === scope.wilayahId;
-    }
+    // Tenant safety: verify full hierarchy when both wilayah and distrik are set
+    // A ranting is only accessible if it falls within the user's designated distrik AND/OR wilayah
+    const rantingWilayahId = ranting.wilayahId;
+    const rantingDistrikId = ranting.wilayah?.distrikId;
 
+    // When user has distrikId, ranting must be within that distrik
     if (scope.distrikId) {
-      return ranting.wilayah?.distrikId === scope.distrikId;
+      if (rantingDistrikId !== scope.distrikId) {
+        return false;
+      }
     }
 
-    return false;
+    // When user has wilayahId (without distrikId), ranting must be within that wilayah
+    // But also ensure it's compatible with any distrik constraint
+    if (scope.wilayahId) {
+      if (rantingWilayahId !== scope.wilayahId) {
+        return false;
+      }
+      // If user also has distrikId, already verified above; if not, any ranting in this wilayah is ok
+      if (!scope.distrikId) {
+        return true;
+      }
+      // User has both wilayahId and distrikId: ranting must be in both
+      // (distrik check already passed above, now verify wilayah match)
+      return rantingWilayahId === scope.wilayahId;
+    }
+
+    // Only distrikId set (without wilayahId) — ranting must have that distrik
+    // but we cannot verify without a wilayah reference, so allow if distrik matches
+    return true;
   }
 
   /**
@@ -373,4 +421,3 @@ export class ScopeHelper {
     return {};
   }
 }
-

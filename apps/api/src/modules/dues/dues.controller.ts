@@ -32,16 +32,24 @@ export class DuesController {
   constructor(private readonly service: DuesService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    summary: 'Daftar semua iuran',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'anggota',
+    {
+      summary: 'Daftar semua iuran',
+    },
+  )
   findAll(@Query() query: DueFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(query, req.scope);
   }
 
   @Post()
   @Idempotent({ ttl: 300_000 })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Buat iuran baru',
   })
   create(@Body() dto: CreateDueDto, @Req() req: ScopedRequest) {
@@ -49,7 +57,7 @@ export class DuesController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Update iuran',
   })
   update(@Param('id') id: string, @Body() dto: UpdateDueDto, @Req() req: ScopedRequest) {
@@ -57,7 +65,7 @@ export class DuesController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Hapus iuran',
   })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -70,6 +78,7 @@ export class DuesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -80,15 +89,23 @@ export class DuesController {
   }
 
   @Get('members/:memberId')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    summary: 'Daftar iuran per anggota',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'anggota',
+    {
+      summary: 'Daftar iuran per anggota',
+    },
+  )
   getMemberDues(@Param('memberId') memberId: string, @Req() req: ScopedRequest) {
     return this.service.getMemberDues(memberId, req.user);
   }
 
   @Get('arrears')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'district',
     summary: 'Daftar iuran menunggak',
   })
@@ -97,7 +114,7 @@ export class DuesController {
   }
 
   @Get('report')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'district',
     summary: 'Laporan iuran',
   })
@@ -106,7 +123,7 @@ export class DuesController {
   }
 
   @Get('report/export')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Export laporan iuran',
   })
   exportReport(@Req() req: ScopedRequest) {
@@ -114,7 +131,7 @@ export class DuesController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Import iuran dari CSV',
   })
   importDues(@Body() importDto: { data: Record<string, unknown>[] }, @Req() req: ScopedRequest) {
@@ -123,7 +140,7 @@ export class DuesController {
 
   @Patch('batch')
   @Idempotent({ ttl: 300_000 })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Batch payment untuk banyak anggota',
   })
   batchPayment(@Body() dto: BatchPaymentDto, @Req() req: ScopedRequest) {
@@ -131,7 +148,7 @@ export class DuesController {
   }
 
   @Get('dashboard/stats')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Statistik dashboard iuran',
   })
   getDashboardStats() {
@@ -144,6 +161,7 @@ export class DuesController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -155,10 +173,22 @@ export class DuesController {
 
   @Post(':id/payments')
   @Idempotent({ ttl: 300_000 })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    summary: 'Konfirmasi pembayaran manual',
-  })
-  submitPaymentConfirmation(@Param('id') id: string, @Body() dto: PaymentConfirmationDto) {
-    return this.service.submitPaymentConfirmation(id, dto);
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'anggota',
+    {
+      summary: 'Konfirmasi pembayaran manual',
+    },
+  )
+  submitPaymentConfirmation(
+    @Param('id') id: string,
+    @Body() dto: PaymentConfirmationDto,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.submitPaymentConfirmation(id, dto, req.user);
   }
 }

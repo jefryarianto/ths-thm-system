@@ -94,4 +94,107 @@ describe('ScopeHelper — self-scope isolation', () => {
       expect(helper.hasAccessToResource(selfScope, 'r-other')).toBe(false);
     });
   });
+
+  // ── Matrix role × level ────────────────────────────────────────────────
+  // Scope di bawah meniru apa yang dipasang ScopeGuard untuk tiap role.
+  // Tujuannya mengunci bentuk `where` agar filter hierarki tidak melebar
+  // (regresi: wilayahId hilang saat scope berisi wilayahId + distrikId).
+  describe('buildScopeFilter (matrix role)', () => {
+    it('superadmin / scope kosong → tanpa filter', () => {
+      expect(helper.buildScopeFilter({}, 'ranting')).toEqual({});
+    });
+
+    it('admin_distrik → filter distrik', () => {
+      expect(helper.buildScopeFilter({ distrikId: 'd1' }, 'ranting')).toEqual({
+        ranting: { wilayah: { distrikId: 'd1' } },
+      });
+    });
+
+    it('admin_wilayah → wilayahId DAN distrikId dipertahankan', () => {
+      expect(helper.buildScopeFilter({ wilayahId: 'w1', distrikId: 'd1' }, 'ranting')).toEqual({
+        ranting: { wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+    });
+
+    it('admin_ranting → id, wilayahId, dan distrikId sekaligus', () => {
+      expect(
+        helper.buildScopeFilter({ rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' }, 'ranting'),
+      ).toEqual({
+        ranting: { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+    });
+
+    it('self scope (anggota) → hierarki ranting tetap dilampirkan', () => {
+      expect(helper.buildScopeFilter({ ...selfScope }, 'ranting')).toEqual({
+        ranting: { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+    });
+  });
+
+  describe('buildIndirectScopeFilter (matrix role)', () => {
+    it('superadmin / scope kosong → tanpa filter', () => {
+      expect(helper.buildIndirectScopeFilter({}, 'anggota')).toEqual({});
+    });
+
+    it('admin_distrik → anggota.ranting.wilayah.distrikId', () => {
+      expect(helper.buildIndirectScopeFilter({ distrikId: 'd1' }, 'anggota')).toEqual({
+        anggota: { ranting: { wilayah: { distrikId: 'd1' } } },
+      });
+    });
+
+    it('admin_wilayah → wilayahId + distrikId tidak saling menimpa (regresi)', () => {
+      const where = helper.buildIndirectScopeFilter(
+        { wilayahId: 'w1', distrikId: 'd1' },
+        'anggota',
+      );
+      expect(where).toEqual({
+        anggota: { ranting: { wilayahId: 'w1', wilayah: { distrikId: 'd1' } } },
+      });
+      // Filter tidak boleh melebar ke seluruh distrik (wilayahId hilang).
+      expect(JSON.stringify(where)).toContain('"wilayahId":"w1"');
+    });
+
+    it('admin_ranting → rantingId + wilayahId + distrikId sekaligus', () => {
+      expect(
+        helper.buildIndirectScopeFilter(
+          { rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' },
+          'anggota',
+        ),
+      ).toEqual({
+        anggota: {
+          rantingId: 'r1',
+          ranting: { wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+        },
+      });
+    });
+
+    it('relation path kustom dipertahankan', () => {
+      expect(helper.buildIndirectScopeFilter({ distrikId: 'd1' }, 'peserta')).toEqual({
+        peserta: { ranting: { wilayah: { distrikId: 'd1' } } },
+      });
+    });
+  });
+
+  describe('admin_nasional (nasional, tanpa hierarki)', () => {
+    it('buildScopeFilter → tanpa filter hierarki', () => {
+      expect(helper.buildScopeFilter({ role: 'admin_nasional' }, 'ranting')).toEqual({});
+    });
+
+    it('buildIndirectScopeFilter → tanpa filter hierarki (bukan key literal)', () => {
+      expect(helper.buildIndirectScopeFilter({ role: 'admin_nasional' }, 'anggota')).toEqual({});
+    });
+
+    it('hasAccessToResourceAsync → boleh akses resource ber-ranting', async () => {
+      const prisma = { ranting: { findUnique: jest.fn() } };
+      await expect(
+        helper.hasAccessToResourceAsync(prisma as never, { role: 'admin_nasional' }, 'r1'),
+      ).resolves.toBe(true);
+      expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('bukan self scope dan bukan national superadmin', () => {
+      expect(isSelfScope({ role: 'admin_nasional' })).toBe(false);
+      expect(helper.hasAccessToResource({ role: 'admin_nasional' }, 'r1')).toBe(true);
+    });
+  });
 });

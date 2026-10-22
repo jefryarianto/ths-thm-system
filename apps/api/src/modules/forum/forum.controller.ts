@@ -40,6 +40,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -56,6 +57,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -68,7 +70,7 @@ export class ForumController {
   }
 
   @Post('categories')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Buat kategori forum (admin)',
   })
   @ApiBody({ type: CreateCategoryDto, description: 'Data kategori forum baru' })
@@ -78,7 +80,7 @@ export class ForumController {
   }
 
   @Patch('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Perbarui kategori forum (admin)',
   })
   @ApiParam({ name: 'id', description: 'ID Kategori Forum', required: true })
@@ -89,7 +91,7 @@ export class ForumController {
   }
 
   @Delete('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Hapus kategori forum (admin)',
   })
   @ApiParam({ name: 'id', description: 'ID Kategori Forum', required: true })
@@ -106,6 +108,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -137,6 +140,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -154,6 +158,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -171,7 +176,7 @@ export class ForumController {
   }
 
   @Patch('threads/:id/pin')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Pin/unpin thread (admin)',
   })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
@@ -181,7 +186,7 @@ export class ForumController {
   }
 
   @Patch('threads/:id/lock')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Lock/unlock thread (admin)',
   })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
@@ -196,6 +201,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -215,6 +221,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -237,6 +244,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -259,6 +267,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -281,6 +290,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',
@@ -303,6 +313,7 @@ export class ForumController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'penguji',
     'anggota',

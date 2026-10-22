@@ -33,16 +33,25 @@ export class CardTemplatesController {
   // Catatan: rute 'active' dideklarasikan sebelum ':id' agar tidak tertelan parameter.
 
   @Get('active')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'penguji', 'anggota', {
-    summary: 'Template kartu aktif untuk scope (distrik → global) — null = desain bawaan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'penguji',
+    'anggota',
+    {
+      summary: 'Template kartu aktif untuk scope (distrik → global) — null = desain bawaan',
+    },
+  )
   async getActive(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
     // TransformInterceptor membungkus otomatis — kembalikan template mentah (null = bawaan)
     return this.service.resolveActive(resolveReadDistrikId(req, distrikId) ?? undefined);
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Daftar template kartu (superadmin: semua; lainnya: distriknya + global)',
   })
   findAll(@Req() req: ScopedRequest) {
@@ -53,7 +62,7 @@ export class CardTemplatesController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Detail template kartu',
   })
   findOne(@Param('id') id: string) {

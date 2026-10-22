@@ -6,6 +6,7 @@ import { ReportsService } from './reports.service';
 import { ExportService } from './export.service';
 import { Response, Request } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 const VALID_EXPORT_TYPES = new Set([
@@ -35,6 +36,7 @@ export class ReportsController {
   @Get('dashboard')
   @ApiOperation({ summary: 'Ambil data dashboard' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   async getDashboardData(@Req() req: ScopedRequest) {
     return this.reportsService.dashboardStats(req.scope, req.user.id);
   }
@@ -42,6 +44,7 @@ export class ReportsController {
   @Get('scan-stats')
   @ApiOperation({ summary: 'Ambil statistik pemindaian' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   async getScanStats(@Req() req: ScopedRequest) {
     return this.reportsService.scanStats(req.scope);
   }
@@ -49,23 +52,32 @@ export class ReportsController {
   @Get('chart/members-over-time')
   @ApiOperation({ summary: 'Grafik pertumbuhan anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  async getMembersOverTime() {
-    return this.reportsService.getMembersOverTime();
+  @RequireScope('branch')
+  async getMembersOverTime(@Req() req: ScopedRequest) {
+    return this.reportsService.getMembersOverTime(req.scope);
   }
 
   @Get('chart/training-attendance')
   @ApiOperation({ summary: 'Grafik kehadiran pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  async getTrainingAttendance(@Query('year') year: string) {
+  @RequireScope('branch')
+  async getTrainingAttendance(@Query('year') year: string, @Req() req: ScopedRequest) {
     const start = new Date(`${year}-01-01`);
     const end = new Date(`${year}-12-31`);
 
-    const data = await this.prisma.absensiLatihan.findMany({
-      where: {
-        latihan: {
-          hariTanggal: { gte: start, lte: end },
-        },
+    // Scope hierarki: hitung kehadiran hanya untuk anggota di cakupan admin.
+    const where: Record<string, unknown> = {
+      latihan: {
+        hariTanggal: { gte: start, lte: end },
       },
+    };
+    if (req.scope?.rantingId) where.anggota = { rantingId: req.scope.rantingId };
+    else if (req.scope?.wilayahId) where.anggota = { ranting: { wilayahId: req.scope.wilayahId } };
+    else if (req.scope?.distrikId)
+      where.anggota = { ranting: { wilayah: { distrikId: req.scope.distrikId } } };
+
+    const data = await this.prisma.absensiLatihan.findMany({
+      where,
       include: { latihan: true },
     });
 
@@ -86,6 +98,7 @@ export class ReportsController {
   @Get('export/:type')
   @ApiOperation({ summary: 'Ekspor data ke XLSX/CSV (teraudit)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   async exportData(
     @Param('type') type: string,
     @Query('format') format: string,
@@ -130,6 +143,7 @@ export class ReportsController {
   @Get('export/audit-log')
   @ApiOperation({ summary: 'Ekspor log email (CSV)' })
   @Roles('superadmin')
+  @RequireScope('branch')
   async exportAuditLog(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
     const logs = await this.prisma.emailLog.findMany({
       where: {

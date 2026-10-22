@@ -468,7 +468,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return { created: memberIds.length - skipped, skipped, total: memberIds.length };
   }
 
-  async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto) {
+  async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto, user?: SelfScopeUser) {
     const iuran = await this.prismaDelegate.findUnique({
       where: { id },
       include: { anggota: { select: { id: true, rantingId: true } } },
@@ -477,6 +477,12 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     if (!iuran) {
       throw new NotFoundException('Iuran tidak ditemukan');
     }
+
+    // SECURITY: endpoint konfirmasi pembayaran juga boleh dipanggil 'anggota'
+    // (bukan hanya admin). assertSelfMember melempar Forbidden bila anggota/
+    // penguji mencoba mengkonfirmasi iuran milik anggota lain; role admin
+    // dilewati. Tanpa ini anggota bisa menandai iuran orang lain lunas/verifikasi.
+    await assertSelfMember(this.prisma, user, iuran.anggotaId);
 
     if (iuran.status === 'lunas') {
       throw new ForbiddenException('Iuran ini sudah lunas');

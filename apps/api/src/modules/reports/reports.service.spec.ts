@@ -234,6 +234,40 @@ describe('ReportsService', () => {
   });
 
   // ─── exportReport ───
+  describe('getMembersOverTime', () => {
+    it('should apply ranting scope to the growth chart', async () => {
+      mockPrisma.anggota.groupBy.mockResolvedValue([]);
+      await service.getMembersOverTime({ rantingId: 'r1' });
+      expect(mockPrisma.anggota.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ rantingId: 'r1' }),
+        }),
+      );
+    });
+
+    it('should apply wilayah scope to the growth chart', async () => {
+      mockPrisma.anggota.groupBy.mockResolvedValue([]);
+      await service.getMembersOverTime({ wilayahId: 'w1' });
+      expect(mockPrisma.anggota.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ ranting: { wilayahId: 'w1' } }),
+        }),
+      );
+    });
+
+    it('should apply district scope to the growth chart', async () => {
+      mockPrisma.anggota.groupBy.mockResolvedValue([]);
+      await service.getMembersOverTime({ distrikId: 'd1' });
+      expect(mockPrisma.anggota.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            ranting: { wilayah: { distrikId: 'd1' } },
+          }),
+        }),
+      );
+    });
+  });
+
   describe('exportReport', () => {
     it('should export members data', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([{ namaLengkap: 'Budi' }]);

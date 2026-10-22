@@ -40,7 +40,11 @@ import { resolveWriteDistrikId, resolveReadDistrikId } from '../../common/utils/
  * kelompok field di halaman Settings → Template Dokumen (`/settings/dokumen`).
  * Desain kartu anggota diatur terpisah di halaman Template Kartu.
  */
-const DOC_TEMPLATE_TYPES = ['sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] as const;
+const DOC_TEMPLATE_TYPES = [
+  'sertifikat_pendadaran',
+  'sertifikat_pelatihan',
+  'piagam_prestasi',
+] as const;
 
 type DocTemplateType = (typeof DOC_TEMPLATE_TYPES)[number];
 
@@ -94,7 +98,7 @@ export class SettingsController {
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'national',
     summary: 'Ambil semua pengaturan',
   })
@@ -149,7 +153,8 @@ export class SettingsController {
 
   @Get('signatures')
   @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
-    summary: 'Ambil daftar tanda tangan (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
+    summary:
+      'Ambil daftar tanda tangan (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
   })
   async getSignatures(@Req() req: ScopedRequest) {
     return this.settingsService.getSignatures({
@@ -171,7 +176,8 @@ export class SettingsController {
 
   @Get('stamps')
   @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
-    summary: 'Ambil daftar stempel (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
+    summary:
+      'Ambil daftar stempel (superadmin/admin_nasional: semua; lainnya: distriknya + global)',
   })
   async getStamps(@Req() req: ScopedRequest) {
     return this.settingsService.getStamps({
@@ -235,7 +241,9 @@ export class SettingsController {
 
   @Post('stamp')
   @ApiConsumes('multipart/form-data')
-  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', { summary: 'Upload stempel (gambar)' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Upload stempel (gambar)',
+  })
   @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('stamp')))
   async uploadStamp(
     @UploadedFile() file: Express.Multer.File | undefined,
@@ -265,7 +273,7 @@ export class SettingsController {
   // ── Sejarah (public content) ──────────────────────
 
   @Get('sejarah')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'national',
     summary: 'Ambil konten sejarah',
   })
@@ -274,7 +282,10 @@ export class SettingsController {
   }
 
   @Patch('sejarah')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui konten sejarah' })
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'national',
+    summary: 'Perbarui konten sejarah',
+  })
   async updateSejarah(@Body() body: { konten: string; isVisible?: boolean }) {
     return this.settingsService.updateSejarah(body);
   }
@@ -282,7 +293,7 @@ export class SettingsController {
   // ── Organisasi (public content) ────────────────────
 
   @Get('organisasi')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'national',
     summary: 'Ambil struktur organisasi',
   })
@@ -291,7 +302,10 @@ export class SettingsController {
   }
 
   @Patch('organisasi')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui struktur organisasi' })
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'national',
+    summary: 'Perbarui struktur organisasi',
+  })
   async updateOrganisasi(@Body() body: { struktur: unknown; isVisible?: boolean }) {
     return this.settingsService.updateOrganisasi(body);
   }
@@ -319,7 +333,7 @@ export class SettingsController {
   }
 
   @Get('branding/colors')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'national',
     summary: 'Ambil warna branding',
   })
@@ -334,7 +348,10 @@ export class SettingsController {
   }
 
   @Post('branding/colors')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui warna branding' })
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'national',
+    summary: 'Perbarui warna branding',
+  })
   async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
     await this.prisma.setting.upsert({
       where: { key: 'branding' },
@@ -414,7 +431,7 @@ export class SettingsController {
   }
 
   @Get(':key')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     scope: 'national',
     summary: 'Ambil pengaturan by key',
   })

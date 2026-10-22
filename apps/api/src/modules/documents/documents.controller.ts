@@ -56,6 +56,7 @@ export class DocumentsController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
   )
@@ -84,6 +85,7 @@ export class DocumentsController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
   )
@@ -100,6 +102,7 @@ export class DocumentsController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
   )
@@ -111,7 +114,7 @@ export class DocumentsController {
   @Post('generate')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate dokumen (synchronous, single)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   generate(@Body() dto: GenerateDocumentDto) {
     return this.service.generate(dto);
@@ -121,7 +124,7 @@ export class DocumentsController {
   @HttpCode(202)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate dokumen massal (async, returns batchId)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   batchGenerate(@Body() dto: BatchGenerateDocumentDto) {
     return this.service.batchGenerate(dto);
@@ -134,7 +137,7 @@ export class DocumentsController {
   @Get('batch/estimate')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Estimasi jumlah anggota untuk batch generate' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   async estimateBatch(@Query() q: BatchEstimateQueryDto) {
     const count = await this.service.estimateBatch(q.range, q.rantingId);
@@ -144,7 +147,7 @@ export class DocumentsController {
   @Get('batch/list')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Daftar batch generation (recent first)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   getBatchList(@Query() q: BatchListQueryDto) {
     const limit = q.limit || 20;
@@ -156,7 +159,7 @@ export class DocumentsController {
   @Get('batch')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Daftar batch (alias untuk /batch/list)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   getBatchListAlias(@Query() q: BatchListQueryDto) {
     return this.getBatchList(q);
@@ -165,7 +168,7 @@ export class DocumentsController {
   @Get('batch/:batchId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Progress batch generation by batchId' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   async getBatchProgress(@Param('batchId') batchId: string) {
     const progress = await this.batchService.getBatchProgress(batchId);
@@ -178,7 +181,7 @@ export class DocumentsController {
   @Get('batch/:batchId/export')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Export laporan batch ke CSV (status per-job)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   async exportBatchCsv(@Param('batchId') batchId: string, @Res() res: Response) {
     const { csv, filename } = await this.batchService.exportCsv(batchId);
@@ -190,7 +193,7 @@ export class DocumentsController {
   @Post('batch/:batchId/retry')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Retry job yang gagal dalam batch' })
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_nasional')
   @RequireScope('branch')
   async retryBatch(@Param('batchId') batchId: string, @Body() dto: BatchRetryDto) {
     const result = await this.batchService.retryBatch(batchId, dto.jobIds);
@@ -203,7 +206,7 @@ export class DocumentsController {
   @Post('batch/:batchId/cancel')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Batalkan batch generation yang sedang berlangsung' })
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_nasional')
   @RequireScope('branch')
   async cancelBatch(@Param('batchId') batchId: string) {
     const cancelled = await this.batchService.cancelBatch(batchId);
@@ -215,7 +218,7 @@ export class DocumentsController {
   @Patch('batch/:batchId/cancel')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Batalkan batch (PATCH — alias untuk POST cancel)' })
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_nasional')
   @RequireScope('branch')
   async cancelBatchPatch(@Param('batchId') batchId: string) {
     return this.cancelBatch(batchId);
@@ -224,7 +227,7 @@ export class DocumentsController {
   @Delete(':id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Hapus dokumen' })
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_nasional')
   @RequireScope('branch')
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
@@ -233,7 +236,14 @@ export class DocumentsController {
   @Get('types/list')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil tipe dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+  )
   @RequireScope('branch')
   getTypes() {
     return this.service.getTypes();
@@ -244,7 +254,7 @@ export class DocumentsController {
   @Post('certificate')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate sertifikat pendadaran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   generateCertificate(@Body() dto: GenerateCertificateDto) {
     return this.service.generateCertificate(dto);
@@ -253,7 +263,7 @@ export class DocumentsController {
   @Post('certificate/pdf')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Download sertifikat pendadaran (PDF)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   async getCertificatePdf(@Body() dto: GenerateCertificateDto, @Res() res: Response) {
     const pdfBuffer = await this.service.getCertificatePdf(dto.memberId, dto);
@@ -265,7 +275,7 @@ export class DocumentsController {
   @Post('certificate/image')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Preview sertifikat pendadaran (PNG)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   async getCertificateImage(@Body() dto: GenerateCertificateDto, @Res() res: Response) {
     const pngBuffer = await this.service.getCertificateImage(dto.memberId, dto);
@@ -279,7 +289,7 @@ export class DocumentsController {
   @Post('award')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate piagam prestasi' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional')
   @RequireScope('branch')
   generateAward(@Body() dto: GenerateAwardDto) {
     return this.service.generateAward(dto);
@@ -293,6 +303,7 @@ export class DocumentsController {
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
+    'admin_nasional',
     'admin_kegiatan',
     'anggota',
   )

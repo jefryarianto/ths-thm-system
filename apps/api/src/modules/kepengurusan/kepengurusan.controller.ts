@@ -11,7 +11,7 @@ export class KepengurusanController {
   constructor(private readonly service: KepengurusanService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Daftar kepengurusan (filter by level, unit, periode)',
   })
   @ApiQuery({ name: 'level', required: false })
@@ -29,7 +29,7 @@ export class KepengurusanController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Detail kepengurusan',
   })
   findOne(@Param('id') id: string) {
@@ -37,7 +37,7 @@ export class KepengurusanController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Tambah kepengurusan baru',
   })
   create(
@@ -61,7 +61,7 @@ export class KepengurusanController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Update kepengurusan',
   })
   update(
@@ -80,7 +80,7 @@ export class KepengurusanController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Hapus kepengurusan (memerlukan persetujuan)',
   })
   remove(@Param('id') id: string) {
@@ -88,7 +88,7 @@ export class KepengurusanController {
   }
 
   @Get('export')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Export kepengurusan ke CSV',
   })
   @ApiQuery({ name: 'level', required: false })
@@ -104,7 +104,7 @@ export class KepengurusanController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Import kepengurusan dari CSV',
   })
   importCsv(@Body() body: { rows: Array<Record<string, string>> }, @Req() req?: ScopedRequest) {
@@ -112,7 +112,7 @@ export class KepengurusanController {
   }
 
   @Patch(':id/reparent')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Pindahkan parent kepengurusan (drag-drop)',
   })
   reparent(@Param('id') id: string, @Body() body: { parentId: string | null }) {
@@ -122,7 +122,7 @@ export class KepengurusanController {
   // ── Approval workflow ──
 
   @Get('pending')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Daftar kepengurusan menunggu persetujuan',
   })
   findPending(@Req() req?: ScopedRequest) {
@@ -130,7 +130,7 @@ export class KepengurusanController {
   }
 
   @Patch(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Setujui perubahan kepengurusan',
   })
   approve(@Param('id') id: string, @Req() req?: ScopedRequest) {
@@ -138,7 +138,7 @@ export class KepengurusanController {
   }
 
   @Patch(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Tolak perubahan kepengurusan',
   })
   reject(@Param('id') id: string, @Body() body: { reason?: string }) {
@@ -146,7 +146,7 @@ export class KepengurusanController {
   }
 
   @Post('bulk-approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Setujui beberapa perubahan sekaligus',
   })
   bulkApprove(@Body() body: { ids: string[] }, @Req() req?: ScopedRequest) {
@@ -154,7 +154,7 @@ export class KepengurusanController {
   }
 
   @Post('bulk-reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
     summary: 'Tolak beberapa perubahan sekaligus',
   })
   bulkReject(@Body() body: { ids: string[]; reason?: string }) {
