@@ -140,6 +140,7 @@ export class ExportService {
     const where: Record<string, unknown> = {};
     if (scope?.rantingId) where.rantingId = scope.rantingId;
     else if (scope?.wilayahId) where.wilayahId = scope.wilayahId;
+    else if (scope?.distrikId) where.wilayah = { distrikId: scope.distrikId };
 
     const trainings = await this.prisma.latihan.findMany({
       where,
@@ -166,6 +167,8 @@ export class ExportService {
   private async getCandidateData(scope?: UserScope) {
     const where: Record<string, unknown> = {};
     if (scope?.rantingId) where.rantingId = scope.rantingId;
+    else if (scope?.wilayahId) where.wilayahId = scope.wilayahId;
+    else if (scope?.distrikId) where.wilayah = { distrikId: scope.distrikId };
 
     const candidates = await this.prisma.calonAnggota.findMany({
       where,

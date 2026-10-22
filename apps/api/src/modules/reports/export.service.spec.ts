@@ -104,4 +104,64 @@ describe('ExportService', () => {
     expect(result.content).toContain('LOGIN_SUCCESS');
     expect(result.rowCount).toBe(1);
   });
+
+  describe('scope filtering (candidates & trainings)', () => {
+    it('should scope candidates to the requesting district', async () => {
+      await service.exportData('candidates', 'csv', { distrikId: 'd1' });
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            wilayah: { distrikId: 'd1' },
+          }),
+        }),
+      );
+    });
+
+    it('should scope candidates to the requesting region', async () => {
+      await service.exportData('candidates', 'csv', { wilayahId: 'w1' });
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            wilayahId: 'w1',
+          }),
+        }),
+      );
+    });
+
+    it('should not add a hierarchy filter for national scope (candidates)', async () => {
+      await service.exportData('candidates', 'csv', {});
+      expect(prisma.calonAnggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+
+    it('should scope trainings to the requesting district', async () => {
+      await service.exportData('trainings', 'csv', { distrikId: 'd1' });
+      expect(prisma.latihan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            wilayah: { distrikId: 'd1' },
+          }),
+        }),
+      );
+    });
+
+    it('should scope trainings to the requesting region', async () => {
+      await service.exportData('trainings', 'csv', { wilayahId: 'w1' });
+      expect(prisma.latihan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            wilayahId: 'w1',
+          }),
+        }),
+      );
+    });
+
+    it('should not add a hierarchy filter for national scope (trainings)', async () => {
+      await service.exportData('trainings', 'csv', {});
+      expect(prisma.latihan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+  });
 });
