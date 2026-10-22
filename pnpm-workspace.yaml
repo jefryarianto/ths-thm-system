@@ -76,12 +76,25 @@ overrides:
   # baseline-browser-mapping MED (GHSA-w5vr-8v7q-w6rv, babel traverse) — jalur browserslist
   baseline-browser-mapping: 2.11.0
   # vitest + @vitest/mocker MED (GHSA-82fw-gwwq-j7x9 <4.1.11) — direct dep apps/web
-  # vitest@^4.1.11 di apps/web/package.json; mocker transitive mengikuti
-  '@vitest/mocker': 4.1.11
+  # vitest@^4.1.12 di apps/web/package.json; mocker transitive mengikuti
+  '@vitest/mocker': 4.1.12
+  # @vitest/mocker MED GHSA-qxg6-89mg-rqv8 (code injection manual mock) & GHSA-xp26-3454-mjgp
+  # (backslash traversal bypass allowlist) — keduanya fix di 4.1.12
+
+  # ── Dependabot 2026-10-22: rantai vite/vitest (apps/web) ──
+  # vite 8.0.16 -> 8.1.6: HIGH GHSA-587h-7wmj-h5pm (launch-editor fs.existsSync bypass, Windows),
+  # MED GHSA-r825-w8mm-5pxw / GHSA-698v-4r3x-3vcv / GHSA-v6wh-96g9-6wx3, LOW GHSA-9jrq-w75r-8gcw
+  vite: 8.1.6
+
+  # follow-redirects HIGH GHSA-q3jh-wrc6-jgq8 (array-form headers bypass credential stripping)
+  # & GHSA-8r9p-f939-6h3c (sensitiveHeaders regex escaping) — fix 1.16.1 (axios ^1.16.0)
+  follow-redirects: 1.16.1
   # Handlebar advisory patched; published package versions for other advisories are still vulnerable.
   handlebars: 4.7.10
 
 allowBuilds:
+  # postinstall @firebase/util hanya berguna di Firebase App Hosting (butuh FIREBASE_WEBAPP_CONFIG)
+  '@firebase/util': false
   '@scarf/scarf': true
   '@nestjs/core': true
   '@prisma/client': true

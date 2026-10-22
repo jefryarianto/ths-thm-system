@@ -1,6 +1,6 @@
 # BullMQ End-to-End Test (Manual)
 
-The adapter-level test suite (`apps/api/src/common/queue/__tests__/bullmq-queue.adapter.e2e-spec.ts`) covers all BullMQ adapter behaviour using `ioredis-mock` (in-memory Redis).  
+The adapter-level test suite (`apps/api/src/common/queue/__tests__/bullmq-queue.adapter.e2e-spec.ts`) covers all BullMQ adapter behaviour against a **real Redis** instance (it is skipped automatically when Redis is not reachable on `localhost:6379`).  
 However, two integration paths **cannot** be tested without a real Redis server:
 
 1. **Job persistence across service restarts** — completed jobs remain in Redis and are not re-processed by a new worker.
