@@ -392,6 +392,15 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Brand Lottie Animation */}          <Suspense>
+          <Lottie
+            src={animationData}
+            loop
+            style={{ width: 200, height: 200 }}
+            className="relative mx-auto"
+          />
+        </Suspense>
+
         {/* Quote */}
         <div className="relative mt-8 border-t border-white/20 pt-5">
           <p className="text-sm italic leading-relaxed text-white/90">
