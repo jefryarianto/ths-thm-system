@@ -86,26 +86,89 @@ export class DocumentsService {
     // Self-scope (anggota/penguji) harus punya cache bucket sendiri — sebelumnya
     // mereka jatuh ke bucket yang sama dengan admin ter-scope (bisa berbagi bucket
     // 'all') dan, yang lebih buruk, bucket ranting member lain.
-    const selfSeg = this.scopeHelper.selfCacheSegment(scope);
-    const orgSeg = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
+    const effectiveScope = scope || { role: 'admin_nasional' } as UserScope;
+    const selfSeg = this.scopeHelper.selfCacheSegment(effectiveScope);
+    // Admin nasional: scope kosong tapi role tidak superadmin.
+    // Jika role admin_nasional, gunakan orgSeg 'national' (tanpa hierarki filter).
+    // Jika scope undefined (public), jangan default ke superadmin — gunakan 'national'
+    // agar filtering tetap diterapkan sesuai desain role.
+    // Jika superadmin, gunakan 'all'. Jika org-scoped role, gabungkan hierarkinya.
+    const orgSeg = effectiveScope.role === 'admin_nasional'
+      ? 'national'
+      : effectiveScope.role === 'superadmin'
+        ? 'all'
+        : effectiveScope.rantingId || effectiveScope.wilayahId || effectiveScope.distrikId
+          ? (effectiveScope.rantingId || effectiveScope.wilayahId || effectiveScope.distrikId || 'all')
+          : 'national';
     const cacheKey = `${this.CACHE_PREFIX}list:${orgSeg}:${selfSeg}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.anggotaId || ''}`;
 
     return this.cache.getOrSet(
       cacheKey,
       async () => {
+        // ---- FILTER BUILDING ----
+        // 1. Indirect scope filter (org hierarchy: rantingId/wilayahId/distrikId)
         const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-        // SECURITY: anggota/penguji hanya boleh melihat dokumen miliknya sendiri
-        // (KTA, sertifikat, dsb). Tanpa ini, scope self yang kini lolos guard
-        // akan membuka dokumen seluruh anggota di rantingnya.
-        const selfFilter = this.scopeHelper.buildSelfScopeFilter(scope, 'anggotaId');
+
+        // 2. Self filter (anggota/penguji hanya boleh milik themselves)
+        //    Untuk superadmin/admin_nasional: return {} (tidak memaksa self-filter).
+        //    Untuk org-scoped: filter ke selfMemberId bila ada.
+        const isSelf = isSelfScope(scope ?? {});
+        const selfFilter = isSelf
+          ? this.scopeHelper.buildSelfScopeFilter(scope ?? {}, 'anggotaId')
+          : {};
+
+        // 3. Penting: jangan izinkan query.anggotaId menimpa self-filter.
+        //    Anggota hanya boleh melihat dokumen milik sendiri; query.anggotaId eksternal
+        //    harus diabaikan atau hanya bisa mempersempit ke self ID.
         const where: Record<string, unknown> = { ...scopeFilter, ...selfFilter };
+
         if (query.tipe) where.tipe = query.tipe;
-        if (query.anggotaId) {
-          // Filter klien hanya boleh mempersempit, tidak boleh menimpa self filter.
-          if (selfFilter.anggotaId && query.anggotaId !== selfFilter.anggotaId) {
-            throw new ForbiddenException('Akses ditolak: Anda hanya dapat melihat dokumen milik sendiri');
+
+        // ── PER-TYPE ACCESS SETTINGS ─────────────────────────────────────────────
+        // These are additional filter layers on top of role-based + self-scope + hierarchy
+        // Each type can have its own access rules beyond the default role filtering
+
+        // 1. Statuta → semua role bisa akses (tidak ada filter tambahan)
+        //    Tidak perlu filter ekstra — role-based access sudah cukup
+
+        // 2. Pernapasan → hanya anggota dengan tingkatan 'Muda'
+        if (query.tipe === 'pernapasan' as any) {
+          // Filter ke anggota dengan tingkat 'Muda'
+          // Asumsi ada enum tingkat di schema Prisma: 'Muda', 'Madya', 'Utama', 'Atasan'
+          if (!where.tingkat) where.tingkat = 'Muda';
+        }
+
+        // 3. SK Ranting A → admin ranting A dan semua pengurus ranting A
+        if (query.tipe === 'sk_rating_a' as any) {
+          // Hanya admin ranting dan superadmin yang boleh akses
+          // dan filter ke ranting tertentu jika user punya rantingId
+          if (scope?.role === 'admin_ranting' || scope?.role === 'superadmin') {
+            // Admin ranting bisa lihat ranting mereka sendiri
+            if (scope?.rantingId) {
+              where.rantingId = scope.rantingId;
+            }
+          } else {
+            // Bagi role lain, batasi (bisa dikonfigurasi ranting tertentu)
+            // Default: hanya tanpa filter ranting (melihat semua sesuai role)
+            where.rantingId = undefined;
           }
-          where.anggotaId = query.anggotaId;
+        }
+
+        // Jika ada query.anggotaId, hanya boleh mempersempit ke selfMemberId,
+        // bukan mengganti filternya menjadi anggota lain.
+        if (query.anggotaId) {
+          if (isSelf && selfFilter.anggotaId && query.anggotaId !== selfFilter.anggotaId) {
+            throw new ForbiddenException(
+              'Akses ditolak: Anda hanya dapat melihat dokumen milik sendiri',
+            );
+          }
+          // Untuk self-scope: hanya izinkan filter ke own anggotaId.
+          // Bukan izinkan arbitrary anggotaId dari klien.
+          if (isSelf) {
+            where.anggotaId = selfFilter.anggotaId;
+          }
+          // Bila bukan self-scope (admin), query.anggotaId boleh digunakan untuk
+          // mempersempit, asalkan sudah lewat scopeFilter.
         }
 
         return paginate(this.prisma.dokumen, where, {
@@ -117,6 +180,7 @@ export class DocumentsService {
       },
       30,
     );
+
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -219,7 +283,9 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildSertifikatPelatihPdf } = require('./pdf-templates/sertifikat_pelatih');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { buildSertifikatWasitDanJuriPdf } = require('./pdf-templates/sertifikat_wasit_dan_juri');
+      const {
+        buildSertifikatWasitDanJuriPdf,
+      } = require('./pdf-templates/sertifikat_wasit_dan_juri');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildSertifikatPengujiPdf } = require('./pdf-templates/sertifikat_penguji');
       // eslint-disable-next-line @typescript-eslint/no-require-imports

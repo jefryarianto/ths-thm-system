@@ -20,6 +20,8 @@ import {
   UserCheck,
   UserPlus,
 } from 'lucide-react';
+import { Lottie } from 'lottie-react';
+import animationData from '/lottie-brand-login.json';
 import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
