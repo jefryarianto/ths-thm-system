@@ -360,13 +360,21 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Logo */}
-          <div className="mb-6">
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg backdrop-blur-sm xl:h-24 xl:w-24">
+          {/* Logo + Brand Lottie Animation */}
+          <div className="mb-6 flex items-center gap-5">
+            <div className="inline-flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg backdrop-blur-sm xl:h-24 xl:w-24">
               <img
                 src="/logo.svg"
                 alt="THS-THM Logo"
                 className="h-full w-full object-contain drop-shadow-lg"
+              />
+            </div>
+            <div className="relative shrink-0" aria-hidden="true">
+              <Lottie
+                src={animationData}
+                loop
+                autoplay
+                className="h-20 w-20 shrink-0 xl:h-24 xl:w-24"
               />
             </div>
           </div>
@@ -390,17 +398,6 @@ export default function LoginPage() {
             <BrandFeatureItem icon={BarChart3} text="Data, laporan & evaluasi organisasi" />
             <BrandFeatureItem icon={Smartphone} text="Akses mobile & notifikasi real-time" />
           </div>
-        </div>
-
-        {/* Brand Lottie Animation */}
-        <div className="relative mt-6 flex shrink-0 justify-center" aria-hidden="true">
-          <Lottie
-            src={animationData}
-            loop
-            autoplay
-            style={{ width: 190, height: 190 }}
-            className="shrink-0"
-          />
         </div>
 
         {/* Quote */}
