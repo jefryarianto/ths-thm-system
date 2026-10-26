@@ -276,6 +276,16 @@
      pengurangan gerak — agar status loading sama dengan aplikasi mobile dan
      tidak tampak seperti tombol yang macet. */
 
+  /* Force animations to play even when prefers-reduced-motion is set */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-spinner,
+    .logo-spinner::after,
+    .animate-logo-spinner,
+    .animate-logo-spinner-reverse {
+      animation-timeline: motion;
+    }
+  }
+
   /* ── Primary button ──
      Aturan radius tombol: md = rounded-lg · sm = rounded-md · lg = rounded-xl */
   .btn-primary {
