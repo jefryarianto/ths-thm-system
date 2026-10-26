@@ -392,14 +392,16 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Brand Lottie Animation */}          <Suspense>
+        {/* Brand Lottie Animation */}
+        <div className="relative mt-6 flex shrink-0 justify-center" aria-hidden="true">
           <Lottie
             src={animationData}
             loop
-            style={{ width: 200, height: 200 }}
-            className="relative mx-auto"
+            autoplay
+            style={{ width: 190, height: 190 }}
+            className="shrink-0"
           />
-        </Suspense>
+        </div>
 
         {/* Quote */}
         <div className="relative mt-8 border-t border-white/20 pt-5">
