@@ -20,8 +20,6 @@ import {
   UserCheck,
   UserPlus,
 } from 'lucide-react';
-import { Lottie } from 'lottie-react';
-import animationData from '../../public/lottie-brand-login.json';
 import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
@@ -30,10 +28,6 @@ import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
-
-/** Handle type for the brand animation, derived from the component's own props. */
-type RefObjectOf<T> = T extends React.RefObject<infer H> ? H : never;
-type BrandLottieHandle = RefObjectOf<NonNullable<React.ComponentProps<typeof Lottie>['lottieRef']>>;
 
 /**
  * AUTH-010: validate the `next` return-to param before navigating.
@@ -131,7 +125,6 @@ export default function LoginPage() {
   // AUTH-011: focus target for the global error banner so keyboard/screen-reader
   // users get immediate feedback after a failed submit.
   const errorRef = useRef<HTMLDivElement>(null);
-  const brandAnimationRef = useRef<BrandLottieHandle | null>(null);
 
   const { user, isAuthenticated } = useAuth();
 
@@ -141,26 +134,6 @@ export default function LoginPage() {
   useEffect(() => {
     if (error) errorRef.current?.focus();
   }, [error]);
-
-  // Brand animation: lottie-react deliberately skips autoplay when the OS asks
-  // for reduced motion, which leaves the mark frozen on its first frame. The
-  // login branding is decorative, so start playback explicitly — pause() first
-  // so the internal play state actually transitions and the ticker registers.
-  useEffect(() => {
-    let attempts = 0;
-    const start = () => {
-      const handle = brandAnimationRef.current;
-      if (!handle?.animationItem) return false;
-      handle.pause();
-      handle.play();
-      return true;
-    };
-    if (start()) return;
-    const timer = window.setInterval(() => {
-      if (start() || ++attempts > 40) window.clearInterval(timer);
-    }, 50);
-    return () => window.clearInterval(timer);
-  }, []);
 
   // AUTH-005: after auth hydration, an authenticated visitor has no business on
   // the login page — send them to their role home (or a validated return-to).
@@ -385,22 +358,13 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Logo + Brand Lottie Animation */}
-          <div className="mb-6 flex items-center gap-5">
-            <div className="inline-flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg backdrop-blur-sm xl:h-24 xl:w-24">
+          {/* Logo */}
+          <div className="mb-6">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg backdrop-blur-sm xl:h-24 xl:w-24">
               <img
                 src="/logo.svg"
                 alt="THS-THM Logo"
                 className="h-full w-full object-contain drop-shadow-lg"
-              />
-            </div>
-            <div className="relative shrink-0" aria-hidden="true">
-              <Lottie
-                src={animationData}
-                loop
-                autoplay
-                lottieRef={brandAnimationRef}
-                className="h-28 w-28 shrink-0 xl:h-36 xl:w-36"
               />
             </div>
           </div>
