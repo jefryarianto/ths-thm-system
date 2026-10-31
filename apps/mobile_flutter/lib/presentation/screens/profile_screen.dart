@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/name_initials.dart';
 import '../../core/utils/formatters.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
@@ -61,9 +62,16 @@ class ProfileScreen extends StatelessWidget {
                   backgroundImage: member.fotoUrl.isNotEmpty
                       ? NetworkImage(member.fotoUrl)
                       : null,
+                  onBackgroundImageError: member.fotoUrl.isNotEmpty ? (_, __) {} : null,
                   child: member.fotoUrl.isEmpty
-                      ? Icon(Icons.person,
-                          size: 56, color: Theme.of(context).colorScheme.primary)
+                      ? Text(
+                          nameInitials(member.namaLengkap),
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        )
                       : null,
                 ),
               ),

@@ -4,6 +4,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 
 import { useEffect, useState } from 'react';
+import { MemberAvatar } from '@/components/ui/member-avatar';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { User, AlertCircle, Save, Upload, RefreshCw, CheckCircle2, Users } from 'lucide-react';
@@ -232,21 +233,7 @@ export default function ProfilePage() {
               {/* Avatar */}
               <div className="relative group">
                 <div className="w-24 h-24 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
-                  {member.fotoPath ? (
-                    <img
-                      src={`/api/uploads/${member.fotoPath}`}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : null}
-                  <img
-                    src="/logo.svg"
-                    alt=""
-                    className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`}
-                  />
+                  <MemberAvatar src={member.fotoPath ? `/api/uploads/${member.fotoPath}` : null} name={member.namaLengkap} className="w-full h-full rounded-xl text-3xl" />
                 </div>
                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 cursor-pointer transition">
                   <Upload size={24} className="text-white" />

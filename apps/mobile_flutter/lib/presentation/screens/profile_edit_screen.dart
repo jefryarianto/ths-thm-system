@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'profile_camera_capture_screen.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/name_initials.dart';
 import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/member.dart';
 import '../../logic/auth/auth_bloc.dart';
@@ -351,8 +352,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                 backgroundImage: backgroundImage,
                 child: backgroundImage == null
-                    ? Icon(Icons.person,
-                        size: 64, color: Theme.of(context).colorScheme.primary)
+                    ? Text(
+                        nameInitials(member?.namaLengkap ?? ''),
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      )
                     : null,
               ),
               if (_photoUploading)

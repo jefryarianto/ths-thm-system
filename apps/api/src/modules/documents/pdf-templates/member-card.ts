@@ -39,6 +39,14 @@ const SLATE_800 = COLORS.value; // #111827 — teks data
 const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
 const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
 
+function getInitialsLocal(name: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 const styles = StyleSheet.create({
   // ── Front Side ──
   pageFront: {
@@ -184,9 +192,17 @@ const styles = StyleSheet.create({
     objectFit: 'cover',
   },
   photoPlaceholder: {
-    color: '#94a3b8',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontSize: 36,
+    fontWeight: 900,
+    textAlign: 'center',
+  },
+  photoFallback: {
+    position: 'absolute',
+    backgroundColor: '#3D5BE0',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Level rank — DI BAWAH photo kecil kanan atas (jarak kecil); teks nama tingkat selebar strip; sembunyi utk 'Anggota'
   rankBox: {
@@ -858,14 +874,22 @@ function buildFrontSide(props: MemberCardPdfProps) {
       { key: 'photo', style: styles.photoBox },
       props.photoDataUrl
         ? h(Image, { src: props.photoDataUrl, style: styles.photoImage })
-        : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
+        : h(
+            View,
+            { style: [styles.photoFallback, { left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h }] },
+            h(Text, { style: styles.photoPlaceholder }, getInitialsLocal(member.namaLengkap)),
+          ),
     ),
     h(
       View,
       { key: 'photo-small', style: styles.photoBoxSmall },
       props.photoDataUrl
         ? h(Image, { src: props.photoDataUrl, style: styles.photoImageSmall })
-        : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
+        : h(
+            View,
+            { style: [styles.photoFallback, { left: FRONT.photo.small.left, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }] },
+            h(Text, { style: [styles.photoPlaceholder, { fontSize: 28 }] }, getInitialsLocal(member.namaLengkap)),
+          ),
     ),
     // Level rank — kanan atas sejajar data No. Anggota; teks nama tingkat selebar strip; sembunyi utk 'Anggota'
     ...(levelStrips.length > 0

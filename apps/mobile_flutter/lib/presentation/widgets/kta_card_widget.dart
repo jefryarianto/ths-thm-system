@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/card_design.dart';
+import '../../core/utils/name_initials.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
 
@@ -257,18 +258,36 @@ Widget _statusBadge(String status) {
         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 1)),
   );
 }
+Widget _initialsBox(double w, double h, String name) {
+  final initials = nameInitials(name);
+  final fontSize = (w < h ? w : h) * 0.28;
+  return Container(
+    width: w,
+    height: h,
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF3D5BE0), Color(0xFF051C8A)],
+      ),
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      initials,
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: fontSize),
+    ),
+  );
+}
+
 Widget _photo(double w, double h, Member m) {
   final crop = photoCrop(w, h);
-  if (m.fotoPath.isEmpty) return SizedBox(width: w, height: h, child: _fbIcon(m.jenisKelamin, w * 0.5));
+  if (m.fotoPath.isEmpty) return _initialsBox(w, h, m.namaLengkap);
   return ClipRect(child: SizedBox(width: w, height: h, child: Stack(children: [
       Positioned(left: crop.left, top: 0, width: crop.w, height: crop.h,
           child: Image.network(m.fotoUrl, fit: BoxFit.cover, gaplessPlayback: true,
-              errorBuilder: (_, __, ___) => _fbIcon(m.jenisKelamin, w * 0.5))),
+              errorBuilder: (_, __, ___) => _initialsBox(w, h, m.namaLengkap))),
   ])));
 }
-Widget _fbIcon(String jk, double sz) => Center(child: Image.asset(
-    jk == 'P' ? 'assets/images/woman-icon.png' : 'assets/images/man-icon.png',
-    width: sz, height: sz, fit: BoxFit.contain, opacity: const AlwaysStoppedAnimation(0.9)));
 Widget _rank(LevelVisual lv, String t) => SizedBox(width: FrontLayout.rankW,
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Text(t.toUpperCase(), maxLines: 1,

@@ -127,20 +127,30 @@ function txt(
   return `<text ${a.join(' ')}${tr}>${esc(content)}</text>`;
 }
 
+function getInitialsLocal(name: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 function photoEl(
   box: { x: number; y: number; w: number; h: number },
   crop: { left: number; top: number; w: number; h: number },
   dataUrl: string | null | undefined,
   clipId: string,
-  placeholder: { cx: number; cy: number; text: string },
+  placeholder: { cx: number; cy: number; text: string; size?: number },
 ) {
   if (!dataUrl) {
+    const fontSize = placeholder.size ?? 36;
     return (
-      `<g><rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6 4"/>` +
-      txt(placeholder.cx, placeholder.cy, placeholder.text, {
-        size: 18,
-        weight: 700,
-        fill: '#94a3b8',
+      `<g>` +
+      `<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="url(#imgFallbackGrad)"/>` +
+      txt(placeholder.cx, placeholder.cy + fontSize / 4, placeholder.text, {
+        size: fontSize,
+        weight: 900,
+        fill: '#ffffff',
         anchor: 'middle',
       }) +
       `</g>`
@@ -256,12 +266,14 @@ function frontSide(d: CardSvgData): string {
   s += photoEl(big, cropBig, d.photoDataUrl, 'clipBig', {
     cx: big.x + big.w / 2,
     cy: big.y + big.h / 2,
-    text: 'FOTO',
+    text: getInitialsLocal(member.namaLengkap),
+    size: 64,
   });
   s += photoEl(small, cropSmall, d.photoDataUrl, 'clipSmall', {
     cx: small.x + small.w / 2,
     cy: small.y + small.h / 2,
-    text: 'FOTO',
+    text: getInitialsLocal(member.namaLengkap),
+    size: 44,
   });
 
   // Level rank — di bawah foto kecil
@@ -623,6 +635,7 @@ export function buildCardSvg(d: CardSvgData): string {
     `<svg width="${CARD.W}" height="${CARD.H * 2}" viewBox="0 0 ${CARD.W} ${CARD.H * 2}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">` +
     `<defs>` +
     `<linearGradient id="backHeadGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${COLORS.header.from}"/><stop offset="100%" stop-color="${COLORS.header.to}"/></linearGradient>` +
+    `<linearGradient id="imgFallbackGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3D5BE0"/><stop offset="100%" stop-color="#051C8A"/></linearGradient>` +
     `</defs>` +
     `<g id="face-front">${frontSide(d)}</g>` +
     `<g id="face-back" transform="translate(0 ${CARD.H})">${backSide(d)}</g>` +

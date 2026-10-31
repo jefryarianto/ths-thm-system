@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/utils/name_initials.dart';
 
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
@@ -169,10 +170,9 @@ class _Avatar extends StatelessWidget {
                 width: 46,
                 height: 46,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Icon(
-                  Icons.person,
-                  color: fg,
-                  size: 28,
+                errorWidget: (_, __, ___) => Text(
+                  nameInitials(state.member.namaLengkap),
+                  style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 16),
                 ),
               ),
             ),
@@ -180,19 +180,12 @@ class _Avatar extends StatelessWidget {
         }
         final auth = context.read<AuthBloc>().state;
         final nama = auth is AuthAuthenticated ? auth.user.namaLengkap : '';
-        final inisial = nama.trim().isEmpty
-            ? 'A'
-            : nama
-                .trim()
-                .split(RegExp(r'\s+'))
-                .take(2)
-                .map((e) => e[0])
-                .join();
+        final inisial = nameInitials(nama);
         return CircleAvatar(
           radius: 24,
           backgroundColor: bg,
           child: Text(
-            inisial.toUpperCase(),
+            inisial,
             style: TextStyle(
               color: fg,
               fontWeight: FontWeight.w700,

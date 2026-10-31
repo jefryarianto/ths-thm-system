@@ -486,6 +486,7 @@ function cardCss() {
 .card .header-text .r3 { letter-spacing: ${f.header.row.spacing[2]}px; }
 .card .photo-slot { overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .card .photo-slot img { position: absolute; object-fit: cover; }
+.card .photo-fallback { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: linear-gradient(135deg, #3D5BE0, #051C8A); color: #ffffff; font-weight: 900; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .card .photo-big { position: absolute; left: ${f.photo.big.left}px; top: ${f.photo.big.top}px; width: ${f.photo.big.w}px; height: ${f.photo.big.h}px; }
 .card .photo-small { position: absolute; right: ${f.photo.small.right}px; top: ${f.photo.small.top}px; width: ${f.photo.small.w}px; height: ${f.photo.small.h}px; }
 .card .rank-box { position: absolute; right: ${f.rank.right}px; top: ${f.rank.top}px; width: ${f.rank.w}px; text-align: center; }

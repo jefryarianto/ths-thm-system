@@ -73,6 +73,7 @@ import {
 import { useToast } from '@/components/ui/toast';
 import { logError } from '@/lib/error-logger';
 import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { MemberAvatar } from '@/components/ui/member-avatar';
 
 // ─── Types ───
 
@@ -312,21 +313,31 @@ function PatternWeb({ name, side }: { name: string; side: 'front' | 'back' }) {
   );
 }
 
-/** Foto anggota - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onError → 404). */
+import { getInitials } from '@/lib/initials';
+
+/** Foto anggota - fallback inisial saat foto tidak ada ATAU gagal dimuat. */
 function MemberPhotoWeb({
   src,
-  iconSrc,
+  name,
   crop,
-  iconCls,
+  initialsSize,
 }: {
   src: string | null;
-  iconSrc: string;
+  name: string;
   crop?: { left: number; top: number; w: number; h: number };
-  iconCls: string;
+  initialsSize?: number;
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
-    return <img src={iconSrc} alt="foto" className={iconCls} />;
+    const size = initialsSize || (crop ? Math.min(crop.w, crop.h) * 0.32 : 48);
+    return (
+      <div
+        className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-800 text-white font-black"
+        style={{ fontSize: size }}
+      >
+        {getInitials(name)}
+      </div>
+    );
   }
   // Crop ala SIM (dari spec): region atas pasfoto (kepala + bahu) memenuhi kotak
   return (
@@ -760,21 +771,18 @@ export default function MemberDetailPage() {
       const stripHtml = Array.from({ length: lv.stripCount })
         .map(() => `<div class="rank-strip" style="background:${lv.color}"></div>`)
         .join('');
-      // Foto - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onerror → 404/korup)
-      const photoIconSrc =
-        m.jenisKelamin === 'P'
-          ? `${window.location.origin}/woman-icon.png`
-          : `${window.location.origin}/man-icon.png`;
+      // Foto - fallback inisial saat foto tidak ada ATAU gagal dimuat
+      const initials = getInitials(m.namaLengkap);
       const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
       const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
       const cropStyle = (c: ReturnType<typeof photoCrop>) =>
         `position:absolute;left:${c.left}px;top:${c.top}px;width:${c.w}px;height:${c.h}px;object-fit:cover`;
       const photoHtml = m.fotoPath
-        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropBig)}" onerror="this.onerror=null;this.src='${photoIconSrc}';this.style.cssText='width:130px;height:130px;object-fit:contain;opacity:0.9'"/>`
-        : `<img src="${photoIconSrc}" alt="foto" style="width:130px;height:130px;object-fit:contain;opacity:0.9"/>`;
+        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropBig)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:64px">${initials}</div>`
+        : `<div class="photo-fallback" style="display:flex;font-size:64px">${initials}</div>`;
       const photoSmallHtml = m.fotoPath
-        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropSmall)}" onerror="this.onerror=null;this.src='${photoIconSrc}';this.style.cssText='width:100px;height:100px;object-fit:contain;opacity:0.9'"/>`
-        : `<img src="${photoIconSrc}" alt="foto" style="width:100px;height:100px;object-fit:contain;opacity:0.9"/>`;
+        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropSmall)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:44px">${initials}</div>`
+        : `<div class="photo-fallback" style="display:flex;font-size:44px">${initials}</div>`;
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || '';
       const logoUrl = `${window.location.origin}/logo.svg`;
@@ -1024,6 +1032,7 @@ export default function MemberDetailPage() {
           hideGradient
           avatar={{
             src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
+            fallbackNode: <MemberAvatar name={member.namaLengkap} className="w-full h-full text-xl" />,
             onUpload: async (file) => {
               try {
                 const token = localStorage.getItem('accessToken');
@@ -1676,9 +1685,9 @@ export default function MemberDetailPage() {
                             ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
                             : null
                         }
-                        iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
+                        name={member.namaLengkap}
                         crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
-                        iconCls="w-[130px] h-[130px] object-contain opacity-90"
+                        initialsSize={64}
                       />
                     </div>
 
@@ -1698,9 +1707,9 @@ export default function MemberDetailPage() {
                             ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
                             : null
                         }
-                        iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
+                        name={member.namaLengkap}
                         crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
-                        iconCls="w-[100px] h-[100px] object-contain opacity-90"
+                        initialsSize={44}
                       />
                     </div>
 

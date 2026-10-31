@@ -2,6 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useConfirm } from '@/components/ui/confirm-modal';
+import { MemberAvatar } from '@/components/ui/member-avatar';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -91,9 +92,7 @@ export default function IncompleteMembersPage() {
       label: 'Nama',
       render: (m: Member) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-            <img src="/logo.svg" alt="" className="w-full h-full object-cover" />
-          </div>
+          <MemberAvatar src={m.fotoPath ? `/api/uploads/${m.fotoPath}` : null} name={m.namaLengkap} className="w-8 h-8 text-xs" />
           <div>
             <Link
               href={`/members/${m.id}`}

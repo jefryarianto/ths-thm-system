@@ -5,10 +5,14 @@ import { RefreshCw, Upload } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
 
+import { useState } from 'react';
+
 export interface ProfileAvatar {
   src?: string | null;
   /** Fallback image (defaults to /logo.svg) */
   fallback?: string;
+  /** Fallback node (e.g. initials avatar) */
+  fallbackNode?: ReactNode;
   /** If set, shows a hover overlay to upload a new photo */
   onUpload?: (file: File) => Promise<void>;
   /** Shape of the avatar: 'circle' (default) or 'rounded' */
@@ -52,6 +56,8 @@ export default function ProfileHeader({
   const avatarShape = avatar?.shape || 'circle';
   const avatarRadius = avatarShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
   const uploadRadius = avatarShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
+  const [imgFailed, setImgFailed] = useState(false);
+  const showAvatarImage = !!avatar?.src && !imgFailed;
 
   return (
     <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -79,23 +85,22 @@ export default function ProfileHeader({
               <div
                 className={`w-20 h-20 ${avatarRadius} bg-surface flex items-center justify-center shadow-lg ring-4 ring-surface overflow-hidden`}
               >
-                {avatar.src ? (
+                {showAvatarImage ? (
                   <img
-                    src={avatar.src}
+                    src={avatar.src!}
                     alt=""
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = 'none';
-                      const next = e.currentTarget.nextElementSibling as HTMLElement | null;
-                      if (next) next.classList.remove('hidden');
-                    }}
+                    onError={() => setImgFailed(true)}
                   />
-                ) : null}
-                <img
-                  src={avatar.fallback || '/logo.svg'}
-                  alt=""
-                  className={`w-full h-full object-cover ${avatar.src ? 'hidden' : ''}`}
-                />
+                ) : avatar.fallbackNode ? (
+                  avatar.fallbackNode
+                ) : (
+                  <img
+                    src={avatar.fallback || '/logo.svg'}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
               {avatar.onUpload && (
                 <label

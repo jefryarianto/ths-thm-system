@@ -33,6 +33,7 @@ import {
   toProperCase,
 } from '@/components/members/constants';
 import { useAuth } from '@/hooks/use-auth';
+import { MemberAvatar } from '@/components/ui/member-avatar';
 
 // ─── Page ───
 
@@ -184,7 +185,8 @@ export default function MembersPage() {
     return distriks.map((d) => ({ value: d.id, label: d.name }));
   }, [distriks]);
 
-  const effectiveDistrikId = filters.distrikId || (distrikOptions.length === 1 ? distrikOptions[0].value : '');
+  const effectiveDistrikId =
+    filters.distrikId || (distrikOptions.length === 1 ? distrikOptions[0].value : '');
 
   useEffect(() => {
     if (distrikOptions.length === 1 && !filters.distrikId) {
@@ -198,7 +200,8 @@ export default function MembersPage() {
     return wil.map((w) => ({ value: w.id, label: w.name }));
   }, [distriks, effectiveDistrikId]);
 
-  const effectiveWilayahId = filters.wilayahId || (wilayahOptions.length === 1 ? wilayahOptions[0].value : '');
+  const effectiveWilayahId =
+    filters.wilayahId || (wilayahOptions.length === 1 ? wilayahOptions[0].value : '');
 
   useEffect(() => {
     if (wilayahOptions.length === 1 && !filters.wilayahId && effectiveDistrikId) {
@@ -340,20 +343,7 @@ export default function MembersPage() {
       label: 'Nama',
       render: (m: Member) => (
         <div className="flex items-center gap-2">
-          {m.fotoPath ? (
-            <img
-              src={`/api/uploads/${m.fotoPath}`}
-              alt=""
-              className="w-8 h-8 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden');
-              }}
-            />
-          ) : null}
-          <div className={`w-8 h-8 rounded-full ${m.fotoPath ? 'hidden' : ''}`}>
-            <img src="/logo.svg" alt="" className="w-8 h-8 rounded-full object-cover" />
-          </div>
+          <MemberAvatar src={m.fotoPath ? `/api/uploads/${m.fotoPath}` : null} name={m.namaLengkap} className="w-8 h-8 text-xs" />
           <Link
             href={`/members/${m.id}`}
             className="font-medium text-gray-900 dark:text-white hover:text-gold-500 dark:hover:text-gold-400 hover:underline transition"
@@ -478,8 +468,8 @@ export default function MembersPage() {
               wilayahOptions.length === 1
                 ? wilayahOptions[0].label
                 : effectiveDistrikId
-                ? 'Semua Wilayah'
-                : 'Pilih Distrik'
+                  ? 'Semua Wilayah'
+                  : 'Pilih Distrik'
             }
             disabled={!effectiveDistrikId || wilayahOptions.length <= 1}
           />
@@ -491,8 +481,8 @@ export default function MembersPage() {
               rantingOptions.length === 1
                 ? rantingOptions[0].label
                 : effectiveWilayahId
-                ? 'Semua Ranting'
-                : 'Pilih Wilayah'
+                  ? 'Semua Ranting'
+                  : 'Pilih Wilayah'
             }
             disabled={!effectiveWilayahId || rantingOptions.length <= 1}
           />
@@ -767,25 +757,7 @@ export default function MembersPage() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative shrink-0">
-                    {m.fotoPath ? (
-                      <img
-                        src={`/api/uploads/${m.fotoPath}`}
-                        alt=""
-                        className="w-12 h-12 rounded-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = 'none';
-                          (e.currentTarget.nextElementSibling as HTMLElement).style.display =
-                            'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div className="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
-                      <span className="font-semibold text-sm text-text">
-                        {m.namaLengkap.charAt(0)}
-                      </span>
-                    </div>
-                  </div>
+                  <MemberAvatar src={m.fotoPath ? `/api/uploads/${m.fotoPath}` : null} name={m.namaLengkap} className="w-12 h-12 text-sm" />
                   <div className="min-w-0">
                     <p className="font-medium text-text truncate">{toProperCase(m.namaLengkap)}</p>
                     <p className="text-xs text-muted font-mono">{m.nomorAnggota}</p>
