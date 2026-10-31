@@ -695,7 +695,7 @@ export class CronTasksService {
     anggotaEmail?: string | null,
   ): Promise<string | null> {
     try {
-      const anggota = await this.prisma.anggota.findFirst({
+      const anggota = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
         select: { id: true, email: true, noHp: true, namaLengkap: true, rantingId: true },
       });

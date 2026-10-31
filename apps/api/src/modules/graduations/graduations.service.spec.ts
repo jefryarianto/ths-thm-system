@@ -485,7 +485,7 @@ describe('GraduationsService', () => {
     });
 
     it('should not duplicate certificates when one already exists', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
       mockPrisma.dokumen.findFirst.mockResolvedValue({ id: 'd1' });
 
       const result = await service.generateDocuments('g1', { candidateId: 'c1' });
@@ -501,7 +501,7 @@ describe('GraduationsService', () => {
     });
 
     it('should skip member creation but still generate certificate when member exists without doc', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
       // dokumen belum ada → sertifikat tetap digenerate tanpa membuat anggota baru
       mockPrisma.dokumen.findFirst.mockResolvedValue(null);
 
