@@ -12,17 +12,20 @@ import { paginate } from '../../common/utils/pagination';
 
 type PostAuthor = { id: string; namaLengkap: string; nomorAnggota: string };
 
+type ForumActor = { id: string; role?: string; namaLengkap?: string };
+
 /** Flat ForumPost row including its author (as returned by Prisma). */
 type ForumPostWithAuthor = {
   id: string;
   threadId: string;
-  authorId: string;
+  authorId: string | null;
+  authorName: string | null;
   parentId: string | null;
   konten: string;
   isSolution: boolean;
   createdAt: Date;
   updatedAt: Date;
-  author: PostAuthor;
+  author: PostAuthor | null;
 };
 
 /** ForumPostWithAuthor with its nested replies (recursive tree node). */
@@ -31,7 +34,13 @@ type ForumPostTreeNode = ForumPostWithAuthor & { children: ForumPostTreeNode[] }
 @Injectable()
 export class ForumService {
   private readonly logger = new Logger(ForumService.name);
-  private readonly ADMIN_ROLES = ['superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+  private readonly ADMIN_ROLES = [
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+  ];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -60,12 +69,31 @@ export class ForumService {
     return anggota?.id ?? null;
   }
 
+  private async resolveAuthor(
+    user: ForumActor,
+  ): Promise<{ authorId: string | null; authorName: string | null }> {
+    const userRow = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { email: true, namaLengkap: true },
+    });
+    if (!userRow) return { authorId: null, authorName: null };
+
+    const anggotaId = await this.resolveAnggotaId(user.id);
+    if (anggotaId) return { authorId: anggotaId, authorName: null };
+    if (this.isAdmin(user.role)) {
+      const authorName = userRow.namaLengkap?.trim() || user.namaLengkap?.trim() || 'Admin';
+      return { authorId: null, authorName };
+    }
+    return { authorId: null, authorName: null };
+  }
+
   /**
    * Resolve the User.id for a given Anggota.id (via shared email).
    * `Notifikasi.userId` references the User model, while forum `authorId`
    * references the Anggota model — notifications must use the User id.
    */
-  private async resolveUserIdByAnggotaId(anggotaId: string): Promise<string | null> {
+  private async resolveUserIdByAnggotaId(anggotaId: string | null): Promise<string | null> {
+    if (!anggotaId) return null;
     const anggota = await this.prisma.anggota.findUnique({
       where: { id: anggotaId },
       select: { email: true },
@@ -85,11 +113,12 @@ export class ForumService {
    */
   private isAllowedToModify(
     authorId: string | null,
-    contentAuthorId: string,
+    contentAuthorId: string | null,
     role?: string,
   ): boolean {
     if (this.isAdmin(role)) return true;
-    return !!authorId && authorId === contentAuthorId;
+    if (!authorId || !contentAuthorId) return false;
+    return authorId === contentAuthorId;
   }
 
   private isAdmin(role?: string): boolean {
@@ -197,19 +226,25 @@ export class ForumService {
     return { ...thread, posts: this.buildPostTree(posts) };
   }
 
-  async createThread(dto: CreateThreadDto, user: { id: string; role?: string }) {
+  async createThread(dto: CreateThreadDto, user: ForumActor) {
     const category = await this.prisma.forumCategory.findUnique({ where: { id: dto.categoryId } });
     if (!category) throw new NotFoundException('Kategori tidak ditemukan');
 
-    const authorId = await this.resolveAnggotaId(user.id);
-    if (!authorId) {
+    const author = await this.resolveAuthor(user);
+    if (!author.authorId && !author.authorName) {
       throw new ForbiddenException(
         'Data keanggotaan Anda tidak ditemukan. Tidak dapat membuat thread.',
       );
     }
 
     const thread = await this.prisma.forumThread.create({
-      data: { categoryId: dto.categoryId, authorId, judul: dto.judul, konten: dto.konten },
+      data: {
+        categoryId: dto.categoryId,
+        authorId: author.authorId,
+        authorName: author.authorName,
+        judul: dto.judul,
+        konten: dto.konten,
+      },
       include: {
         author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
         category: { select: { id: true, nama: true } },
@@ -219,7 +254,7 @@ export class ForumService {
     return thread;
   }
 
-  async updateThread(id: string, dto: UpdateThreadDto, user: { id: string; role?: string }) {
+  async updateThread(id: string, dto: UpdateThreadDto, user: ForumActor) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
 
@@ -267,7 +302,7 @@ export class ForumService {
     return updated;
   }
 
-  async deleteThread(id: string, user: { id: string; role?: string }) {
+  async deleteThread(id: string, user: ForumActor) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
 
@@ -283,19 +318,19 @@ export class ForumService {
   //  POSTS
   // ─────────────────────────────────────────────────────────
 
-  async createPost(threadId: string, dto: CreatePostDto, user: { id: string; role?: string }) {
+  async createPost(threadId: string, dto: CreatePostDto, user: ForumActor) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id: threadId } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
     if (thread.isLocked)
       throw new ForbiddenException('Thread ini dikunci. Tidak dapat menambah balasan.');
 
-    const authorId = await this.resolveAnggotaId(user.id);
-    if (!authorId) {
+    const author = await this.resolveAuthor(user);
+    if (!author.authorId && !author.authorName) {
       throw new ForbiddenException('Data keanggotaan Anda tidak ditemukan. Tidak dapat membalas.');
     }
 
     // Reply bersarang: pastikan post induk ada & merupakan bagian thread ini.
-    let parentPost: { id: string; authorId: string; threadId: string } | null = null;
+    let parentPost: { id: string; authorId: string | null; threadId: string } | null = null;
     if (dto.parentId) {
       parentPost = await this.prisma.forumPost.findUnique({
         where: { id: dto.parentId },
@@ -305,15 +340,24 @@ export class ForumService {
       if (parentPost.threadId !== threadId) {
         throw new ForbiddenException('Post induk tidak termasuk dalam thread ini');
       }
-      if (parentPost.authorId === authorId) {
+      if (author.authorId && parentPost.authorId === author.authorId) {
         throw new ForbiddenException('Tidak dapat membalas post sendiri');
       }
     }
 
     const post = await this.prisma.forumPost.create({
-      data: { threadId, authorId, parentId: dto.parentId ?? null, konten: dto.konten },
+      data: {
+        threadId,
+        authorId: author.authorId,
+        authorName: author.authorName,
+        parentId: dto.parentId ?? null,
+        konten: dto.konten,
+      },
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
+
+    const postAuthorName =
+      (post.author?.namaLengkap as string | undefined) ?? post.authorName ?? 'Admin';
 
     if (parentPost) {
       // Notifikasi ke pembuat post induk (bila bukan dirinya sendiri)
@@ -323,7 +367,7 @@ export class ForumService {
           await this.notificationsService.send(parentAuthorUserId, {
             userId: parentAuthorUserId,
             judul: 'Membalas Komentar Anda',
-            isi: `${post.author.namaLengkap} membalas komentar Anda di thread "${thread.judul}"`,
+            isi: `${postAuthorName} membalas komentar Anda di thread "${thread.judul}"`,
             tipe: 'forum_reply',
             data: { threadId, postId: post.id, parentId: parentPost.id },
           });
@@ -331,14 +375,14 @@ export class ForumService {
           this.logger.warn(`Gagal kirim notifikasi balasan forum: ${error}`);
         }
       }
-    } else if (thread.authorId !== authorId) {
+    } else if (thread.authorId && thread.authorId !== author.authorId) {
       const threadAuthorUserId = await this.resolveUserIdByAnggotaId(thread.authorId);
       if (threadAuthorUserId) {
         try {
           await this.notificationsService.send(threadAuthorUserId, {
             userId: threadAuthorUserId,
             judul: 'Balasan Baru di Thread Anda',
-            isi: `${post.author.namaLengkap} membalas thread "${thread.judul}"`,
+            isi: `${postAuthorName} membalas thread "${thread.judul}"`,
             tipe: 'forum_reply',
             data: { threadId, postId: post.id },
           });
@@ -356,7 +400,7 @@ export class ForumService {
    * Endpoint khusus: `POST /forum/posts/:id/replies`.
    * Mendelegasikan ke createPost dengan parentId yang sudah ditetapkan.
    */
-  async replyToPost(postId: string, dto: CreatePostDto, user: { id: string; role?: string }) {
+  async replyToPost(postId: string, dto: CreatePostDto, user: ForumActor) {
     const parentPost = await this.prisma.forumPost.findUnique({
       where: { id: postId },
       select: { id: true, threadId: true },
@@ -366,7 +410,7 @@ export class ForumService {
     return this.createPost(parentPost.threadId, { ...dto, parentId: parentPost.id }, user);
   }
 
-  async updatePost(id: string, dto: UpdatePostDto, user: { id: string; role?: string }) {
+  async updatePost(id: string, dto: UpdatePostDto, user: ForumActor) {
     const post = await this.prisma.forumPost.findUnique({
       where: { id },
       include: { author: { select: { id: true } } },
@@ -387,7 +431,7 @@ export class ForumService {
     return updated;
   }
 
-  async markAsSolution(postId: string, threadId: string, user: { id: string; role?: string }) {
+  async markAsSolution(postId: string, threadId: string, user: ForumActor) {
     const post = await this.prisma.forumPost.findUnique({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
     if (post.threadId !== threadId)
@@ -412,7 +456,7 @@ export class ForumService {
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
-    if (post.authorId !== authorId) {
+    if (post.authorId && post.authorId !== authorId) {
       const postAuthorUserId = await this.resolveUserIdByAnggotaId(post.authorId);
       if (postAuthorUserId) {
         try {
@@ -432,13 +476,30 @@ export class ForumService {
     return updated;
   }
 
-  async deletePost(id: string, user: { id: string; role?: string }) {
+  async deletePost(id: string, user: ForumActor) {
     const post = await this.prisma.forumPost.findUnique({ where: { id } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
 
     const authorId = await this.resolveAnggotaId(user.id);
     if (!this.isAllowedToModify(authorId, post.authorId, user.role)) {
       throw new ForbiddenException('Anda hanya dapat menghapus balasan sendiri');
+    }
+
+    if (authorId && post.authorId && post.authorId !== authorId) {
+      const postAuthorUserId = await this.resolveUserIdByAnggotaId(post.authorId);
+      if (postAuthorUserId) {
+        try {
+          await this.notificationsService.send(postAuthorUserId, {
+            userId: postAuthorUserId,
+            judul: 'Balasan Anda Dihapus',
+            isi: `Balasan Anda di thread telah dihapus oleh moderator`,
+            tipe: 'forum_deleted',
+            data: { threadId: post.threadId, postId: post.id },
+          });
+        } catch (error) {
+          this.logger.warn(`Gagal kirim notifikasi penghapusan forum: ${error}`);
+        }
+      }
     }
 
     await this.prisma.forumPost.delete({ where: { id } });

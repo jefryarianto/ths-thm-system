@@ -44,6 +44,23 @@ async function main() {
   }
   console.log('Approval levels created');
 
+  // Create default forum categories
+  const forumCategories = [
+    { id: 'forum-cat-diskusi-umum', nama: 'Diskusi Umum', deskripsi: 'Diskusi umum antar anggota', order: 1 },
+    { id: 'forum-cat-pengumuman', nama: 'Pengumuman', deskripsi: 'Pengumuman resmi organisasi', order: 2 },
+    { id: 'forum-cat-tanya-jawab', nama: 'Tanya Jawab', deskripsi: 'Pertanyaan dan jawaban seputar organisasi', order: 3 },
+  ];
+
+  for (const category of forumCategories) {
+    await prisma.forumCategory.upsert({
+      where: { id: category.id },
+      update: {},
+      create: category,
+    });
+  }
+
+  console.log('Forum categories created');
+
   // Create default document categories (reference data untuk modul org-documents)
   const kategoriDokumen = [
     { nama: 'AD/ART', deskripsi: 'Anggaran Dasar dan Rumah Tangga' },

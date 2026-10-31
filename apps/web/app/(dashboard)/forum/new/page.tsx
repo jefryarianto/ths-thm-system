@@ -4,11 +4,12 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
-import apiClient, { unwrap } from '@/lib/api-client';
+import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
+import { CanAdmin } from '@/components/auth/can';
 
 interface Category {
   id: string;
@@ -52,9 +53,8 @@ export default function NewThreadPage() {
       if (data?.id) {
         router.push(`/forum/t/${data.id}`);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal membuat thread');
+    } catch (err: unknown) {
+      toast('error', extractErrorMessage(err, 'Gagal membuat thread'));
     }
     setSubmitting(false);
   };
@@ -76,17 +76,32 @@ export default function NewThreadPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Kategori
             </label>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nama}
-                </option>
-              ))}
-            </select>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={categories.length === 0}
+              >
+                {categories.length === 0 ? (
+                  <option value="">Belum ada kategori</option>
+                ) : (
+                  categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nama}
+                    </option>
+                  ))
+                )}
+              </select>
+              {categories.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Belum ada kategori forum.{' '}
+                  <CanAdmin module="forum">
+                    <Link href="/forum/admin/categories" className="underline">
+                      Buat kategori
+                    </Link>
+                  </CanAdmin>
+                </p>
+              )}
           </div>
 
           <div className="mb-4">
@@ -118,8 +133,8 @@ export default function NewThreadPage() {
           <div className="flex justify-end">
             <button
               onClick={handleSubmit}
-              disabled={submitting || !categoryId || !judul.trim() || !konten.trim()}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+              disabled={submitting || !categoryId || categories.length === 0 || !judul.trim() || !konten.trim()}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={14} /> {submitting ? 'Membuat...' : 'Buat Thread'}
             </button>

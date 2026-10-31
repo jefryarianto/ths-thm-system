@@ -317,9 +317,9 @@ describe('ForumService', () => {
 
     it('should throw NotFoundException when parent post does not exist', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(null);
-      await expect(
-        service.replyToPost('missing', { konten: 'reply' }, otherUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.replyToPost('missing', { konten: 'reply' }, otherUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when parent post belongs to another thread', async () => {

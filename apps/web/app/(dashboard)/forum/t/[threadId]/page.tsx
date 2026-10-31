@@ -5,18 +5,21 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 import { useParams } from 'next/navigation';
 import { Pin, Lock, Eye, Trash2, Send, CheckCircle, Edit3 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useAuth } from '@/hooks/use-auth';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
+import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
 
 interface Post {
   id: string;
   konten: string;
   createdAt: string;
   isSolution?: boolean;
-  author: { id: string; namaLengkap: string; nomorAnggota: string };
+  author: { id: string; namaLengkap: string; nomorAnggota: string } | null;
+  authorName?: string | null;
 }
 
 interface Thread {
@@ -27,7 +30,8 @@ interface Thread {
   isLocked: boolean;
   viewCount: number;
   createdAt: string;
-  author: { id: string; namaLengkap: string; nomorAnggota: string };
+  author: { id: string; namaLengkap: string; nomorAnggota: string } | null;
+  authorName?: string | null;
   category: { id: string; nama: string };
   posts: Post[];
 }
@@ -37,6 +41,9 @@ export default function ThreadDetailPage() {
   const toast = useToast();
   const params = useParams();
   const threadId = params.threadId as string;
+  // PATCH /forum/threads/:id/{pin,lock} hanya superadmin s/d admin_ranting.
+  const { hasMinRole } = useAuth();
+  const canModerate = hasMinRole('admin_ranting');
   const [thread, setThread] = useState<Thread | null>(null);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState('');
@@ -152,7 +159,7 @@ export default function ThreadDetailPage() {
               </div>
               <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
                 <span className="font-medium text-gray-600 dark:text-gray-300">
-                  {thread.author.namaLengkap}
+                  {getForumAuthorName(thread.author, thread.authorName)}
                 </span>
                 <span>
                   {new Date(thread.createdAt).toLocaleDateString('id-ID', {
@@ -171,22 +178,24 @@ export default function ThreadDetailPage() {
                 {thread.konten}
               </div>
             </div>
-            <div className="flex items-center gap-1 ml-4">
-              <button
-                onClick={handlePin}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
-                title={thread.isPinned ? 'Unpin' : 'Pin'}
-              >
-                <Pin size={16} fill={thread.isPinned ? 'currentColor' : 'none'} />
-              </button>
-              <button
-                onClick={handleLock}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
-                title={thread.isLocked ? 'Unlock' : 'Lock'}
-              >
-                <Lock size={16} fill={thread.isLocked ? 'currentColor' : 'none'} />
-              </button>
-            </div>
+            {canModerate && (
+              <div className="flex items-center gap-1 ml-4">
+                <button
+                  onClick={handlePin}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+                  title={thread.isPinned ? 'Unpin' : 'Pin'}
+                >
+                  <Pin size={16} fill={thread.isPinned ? 'currentColor' : 'none'} />
+                </button>
+                <button
+                  onClick={handleLock}
+                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
+                  title={thread.isLocked ? 'Unlock' : 'Lock'}
+                >
+                  <Lock size={16} fill={thread.isLocked ? 'currentColor' : 'none'} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -243,11 +252,11 @@ export default function ThreadDetailPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
                         <span className="text-xs font-bold text-blue-600">
-                          {post.author.namaLengkap.charAt(0)}
+                          {getForumAuthorInitial(post.author, post.authorName)}
                         </span>
                       </div>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {post.author.namaLengkap}
+                        {getForumAuthorName(post.author, post.authorName)}
                       </span>
                       <span className="text-xs text-gray-400">
                         {new Date(post.createdAt).toLocaleDateString('id-ID', {

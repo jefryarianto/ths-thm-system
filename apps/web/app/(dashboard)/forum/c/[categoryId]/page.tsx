@@ -10,6 +10,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import { useDebounce } from '@/lib/hooks/use-debounce';
+import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
 
 interface Thread {
   id: string;
@@ -19,7 +20,8 @@ interface Thread {
   isLocked: boolean;
   viewCount: number;
   createdAt: string;
-  author: { id: string; namaLengkap: string; nomorAnggota: string };
+  author: { id: string; namaLengkap: string; nomorAnggota: string } | null;
+  authorName?: string | null;
   category: { id: string; nama: string };
   _count: { posts: number };
 }
@@ -41,7 +43,8 @@ export default function CategoryThreadsPage() {
             params: debouncedSearch ? { search: debouncedSearch } : undefined,
           }),
           apiClient.get('/forum/categories'),
-        ]);        const threadsData = unwrap<Thread[]>(threadsRes);
+        ]);
+        const threadsData = unwrap<Thread[]>(threadsRes);
         if (threadsData) setThreads(threadsData);
         const catsData = unwrap<Array<{ id: string; nama: string }>>(catsRes);
         if (catsData) {
@@ -63,13 +66,14 @@ export default function CategoryThreadsPage() {
           params: debouncedSearch ? { search: debouncedSearch } : undefined,
         }),
         apiClient.get('/forum/categories'),
-      ]);        const threadsData = unwrap<Thread[]>(threadsRes);
-        if (threadsData) setThreads(threadsData);
-        const catsData = unwrap<Array<{ id: string; nama: string }>>(catsRes);
-        if (catsData) {
-          const cat = catsData.find((c) => c.id === categoryId);
-          if (cat) setCategoryName(cat.nama);
-        }
+      ]);
+      const threadsData = unwrap<Thread[]>(threadsRes);
+      if (threadsData) setThreads(threadsData);
+      const catsData = unwrap<Array<{ id: string; nama: string }>>(catsRes);
+      if (catsData) {
+        const cat = catsData.find((c) => c.id === categoryId);
+        if (cat) setCategoryName(cat.nama);
+      }
     } catch {
       /* ignore */
     }
@@ -144,7 +148,7 @@ export default function CategoryThreadsPage() {
                       {t.konten}
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                      <span>{t.author.namaLengkap}</span>
+                      <span>{getForumAuthorName(t.author, t.authorName)}</span>
                       <span>·</span>
                       <span>
                         {new Date(t.createdAt).toLocaleDateString('id-ID', {
