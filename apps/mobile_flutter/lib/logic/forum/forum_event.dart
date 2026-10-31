@@ -64,3 +64,15 @@ class ForumCreatePostRequested extends ForumEvent {
 class ForumLogoutRequested extends ForumEvent {
   const ForumLogoutRequested();
 }
+
+/// Event internal untuk update state dari event realtime (Socket.IO).
+/// `transform` adalah fungsi murni: menerima state saat ini dan mengembalikan
+/// state baru (atau state yang sama bila event tidak relevan).
+class ForumRealtimeEvent extends ForumEvent {
+  final ForumState Function(ForumState) transform;
+
+  const ForumRealtimeEvent(this.transform);
+
+  @override
+  List<Object> get props => [transform];
+}

@@ -4,6 +4,7 @@ import { ForumService } from './forum.service';
 import { ForumCategoryService } from './forum-category.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../notifications/events.gateway';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 
@@ -105,6 +106,11 @@ describe('ForumService', () => {
     send: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockEventsGateway = {
+    broadcast: jest.fn(),
+    sendToUser: jest.fn(),
+  };
+
   const mockScopeHelper = {
     buildScopeFilter: jest.fn().mockReturnValue({}),
     buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
@@ -128,6 +134,7 @@ describe('ForumService', () => {
         ForumCategoryService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: EventsGateway, useValue: mockEventsGateway },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCacheService },
       ],

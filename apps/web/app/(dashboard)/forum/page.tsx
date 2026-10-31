@@ -5,6 +5,7 @@ import { MessageSquare, FolderOpen, Plus, Settings } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { CanAdmin } from '@/components/auth/can';
 import apiClient, { unwrap } from '@/lib/api-client';
+import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -32,6 +33,33 @@ export default function ForumPage() {
       setLoading(false);
     })();
   }, []);
+
+  // Update realtime: jumlah thread per kategori ikut berubah saat thread dibuat/dihapus.
+  useForumRealtime({
+    threadCreated: (data) => {
+      const d = (data as { thread?: { categoryId?: string } }).thread ?? data;
+      const categoryId = (d as { categoryId?: string } | undefined)?.categoryId;
+      if (categoryId) {
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === categoryId ? { ...c, _count: { threads: c._count.threads + 1 } } : c,
+          ),
+        );
+      }
+    },
+    threadDeleted: (data) => {
+      const d = data as { categoryId?: string };
+      if (d?.categoryId) {
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === d.categoryId
+              ? { ...c, _count: { threads: Math.max(0, c._count.threads - 1) } }
+              : c,
+          ),
+        );
+      }
+    },
+  });
 
   return (
     <PermissionGuard module="forum" action="view">

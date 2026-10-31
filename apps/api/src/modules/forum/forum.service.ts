@@ -8,6 +8,7 @@ import {
   ThreadFilterDto,
 } from './dto/forum.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../notifications/events.gateway';
 import { paginate } from '../../common/utils/pagination';
 
 type PostAuthor = { id: string; namaLengkap: string; nomorAnggota: string };
@@ -45,7 +46,17 @@ export class ForumService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
+
+  /** Emit a forum realtime event; failures must never break the request flow. */
+  private emit(event: string, data: unknown): void {
+    try {
+      this.eventsGateway.broadcast(event, data);
+    } catch (error) {
+      this.logger.warn(`Gagal broadcast event ${event}: ${error}`);
+    }
+  }
 
   // ─────────────────────────────────────────────────────────
   //  HELPERS
@@ -258,6 +269,8 @@ export class ForumService {
       },
     });
 
+    this.emit('forum:threadCreated', thread);
+
     return thread;
   }
 
@@ -282,6 +295,8 @@ export class ForumService {
       },
     });
 
+    this.emit('forum:threadUpdated', updated);
+
     return updated;
   }
 
@@ -294,6 +309,8 @@ export class ForumService {
       data: { isPinned: !thread.isPinned },
     });
 
+    this.emit('forum:threadUpdated', updated);
+
     return updated;
   }
 
@@ -305,6 +322,8 @@ export class ForumService {
       where: { id },
       data: { isLocked: !thread.isLocked },
     });
+
+    this.emit('forum:threadUpdated', updated);
 
     return updated;
   }
@@ -319,6 +338,7 @@ export class ForumService {
     }
 
     await this.prisma.forumThread.delete({ where: { id } });
+    this.emit('forum:threadDeleted', { id, categoryId: thread.categoryId });
   }
 
   // ─────────────────────────────────────────────────────────
@@ -399,6 +419,8 @@ export class ForumService {
       }
     }
 
+    this.emit('forum:postCreated', { threadId, post });
+
     return post;
   }
 
@@ -434,6 +456,8 @@ export class ForumService {
       data: { konten: dto.konten! },
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
+
+    this.emit('forum:postUpdated', { threadId: post.threadId, post: updated });
 
     return updated;
   }
@@ -480,6 +504,8 @@ export class ForumService {
       }
     }
 
+    this.emit('forum:postUpdated', { threadId, post: updated });
+
     return updated;
   }
 
@@ -510,5 +536,6 @@ export class ForumService {
     }
 
     await this.prisma.forumPost.delete({ where: { id } });
+    this.emit('forum:postDeleted', { threadId: post.threadId, postId: post.id });
   }
 }

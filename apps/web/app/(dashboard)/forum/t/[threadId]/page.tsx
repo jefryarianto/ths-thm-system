@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
+import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
 
 interface Post {
   id: string;
@@ -65,6 +66,26 @@ export default function ThreadDetailPage() {
   useEffect(() => {
     fetchThread();
   }, [fetchThread]);
+
+  // Update realtime: balasan/thread berubah dari pengguna lain.
+  useForumRealtime({
+    threadUpdated: (data) => {
+      const d = (data as { thread?: Thread }).thread ?? data;
+      if (d && (d as Thread).id === threadId) fetchThread();
+    },
+    postCreated: (data) => {
+      const d = data as { threadId?: string };
+      if (d?.threadId === threadId) fetchThread();
+    },
+    postUpdated: (data) => {
+      const d = data as { threadId?: string };
+      if (d?.threadId === threadId) fetchThread();
+    },
+    postDeleted: (data) => {
+      const d = data as { threadId?: string };
+      if (d?.threadId === threadId) fetchThread();
+    },
+  });
 
   const handleReply = async () => {
     if (!reply.trim()) return;

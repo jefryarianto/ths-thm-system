@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'core/services/app_navigator.dart';
 import 'core/services/app_update_service.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/realtime_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'firebase_options.dart';
@@ -123,6 +124,12 @@ class MyApp extends StatelessWidget {
             // sesi dipulihkan / login sukses.
             if (state is AuthAuthenticated) {
               appRefreshNotifications?.call();
+            }
+            // Pastikan koneksi realtime aktif setiap kali sesi tersedia.
+            if (state is AuthAuthenticated) {
+              RealtimeService.instance.connect();
+            } else if (state is AuthUnauthenticated) {
+              RealtimeService.instance.disconnect();
             }
           },
           child: ListenableBuilder(

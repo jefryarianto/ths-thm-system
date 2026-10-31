@@ -11,6 +11,7 @@ import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
+import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
 
 interface Thread {
   id: string;
@@ -57,6 +58,34 @@ export default function CategoryThreadsPage() {
       setLoading(false);
     })();
   }, [categoryId, debouncedSearch]);
+
+  // Update realtime: thread baru/berubah/hapus dari pengguna lain.
+  useForumRealtime({
+    threadCreated: (data) => {
+      const d = (data as { thread?: Thread }).thread ?? data;
+      const t = d as Thread;
+      if (t && t.category?.id === categoryId) {
+        setThreads((prev) =>
+          prev.some((x) => x.id === t.id) ? prev : [t, ...prev],
+        );
+      }
+    },
+    threadUpdated: (data) => {
+      const d = (data as { thread?: Thread }).thread ?? data;
+      const t = d as Thread;
+      if (t && t.category?.id === categoryId) {
+        setThreads((prev) =>
+          prev.map((x) => (x.id === t.id ? t : x)),
+        );
+      }
+    },
+    threadDeleted: (data) => {
+      const d = data as { id?: string; categoryId?: string };
+      if (d && d.categoryId === categoryId && d.id) {
+        setThreads((prev) => prev.filter((x) => x.id !== d.id));
+      }
+    },
+  });
 
   const handleRefresh = async () => {
     setLoading(true);

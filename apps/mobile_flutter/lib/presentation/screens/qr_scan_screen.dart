@@ -95,7 +95,7 @@ class QrScanScreen extends StatefulWidget {
 }
 
 class _QrScanScreenState extends State<QrScanScreen> {
-  final MobileScannerController _scanner =
+  MobileScannerController _scanner =
       MobileScannerController(formats: const [BarcodeFormat.qrCode]);
   final ApiClient _api = ApiClient();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -118,11 +118,18 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   Future<void> _requestCameraPermission() async {
     final status = await Permission.camera.request();
-    if (!status.isGranted) {
-      // Show a simple snackbar; UI can handle later
+    if (!status.isGranted && !mounted) return;
+    if (!status.isGranted && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Permission kamera ditolak. Scan tidak dapat berfungsi.')),
+          const SnackBar(
+            content: Text('Kamera dibutuhkan untuk scan QR. Aktifkan izin kamera.'),
+            action: SnackBarAction(
+              label: 'Buka Pengaturan',
+              onPressed: openAppSettings,
+            ),
+          ),
         );
       });
     }
@@ -579,6 +586,61 @@ class _QrScanScreenState extends State<QrScanScreen> {
           MobileScanner(
             controller: _scanner,
             onDetect: _onDetect,
+            errorBuilder: (context, error, child) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.white, size: 40),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Kamera tidak dapat diakses',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Periksa izin kamera pada aplikasi ini.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: openAppSettings,
+                        icon: const Icon(Icons.settings, size: 16),
+                        label: const Text('Buka Pengaturan'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white70),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _scanner.dispose();
+                          _scanner = MobileScannerController(
+                            formats: const [BarcodeFormat.qrCode],
+                          );
+                        }),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                        ),
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           Center(
             child: Container(
