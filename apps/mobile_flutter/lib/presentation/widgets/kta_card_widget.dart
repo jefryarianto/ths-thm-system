@@ -260,7 +260,7 @@ Widget _statusBadge(String status) {
 }
 Widget _initialsBox(double w, double h, String name) {
   final initials = nameInitials(name);
-  final fontSize = (w < h ? w : h) * 0.28;
+  final fontSize = (w < h ? w : h) * 0.22;
   return Container(
     width: w,
     height: h,
@@ -274,7 +274,7 @@ Widget _initialsBox(double w, double h, String name) {
     alignment: Alignment.center,
     child: Text(
       initials,
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: fontSize),
+      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: fontSize, letterSpacing: 0.5),
     ),
   );
 }

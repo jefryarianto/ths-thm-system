@@ -131,8 +131,9 @@ function getInitialsLocal(name: string): string {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+  if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+  if (parts.length === 2) return (parts[0][0] + parts[1].slice(0, 2)).toUpperCase();
+  return (parts[0][0] + parts[1][0] + parts[2][0]).toUpperCase();
 }
 
 function photoEl(
@@ -267,13 +268,13 @@ function frontSide(d: CardSvgData): string {
     cx: big.x + big.w / 2,
     cy: big.y + big.h / 2,
     text: getInitialsLocal(member.namaLengkap),
-    size: 64,
+    size: 52,
   });
   s += photoEl(small, cropSmall, d.photoDataUrl, 'clipSmall', {
     cx: small.x + small.w / 2,
     cy: small.y + small.h / 2,
     text: getInitialsLocal(member.namaLengkap),
-    size: 44,
+    size: 36,
   });
 
   // Level rank — di bawah foto kecil

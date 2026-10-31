@@ -43,8 +43,9 @@ function getInitialsLocal(name: string): string {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+  if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+  if (parts.length === 2) return (parts[0][0] + parts[1].slice(0, 2)).toUpperCase();
+  return (parts[0][0] + parts[1][0] + parts[2][0]).toUpperCase();
 }
 
 const styles = StyleSheet.create({
@@ -191,12 +192,13 @@ const styles = StyleSheet.create({
     height: cropSmall.h,
     objectFit: 'cover',
   },
-  photoPlaceholder: {
-    color: '#ffffff',
-    fontSize: 36,
-    fontWeight: 900,
-    textAlign: 'center',
-  },
+    photoPlaceholder: {
+      color: '#ffffff',
+      fontSize: 30,
+      fontWeight: 900,
+      textAlign: 'center',
+      letterSpacing: 1,
+    },
   photoFallback: {
     position: 'absolute',
     backgroundColor: '#3D5BE0',
@@ -885,10 +887,10 @@ function buildFrontSide(props: MemberCardPdfProps) {
       { key: 'photo-small', style: styles.photoBoxSmall },
       props.photoDataUrl
         ? h(Image, { src: props.photoDataUrl, style: styles.photoImageSmall })
-        : h(
+          : h(
             View,
             { style: [styles.photoFallback, { left: FRONT.photo.small.left, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }] },
-            h(Text, { style: [styles.photoPlaceholder, { fontSize: 28 }] }, getInitialsLocal(member.namaLengkap)),
+            h(Text, { style: [styles.photoPlaceholder, { fontSize: 22, letterSpacing: 1 }] }, getInitialsLocal(member.namaLengkap)),
           ),
     ),
     // Level rank — kanan atas sejajar data No. Anggota; teks nama tingkat selebar strip; sembunyi utk 'Anggota'

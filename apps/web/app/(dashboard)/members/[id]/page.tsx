@@ -778,11 +778,11 @@ export default function MemberDetailPage() {
       const cropStyle = (c: ReturnType<typeof photoCrop>) =>
         `position:absolute;left:${c.left}px;top:${c.top}px;width:${c.w}px;height:${c.h}px;object-fit:cover`;
       const photoHtml = m.fotoPath
-        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropBig)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:64px">${initials}</div>`
-        : `<div class="photo-fallback" style="display:flex;font-size:64px">${initials}</div>`;
+        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropBig)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:52px;letter-spacing:0.5px">${initials}</div>`
+        : `<div class="photo-fallback" style="display:flex;font-size:52px;letter-spacing:0.5px">${initials}</div>`;
       const photoSmallHtml = m.fotoPath
-        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropSmall)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:44px">${initials}</div>`
-        : `<div class="photo-fallback" style="display:flex;font-size:44px">${initials}</div>`;
+        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}.bg.png" alt="Foto" style="${cropStyle(cropSmall)}" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.style.display='none'"/><div class="photo-fallback" style="display:flex;font-size:36px;letter-spacing:0.5px">${initials}</div>`
+        : `<div class="photo-fallback" style="display:flex;font-size:36px;letter-spacing:0.5px">${initials}</div>`;
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || '';
       const logoUrl = `${window.location.origin}/logo.svg`;
@@ -1679,16 +1679,16 @@ export default function MemberDetailPage() {
                         height: FRONT.photo.big.h,
                       }}
                     >
-                      <MemberPhotoWeb
-                        src={
-                          member.fotoPath
-                            ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
-                            : null
-                        }
-                        name={member.namaLengkap}
-                        crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
-                        initialsSize={64}
-                      />
+                    <MemberPhotoWeb
+                      src={
+                        member.fotoPath
+                          ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
+                          : null
+                      }
+                      name={member.namaLengkap}
+                      crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
+                      initialsSize={52}
+                    />
                     </div>
 
                     {/* Photo kecil kanan atas - TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
@@ -1701,16 +1701,16 @@ export default function MemberDetailPage() {
                         height: FRONT.photo.small.h,
                       }}
                     >
-                      <MemberPhotoWeb
-                        src={
-                          member.fotoPath
-                            ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
-                            : null
-                        }
-                        name={member.namaLengkap}
-                        crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
-                        initialsSize={44}
-                      />
+                    <MemberPhotoWeb
+                      src={
+                        member.fotoPath
+                          ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png`
+                          : null
+                      }
+                      name={member.namaLengkap}
+                      crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
+                      initialsSize={36}
+                    />
                     </div>
 
                     {/* Level rank - DI BAWAH photo kecil (kanan atas); sembunyi utk 'Anggota' */}
