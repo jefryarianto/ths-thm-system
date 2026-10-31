@@ -1266,7 +1266,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let anggota: { id: string } | null = null;
     if (candidate.email) {
-      anggota = await this.prisma.anggota.findUnique({
+      anggota = await this.prisma.anggota.findFirst({
         where: { email: candidate.email },
         select: { id: true },
       });
@@ -1278,7 +1278,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       anggota = await this.prisma.$transaction(async (tx) => {
         // Re-resolve di dalam tx: calon mungkin sudah diproses request konkuren.
         if (candidate.email) {
-          const existing = await tx.anggota.findUnique({
+          const existing = await tx.anggota.findFirst({
             where: { email: candidate.email },
             select: { id: true },
           });
