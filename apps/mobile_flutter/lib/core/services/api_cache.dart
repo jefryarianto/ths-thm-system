@@ -124,6 +124,8 @@ class CacheKeys {
   static const String documents = 'documents';
   static const String homeFeed = 'home_feed';
   static const String forumCategories = 'forum_categories';
+  static const String forumThreads = 'forum_threads';
+  static const String forumThread = 'forum_thread';
   static const String gamification = 'gamification';
   static const String member = 'member';
   static const String pendadaran = 'pendadaran';

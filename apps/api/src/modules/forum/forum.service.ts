@@ -194,8 +194,15 @@ export class ForumService {
       this.prisma.forumThread.count({ where }),
     ]);
 
+    const dataWithPreview = data.map((thread) => ({
+      ...thread,
+      konten: thread.konten.length > 400
+        ? `${thread.konten.slice(0, 400)}…`
+        : thread.konten,
+    }));
+
     return {
-      data,
+      data: dataWithPreview,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }

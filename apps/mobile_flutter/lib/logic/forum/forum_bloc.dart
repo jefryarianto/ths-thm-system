@@ -82,6 +82,30 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     ForumThreadsLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
+    final cacheKey =
+        '${CacheKeys.forumThreads}:${event.categoryId}:${event.search.trim()}';
+    // Sajikan cache thread segera bila ada.
+    CachedPayload<List<dynamic>>? cached;
+    try {
+      cached = await ApiCache.instance.get<List<dynamic>>(cacheKey);
+      if (cached != null) {
+        final list = cached.data
+            .whereType<Map<String, dynamic>>()
+            .map(ForumThread.fromJson)
+            .toList();
+        emit(ForumThreadsLoaded(
+          threads: list,
+          categoryId: event.categoryId,
+          search: event.search,
+          isStale: cached.isStale,
+        ));
+      } else {
+        emit(ForumLoading());
+      }
+    } catch (_) {
+      emit(ForumLoading());
+    }
+
     try {
       final res = await _apiClient.dio.get(
         '/forum/categories/${event.categoryId}/threads',
@@ -89,7 +113,11 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
             ? {'search': event.search.trim()}
             : null,
       );
+      final rawList = (res.data['data'] as List?)
+          ?.whereType<Map<String, dynamic>>()
+          .toList(growable: false);
       final list = _parseList(res.data, ForumThread.fromJson);
+      await ApiCache.instance.set(cacheKey, rawList ?? list);
       emit(ForumThreadsLoaded(
         threads: list,
         categoryId: event.categoryId,
@@ -98,11 +126,38 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(ForumInitial());
+      } else if (cached != null) {
+        // Segarkan gagal tetapi cache tersedia — tetap tampilkan data lama.
+        final list = cached.data
+            .whereType<Map<String, dynamic>>()
+            .map(ForumThread.fromJson)
+            .toList();
+        emit(ForumThreadsLoaded(
+          threads: list,
+          categoryId: event.categoryId,
+          search: event.search,
+          isStale: true,
+          errorMessage: _message(e),
+        ));
       } else {
         emit(ForumError(message: _message(e)));
       }
     } catch (e) {
-      emit(ForumError(message: e.toString()));
+      if (cached != null) {
+        final list = cached.data
+            .whereType<Map<String, dynamic>>()
+            .map(ForumThread.fromJson)
+            .toList();
+        emit(ForumThreadsLoaded(
+          threads: list,
+          categoryId: event.categoryId,
+          search: event.search,
+          isStale: true,
+          errorMessage: e.toString(),
+        ));
+      } else {
+        emit(ForumError(message: e.toString()));
+      }
     }
   }
 
@@ -110,28 +165,85 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     ForumThreadLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
-    emit(ForumLoading());
+    final cacheKey = '${CacheKeys.forumThread}:${event.id}';
+    // Sajikan cache thread segera bila ada.
+    CachedPayload<Map<String, dynamic>>? cached;
+    try {
+      cached = await ApiCache.instance.get<Map<String, dynamic>>(cacheKey);
+      if (cached != null) {
+        final thread = ForumThread.fromJson(cached.data);
+        final postsRaw = cached.data['posts'];
+        final posts = postsRaw is List
+            ? postsRaw
+                .whereType<Map<String, dynamic>>()
+                .map(ForumPost.fromJson)
+                .toList()
+            : const <ForumPost>[];
+        emit(ForumThreadLoaded(
+          thread: thread,
+          posts: posts,
+          isStale: cached.isStale,
+        ));
+      } else {
+        emit(ForumLoading());
+      }
+    } catch (_) {
+      emit(ForumLoading());
+    }
+
     try {
       final res = await _apiClient.dio.get('/forum/threads/${event.id}');
       final data = _unwrap(res.data);
-      final thread = ForumThread.fromJson(
-          data is Map<String, dynamic> ? data : <String, dynamic>{});
-      final postsRaw = data is Map<String, dynamic> ? data['posts'] : null;
+      final rawData = data is Map<String, dynamic> ? data : <String, dynamic>{};
+      final thread = ForumThread.fromJson(rawData);
+      final postsRaw = rawData['posts'];
       final posts = postsRaw is List
           ? postsRaw
               .whereType<Map<String, dynamic>>()
               .map(ForumPost.fromJson)
               .toList()
           : const <ForumPost>[];
+      await ApiCache.instance.set(cacheKey, rawData);
       emit(ForumThreadLoaded(thread: thread, posts: posts));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(ForumInitial());
+      } else if (cached != null) {
+        // Segarkan gagal tetapi cache tersedia — tetap tampilkan data lama.
+        final thread = ForumThread.fromJson(cached.data);
+        final postsRaw = cached.data['posts'];
+        final posts = postsRaw is List
+            ? postsRaw
+                .whereType<Map<String, dynamic>>()
+                .map(ForumPost.fromJson)
+                .toList()
+            : const <ForumPost>[];
+        emit(ForumThreadLoaded(
+          thread: thread,
+          posts: posts,
+          isStale: true,
+        ));
       } else {
         emit(ForumError(message: _message(e)));
       }
     } catch (e) {
-      emit(ForumError(message: e.toString()));
+      if (cached != null) {
+        final thread = ForumThread.fromJson(cached.data);
+        final postsRaw = cached.data['posts'];
+        final posts = postsRaw is List
+            ? postsRaw
+                .whereType<Map<String, dynamic>>()
+                .map(ForumPost.fromJson)
+                .toList()
+            : const <ForumPost>[];
+        emit(ForumThreadLoaded(
+          thread: thread,
+          posts: posts,
+          isStale: true,
+        ));
+      } else {
+        emit(ForumError(message: e.toString()));
+      }
     }
   }
 

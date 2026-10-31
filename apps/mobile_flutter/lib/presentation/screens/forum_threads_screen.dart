@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/app_search_field.dart';
+import '../widgets/stale_data_banner.dart';
 import '../widgets/state_views.dart';
 
 class ForumThreadsScreen extends StatefulWidget {
@@ -21,6 +24,7 @@ class ForumThreadsScreen extends StatefulWidget {
 
 class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
   final _search = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -32,13 +36,19 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _search.dispose();
     super.dispose();
   }
 
   void _doSearch(String q) {
-    context.read<ForumBloc>().add(
-        ForumThreadsLoadRequested(categoryId: widget.categoryId, search: q));
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        context.read<ForumBloc>().add(
+            ForumThreadsLoadRequested(categoryId: widget.categoryId, search: q));
+      }
+    });
   }
 
   @override
@@ -92,84 +102,98 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                   onAction: () => context.push<void>('/forum/create'),
                 );
               }
-              return RefreshIndicator(
-                onRefresh: () async => _doSearch(_search.text),
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(AppTheme.space12),
-                  itemCount: threads.length,
-                  itemBuilder: (context, i) {
-                    final t = threads[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Row(children: [
-                          if (t.isPinned)
-                            Icon(Icons.push_pin,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.primary),
-                          if (t.isPinned) const SizedBox(width: AppTheme.space4),
-                          Expanded(
-                              child: Text(t.judul,
-                                  maxLines: 1,
+              final list = ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppTheme.space12),
+                itemCount: threads.length,
+                itemBuilder: (context, i) {
+                  final t = threads[i];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Row(children: [
+                        if (t.isPinned)
+                          Icon(Icons.push_pin,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary),
+                        if (t.isPinned) const SizedBox(width: AppTheme.space4),
+                        Expanded(
+                            child: Text(t.judul,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600))),
+                      ]),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(t.konten,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600))),
-                        ]),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(t.konten,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant)),
+                              const SizedBox(height: 6),
+                              Row(children: [
+                                CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.12),
+                                    child: Text(
+                                        t.author.namaLengkap.isNotEmpty
+                                            ? t.author.namaLengkap[0]
+                                            : '?',
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary))),
+                                const SizedBox(width: 6),
+                                Text(t.author.namaLengkap,
                                     style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurfaceVariant)),
-                                const SizedBox(height: 6),
-                                Row(children: [
-                                  CircleAvatar(
-                                      radius: 10,
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.12),
-                                      child: Text(
-                                          t.author.namaLengkap.isNotEmpty
-                                              ? t.author.namaLengkap[0]
-                                              : '?',
-                                          style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w700,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary))),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                      child: Text(t.author.namaLengkap,
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant))),
-                                  Text('${t.postCount} balasan',
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant)),
-                                ]),
+                                Text('${t.postCount} balasan',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant)),
                               ]),
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push<void>('/forum/t/${t.id}'),
+                            ]),
                       ),
-                    );
-                  },
-                ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push<void>('/forum/t/${t.id}'),
+                    ),
+                  );
+                },
+              );
+              if (state.isStale) {
+                return Column(children: [
+                  StaleDataBanner(
+                    errorMessage: state.errorMessage,
+                    onRefresh: () => _doSearch(_search.text),
+                  ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async => _doSearch(_search.text),
+                      child: list,
+                    ),
+                  ),
+                ]);
+              }
+              return RefreshIndicator(
+                onRefresh: () async => _doSearch(_search.text),
+                child: list,
               );
             },
           ),

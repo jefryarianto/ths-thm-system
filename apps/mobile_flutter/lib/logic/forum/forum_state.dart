@@ -35,27 +35,39 @@ class ForumThreadsLoaded extends ForumState {
   final String categoryId;
   final String search;
 
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
+  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
+  final String? errorMessage;
+
   const ForumThreadsLoaded({
     required this.threads,
     required this.categoryId,
     this.search = '',
+    this.isStale = false,
+    this.errorMessage,
   });
 
   @override
-  List<Object> get props => [threads, categoryId, search];
+  List<Object> get props => [threads, categoryId, search, isStale, errorMessage ?? ''];
 }
 
 class ForumThreadLoaded extends ForumState {
   final ForumThread thread;
   final List<ForumPost> posts;
 
+  /// true bila data berasal dari cache offline (bukan server).
+  final bool isStale;
+
   const ForumThreadLoaded({
     required this.thread,
     required this.posts,
+    this.isStale = false,
   });
 
   @override
-  List<Object> get props => [thread, posts];
+  List<Object> get props => [thread, posts, isStale];
 }
 
 class ForumError extends ForumState {

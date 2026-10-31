@@ -70,90 +70,109 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
             if (state is! ForumThreadLoaded) return const AppLoadingSpinner();
             final thread = state.thread;
             final posts = state.posts;
+            final itemCount = posts.length + 1;
             return Column(children: [
               Expanded(
-                child: ListView(padding: const EdgeInsets.all(AppTheme.space16), children: [
-                  Text(thread.judul,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: AppTheme.space8),
-                  Row(children: [
-                    CircleAvatar(
-                        radius: 14,
-                        backgroundColor:
-                            AppTheme.primary.withValues(alpha: 0.1),
-                        child: Text(
-                            thread.author.namaLengkap.isNotEmpty
-                                ? thread.author.namaLengkap[0]
-                                : '?',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Theme.of(context).colorScheme.primary))),
-                    const SizedBox(width: AppTheme.space8),
-                    Column(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppTheme.space16),
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(thread.author.namaLengkap,
+                          Text(thread.judul,
                               style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w600)),
-                          Text(Formatters.dateLong(thread.createdAt),
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant)),
-                        ]),
-                  ]),
-                  const SizedBox(height: AppTheme.space12),
-                  Text(thread.konten, style: const TextStyle(height: 1.5)),
-                  const Divider(height: 32),
-                  Text('${posts.length} Balasan',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: AppTheme.space8),
-                  ...posts.map((p) => Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.space12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(children: [
-                                CircleAvatar(
-                                    radius: 10,
-                                    backgroundColor:
-                                        AppTheme.primary.withValues(alpha: 0.1),
-                                    child: Text(
-                                        p.author.namaLengkap.isNotEmpty
-                                            ? p.author.namaLengkap[0]
-                                            : '?',
-                                        style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary))),
-                                const SizedBox(width: 6),
-                                Text(p.author.namaLengkap,
-                                    style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: AppTheme.space8),
+                          Row(children: [
+                            CircleAvatar(
+                                radius: 14,
+                                backgroundColor:
+                                    AppTheme.primary.withValues(alpha: 0.1),
+                                child: Text(
+                                    thread.author.namaLengkap.isNotEmpty
+                                        ? thread.author.namaLengkap[0]
+                                        : '?',
+                                    style: TextStyle(
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w600)),
-                                const Spacer(),
-                                Text(Formatters.relative(p.createdAt),                                    style: TextStyle(
-                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .onSurfaceVariant)),
-                              ]),
-                              const SizedBox(height: AppTheme.space8),
-                              Text(p.konten,
+                                            .primary))),
+                            const SizedBox(width: AppTheme.space8),
+                            Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(thread.author.namaLengkap,
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600)),
+                                  Text(Formatters.dateLong(thread.createdAt),
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant)),
+                                ]),
+                          ]),
+                          const SizedBox(height: AppTheme.space12),
+                          Text(thread.konten,
+                              style: const TextStyle(height: 1.5)),
+                          const Divider(height: 32),
+                          Text('${posts.length} Balasan',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700)),
+                          const SizedBox(height: AppTheme.space8),
+                        ],
+                      );
+                    }
+                    final p = posts[index - 1];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppTheme.space12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: AppTheme.primary
+                                      .withValues(alpha: 0.1),
+                                  child: Text(
+                                      p.author.namaLengkap.isNotEmpty
+                                          ? p.author.namaLengkap[0]
+                                          : '?',
+                                      style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary))),
+                              const SizedBox(width: 6),
+                              Text(p.author.namaLengkap,
                                   style: const TextStyle(
-                                      fontSize: 13, height: 1.4)),
-                            ],
-                          ),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                              const Spacer(),
+                              Text(Formatters.relative(p.createdAt),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant)),
+                            ]),
+                            const SizedBox(height: AppTheme.space8),
+                            Text(p.konten,
+                                style: const TextStyle(
+                                    fontSize: 13, height: 1.4)),
+                          ],
                         ),
-                      )),
-                ]),
+                      ),
+                    );
+                  },
+                ),
               ),
               Container(
                 padding: EdgeInsets.fromLTRB(
