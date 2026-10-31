@@ -61,13 +61,14 @@ vi.mock('axios', () => {
 });
 
 import axios from 'axios';
-import apiClient, { unwrap, unwrapPaginated, setTokens, clearTokens } from '@/lib/api-client';
+import apiClient, { unwrap, unwrapPaginated, setTokens, clearTokens, proactivelyRefresh } from '@/lib/api-client';
 import { sessionManager } from '@/lib/session-manager';
 
 describe('api-client', () => {
   beforeEach(() => {
     localStorage.clear();
     // Reset shared session state so tests are isolated (clearTokens sets isExpired).
+    sessionManager.logout();
     sessionManager.reset();
     // Bersihkan history panggilan antar-test (restoreAllMocks tidak
     // menghapus call history mock dari vi.mock factory).
@@ -75,6 +76,7 @@ describe('api-client', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -226,6 +228,16 @@ describe('api-client', () => {
       expect(localStorage.getItem('accessToken')).toBe('recovered-token');
       // Flag expired berhasil dipulihkan — sesi hidup kembali tanpa logout.
       expect(sessionManager.isExpired).toBe(false);
+    });
+
+    it('does not self-heal after a terminal expiry', async () => {
+      sessionManager.expire(true);
+      vi.mocked(axios.post).mockClear();
+
+      const config = { url: '/members', headers: {} as Record<string, string> };
+
+      await expect(getRequestInterceptor()(config)).rejects.toThrow('SESSION_EXPIRED');
+      expect(axios.post).not.toHaveBeenCalled();
     });
 
     it('lets auth endpoints pass through without any refresh attempt', async () => {
@@ -431,6 +443,17 @@ describe('api-client', () => {
       });
 
       expect(sessionManager.isExpired).toBe(false);
+    });
+  });
+
+  describe('proactivelyRefresh', () => {
+    it('does not resurrect a terminated session', async () => {
+      sessionManager.expire(true);
+      vi.mocked(axios.post).mockResolvedValue({ data: { data: { accessToken: 'resurrected' } } });
+
+      await expect(proactivelyRefresh()).rejects.toThrow('SESSION_EXPIRED');
+      expect(localStorage.getItem('accessToken')).toBeNull();
+      expect(vi.mocked(axios.post)).not.toHaveBeenCalled();
     });
   });
 

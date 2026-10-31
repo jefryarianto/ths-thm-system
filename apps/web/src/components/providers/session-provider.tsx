@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { sessionManager } from '@/lib/session-manager';
-import { useToast } from '@/components/ui/toast';
+import { useToast, useDismissToast } from '@/components/ui/toast';
 import { SessionWarningToast } from '@/components/session-warning-toast';
 import { useActivityTracker } from '@/hooks/use-activity-tracker';
 import { playSessionWarningAlert, playSessionExpiredAlert } from '@/lib/notification-alert';
@@ -11,12 +11,15 @@ import { playSessionWarningAlert, playSessionExpiredAlert } from '@/lib/notifica
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const toast = useToast();
+  const dismissToast = useDismissToast();
   const toastRef = useRef(toast);
+  const dismissToastRef = useRef(dismissToast);
   const pathnameRef = useRef(pathname);
   // Benar-benar "session expired redirect" sudah dijadwalkan dan tidak boleh
   // dibatalkan oleh refresh sukses yang datang sesudahnya (lihat listener).
   const redirectScheduledRef = useRef(false);
   toastRef.current = toast;
+  dismissToastRef.current = dismissToast;
   pathnameRef.current = pathname;
 
   // Session expired listener — stable, runs once
@@ -42,11 +45,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         // membawa pengguna ke landing. Sesi otomatis "hidup" lagi tanpa login
         // baru, dan 15 menit kemudian expire() menendang lagi → siklus
         // landing ↔ dashboard tanpa henti.
+        if (redirectScheduledRef.current) return;
         redirectScheduledRef.current = true;
+        try {
+          dismissToastRef.current('warning-expiry');
+        } catch {
+          /* ignore */
+        }
         playSessionExpiredAlert();
-        toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman utama...');
+        toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
         timeoutId = setTimeout(() => {
-          window.location.replace('/');
+          window.location.replace('/login');
         }, 1000);
       } else if (!redirectScheduledRef.current) {
         // Hanya batalkan redirect bila belum pernah dijadwalkan. Setelah
@@ -90,8 +99,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const expired = localStorage.getItem('session-expired') === 'true';
     if (expired && !sessionManager.isExpired) {
-      localStorage.removeItem('session-expired');
-      sessionManager.expire(false);
+      // Biarkan login page membaca flag untuk menampilkan notice
+      if (pathnameRef.current !== '/login') {
+        try {
+          localStorage.removeItem('session-expired');
+        } catch {
+          /* ignore */
+        }
+        sessionManager.expire(false);
+      }
     }
 
     const existingToken = localStorage.getItem('accessToken');

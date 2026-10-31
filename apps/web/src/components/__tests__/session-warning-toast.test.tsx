@@ -63,12 +63,14 @@ describe('SessionWarningToast', () => {
     mockGetRemaining.mockReturnValue(90);
 
     render(<SessionWarningToast expiresInSeconds={120} toastId="toast-1" />);
-    expect(screen.getByText('2:00')).toBeInTheDocument();
+    expect(screen.getByText('1:30')).toBeInTheDocument();
 
+    // Simulasikan token yang semakin berkurang
+    mockGetRemaining.mockReturnValue(89);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.getByText('1:30')).toBeInTheDocument();
+    expect(screen.getByText('1:29')).toBeInTheDocument();
   });
 
   it('dismisses when the token is already expired', () => {
@@ -76,7 +78,8 @@ describe('SessionWarningToast', () => {
     mockGetRemaining.mockReturnValue(0);
 
     render(<SessionWarningToast expiresInSeconds={120} toastId="toast-1" />);
-    expect(dismissToast).not.toHaveBeenCalled();
+    // Dengan logika baru, token expired saat mount langsung ditutup
+    expect(dismissToast).toHaveBeenCalledWith('toast-1');
 
     act(() => {
       vi.advanceTimersByTime(1000);
@@ -85,6 +88,7 @@ describe('SessionWarningToast', () => {
   });
 
   it('progress bar fills 100% at the start of the warning window', () => {
+    mockGetRemaining.mockReturnValue(120);
     render(<SessionWarningToast expiresInSeconds={120} toastId="toast-1" />);
     const bar = screen.getByRole('progressbar');
     const fill = screen.getByTestId('session-progress-fill');
@@ -94,9 +98,10 @@ describe('SessionWarningToast', () => {
 
   it('progress bar shrinks as the token counts down', () => {
     vi.useFakeTimers();
-    mockGetRemaining.mockReturnValue(60);
+    mockGetRemaining.mockReturnValue(120);
 
     render(<SessionWarningToast expiresInSeconds={120} toastId="toast-1" />);
+    mockGetRemaining.mockReturnValue(60);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
@@ -106,22 +111,20 @@ describe('SessionWarningToast', () => {
     expect(fill).toHaveStyle({ width: '50%' });
   });
 
-  it('grows the span when a refresh extends the token, so the bar never exceeds 100%', () => {
+  it('dismisses when a background refresh extends the token', () => {
     vi.useFakeTimers();
-    mockGetRemaining.mockReturnValue(180);
+    mockGetRemaining.mockReturnValue(120);
 
     render(<SessionWarningToast expiresInSeconds={120} toastId="toast-1" />);
+    expect(screen.getByText('2:00')).toBeInTheDocument();
+
+    // Token diperpanjang (refresh dari background) → toast ditutup
+    mockGetRemaining.mockReturnValue(900);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
 
-    // The refreshed token lives 180s; the countdown jumps to that value and
-    // the span grows with it — the bar resets to 100%, never beyond.
-    expect(screen.getByText('3:00')).toBeInTheDocument();
-    const bar = screen.getByRole('progressbar');
-    const fill = screen.getByTestId('session-progress-fill');
-    expect(bar).toHaveAttribute('aria-valuemax', '180');
-    expect(fill).toHaveStyle({ width: '100%' });
+    expect(dismissToast).toHaveBeenCalledWith('toast-1');
   });
 
   it('schedules a new warning and dismisses when "Perpanjang Sesi" succeeds', async () => {

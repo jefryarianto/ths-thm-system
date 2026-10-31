@@ -3,10 +3,10 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { proactivelyRefresh } from '@/lib/api-client';
 import { logDebug } from '@/lib/error-logger';
-import { sessionManager } from '@/lib/session-manager';
+import { sessionManager, SESSION_EXPIRY_WARNING_SECONDS } from '@/lib/session-manager';
 
 // Refresh token if less than this many seconds remain
-const REFRESH_THRESHOLD_SECONDS = 120; // 2 minutes (refresh before 5-min inactivity timeout)
+const REFRESH_THRESHOLD_SECONDS = SESSION_EXPIRY_WARNING_SECONDS + 60; // refresh sebelum window warning
 
 // Throttle: minimum ms between activity-triggered refresh attempts
 const REFRESH_COOLDOWN_MS = 60_000; // 1 minute
@@ -49,10 +49,9 @@ export function useActivityTracker() {
       // Token is within threshold — refresh now
       refreshing.current = true;
       lastRefreshAt.current = Date.now();
-      logDebug(
-        `Token expiring in ${secondsUntilExpiry}s, refreshing proactively`,
-        { module: 'activity-tracker' },
-      );
+      logDebug(`Token expiring in ${secondsUntilExpiry}s, refreshing proactively`, {
+        module: 'activity-tracker',
+      });
       await proactivelyRefresh();
     } catch {
       // Ignore decode/refresh errors — the interceptor will handle real failures

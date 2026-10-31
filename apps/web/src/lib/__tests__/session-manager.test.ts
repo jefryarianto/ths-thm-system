@@ -47,9 +47,11 @@ describe('SessionManager — sesi berulang regression', () => {
     // Singleton bersifat global di seluruh test; reset ke kondisi awal.
     const { sessionManager } = await import('@/lib/session-manager');
     sessionManager.logout();
+    localStorage.clear();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -203,5 +205,104 @@ describe('SessionManager — getRemainingSeconds()', () => {
     const exp = Math.floor(Date.now() / 1000) - 10;
     localStorage.setItem('accessToken', makeFakeToken({ sub: 'user-1', exp }));
     expect(sessionManager.getRemainingSeconds()).toBe(0);
+  });
+});
+
+describe('SessionManager — hard expiry deadline', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    localStorage.clear();
+    const { sessionManager } = await import('@/lib/session-manager');
+    sessionManager.logout();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('mengakhiri sesi tepat saat token habis', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + 60;
+    const token = makeFakeToken({ sub: 'u', exp });
+    localStorage.setItem('accessToken', token);
+    const listener = vi.fn();
+    sessionManager.subscribe(listener);
+
+    sessionManager.scheduleExpiryWarning(token, 30);
+
+    vi.advanceTimersByTime(60_000);
+
+    expect(sessionManager.isExpired).toBe(true);
+    expect(sessionManager.isTerminalExpiry).toBe(true);
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(listener).toHaveBeenCalled();
+
+    listener.mockRestore();
+  });
+
+  it('langsung expire bila token sudah kedaluwarsa saat dijadwalkan', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now - 5;
+    const token = makeFakeToken({ sub: 'u', exp });
+    localStorage.setItem('accessToken', token);
+
+    sessionManager.scheduleExpiryWarning(token, 300);
+
+    expect(sessionManager.isExpired).toBe(true);
+    expect(sessionManager.isTerminalExpiry).toBe(true);
+    expect(localStorage.getItem('accessToken')).toBeNull();
+  });
+
+  it('tidak logout bila token diganti di tab lain (deadline dijadwalkan ulang)', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const now = Math.floor(Date.now() / 1000);
+    const tokenA = makeFakeToken({ sub: 'u', exp: now + 60 });
+    localStorage.setItem('accessToken', tokenA);
+    sessionManager.subscribe(() => {});
+
+    sessionManager.scheduleExpiryWarning(tokenA, 30);
+
+    // Token diganti sebelum deadline
+    const tokenB = makeFakeToken({ sub: 'u', exp: now + 180 });
+    localStorage.setItem('accessToken', tokenB);
+
+    vi.advanceTimersByTime(60_000);
+
+    expect(sessionManager.isExpired).toBe(false);
+    expect(localStorage.getItem('accessToken')).toBe(tokenB);
+  });
+
+  it('membatalkan deadline saat logout', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + 60;
+    const token = makeFakeToken({ sub: 'u', exp });
+    localStorage.setItem('accessToken', token);
+
+    sessionManager.scheduleExpiryWarning(token, 30);
+    sessionManager.logout();
+
+    vi.advanceTimersByTime(60_000);
+
+    expect(sessionManager.isExpired).toBe(false);
+    expect(localStorage.getItem('accessToken')).toBeNull();
+  });
+
+  it('membatalkan deadline saat reset', async () => {
+    const { sessionManager } = await import('@/lib/session-manager');
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + 60;
+    const token = makeFakeToken({ sub: 'u', exp });
+    localStorage.setItem('accessToken', token);
+
+    sessionManager.scheduleExpiryWarning(token, 30);
+    sessionManager.reset();
+
+    vi.advanceTimersByTime(60_000);
+
+    expect(sessionManager.isExpired).toBe(false);
   });
 });

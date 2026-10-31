@@ -1,5 +1,7 @@
 type ExpiringSoonListener = (expiresInSeconds: number) => void;
 
+export const SESSION_EXPIRY_WARNING_SECONDS = 300;
+
 // Decode a JWT payload safely. Returns null if the token is invalid.
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -37,7 +39,9 @@ class SessionManager {
   private listeners: Set<() => void> = new Set();
   private expiringSoonListeners: Set<ExpiringSoonListener> = new Set();
   private _isExpired = false;
+  private _terminalExpiry = false;
   private _expiryWarningTimer: ReturnType<typeof setTimeout> | undefined;
+  private _expiryDeadlineTimer: ReturnType<typeof setTimeout> | undefined;
   private _expiryWarningFired = false;
   private _inactivityTimer: ReturnType<typeof setTimeout> | undefined;
   // Handler global activity yang sedang terdaftar di window — disimpan agar
@@ -58,6 +62,17 @@ class SessionManager {
     return this._isExpired;
   }
 
+  /** True hanya untuk expiry yang disengaja (timer habis / refresh token invalid). */
+  get isTerminalExpiry() {
+    if (this._terminalExpiry) return true;
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('session-expired') === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   // ─── Session State Listeners ──────────────────────────────────
 
   subscribe(listener: () => void) {
@@ -76,16 +91,25 @@ class SessionManager {
     return () => this.expiringSoonListeners.delete(listener);
   }
 
-  // ─── Expiry Warning Timer ─────────────────────────────────────
+  // ─── Expiry Timers ───────────────────────────────────────────
+
+  private clearExpiryDeadline() {
+    if (this._expiryDeadlineTimer) {
+      clearTimeout(this._expiryDeadlineTimer);
+      this._expiryDeadlineTimer = undefined;
+    }
+  }
 
   /**
    * Decode the access token and schedule a warning toast N seconds before
    * the JWT expires. Default warning window: 300 seconds (5 minutes).
    * Called after every token set/refresh.
    */
-  scheduleExpiryWarning(accessToken: string, warnSecondsBefore = 300) {
+  scheduleExpiryWarning(accessToken: string, warnSecondsBefore = SESSION_EXPIRY_WARNING_SECONDS) {
     this.cancelExpiryWarning();
     this._expiryWarningFired = false;
+
+    if (typeof window === 'undefined') return;
 
     const payload = decodeJwtPayload(accessToken);
     if (!payload || typeof payload.exp !== 'number') return;
@@ -93,6 +117,39 @@ class SessionManager {
     const expiresAtMs = payload.exp * 1000;
     const now = Date.now();
     const secondsUntilExpiry = Math.floor((expiresAtMs - now) / 1000);
+
+    // Token sudah kedaluwarsa → akhiri sesi
+    if (secondsUntilExpiry <= 0) {
+      this.expire(true);
+      return;
+    }
+
+    // Deadline keras: logout tepat saat token habis jika tidak diperpanjang
+    this.clearExpiryDeadline();
+    const msUntilExpiry = expiresAtMs - Date.now();
+    if (msUntilExpiry <= 0) {
+      this.expire(true);
+      return;
+    }
+    this._expiryDeadlineTimer = setTimeout(() => {
+      this._expiryDeadlineTimer = undefined;
+      if (typeof window === 'undefined') return;
+      if (this._isExpired) return;
+      const currentToken = localStorage.getItem('accessToken');
+      if (!currentToken) return;
+      if (currentToken !== accessToken) {
+        this.scheduleExpiryWarning(currentToken);
+        return;
+      }
+      const remaining = this.getRemainingSeconds();
+      if (remaining <= 0) {
+        this.expire(true);
+        return;
+      }
+      // Timer terlalu awal (clock skew) → jadwalkan ulang
+      this.scheduleExpiryWarning(currentToken);
+    }, msUntilExpiry);
+
     const secondsUntilWarning = secondsUntilExpiry - warnSecondsBefore;
 
     // eslint-disable-next-line no-console -- verbose session timing diagnostic
@@ -111,12 +168,13 @@ class SessionManager {
     }, secondsUntilWarning * 1000);
   }
 
-  /** Cancel any pending expiry warning. */
+  /** Cancel any pending expiry warning and deadline. */
   cancelExpiryWarning() {
     if (this._expiryWarningTimer) {
       clearTimeout(this._expiryWarningTimer);
       this._expiryWarningTimer = undefined;
     }
+    this.clearExpiryDeadline();
   }
 
   /**
@@ -152,6 +210,7 @@ class SessionManager {
 
   /** Track user activity to reset the inactivity timer */
   trackActivity() {
+    if (this._isExpired) return;
     this._lastActivityAt = Date.now();
     this.resetInactivityTimer();
   }
@@ -179,6 +238,7 @@ class SessionManager {
     // timer yang sudah seharusnya mati. Lepas dulu listener sebelumnya
     // (idempotent) baru pasang yang bersih.
     this.stopInactivityTracking();
+    if (this._isExpired) return;
 
     this._lastActivityAt = Date.now();
     this.resetInactivityTimer();
@@ -216,6 +276,9 @@ class SessionManager {
     // eslint-disable-next-line no-console -- verbose session timing diagnostic
     console.debug('[session-manager] Session expired', { shouldRedirect });
     this._isExpired = true;
+    if (shouldRedirect) {
+      this._terminalExpiry = true;
+    }
     this.cancelExpiryWarning();
     // BUG FIX: hentikan tracking activity. Tanpa ini, listener mouse/keyboard
     // tetap aktif setelah sesi berakhir, memanggil trackActivity() ->
@@ -229,9 +292,21 @@ class SessionManager {
     // role-redirect) even though the server session is gone — bouncing the
     // user off the public landing page into a /login?session_invalid=1 loop.
     this.clearTokens();
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('user');
+      } catch {
+        /* ignore */
+      }
+    }
     if (shouldRedirect) {
-      localStorage.setItem('session-expired', 'true');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('session-expired', 'true');
+        } catch {
+          /* ignore */
+        }
+      }
     }
     this.listeners.forEach((l) => l());
   }
@@ -248,12 +323,19 @@ class SessionManager {
    */
   logout() {
     this._isExpired = false;
+    this._terminalExpiry = false;
     this._expiryWarningFired = false;
     this.cancelExpiryWarning();
     this.stopInactivityTracking();
     this.clearTokens();
-    localStorage.removeItem('session-expired');
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('session-expired');
+        localStorage.removeItem('user');
+      } catch {
+        /* ignore */
+      }
+    }
     // Notify subscribers (e.g. useAuth) so any client-side "authenticated"
     // state derived from a stale localStorage.user is cleared immediately.
     // This breaks the login redirect loop where the server rejects a
@@ -264,6 +346,7 @@ class SessionManager {
 
   reset() {
     this._isExpired = false;
+    this._terminalExpiry = false;
     this._expiryWarningFired = false;
     this.cancelExpiryWarning();
     // BUG FIX (loop "sesi berulang"): reset() TIDAK membatalkan timer
@@ -273,7 +356,13 @@ class SessionManager {
     // Siklus ini membuat pengguna ditarik pulang-pergi landing ↔ dashboard
     // tanpa henti. Hentikan semua timer sesi sebelum memberi tahu subscriber.
     this.stopInactivityTracking();
-    localStorage.removeItem('session-expired');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('session-expired');
+      } catch {
+        /* ignore */
+      }
+    }
     this.listeners.forEach((l) => l());
   }
 }

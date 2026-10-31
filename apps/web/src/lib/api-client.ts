@@ -196,6 +196,10 @@ async function performTokenRefresh(): Promise<string> {
     // null (timeout/kegagalan tab lain) → lanjut refresh sendiri sebagai fallback.
   }
 
+  if (sessionManager.isTerminalExpiry) {
+    throw SESSION_EXPIRED_ERROR;
+  }
+
   isRefreshing = true;
   try {
     // Coba klaim lock antar-tab. Bila kalah (tab lain sudah/sementara
@@ -211,11 +215,21 @@ async function performTokenRefresh(): Promise<string> {
     let lastRefreshErr: unknown;
     for (let attempt = 0; attempt <= MAX_REFRESH_RETRIES; attempt++) {
       try {
+        if (sessionManager.isTerminalExpiry) {
+          onTokenRefreshFailed(SESSION_EXPIRED_ERROR);
+          refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
+          throw SESSION_EXPIRED_ERROR;
+        }
         const { data } = await axios.post(
           `/api/auth/refresh`,
           {},
           { withCredentials: true, timeout: 15000 },
         );
+        if (sessionManager.isTerminalExpiry) {
+          onTokenRefreshFailed(SESSION_EXPIRED_ERROR);
+          refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
+          throw SESSION_EXPIRED_ERROR;
+        }
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
         // NOTE: accessToken cookie intentionally removed per FASE 29P
@@ -317,6 +331,9 @@ apiClient.interceptors.request.use(async (config) => {
   }
 
   if (sessionManager.isExpired) {
+    if (sessionManager.isTerminalExpiry) {
+      return Promise.reject(SESSION_EXPIRED_ERROR);
+    }
     // SELF-HEALING: flag expired bisa jadi usang (tertulis setelah gangguan
     // network sesaat, atau terbawa lintas navigasi SPA). Cookie refresh 14
     // hari sering masih valid → coba SATU re-auth senyap sebelum menyerah.
@@ -486,9 +503,7 @@ export interface PaginatedResponse<T> {
  * access. unwrap() *is* the approved accessor — callers should use it rather
  * than reaching into `data.data` themselves.
  */
-export function unwrap<T>(
-  response: { data: ApiResponse<T> | ApiResponse<unknown> },
-): T {
+export function unwrap<T>(response: { data: ApiResponse<T> | ApiResponse<unknown> }): T {
   // eslint-disable-next-line no-restricted-syntax -- the unwrap helper itself
   return response.data.data as T;
 }
