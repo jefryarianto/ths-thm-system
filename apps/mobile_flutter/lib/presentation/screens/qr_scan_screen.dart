@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
@@ -110,8 +111,21 @@ class _QrScanScreenState extends State<QrScanScreen> {
   @override
   void initState() {
     super.initState();
+    _requestCameraPermission();
     _loadHistory();
     _fetchKegiatan();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      // Show a simple snackbar; UI can handle later
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Permission kamera ditolak. Scan tidak dapat berfungsi.')),
+        );
+      });
+    }
   }
 
   @override
