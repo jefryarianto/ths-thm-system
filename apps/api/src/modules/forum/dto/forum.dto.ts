@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsNumber, Min, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber, Min, IsNotEmpty, IsArray, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateThreadDto {
@@ -16,6 +16,12 @@ export class CreateThreadDto {
   @IsString()
   @IsNotEmpty()
   konten: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Daftar URL gambar lampiran' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 }
 
 export class CreatePostDto {
@@ -25,11 +31,18 @@ export class CreatePostDto {
   konten: string;
 
   @ApiPropertyOptional({
-    description: 'ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa.',
+    description:
+      'ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa.',
   })
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Daftar URL gambar lampiran' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 }
 
 export class UpdateThreadDto {
@@ -42,6 +55,12 @@ export class UpdateThreadDto {
   @IsOptional()
   @IsString()
   konten?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 }
 
 export class UpdatePostDto {
@@ -49,6 +68,19 @@ export class UpdatePostDto {
   @IsOptional()
   @IsString()
   konten?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+}
+
+export class ReactDto {
+  @ApiProperty({ description: 'Emoji reaksi, mis. 👍, ❤️, 😂, 😮, 😢, 🙏' })
+  @IsString()
+  @IsNotEmpty()
+  emoji: string;
 }
 
 export class CreateCategoryDto {
@@ -115,4 +147,26 @@ export class ThreadFilterDto {
   @IsOptional()
   @IsString()
   authorId?: string;
+}
+
+export class ThreadReactionResponseDto {
+  @ApiProperty({ description: 'Jumlah reaksi per emoji' })
+  @IsObject()
+  reactions: Record<string, number>;
+
+  @ApiProperty({ description: 'Emoji yang dipilih user saat ini', nullable: true })
+  @IsOptional()
+  @IsString()
+  currentUserEmoji?: string | null;
+}
+
+export class PostReactionResponseDto {
+  @ApiProperty({ description: 'Jumlah reaksi per emoji' })
+  @IsObject()
+  reactions: Record<string, number>;
+
+  @ApiProperty({ description: 'Emoji yang dipilih user saat ini', nullable: true })
+  @IsOptional()
+  @IsString()
+  currentUserEmoji?: string | null;
 }

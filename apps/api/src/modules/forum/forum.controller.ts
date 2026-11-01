@@ -1,4 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { unlinkSync } from 'fs';
+import { buildImageUploadOptions, validateImageMagicBytes, validateImageUploadSecurity } from '../../common/utils/image-upload.util';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -7,7 +9,12 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ForumService } from './forum.service';
 import { ForumCategoryService } from './forum-category.service';
 import {
@@ -18,6 +25,9 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
   ThreadFilterDto,
+  ThreadReactionResponseDto,
+  PostReactionResponseDto,
+  ReactDto,
 } from './dto/forum.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -195,6 +205,34 @@ export class ForumController {
     return this.service.toggleLock(id);
   }
 
+  @Post('upload-image')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Upload gambar untuk forum thread/post' },
+  )
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('image', buildImageUploadOptions('forum')))
+  @ApiOkResponse({ description: 'Gambar berhasil diupload' })
+  async uploadForumImage(@Req() req: any) {
+    const file = req.file;
+    if (!file) throw new BadRequestException('File gambar harus diupload');
+    if (!validateImageMagicBytes(file.path)) {
+      try { unlinkSync(file.path); } catch {}
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
+    }
+    await validateImageUploadSecurity(file.path, file.originalname);
+    const url = `/api/uploads/${file.filename}`;
+    const displayName = file.filename;
+    return { filename: displayName, url };
+  }
+
   @Delete('threads/:id')
   @CrudAuth(
     'superadmin',
@@ -323,5 +361,69 @@ export class ForumController {
   @ApiOkResponse({ description: 'Balasan berhasil dihapus' })
   deletePost(@Param('id') id: string, @CurrentUser() user: { id: string; role: string; namaLengkap?: string }) {
     return this.service.deletePost(id, user);
+  }
+
+  @Post('threads/:id/react')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Toggle reaksi pada thread' },
+  )
+  @ApiParam({ name: 'id', description: 'ID Thread', required: true })
+  @ApiBody({ type: ReactDto, description: 'Emoji reaksi' })
+  @ApiOkResponse({ description: 'Reaksi berhasil ditambahkan/dihapus', type: ThreadReactionResponseDto })
+  reactToThread(
+    @Param('id') threadId: string,
+    @Body() dto: ReactDto,
+    @CurrentUser() user: { id: string; role: string; namaLengkap?: string },
+  ) {
+    return this.service.toggleThreadReaction(threadId, dto.emoji, user.id);
+  }
+
+  @Post('posts/:id/react')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Toggle reaksi pada post' },
+  )
+  @ApiParam({ name: 'id', description: 'ID Post/Balasan', required: true })
+  @ApiBody({ type: ReactDto, description: 'Emoji reaksi' })
+  @ApiOkResponse({ description: 'Reaksi berhasil ditambahkan/dihapus', type: PostReactionResponseDto })
+  reactToPost(
+    @Param('id') postId: string,
+    @Body() dto: ReactDto,
+    @CurrentUser() user: { id: string; role: string; namaLengkap?: string },
+  ) {
+    return this.service.togglePostReaction(postId, dto.emoji, user.id);
+  }
+
+  @Get('mentions')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Cari mention' },
+  )
+  @ApiQuery({ name: 'search', required: false, description: 'Nama anggota untuk dicari' })
+  @ApiOkResponse({ description: 'Daftar mention hasil pencarian' })
+  getMentions(@Query('search') search?: string) {
+    return this.service.getMentions(search);
   }
 }

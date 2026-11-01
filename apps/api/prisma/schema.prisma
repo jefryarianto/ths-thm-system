@@ -229,8 +229,10 @@ model User {
   penugasanPengujis           PenugasanPenguji[]
   tandaTangans                TandaTangan[]
   ujianPraktekPenilais        UjianPraktekPenilai[]
-  userSessions                UserSession[]
-  distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id])
+   userSessions                UserSession[]
+   forumThreadReactions        ForumThreadReaction[]
+   forumPostReactions          ForumPostReaction[]
+   distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id])
   ranting                     Ranting?              @relation(fields: [rantingId], references: [id])
   wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id])
 
@@ -1418,20 +1420,22 @@ model ForumCategory {
 }
 
 model ForumThread {
-  id         String         @id @default(uuid())
-  categoryId String         @map("category_id")
-  authorId   String?        @map("author_id")
-  authorName String?        @map("author_name")
+  id         String                @id @default(uuid())
+  categoryId String                @map("category_id")
+  authorId   String?               @map("author_id")
+  authorName String?               @map("author_name")
   judul      String
   konten     String
-  isPinned   Boolean        @default(false) @map("is_pinned")
-  isLocked   Boolean        @default(false) @map("is_locked")
-  viewCount  Int            @default(0) @map("view_count")
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
+  images     String[]              @default([])
+  isPinned   Boolean               @default(false) @map("is_pinned")
+  isLocked   Boolean               @default(false) @map("is_locked")
+  viewCount  Int                   @default(0) @map("view_count")
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
   posts      ForumPost[]
-  author     Anggota?       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category   ForumCategory  @relation(fields: [categoryId], references: [id])
+  reactions  ForumThreadReaction[]
+  author     Anggota?              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category   ForumCategory         @relation(fields: [categoryId], references: [id])
 
   @@index([categoryId])
   @@index([authorId])
@@ -1440,25 +1444,57 @@ model ForumThread {
 }
 
 model ForumPost {
-  id         String       @id @default(uuid())
-  threadId   String       @map("thread_id")
-  authorId   String?      @map("author_id")
-  authorName String?      @map("author_name")
+  id         String              @id @default(uuid())
+  threadId   String              @map("thread_id")
+  authorId   String?             @map("author_id")
+  authorName String?             @map("author_name")
   konten     String
-  isSolution Boolean      @default(false) @map("is_solution")
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-  parentId   String?      @map("parent_id")
-  author     Anggota?     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent     ForumPost?   @relation("ForumPostReplies", fields: [parentId], references: [id])
-  replies    ForumPost[]  @relation("ForumPostReplies")
-  thread     ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  images     String[]            @default([])
+  isSolution Boolean             @default(false) @map("is_solution")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+  parentId   String?             @map("parent_id")
+  author     Anggota?            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent     ForumPost?          @relation("ForumPostReplies", fields: [parentId], references: [id])
+  replies    ForumPost[]         @relation("ForumPostReplies")
+  thread     ForumThread         @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  reactions  ForumPostReaction[]
 
   @@index([threadId])
   @@index([authorId])
   @@index([parentId])
   @@index([createdAt])
   @@map("forum_posts")
+}
+
+model ForumThreadReaction {
+  id        String      @id @default(uuid())
+  threadId  String      @map("thread_id")
+  userId    String      @map("user_id")
+  emoji     String
+  createdAt DateTime    @default(now()) @map("created_at")
+  thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([threadId])
+  @@index([userId])
+  @@map("forum_thread_reactions")
+}
+
+model ForumPostReaction {
+  id        String    @id @default(uuid())
+  postId    String    @map("post_id")
+  userId    String    @map("user_id")
+  emoji     String
+  createdAt DateTime  @default(now()) @map("created_at")
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("forum_post_reactions")
 }
 
 model QrCode {

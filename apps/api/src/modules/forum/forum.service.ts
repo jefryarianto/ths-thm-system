@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateThreadDto,
@@ -537,5 +537,149 @@ export class ForumService {
 
     await this.prisma.forumPost.delete({ where: { id } });
     this.emit('forum:postDeleted', { threadId: post.threadId, postId: post.id });
+  }
+
+  async toggleThreadReaction(
+    threadId: string,
+    emoji: string,
+    userId: string,
+  ): Promise<{ reactions: Record<string, number>; currentUserEmoji?: string | null }> {
+    // Validate emoji format (simple check: common emojis)
+    const validEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '💡', '🎉', '👎'];
+    if (!validEmojis.includes(emoji)) {
+      throw new BadRequestException('Emaksi reaksi tidak valid');
+    }
+
+    // Cek apakah user sudah bereaksi
+    const existingReaction = await this.prisma.forumThreadReaction.findFirst({
+      where: { threadId, userId },
+    });
+
+    let reaction: typeof existingReaction | null = null;
+
+    if (existingReaction) {
+      if (existingReaction.emoji === emoji) {
+        // Toggle off: hapus reaksi sama
+        await this.prisma.forumThreadReaction.delete({ where: { id: existingReaction.id } });
+        reaction = null;
+      } else {
+        // Ganti emoji
+        reaction = await this.prisma.forumThreadReaction.update({
+          where: { id: existingReaction.id },
+          data: { emoji },
+        });
+      }
+    } else {
+      // Buat reaksi baru
+      reaction = await this.prisma.forumThreadReaction.create({
+        data: { threadId, userId, emoji },
+      });
+    }
+
+    // Hitung total reaksi per emoji
+    const [reactionsData, totalCount] = await Promise.all([
+      this.prisma.forumThreadReaction.groupBy({
+        by: 'emoji',
+        where: { threadId },
+        _count: { emoji: true },
+      }),
+      this.prisma.forumThread.count({ where: { id: threadId } }),
+    ]);
+
+    const reactions: Record<string, number> = {};
+    for (const r of reactionsData) {
+      reactions[r.emoji] = r._count.emoji;
+    }
+
+    // Emit realtime event
+    this.emit('forum:reactionUpdated', {
+      threadId,
+      postId: null,
+      targetType: 'thread' as const,
+      userId,
+      emoji: reaction?.emoji ?? null,
+      reactions,
+    });
+
+    return { reactions, currentUserEmoji: reaction?.emoji ?? null };
+  }
+
+  async togglePostReaction(
+    postId: string,
+    emoji: string,
+    userId: string,
+  ): Promise<{ reactions: Record<string, number>; currentUserEmoji?: string | null }> {
+    const validEmojis = ['👍', '❤️', '😂', '😮', '𘮢', '🙏', '🔥', '💡', '🎉', '👎'];
+    if (!validEmojis.includes(emoji)) {
+      throw new BadRequestException('Emoji reaksi tidak valid');
+    }
+
+    const existingReaction = await this.prisma.forumPostReaction.findFirst({
+      where: { postId, userId },
+    });
+
+    let reaction: typeof existingReaction | null = null;
+
+    if (existingReaction) {
+      if (existingReaction.emoji === emoji) {
+        await this.prisma.forumPostReaction.delete({ where: { id: existingReaction.id } });
+        reaction = null;
+      } else {
+        reaction = await this.prisma.forumPostReaction.update({
+          where: { id: existingReaction.id },
+          data: { emoji },
+        });
+      }
+    } else {
+      reaction = await this.prisma.forumPostReaction.create({
+        data: { postId, userId, emoji },
+      });
+    }
+
+    const [reactionsData] = await Promise.all([
+      this.prisma.forumPostReaction.groupBy({
+        by: 'emoji',
+        where: { postId },
+        _count: { emoji: true },
+      }),
+    ]);
+
+    const reactions: Record<string, number> = {};
+    for (const r of reactionsData) {
+      reactions[r.emoji] = r._count.emoji;
+    }
+
+    this.emit('forum:reactionUpdated', {
+      threadId: null,
+      postId,
+      targetType: 'post' as const,
+      userId,
+      emoji: reaction?.emoji ?? null,
+      reactions,
+    });
+
+    return { reactions, currentUserEmoji: reaction?.emoji ?? null };
+  }
+
+  async getMentions(search?: string) {
+    if (!search) return [];
+
+    // Cari anggota berdasarkan nama lengkap yang mengandung search term
+    const results = await this.prisma.anggota.findMany({
+      where: {
+        namaLengkap: {
+          contains: search,
+          mode: 'insensitive',
+        },
+        deletedAt: null,
+      },
+      select: { id: true, namaLengkap: true },
+      take: 10,
+    });
+
+    return results.map((a) => ({
+      id: a.id,
+      nama: a.namaLengkap,
+    }));
   }
 }
