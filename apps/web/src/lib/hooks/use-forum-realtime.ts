@@ -15,6 +15,7 @@ export function useForumRealtime(handlers: {
   postCreated?: Handler;
   postUpdated?: Handler;
   postDeleted?: Handler;
+  reactionUpdated?: Handler;
 }) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
@@ -31,6 +32,7 @@ export function useForumRealtime(handlers: {
       ['forum:postCreated', (d: any) => handlersRef.current.postCreated?.(d)],
       ['forum:postUpdated', (d: any) => handlersRef.current.postUpdated?.(d)],
       ['forum:postDeleted', (d: any) => handlersRef.current.postDeleted?.(d)],
+      ['forum:reactionUpdated', (d: any) => handlersRef.current.reactionUpdated?.(d)],
     ];
 
     listeners.forEach(([event, handler]) => socket.on(event, handler));

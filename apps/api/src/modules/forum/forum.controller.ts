@@ -140,8 +140,8 @@ export class ForumController {
   @Public()
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiOkResponse({ description: 'Detail thread beserta semua balasan' })
-  getThread(@Param('id') id: string) {
-    return this.service.getThread(id);
+  getThread(@Param('id') id: string, @CurrentUser() user?: { id: string; role: string }) {
+    return this.service.getThread(id, user?.id);
   }
 
   @Post('threads')

@@ -52,13 +52,43 @@ class ForumCreatePostRequested extends ForumEvent {
   final String threadId;
   final String konten;
 
+  /// Path file gambar terpilih (device) — diunggah ke `/forum/upload-image`
+  /// sebelum balasan dikirim, URL hasilnya dikirim sebagai `images`.
+  final List<String> imagePaths;
+
   const ForumCreatePostRequested({
     required this.threadId,
     required this.konten,
+    this.imagePaths = const [],
   });
 
   @override
-  List<Object> get props => [threadId, konten];
+  List<Object> get props => [threadId, konten, imagePaths];
+}
+
+class ForumThreadReactRequested extends ForumEvent {
+  final String threadId;
+  final String emoji;
+
+  const ForumThreadReactRequested({required this.threadId, required this.emoji});
+
+  @override
+  List<Object> get props => [threadId, emoji];
+}
+
+class ForumPostReactRequested extends ForumEvent {
+  final String threadId;
+  final String postId;
+  final String emoji;
+
+  const ForumPostReactRequested({
+    required this.threadId,
+    required this.postId,
+    required this.emoji,
+  });
+
+  @override
+  List<Object> get props => [threadId, postId, emoji];
 }
 
 class ForumLogoutRequested extends ForumEvent {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useParams } from 'next/navigation';
-import { Pin, Lock, Eye, Trash2, Send, CheckCircle, Edit3 } from 'lucide-react';
+import { Pin, Lock, Eye, Trash2, CheckCircle, Edit3 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useAuth } from '@/hooks/use-auth';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
@@ -13,10 +13,15 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
 import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
+import { ReactionBar, type ReactionState } from '@/components/forum/reaction-bar';
+import { ForumComposer } from '@/components/forum/forum-composer';
 
 interface Post {
   id: string;
   konten: string;
+  images?: string[];
+  reactions?: Record<string, number>;
+  currentUserEmoji?: string | null;
   createdAt: string;
   isSolution?: boolean;
   author: { id: string; namaLengkap: string; nomorAnggota: string } | null;
@@ -27,6 +32,9 @@ interface Thread {
   id: string;
   judul: string;
   konten: string;
+  images?: string[];
+  reactions?: Record<string, number>;
+  currentUserEmoji?: string | null;
   isPinned: boolean;
   isLocked: boolean;
   viewCount: number;
@@ -85,13 +93,26 @@ export default function ThreadDetailPage() {
       const d = data as { threadId?: string };
       if (d?.threadId === threadId) fetchThread();
     },
+    reactionUpdated: (data) => {
+      const d = data as { threadId?: string | null; postId?: string | null; targetType?: string };
+      if (d?.targetType === 'thread' && d.threadId === threadId) {
+        fetchThread();
+        return;
+      }
+      if (d?.targetType === 'post' && d.postId && thread?.posts.some((p) => p.id === d.postId)) {
+        fetchThread();
+      }
+    },
   });
 
-  const handleReply = async () => {
-    if (!reply.trim()) return;
+  const handleReply = async (content: string, images: string[]) => {
+    if (!content.trim()) return;
     setSubmitting(true);
     try {
-      await apiClient.post(`/forum/threads/${threadId}/posts`, { konten: reply.trim() });
+      await apiClient.post(`/forum/threads/${threadId}/posts`, {
+        konten: content.trim(),
+        ...(images.length > 0 && { images }),
+      });
       setReply('');
       await fetchThread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,6 +120,25 @@ export default function ThreadDetailPage() {
       toast('error', extractErrorMessage(err, 'Gagal mengirim balasan'));
     }
     setSubmitting(false);
+  };
+
+  const handleThreadReaction = (next: ReactionState) => {
+    setThread((t) => (t ? { ...t, reactions: next.reactions, currentUserEmoji: next.currentUserEmoji } : t));
+  };
+
+  const handlePostReaction = (postId: string, next: ReactionState) => {
+    setThread((t) =>
+      t
+        ? {
+            ...t,
+            posts: t.posts.map((p) =>
+              p.id === postId
+                ? { ...p, reactions: next.reactions, currentUserEmoji: next.currentUserEmoji }
+                : p,
+            ),
+          }
+        : t,
+    );
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -198,6 +238,14 @@ export default function ThreadDetailPage() {
               <div className="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {thread.konten}
               </div>
+              <ImageGrid images={thread.images} />
+              <ReactionBar
+                targetType="thread"
+                targetId={thread.id}
+                reactions={thread.reactions}
+                currentUserEmoji={thread.currentUserEmoji}
+                onChange={handleThreadReaction}
+              />
             </div>
             {canModerate && (
               <div className="flex items-center gap-1 ml-4">
@@ -314,6 +362,15 @@ export default function ThreadDetailPage() {
                   <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                     {post.konten}
                   </div>
+                  <ImageGrid images={post.images} />
+                  <ReactionBar
+                    compact
+                    targetType="post"
+                    targetId={post.id}
+                    reactions={post.reactions}
+                    currentUserEmoji={post.currentUserEmoji}
+                    onChange={(next) => handlePostReaction(post.id, next)}
+                  />
                 </>
               )}
             </div>
@@ -322,26 +379,38 @@ export default function ThreadDetailPage() {
 
         {!thread.isLocked && (
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <textarea
+            <ForumComposer
               value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Tulis balasan..."
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              onChange={setReply}
+              onSubmit={handleReply}
+              submitLabel="Kirim Balasan"
+              submitting={submitting}
+              placeholder="Tulis balasan... gunakan @ untuk mention anggota"
               rows={3}
             />
-            <div className="flex justify-end mt-3">
-              <button
-                onClick={handleReply}
-                disabled={submitting || !reply.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                <Send size={14} /> {submitting ? 'Mengirim...' : 'Kirim Balasan'}
-              </button>
-            </div>
           </div>
         )}
         {confirmModal}
       </PageContainer>
     </PermissionGuard>
+  );
+}
+
+function ImageGrid({ images }: { images?: string[] }) {
+  if (!images || images.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-3">
+      {images.map((url) => (
+        <a
+          key={url}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity"
+        >
+          <img src={url} alt="Lampiran" className="w-full h-full object-cover" />
+        </a>
+      ))}
+    </div>
   );
 }

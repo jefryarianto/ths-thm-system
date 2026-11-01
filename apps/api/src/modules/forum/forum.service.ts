@@ -23,6 +23,7 @@ type ForumPostWithAuthor = {
   authorName: string | null;
   parentId: string | null;
   konten: string;
+  images: string[];
   isSolution: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -30,7 +31,25 @@ type ForumPostWithAuthor = {
 };
 
 /** ForumPostWithAuthor with its nested replies (recursive tree node). */
-type ForumPostTreeNode = ForumPostWithAuthor & { children: ForumPostTreeNode[] };
+type ForumPostTreeNode = ForumPostWithAuthor & {
+  children: ForumPostTreeNode[];
+  reactions?: Record<string, number>;
+  currentUserEmoji?: string | null;
+};
+
+/** Emoji reaksi yang diterima server (thread & post). */
+export const VALID_REACTION_EMOJIS = [
+  '👍',
+  '❤️',
+  '😂',
+  '😮',
+  '😢',
+  '🙏',
+  '🔥',
+  '💡',
+  '🎉',
+  '👎',
+];
 
 @Injectable()
 export class ForumService {
@@ -218,7 +237,7 @@ export class ForumService {
     };
   }
 
-  async getThread(id: string) {
+  async getThread(id: string, userId?: string) {
     const thread = await this.prisma.forumThread.findUnique({
       where: { id },
       include: {
@@ -233,15 +252,63 @@ export class ForumService {
       data: { viewCount: { increment: 1 } },
     });
 
-    const posts = await this.prisma.forumPost.findMany({
-      where: { threadId: id },
-      orderBy: { createdAt: 'asc' },
-      include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
-      },
-    });
+    const [posts, threadReactionsData, threadUserReaction, postReactionsData, postUserReactions] =
+      await Promise.all([
+        this.prisma.forumPost.findMany({
+          where: { threadId: id },
+          orderBy: { createdAt: 'asc' },
+          include: {
+            author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
+          },
+        }),
+        this.prisma.forumThreadReaction.groupBy({
+          by: ['emoji'],
+          where: { threadId: id },
+          _count: { emoji: true },
+        }),
+        userId
+          ? this.prisma.forumThreadReaction.findFirst({
+              where: { threadId: id, userId },
+              select: { emoji: true },
+            })
+          : Promise.resolve(null),
+        this.prisma.forumPostReaction.groupBy({
+          by: ['postId', 'emoji'],
+          where: { post: { threadId: id } },
+          _count: { emoji: true },
+        }),
+        userId
+          ? this.prisma.forumPostReaction.findMany({
+              where: { post: { threadId: id }, userId },
+              select: { postId: true, emoji: true },
+            })
+          : Promise.resolve([]),
+      ]);
 
-    return { ...thread, posts: this.buildPostTree(posts) };
+    const threadReactions: Record<string, number> = {};
+    for (const r of threadReactionsData) threadReactions[r.emoji] = r._count.emoji;
+
+    const postReactionsByPost = new Map<string, Record<string, number>>();
+    for (const r of postReactionsData) {
+      const entry = postReactionsByPost.get(r.postId) ?? {};
+      entry[r.emoji] = r._count.emoji;
+      postReactionsByPost.set(r.postId, entry);
+    }
+
+    const currentUserEmojiByPost = new Map(postUserReactions.map((r) => [r.postId, r.emoji]));
+
+    const postsWithReactions = posts.map((post) => ({
+      ...post,
+      reactions: postReactionsByPost.get(post.id) ?? {},
+      currentUserEmoji: currentUserEmojiByPost.get(post.id) ?? null,
+    }));
+
+    return {
+      ...thread,
+      reactions: threadReactions,
+      currentUserEmoji: threadUserReaction?.emoji ?? null,
+      posts: this.buildPostTree(postsWithReactions),
+    };
   }
 
   async createThread(dto: CreateThreadDto, user: ForumActor) {
@@ -262,6 +329,7 @@ export class ForumService {
         authorName: author.authorName,
         judul: dto.judul,
         konten: dto.konten,
+        ...(dto.images !== undefined && { images: dto.images }),
       },
       include: {
         author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
@@ -288,6 +356,7 @@ export class ForumService {
       data: {
         ...(dto.judul !== undefined && { judul: dto.judul }),
         ...(dto.konten !== undefined && { konten: dto.konten }),
+        ...(dto.images !== undefined && { images: dto.images }),
       },
       include: {
         author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
@@ -379,6 +448,7 @@ export class ForumService {
         authorName: author.authorName,
         parentId: dto.parentId ?? null,
         konten: dto.konten,
+        ...(dto.images !== undefined && { images: dto.images }),
       },
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
@@ -453,7 +523,10 @@ export class ForumService {
 
     const updated = await this.prisma.forumPost.update({
       where: { id },
-      data: { konten: dto.konten! },
+      data: {
+        konten: dto.konten!,
+        ...(dto.images !== undefined && { images: dto.images }),
+      },
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
@@ -544,10 +617,8 @@ export class ForumService {
     emoji: string,
     userId: string,
   ): Promise<{ reactions: Record<string, number>; currentUserEmoji?: string | null }> {
-    // Validate emoji format (simple check: common emojis)
-    const validEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '💡', '🎉', '👎'];
-    if (!validEmojis.includes(emoji)) {
-      throw new BadRequestException('Emaksi reaksi tidak valid');
+    if (!VALID_REACTION_EMOJIS.includes(emoji)) {
+      throw new BadRequestException('Emoji reaksi tidak valid');
     }
 
     // Cek apakah user sudah bereaksi
@@ -609,8 +680,7 @@ export class ForumService {
     emoji: string,
     userId: string,
   ): Promise<{ reactions: Record<string, number>; currentUserEmoji?: string | null }> {
-    const validEmojis = ['👍', '❤️', '😂', '😮', '𘮢', '🙏', '🔥', '💡', '🎉', '👎'];
-    if (!validEmojis.includes(emoji)) {
+    if (!VALID_REACTION_EMOJIS.includes(emoji)) {
       throw new BadRequestException('Emoji reaksi tidak valid');
     }
 

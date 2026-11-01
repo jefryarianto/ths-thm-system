@@ -19,6 +19,8 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     on<ForumThreadLoadRequested>(_onThread);
     on<ForumCreateThreadRequested>(_onCreateThread);
     on<ForumCreatePostRequested>(_onCreatePost);
+    on<ForumThreadReactRequested>(_onThreadReact);
+    on<ForumPostReactRequested>(_onPostReact);
     on<ForumLogoutRequested>(_onLogout);
     on<ForumRealtimeEvent>(_onRealtime);
     _initRealtime();
@@ -143,6 +145,34 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           thread: current.thread,
           posts: current.posts.where((p) => p.id != postId).toList(),
         );
+      }));
+    });
+
+    realtime.on('forum:reactionUpdated', (data) {
+      if (isClosed || data is! Map<String, dynamic>) return;
+      add(ForumRealtimeEvent((current) {
+        if (current is! ForumThreadLoaded) return current;
+        final reactions = _asIntMap(data['reactions']);
+        final targetType = data['targetType']?.toString() ?? '';
+        if (targetType == 'thread' &&
+            data['threadId']?.toString() == current.thread.id) {
+          return ForumThreadLoaded(
+            thread: current.thread.copyWith(reactions: reactions),
+            posts: current.posts,
+          );
+        }
+        if (targetType == 'post') {
+          final postId = data['postId']?.toString() ?? '';
+          if (postId.isEmpty) return current;
+          return ForumThreadLoaded(
+            thread: current.thread,
+            posts: [
+              for (final p in current.posts)
+                p.id == postId ? p.copyWith(reactions: reactions) : p,
+            ],
+          );
+        }
+        return current;
       }));
     });
   }
@@ -393,10 +423,95 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     Emitter<ForumState> emit,
   ) async {
     try {
+      // Unggah lampiran gambar dulu (multipart — override Content-Type JSON).
+      final urls = <String>[];
+      for (final path in event.imagePaths) {
+        final form = FormData.fromMap({
+          'image': await MultipartFile.fromFile(path),
+        });
+        final up = await _apiClient.dio.post(
+          '/forum/upload-image',
+          data: form,
+          options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        );
+        final data = _unwrap(up.data);
+        if (data is Map<String, dynamic> && data['url'] != null) {
+          urls.add(data['url'].toString());
+        }
+      }
       await _apiClient.dio.post(
         '/forum/threads/${event.threadId}/posts',
-        data: {'konten': event.konten},
+        data: {
+          'konten': event.konten,
+          if (urls.isNotEmpty) 'images': urls,
+        },
       );
+    } on DioException catch (e) {
+      emit(ForumError(message: _message(e)));
+    } catch (e) {
+      emit(ForumError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onThreadReact(
+    ForumThreadReactRequested event,
+    Emitter<ForumState> emit,
+  ) async {
+    try {
+      final res = await _apiClient.dio.post(
+        '/forum/threads/${event.threadId}/react',
+        data: {'emoji': event.emoji},
+      );
+      final current = state;
+      final data = _unwrap(res.data);
+      if (current is ForumThreadLoaded &&
+          current.thread.id == event.threadId &&
+          data is Map<String, dynamic>) {
+        final emoji = data['currentUserEmoji']?.toString();
+        emit(ForumThreadLoaded(
+          thread: current.thread.copyWith(
+            reactions: _asIntMap(data['reactions']),
+            currentUserEmoji: emoji,
+            clearEmoji: emoji == null,
+          ),
+          posts: current.posts,
+        ));
+      }
+    } on DioException catch (e) {
+      emit(ForumError(message: _message(e)));
+    } catch (e) {
+      emit(ForumError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onPostReact(
+    ForumPostReactRequested event,
+    Emitter<ForumState> emit,
+  ) async {
+    try {
+      final res = await _apiClient.dio.post(
+        '/forum/posts/${event.postId}/react',
+        data: {'emoji': event.emoji},
+      );
+      final current = state;
+      final data = _unwrap(res.data);
+      if (current is ForumThreadLoaded &&
+          data is Map<String, dynamic>) {
+        final emoji = data['currentUserEmoji']?.toString();
+        emit(ForumThreadLoaded(
+          thread: current.thread,
+          posts: [
+            for (final p in current.posts)
+              p.id == event.postId
+                  ? p.copyWith(
+                      reactions: _asIntMap(data['reactions']),
+                      currentUserEmoji: emoji,
+                      clearEmoji: emoji == null,
+                    )
+                  : p,
+          ],
+        ));
+      }
     } on DioException catch (e) {
       emit(ForumError(message: _message(e)));
     } catch (e) {
@@ -424,6 +539,13 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
   static dynamic _unwrap(dynamic data) {
     if (data is Map && data['data'] != null) return data['data'];
     return data;
+  }
+
+  static Map<String, int> _asIntMap(dynamic raw) {
+    if (raw is Map) {
+      return raw.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0));
+    }
+    return const {};
   }
 
   static List<T> _parseList<T>(

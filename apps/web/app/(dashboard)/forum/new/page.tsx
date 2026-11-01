@@ -3,13 +3,14 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
 import { CanAdmin } from '@/components/auth/can';
+import { ForumComposer } from '@/components/forum/forum-composer';
 
 interface Category {
   id: string;
@@ -40,14 +41,18 @@ export default function NewThreadPage() {
     })();
   }, []);
 
-  const handleSubmit = async () => {
-    if (!categoryId || !judul.trim() || !konten.trim()) return;
+  const handleSubmit = async (konten: string, images: string[]) => {
+    if (!categoryId || !judul.trim() || !konten.trim()) {
+      toast('error', 'Lengkapi kategori, judul, dan konten terlebih dahulu');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await apiClient.post('/forum/threads', {
         categoryId,
         judul: judul.trim(),
         konten: konten.trim(),
+        ...(images.length > 0 && { images }),
       });
       const data = unwrap<{ id: string }>(res);
       if (data?.id) {
@@ -121,23 +126,15 @@ export default function NewThreadPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Konten
             </label>
-            <textarea
+            <ForumComposer
               value={konten}
-              onChange={(e) => setKonten(e.target.value)}
-              placeholder="Tulis konten thread..."
+              onChange={setKonten}
+              onSubmit={handleSubmit}
+              submitLabel="Buat Thread"
+              submitting={submitting}
+              placeholder="Tulis konten thread... gunakan @ untuk mention anggota"
               rows={8}
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !categoryId || categories.length === 0 || !judul.trim() || !konten.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send size={14} /> {submitting ? 'Membuat...' : 'Buat Thread'}
-            </button>
           </div>
         </div>
       </PageContainer>

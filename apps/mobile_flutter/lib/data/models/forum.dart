@@ -46,12 +46,27 @@ class ForumAuthor {
       );
 }
 
+List<String> _parseImages(dynamic raw) {
+  if (raw is List) return raw.map((e) => e.toString()).toList();
+  return const [];
+}
+
+Map<String, int> _parseReactions(dynamic raw) {
+  if (raw is Map) {
+    return raw.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0));
+  }
+  return const {};
+}
+
 class ForumThread {
   final String id;
   final String categoryId;
   final String authorId;
   final String judul;
   final String konten;
+  final List<String> images;
+  final Map<String, int> reactions;
+  final String? currentUserEmoji;
   final bool isPinned;
   final bool isLocked;
   final int viewCount;
@@ -67,6 +82,9 @@ class ForumThread {
     required this.authorId,
     required this.judul,
     required this.konten,
+    this.images = const [],
+    this.reactions = const {},
+    this.currentUserEmoji,
     required this.isPinned,
     required this.isLocked,
     required this.viewCount,
@@ -76,6 +94,32 @@ class ForumThread {
     this.category,
     required this.postCount,
   });
+
+  ForumThread copyWith({
+    Map<String, int>? reactions,
+    String? currentUserEmoji,
+    bool clearEmoji = false,
+    List<String>? images,
+  }) {
+    return ForumThread(
+      id: id,
+      categoryId: categoryId,
+      authorId: authorId,
+      judul: judul,
+      konten: konten,
+      images: images ?? this.images,
+      reactions: reactions ?? this.reactions,
+      currentUserEmoji: clearEmoji ? null : (currentUserEmoji ?? this.currentUserEmoji),
+      isPinned: isPinned,
+      isLocked: isLocked,
+      viewCount: viewCount,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      author: author,
+      category: category,
+      postCount: postCount,
+    );
+  }
 
   factory ForumThread.fromJson(Map<String, dynamic> json) {
     final count = json['_count'];
@@ -87,6 +131,9 @@ class ForumThread {
       authorId: json['authorId']?.toString() ?? '',
       judul: json['judul']?.toString() ?? json['nama']?.toString() ?? '',
       konten: json['konten']?.toString() ?? '',
+      images: _parseImages(json['images']),
+      reactions: _parseReactions(json['reactions']),
+      currentUserEmoji: json['currentUserEmoji']?.toString(),
       isPinned: json['isPinned'] as bool? ?? false,
       isLocked: json['isLocked'] as bool? ?? false,
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
@@ -110,6 +157,9 @@ class ForumPost {
   final String threadId;
   final String authorId;
   final String konten;
+  final List<String> images;
+  final Map<String, int> reactions;
+  final String? currentUserEmoji;
   final bool isSolution;
   final String createdAt;
   final String updatedAt;
@@ -120,11 +170,35 @@ class ForumPost {
     required this.threadId,
     required this.authorId,
     required this.konten,
+    this.images = const [],
+    this.reactions = const {},
+    this.currentUserEmoji,
     required this.isSolution,
     required this.createdAt,
     required this.updatedAt,
     required this.author,
   });
+
+  ForumPost copyWith({
+    Map<String, int>? reactions,
+    String? currentUserEmoji,
+    bool clearEmoji = false,
+    List<String>? images,
+  }) {
+    return ForumPost(
+      id: id,
+      threadId: threadId,
+      authorId: authorId,
+      konten: konten,
+      images: images ?? this.images,
+      reactions: reactions ?? this.reactions,
+      currentUserEmoji: clearEmoji ? null : (currentUserEmoji ?? this.currentUserEmoji),
+      isSolution: isSolution,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      author: author,
+    );
+  }
 
   factory ForumPost.fromJson(Map<String, dynamic> json) {
     final rawAuthor = json['author'];
@@ -133,6 +207,9 @@ class ForumPost {
       threadId: json['threadId']?.toString() ?? '',
       authorId: json['authorId']?.toString() ?? '',
       konten: json['konten']?.toString() ?? '',
+      images: _parseImages(json['images']),
+      reactions: _parseReactions(json['reactions']),
+      currentUserEmoji: json['currentUserEmoji']?.toString(),
       isSolution: json['isSolution'] as bool? ?? false,
       createdAt: json['createdAt']?.toString() ?? '',
       updatedAt: json['updatedAt']?.toString() ?? '',
