@@ -56,6 +56,7 @@ import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/berita_detail_screen.dart';
 import 'presentation/screens/berita/berita_submit_screen.dart';
 import 'presentation/screens/berita/berita_status_screen.dart';
+import 'presentation/screens/berita/berita_overview_screen.dart';
 import 'presentation/screens/kegiatan_detail_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
 import 'presentation/screens/verification_result_screen.dart';
