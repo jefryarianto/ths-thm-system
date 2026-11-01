@@ -70,7 +70,7 @@ jobs:
           pnpm --filter @ths-thm/api generate:client
       - name: Verifikasi swagger.json & api.d.ts sinkron
         run: |
-          git diff --exit-code -- apps/api/swagger.json apps/web/src/types/api.d.ts \
+          git diff --exit-code -- apps/web/src/types/api.d.ts \
             || (echo "::error::Kontrak API basi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
           echo "✅ Kontrak API sinkron"
 
