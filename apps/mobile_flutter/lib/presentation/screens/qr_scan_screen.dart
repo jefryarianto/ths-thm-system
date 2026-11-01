@@ -110,7 +110,6 @@ class _QrScanScreenState extends State<QrScanScreen>
   bool _cameraPermissionGranted = false;
   bool _isCheckingPermission = true;
   String? _cameraErrorMessage;
-  int _scannerKeyIndex = 0;
 
   @override
   void initState() {
@@ -159,11 +158,15 @@ class _QrScanScreenState extends State<QrScanScreen>
       if (!mounted) return;
 
       if (status.isGranted) {
+        if (!_cameraPermissionGranted) {
+          try {
+            await _scanner.start();
+          } catch (_) {}
+        }
         setState(() {
           _cameraPermissionGranted = true;
           _isCheckingPermission = false;
           _cameraErrorMessage = null;
-          _scannerKeyIndex++;
         });
       } else {
         setState(() {
@@ -697,7 +700,6 @@ class _QrScanScreenState extends State<QrScanScreen>
             )
           else
             MobileScanner(
-              key: ValueKey('scanner_$_scannerKeyIndex'),
               controller: _scanner,
               onDetect: _onDetect,
               errorBuilder: (context, error, child) {
@@ -730,9 +732,11 @@ class _QrScanScreenState extends State<QrScanScreen>
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: () {
-                            setState(() {
-                              _scannerKeyIndex++;
-                            });
+                            _checkCameraPermission();
+                            try {
+                              _scanner.stop();
+                              _scanner.start();
+                            } catch (_) {}
                           },
                           icon: const Icon(Icons.refresh, size: 16),
                           label: const Text('Muat Ulang Kamera'),

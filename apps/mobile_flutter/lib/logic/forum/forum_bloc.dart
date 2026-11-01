@@ -506,19 +506,34 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           current.thread.id == event.threadId &&
           data is Map<String, dynamic>) {
         final emoji = data['currentUserEmoji']?.toString();
+        final prev = current.thread;
+        final updatedThread = prev.copyWith(
+          reactions: _asIntMap(data['reactions']),
+          currentUserEmoji: emoji,
+          clearEmoji: emoji == null,
+        );
         emit(ForumThreadLoaded(
-          thread: current.thread.copyWith(
-            reactions: _asIntMap(data['reactions']),
-            currentUserEmoji: emoji,
-            clearEmoji: emoji == null,
-          ),
+          thread: updatedThread,
           posts: current.posts,
+          cachedCategories: current.cachedCategories,
+          cachedThreads: current.cachedThreads,
         ));
       }
     } on DioException catch (e) {
-      emit(ForumError(message: _message(e)));
+      final current = state;
+      final errState = ForumError(
+        message: _message(e),
+        cachedCategories: current.cachedCategories,
+        cachedThreads: current.cachedThreads,
+      );
+      emit(errState);
     } catch (e) {
-      emit(ForumError(message: e.toString()));
+      final current = state;
+      emit(ForumError(
+        message: e.toString(),
+        cachedCategories: current.cachedCategories,
+        cachedThreads: current.cachedThreads,
+      ));
     }
   }
 
@@ -548,12 +563,24 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
                     )
                   : p,
           ],
+          cachedCategories: current.cachedCategories,
+          cachedThreads: current.cachedThreads,
         ));
       }
     } on DioException catch (e) {
-      emit(ForumError(message: _message(e)));
+      final cur = state;
+      emit(ForumError(
+        message: _message(e),
+        cachedCategories: cur.cachedCategories,
+        cachedThreads: cur.cachedThreads,
+      ));
     } catch (e) {
-      emit(ForumError(message: e.toString()));
+      final cur = state;
+      emit(ForumError(
+        message: e.toString(),
+        cachedCategories: cur.cachedCategories,
+        cachedThreads: cur.cachedThreads,
+      ));
     }
   }
 
