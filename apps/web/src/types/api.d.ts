@@ -5310,6 +5310,23 @@ export interface paths {
         patch: operations["ForumController_toggleLock"];
         trace?: never;
     };
+    "/forum/upload-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload gambar untuk forum thread/post */
+        post: operations["ForumController_uploadForumImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/forum/threads/{id}/posts": {
         parameters: {
             query?: never;
@@ -5377,6 +5394,57 @@ export interface paths {
         head?: never;
         /** Tandai sebagai solusi */
         patch: operations["ForumController_markAsSolution"];
+        trace?: never;
+    };
+    "/forum/threads/{id}/react": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Toggle reaksi pada thread */
+        post: operations["ForumController_reactToThread"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forum/posts/{id}/react": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Toggle reaksi pada post */
+        post: operations["ForumController_reactToPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forum/mentions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cari mention */
+        get: operations["ForumController_getMentions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/calendar/events": {
@@ -7239,6 +7307,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Matriks izin semua role (khusus superadmin) */
         get: operations["PermissionsController_getMatrix"];
         put?: never;
         post?: never;
@@ -7261,6 +7330,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Ubah satu izin role (khusus superadmin) */
         patch: operations["PermissionsController_toggle"];
         trace?: never;
     };
@@ -7277,6 +7347,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Ubah banyak izin satu role (khusus superadmin) */
         patch: operations["PermissionsController_bulkToggle"];
         trace?: never;
     };
@@ -8025,18 +8096,40 @@ export interface components {
             categoryId: string;
             judul: string;
             konten: string;
+            /** @description Daftar URL gambar lampiran */
+            images?: string[];
         };
         UpdateThreadDto: {
             judul?: string;
             konten?: string;
+            images?: string[];
         };
         CreatePostDto: {
             konten: string;
             /** @description ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa. */
             parentId?: string;
+            /** @description Daftar URL gambar lampiran */
+            images?: string[];
         };
         UpdatePostDto: {
             konten?: string;
+            images?: string[];
+        };
+        ReactDto: {
+            /** @description Emoji reaksi, mis. 👍, ❤️, 😂, 😮, 😢, 🙏 */
+            emoji: string;
+        };
+        ThreadReactionResponseDto: {
+            /** @description Jumlah reaksi per emoji */
+            reactions: Record<string, never>;
+            /** @description Emoji yang dipilih user saat ini */
+            currentUserEmoji: Record<string, never> | null;
+        };
+        PostReactionResponseDto: {
+            /** @description Jumlah reaksi per emoji */
+            reactions: Record<string, never>;
+            /** @description Emoji yang dipilih user saat ini */
+            currentUserEmoji: Record<string, never> | null;
         };
         CreateDistrikDto: Record<string, never>;
         UpdateDistrikDto: Record<string, never>;
@@ -16076,6 +16169,24 @@ export interface operations {
             };
         };
     };
+    ForumController_uploadForumImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gambar berhasil diupload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ForumController_createPost: {
         parameters: {
             query?: never;
@@ -16191,6 +16302,83 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Post ditandai sebagai solusi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ForumController_reactToThread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Thread */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Emoji reaksi */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactDto"];
+            };
+        };
+        responses: {
+            /** @description Reaksi berhasil ditambahkan/dihapus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadReactionResponseDto"];
+                };
+            };
+        };
+    };
+    ForumController_reactToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Post/Balasan */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Emoji reaksi */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactDto"];
+            };
+        };
+        responses: {
+            /** @description Reaksi berhasil ditambahkan/dihapus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostReactionResponseDto"];
+                };
+            };
+        };
+    };
+    ForumController_getMentions: {
+        parameters: {
+            query?: {
+                /** @description Nama anggota untuk dicari */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar mention hasil pencarian */
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -12394,6 +12394,26 @@
         ]
       }
     },
+    "/forum/upload-image": {
+      "post": {
+        "operationId": "ForumController_uploadForumImage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Gambar berhasil diupload"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload gambar untuk forum thread/post",
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
     "/forum/threads/{id}/posts": {
       "post": {
         "operationId": "ForumController_createPost",
@@ -12579,6 +12599,132 @@
           }
         ],
         "summary": "Tandai sebagai solusi",
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/threads/{id}/react": {
+      "post": {
+        "operationId": "ForumController_reactToThread",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Thread",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Emoji reaksi",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reaksi berhasil ditambahkan/dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadReactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle reaksi pada thread",
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/posts/{id}/react": {
+      "post": {
+        "operationId": "ForumController_reactToPost",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID Post/Balasan",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Emoji reaksi",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reaksi berhasil ditambahkan/dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostReactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle reaksi pada post",
+        "tags": [
+          "Forum"
+        ]
+      }
+    },
+    "/forum/mentions": {
+      "get": {
+        "operationId": "ForumController_getMentions",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Nama anggota untuk dicari",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar mention hasil pencarian"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cari mention",
         "tags": [
           "Forum"
         ]
@@ -16550,6 +16696,7 @@
             "description": ""
           }
         },
+        "summary": "Matriks izin semua role (khusus superadmin)",
         "tags": [
           "Permissions"
         ]
@@ -16564,6 +16711,7 @@
             "description": ""
           }
         },
+        "summary": "Ubah satu izin role (khusus superadmin)",
         "tags": [
           "Permissions"
         ]
@@ -16587,6 +16735,7 @@
             "description": ""
           }
         },
+        "summary": "Ubah banyak izin satu role (khusus superadmin)",
         "tags": [
           "Permissions"
         ]
@@ -18761,6 +18910,13 @@
           },
           "konten": {
             "type": "string"
+          },
+          "images": {
+            "description": "Daftar URL gambar lampiran",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -18777,6 +18933,12 @@
           },
           "konten": {
             "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -18789,6 +18951,13 @@
           "parentId": {
             "type": "string",
             "description": "ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa."
+          },
+          "images": {
+            "description": "Daftar URL gambar lampiran",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -18800,8 +18969,62 @@
         "properties": {
           "konten": {
             "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
+      },
+      "ReactDto": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "description": "Emoji reaksi, mis. 👍, ❤️, 😂, 😮, 😢, 🙏"
+          }
+        },
+        "required": [
+          "emoji"
+        ]
+      },
+      "ThreadReactionResponseDto": {
+        "type": "object",
+        "properties": {
+          "reactions": {
+            "type": "object",
+            "description": "Jumlah reaksi per emoji"
+          },
+          "currentUserEmoji": {
+            "type": "object",
+            "description": "Emoji yang dipilih user saat ini",
+            "nullable": true
+          }
+        },
+        "required": [
+          "reactions",
+          "currentUserEmoji"
+        ]
+      },
+      "PostReactionResponseDto": {
+        "type": "object",
+        "properties": {
+          "reactions": {
+            "type": "object",
+            "description": "Jumlah reaksi per emoji"
+          },
+          "currentUserEmoji": {
+            "type": "object",
+            "description": "Emoji yang dipilih user saat ini",
+            "nullable": true
+          }
+        },
+        "required": [
+          "reactions",
+          "currentUserEmoji"
+        ]
       },
       "CreateDistrikDto": {
         "type": "object",
