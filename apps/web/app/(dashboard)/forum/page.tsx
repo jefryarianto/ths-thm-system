@@ -90,11 +90,10 @@ export default function ForumPage() {
                   Forum Komunitas THS-THM
                 </span>
                 <h1 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                  Diskusi, berbagi, dan berkembang bersama
+                  Forum Komunitas
                 </h1>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">
-                  Ruang anggota untuk bertanya, menjawab, dan menyebarkan pengumuman organisasi —
-                  satu percakapan, satu pengetahuan bersama.
+                  Diskusi, berbagi, dan berkembang bersama
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-white/85">
