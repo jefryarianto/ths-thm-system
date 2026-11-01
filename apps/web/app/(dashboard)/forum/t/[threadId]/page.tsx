@@ -3,15 +3,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useParams } from 'next/navigation';
-import { Pin, Lock, Eye, Trash2, CheckCircle, Edit3 } from 'lucide-react';
+import { Pin, Lock, Eye, Trash2, CheckCircle, Edit3, MessageSquare, ArrowLeft } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useAuth } from '@/hooks/use-auth';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import Badge from '@/components/ui/badge';
+import Button from '@/components/ui/button';
+import { MemberAvatar } from '@/components/ui/member-avatar';
 import { useToast } from '@/components/ui/toast';
-import { getForumAuthorInitial, getForumAuthorName } from '@/lib/forum-author';
+import { getForumAuthorName } from '@/lib/forum-author';
 import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
 import { ReactionBar, type ReactionState } from '@/components/forum/reaction-bar';
 import { ForumComposer } from '@/components/forum/forum-composer';
@@ -44,6 +47,23 @@ interface Thread {
   category: { id: string; nama: string };
   posts: Post[];
 }
+
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const formatShortDate = (value: string) =>
+  new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 export default function ThreadDetailPage() {
   const { confirm, confirmModal } = useConfirm();
@@ -186,199 +206,255 @@ export default function ThreadDetailPage() {
   if (loading)
     return (
       <PageContainer>
-        <div className="text-center py-16 text-gray-500">Memuat...</div>
+        <div className="space-y-4">
+          <div className="h-4 w-40 bg-surface-variant rounded animate-pulse" />
+          <div className="bg-surface rounded-xl border border-border p-6 animate-pulse space-y-3">
+            <div className="h-5 w-2/3 bg-surface-variant rounded" />
+            <div className="h-3 w-1/3 bg-surface-variant rounded" />
+            <div className="h-3 w-full bg-surface-variant rounded" />
+            <div className="h-3 w-5/6 bg-surface-variant rounded" />
+          </div>
+          <div className="bg-surface rounded-xl border border-border p-6 animate-pulse space-y-3">
+            <div className="h-3 w-1/4 bg-surface-variant rounded" />
+            <div className="h-3 w-full bg-surface-variant rounded" />
+          </div>
+        </div>
       </PageContainer>
     );
   if (!thread)
     return (
       <PageContainer>
-        <div className="text-center py-16 text-gray-400">Thread tidak ditemukan</div>
+        <div className="text-center py-16 bg-surface rounded-xl border border-border">
+          <div className="mx-auto w-14 h-14 rounded-full bg-primary-container flex items-center justify-center mb-4">
+            <MessageSquare size={26} className="text-primary-on-container" />
+          </div>
+          <p className="font-medium text-text">Thread tidak ditemukan</p>
+          <p className="text-sm text-muted mt-1">
+            Thread mungkin telah dihapus atau tautannya tidak valid.
+          </p>
+          <Link
+            href="/forum"
+            className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-link hover:underline"
+          >
+            <ArrowLeft size={14} /> Kembali ke Forum
+          </Link>
+        </div>
       </PageContainer>
     );
 
+  const threadAuthorName = getForumAuthorName(thread.author, thread.authorName);
+
   return (
     <PermissionGuard module="forum" action="view">
-      <Breadcrumbs suffix={{ href: '#', label: thread?.judul || 'Detail' }} />
+      <Breadcrumbs suffix={{ href: '#', label: thread.judul || 'Detail' }} />
       <PageContainer>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-          <Link href="/forum" className="hover:text-blue-600">
-            Forum
-          </Link>
-          <span>/</span>
-          <Link href={`/forum/c/${thread.category.id}`} className="hover:text-blue-600">
-            {thread.category.nama}
-          </Link>
-        </div>
+        {/* ── Header thread ─────────────────────────────── */}
+        <article className="bg-surface rounded-xl border border-border shadow-elegant overflow-hidden">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    href={`/forum/c/${thread.category.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary-container text-primary-on-container px-3 py-1 text-xs font-semibold hover:opacity-80 transition-opacity"
+                  >
+                    {thread.category.nama}
+                  </Link>
+                  {thread.isPinned && <Badge variant="primary" label="Disematkan" />}
+                  {thread.isLocked && <Badge variant="danger" label="Dikunci" />}
+                </div>
+                <h1 className="mt-2.5 text-xl sm:text-2xl font-bold tracking-tight text-text leading-snug">
+                  {thread.judul}
+                </h1>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                {thread.isPinned && <Pin size={14} className="text-blue-500" />}
-                {thread.isLocked && <Lock size={14} className="text-red-500" />}
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{thread.judul}</h1>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+                  <span className="inline-flex items-center gap-2">
+                    <MemberAvatar name={threadAuthorName} className="w-7 h-7" textClassName="text-[10px]" />
+                    <span className="font-semibold text-text">{threadAuthorName}</span>
+                  </span>
+                  <span>{formatDate(thread.createdAt)}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Eye size={13} /> {thread.viewCount} dilihat
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare size={13} /> {thread.posts.length} balasan
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
-                  {getForumAuthorName(thread.author, thread.authorName)}
-                </span>
-                <span>
-                  {new Date(thread.createdAt).toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Eye size={12} /> {thread.viewCount}
-                </span>
-              </div>
-              <div className="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {thread.konten}
-              </div>
-              <ImageGrid images={thread.images} />
-              <ReactionBar
-                targetType="thread"
-                targetId={thread.id}
-                reactions={thread.reactions}
-                currentUserEmoji={thread.currentUserEmoji}
-                onChange={handleThreadReaction}
-              />
+
+              {canModerate && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={handlePin}
+                    className={`p-2 rounded-lg transition-colors ${
+                      thread.isPinned
+                        ? 'text-primary bg-primary-container'
+                        : 'text-muted hover:text-primary hover:bg-surface-variant'
+                    }`}
+                    title={thread.isPinned ? 'Lepas sematan' : 'Sematkan thread'}
+                    aria-label={thread.isPinned ? 'Lepas sematan' : 'Sematkan thread'}
+                  >
+                    <Pin size={16} fill={thread.isPinned ? 'currentColor' : 'none'} />
+                  </button>
+                  <button
+                    onClick={handleLock}
+                    className={`p-2 rounded-lg transition-colors ${
+                      thread.isLocked
+                        ? 'text-error bg-error-50 dark:bg-error-950'
+                        : 'text-muted hover:text-error hover:bg-surface-variant'
+                    }`}
+                    title={thread.isLocked ? 'Buka kunci' : 'Kunci thread'}
+                    aria-label={thread.isLocked ? 'Buka kunci' : 'Kunci thread'}
+                  >
+                    <Lock size={16} fill={thread.isLocked ? 'currentColor' : 'none'} />
+                  </button>
+                </div>
+              )}
             </div>
-            {canModerate && (
-              <div className="flex items-center gap-1 ml-4">
-                <button
-                  onClick={handlePin}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
-                  title={thread.isPinned ? 'Unpin' : 'Pin'}
-                >
-                  <Pin size={16} fill={thread.isPinned ? 'currentColor' : 'none'} />
-                </button>
-                <button
-                  onClick={handleLock}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
-                  title={thread.isLocked ? 'Unlock' : 'Lock'}
-                >
-                  <Lock size={16} fill={thread.isLocked ? 'currentColor' : 'none'} />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
 
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          {thread.posts.length} Balasan
-        </h3>
+            <div className="mt-4 text-[15px] leading-7 text-text/90 whitespace-pre-wrap">
+              {thread.konten}
+            </div>
+            <ImageGrid images={thread.images} />
+            <ReactionBar
+              targetType="thread"
+              targetId={thread.id}
+              reactions={thread.reactions}
+              currentUserEmoji={thread.currentUserEmoji}
+              onChange={handleThreadReaction}
+            />
+          </div>
+        </article>
+
+        {/* ── Balasan ───────────────────────────────────── */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+            Balasan
+            <span className="inline-flex items-center justify-center rounded-full bg-surface-variant px-2 py-0.5 text-xs font-semibold text-muted">
+              {thread.posts.length}
+            </span>
+          </h3>
+        </div>
 
         <div className="space-y-3 mb-6">
-          {thread.posts.map((post) => (
-            <div
-              key={post.id}
-              className={`bg-white dark:bg-gray-800 rounded-lg border p-4 ${
-                post.isSolution
-                  ? 'border-green-300 dark:border-green-700 ring-1 ring-green-200 dark:ring-green-800'
-                  : 'border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              {post.isSolution && (
-                <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium mb-2">
-                  <CheckCircle size={14} />
-                  Solusi
-                </div>
-              )}
-              {editingPostId === post.id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    rows={3}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingPostId(null);
-                        setEditContent('');
-                      }}
-                      className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      onClick={() => submitEditPost(post.id)}
-                      disabled={!editContent.trim()}
-                      className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-                    >
-                      Simpan
-                    </button>
+          {thread.posts.map((post) => {
+            const postAuthorName = getForumAuthorName(post.author, post.authorName);
+            return (
+              <div
+                key={post.id}
+                className={`bg-surface rounded-xl border p-4 sm:p-5 transition-shadow hover:shadow-elegant ${
+                  post.isSolution
+                    ? 'border-success-300 dark:border-success-800 ring-1 ring-success-200 dark:ring-success-900 bg-success-50/40 dark:bg-success-950/30'
+                    : 'border-border shadow-elegant'
+                }`}
+              >
+                {post.isSolution && (
+                  <div className="mb-3">
+                    <Badge variant="success" label="Solusi Terpilih" />
                   </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-                        <span className="text-xs font-bold text-blue-600">
-                          {getForumAuthorInitial(post.author, post.authorName)}
-                        </span>
+                )}
+                {editingPostId === post.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-lg p-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                      rows={3}
+                      aria-label="Edit balasan"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingPostId(null);
+                          setEditContent('');
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => submitEditPost(post.id)}
+                        disabled={!editContent.trim()}
+                      >
+                        Simpan
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <MemberAvatar name={postAuthorName} className="w-8 h-8" textClassName="text-xs" />
+                        <div className="min-w-0">
+                          <span className="text-sm font-semibold text-text block truncate">
+                            {postAuthorName}
+                          </span>
+                          <span className="text-xs text-muted">{formatShortDate(post.createdAt)}</span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {getForumAuthorName(post.author, post.authorName)}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(post.createdAt).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: 'long',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          onClick={() => startEditPost(post)}
+                          className="p-1.5 text-muted hover:text-primary hover:bg-surface-variant rounded-lg transition-colors"
+                          title="Edit balasan"
+                          aria-label="Edit balasan"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleMarkSolution(post.id)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            post.isSolution
+                              ? 'text-success-600 bg-success-50 dark:bg-success-950'
+                              : 'text-muted hover:text-success-600 hover:bg-surface-variant'
+                          }`}
+                          title={post.isSolution ? 'Solusi sudah ditandai' : 'Tandai sebagai solusi'}
+                          aria-label="Tandai sebagai solusi"
+                        >
+                          <CheckCircle size={14} fill={post.isSolution ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="p-1.5 text-muted hover:text-error hover:bg-surface-variant rounded-lg transition-colors"
+                          title="Hapus balasan"
+                          aria-label="Hapus balasan"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => startEditPost(post)}
-                        className="p-1.5 text-gray-300 hover:text-blue-600 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleMarkSolution(post.id)}
-                        className="p-1.5 text-gray-300 hover:text-green-600 transition-colors"
-                        title="Tandai Solusi"
-                      >
-                        <CheckCircle size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="text-gray-300 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    <div className="mt-3 text-sm leading-7 text-text/90 whitespace-pre-wrap">
+                      {post.konten}
                     </div>
-                  </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                    {post.konten}
-                  </div>
-                  <ImageGrid images={post.images} />
-                  <ReactionBar
-                    compact
-                    targetType="post"
-                    targetId={post.id}
-                    reactions={post.reactions}
-                    currentUserEmoji={post.currentUserEmoji}
-                    onChange={(next) => handlePostReaction(post.id, next)}
-                  />
-                </>
-              )}
+                    <ImageGrid images={post.images} />
+                    <ReactionBar
+                      compact
+                      targetType="post"
+                      targetId={post.id}
+                      reactions={post.reactions}
+                      currentUserEmoji={post.currentUserEmoji}
+                      onChange={(next) => handlePostReaction(post.id, next)}
+                    />
+                  </>
+                )}
+              </div>
+            );
+          })}
+
+          {thread.posts.length === 0 && (
+            <div className="text-center py-10 bg-surface rounded-xl border border-dashed border-border">
+              <p className="text-sm text-muted">
+                Belum ada balasan. Jadilah yang pertama merespons.
+              </p>
             </div>
-          ))}
+          )}
         </div>
 
-        {!thread.isLocked && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        {!thread.isLocked ? (
+          <div className="bg-surface rounded-xl border border-border shadow-elegant p-4 sm:p-5">
             <ForumComposer
               value={reply}
               onChange={setReply}
@@ -388,6 +464,10 @@ export default function ThreadDetailPage() {
               placeholder="Tulis balasan... gunakan @ untuk mention anggota"
               rows={3}
             />
+          </div>
+        ) : (
+          <div className="text-center py-4 bg-surface-variant rounded-xl border border-border text-sm text-muted">
+            Thread ini dikunci — balasan baru tidak dapat dikirim.
           </div>
         )}
         {confirmModal}
@@ -406,7 +486,7 @@ function ImageGrid({ images }: { images?: string[] }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:opacity-80 transition-opacity"
+          className="block w-24 h-24 rounded-lg overflow-hidden border border-border hover:opacity-80 transition-opacity"
         >
           <img src={url} alt="Lampiran" className="w-full h-full object-cover" />
         </a>

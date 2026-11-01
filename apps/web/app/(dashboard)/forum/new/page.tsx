@@ -3,7 +3,7 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PenLine, Tag } from 'lucide-react';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -67,38 +67,64 @@ export default function NewThreadPage() {
   return (
     <PermissionGuard module="forum" action="create">
       <PageContainer>
-        <PageHeader title="Buat Thread Baru" />
+        <PageHeader title="Buat Thread Baru" subtitle="Mulai diskusi atau bagikan pengumuman" />
 
         <Link
           href="/forum"
-          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-6"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors"
         >
           <ArrowLeft size={14} /> Kembali ke Forum
         </Link>
 
-        <div className="max-w-2xl bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Kategori
-            </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                disabled={categories.length === 0}
+        <div className="max-w-2xl bg-surface rounded-xl border border-border shadow-elegant overflow-hidden">
+          {/* strip aksen */}
+          <div className="h-1.5 bg-gradient-to-r from-primary-600 via-primary to-info" aria-hidden />
+
+          <div className="p-6">
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-elegant">
+                <PenLine size={18} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-text">Detail Thread</h2>
+                <p className="text-xs text-muted">
+                  Gunakan @ untuk menyebut anggota dalam konten
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label
+                htmlFor="thread-category"
+                className="block text-sm font-medium text-text mb-1.5"
               >
-                {categories.length === 0 ? (
-                  <option value="">Belum ada kategori</option>
-                ) : (
-                  categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nama}
-                    </option>
-                  ))
-                )}
-              </select>
+                Kategori
+              </label>
+              <div className="relative">
+                <Tag
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+                />
+                <select
+                  id="thread-category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 disabled:opacity-60"
+                  disabled={categories.length === 0}
+                >
+                  {categories.length === 0 ? (
+                    <option value="">Belum ada kategori</option>
+                  ) : (
+                    categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nama}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
               {categories.length === 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                <p className="text-xs text-warning mt-1.5">
                   Belum ada kategori forum.{' '}
                   <CanAdmin module="forum">
                     <Link href="/forum/admin/categories" className="underline">
@@ -107,34 +133,34 @@ export default function NewThreadPage() {
                   </CanAdmin>
                 </p>
               )}
-          </div>
+            </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Judul
-            </label>
-            <input
-              type="text"
-              value={judul}
-              onChange={(e) => setJudul(e.target.value)}
-              placeholder="Judul thread..."
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            <div className="mb-4">
+              <label htmlFor="thread-title" className="block text-sm font-medium text-text mb-1.5">
+                Judul
+              </label>
+              <input
+                id="thread-title"
+                type="text"
+                value={judul}
+                onChange={(e) => setJudul(e.target.value)}
+                placeholder="Judul thread…"
+                className="w-full border border-border bg-surface rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+              />
+            </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Konten
-            </label>
-            <ForumComposer
-              value={konten}
-              onChange={setKonten}
-              onSubmit={handleSubmit}
-              submitLabel="Buat Thread"
-              submitting={submitting}
-              placeholder="Tulis konten thread... gunakan @ untuk mention anggota"
-              rows={8}
-            />
+            <div className="mb-1">
+              <label className="block text-sm font-medium text-text mb-1.5">Konten</label>
+              <ForumComposer
+                value={konten}
+                onChange={setKonten}
+                onSubmit={handleSubmit}
+                submitLabel="Buat Thread"
+                submitting={submitting}
+                placeholder="Tulis konten thread... gunakan @ untuk mention anggota"
+                rows={8}
+              />
+            </div>
           </div>
         </div>
       </PageContainer>

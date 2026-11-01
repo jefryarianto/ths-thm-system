@@ -69,19 +69,19 @@ export function ReactionBar({
           disabled={busy}
           className={`${chipSize} rounded-full border transition-colors ${
             currentUserEmoji === emoji
-              ? 'border-blue-400 bg-blue-50 dark:bg-blue-950 ring-1 ring-blue-300'
-              : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hover:border-gray-300'
+              ? 'border-primary/50 bg-primary-container ring-1 ring-primary/30 text-on-primary-container'
+              : 'border-border bg-surface-variant text-muted hover:border-primary/40'
           } disabled:opacity-50`}
           title={currentUserEmoji === emoji ? 'Hapus reaksi' : 'Beri reaksi'}
         >
           <span>{emoji}</span>
-          <span className="ml-1 text-xs font-medium text-gray-600 dark:text-gray-300">{count}</span>
+          <span className="ml-1 text-xs font-medium text-muted">{count}</span>
         </button>
       ))}
 
       <button
         onClick={() => setPickerOpen((v) => !v)}
-        className={`${chipSize} rounded-full border border-dashed border-gray-300 dark:border-gray-600 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors`}
+        className={`${chipSize} rounded-full border border-dashed border-border text-muted hover:text-primary hover:border-primary/40 transition-colors`}
         title="Beri reaksi"
       >
         <SmilePlus size={compact ? 14 : 16} />
@@ -90,14 +90,14 @@ export function ReactionBar({
       {pickerOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
-          <div className="absolute z-20 bottom-full mb-1 left-0 flex flex-wrap gap-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg w-max">
+          <div className="absolute z-20 bottom-full mb-1 left-0 flex flex-wrap gap-1 p-2 bg-surface border border-border rounded-lg shadow-elegant-md w-max">
             {REACTION_EMOJIS.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => react(emoji)}
                 disabled={busy}
-                className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-lg transition-colors ${
-                  currentUserEmoji === emoji ? 'bg-blue-50 dark:bg-blue-950' : ''
+                className={`p-1.5 rounded hover:bg-surface-variant text-lg transition-colors ${
+                  currentUserEmoji === emoji ? 'bg-primary-container' : ''
                 }`}
                 title="Pasang reaksi ini"
               >
