@@ -94,7 +94,8 @@ class QrScanScreen extends StatefulWidget {
   State<QrScanScreen> createState() => _QrScanScreenState();
 }
 
-class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver {
+class _QrScanScreenState extends State<QrScanScreen>
+    with WidgetsBindingObserver {
   late MobileScannerController _scanner;
   final ApiClient _api = ApiClient();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -107,6 +108,9 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
   bool _loadingKegiatan = true;
   ScanResultData? _result;
   bool _cameraPermissionGranted = false;
+  bool _isCheckingPermission = true;
+  String? _cameraErrorMessage;
+  int _scannerKeyIndex = 0;
 
   @override
   void initState() {
@@ -114,41 +118,67 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
     WidgetsBinding.instance.addObserver(this);
     _scanner = MobileScannerController(
       formats: const [BarcodeFormat.qrCode],
-      autoStart: false,
+      autoStart: true,
     );
-    _requestCameraPermission();
+    _checkCameraPermission();
     _loadHistory();
     _fetchKegiatan();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_cameraPermissionGranted) {
-      _requestCameraPermission();
+    if (state == AppLifecycleState.resumed) {
+      if (_cameraPermissionGranted) {
+        try {
+          _scanner.start();
+        } catch (_) {}
+      } else {
+        _checkCameraPermission();
+      }
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      try {
+        _scanner.stop();
+      } catch (_) {}
     }
   }
 
-  Future<void> _requestCameraPermission() async {
-    final status = await Permission.camera.request();
-    if (!mounted) return;
-    if (status.isGranted) {
-      setState(() => _cameraPermissionGranted = true);
-      try {
-        await _scanner.start();
-      } catch (_) {}
-    } else {
-      setState(() => _cameraPermissionGranted = false);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kamera dibutuhkan untuk scan QR. Aktifkan izin kamera.'),
-            action: SnackBarAction(
-              label: 'Buka Pengaturan',
-              onPressed: openAppSettings,
-            ),
-          ),
-        );
+  Future<void> _checkCameraPermission() async {
+    setState(() {
+      _isCheckingPermission = true;
+      _cameraErrorMessage = null;
+    });
+
+    try {
+      final currentStatus = await Permission.camera.status;
+      PermissionStatus status = currentStatus;
+      if (!currentStatus.isGranted) {
+        status = await Permission.camera.request();
+      }
+
+      if (!mounted) return;
+
+      if (status.isGranted) {
+        setState(() {
+          _cameraPermissionGranted = true;
+          _isCheckingPermission = false;
+          _cameraErrorMessage = null;
+          _scannerKeyIndex++;
+        });
+      } else {
+        setState(() {
+          _cameraPermissionGranted = false;
+          _isCheckingPermission = false;
+          _cameraErrorMessage = status.isPermanentlyDenied
+              ? 'Izin kamera ditolak permanen. Buka pengaturan untuk mengaktifkan.'
+              : 'Izin kamera dibutuhkan untuk memindai QR code.';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCheckingPermission = false;
+        _cameraErrorMessage = 'Gagal mengakses izin kamera: $e';
       });
     }
   }
@@ -302,7 +332,8 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
       final no = m?['nomorAnggota']?.toString() ??
           doc['nomorAnggota']?.toString() ??
           '-';
-      final statusLabel = _statusLabel(m?['statusKeanggotaan']?.toString() ?? '');
+      final statusLabel =
+          _statusLabel(m?['statusKeanggotaan']?.toString() ?? '');
       final lokasi = [
         m?['ranting']?.toString() ?? '',
         m?['wilayah']?.toString() ?? '',
@@ -335,7 +366,8 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
               : 'QR: tidak dikenal';
       return ScanResultData(
         success: false,
-        message: status == 404 ? 'Dokumen/Kartu Tidak Valid' : 'Verifikasi Gagal',
+        message:
+            status == 404 ? 'Dokumen/Kartu Tidak Valid' : 'Verifikasi Gagal',
         detail: detail,
       );
     }
@@ -560,8 +592,7 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
                     'Tidak ada kegiatan aktif. Scan dibatasi verifikasi.',
                     style: TextStyle(
                         fontSize: 12,
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 )
               : DropdownButtonFormField<String>(
@@ -602,76 +633,128 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
       ),
       child: Stack(
         children: [
-          MobileScanner(
-            controller: _scanner,
-            onDetect: _onDetect,
-            errorBuilder: (context, error, child) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.white, size: 40),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Kamera tidak dapat diakses',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Periksa izin kamera pada aplikasi ini.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          await _requestCameraPermission();
-                        },
-                        icon: const Icon(Icons.refresh, size: 16),
-                        label: const Text('Coba Lagi'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white70),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: openAppSettings,
-                        icon: const Icon(Icons.settings, size: 14),
-                        label: const Text('Buka Pengaturan'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _scanner.dispose();
-                          _scanner = MobileScannerController(
-                            formats: const [BarcodeFormat.qrCode],
-                          );
-                        }),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                        child: const Text('Coba Lagi'),
-                      ),
-                    ],
+          if (_isCheckingPermission)
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppLoadingSpinner.small(color: Colors.white),
+                  SizedBox(height: 12),
+                  Text(
+                    'Menyiapkan kamera...',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
+                ],
+              ),
+            )
+          else if (!_cameraPermissionGranted || _cameraErrorMessage != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.camera_alt_outlined,
+                        color: Colors.white70, size: 42),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Kamera Tidak Aktif',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _cameraErrorMessage ??
+                          'Aktifkan izin kamera untuk memindai QR code.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: 12),
+                    ),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
+                      onPressed: _checkCameraPermission,
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('Izinkan / Coba Lagi'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextButton.icon(
+                      onPressed: openAppSettings,
+                      icon: const Icon(Icons.settings, size: 14),
+                      label: const Text('Buka Pengaturan HP'),
+                      style:
+                          TextButton.styleFrom(foregroundColor: Colors.white70),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            )
+          else
+            MobileScanner(
+              key: ValueKey('scanner_$_scannerKeyIndex'),
+              controller: _scanner,
+              onDetect: _onDetect,
+              errorBuilder: (context, error, child) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: Colors.white, size: 40),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Kamera tidak dapat diakses',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          error.errorDetails?.message ??
+                              'Pastikan izin kamera aktif dan tidak digunakan aplikasi lain.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 11),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _scannerKeyIndex++;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: const Text('Muat Ulang Kamera'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextButton.icon(
+                          onPressed: openAppSettings,
+                          icon: const Icon(Icons.settings, size: 14),
+                          label: const Text('Buka Pengaturan'),
+                          style: TextButton.styleFrom(
+                              foregroundColor: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           Center(
             child: Container(
               width: 200,
@@ -735,7 +818,8 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
                     minWidth: AppTheme.touchTargetCompact,
                     minHeight: AppTheme.touchTargetCompact,
                   ),
-                  padding: const EdgeInsets.all(AppTheme.touchTargetCompact / 6),
+                  padding:
+                      const EdgeInsets.all(AppTheme.touchTargetCompact / 6),
                   icon: const Icon(Icons.close, size: 18),
                   onPressed: () => setState(() => _result = null),
                 ),
@@ -784,8 +868,7 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
                 child: Text(
                   'Hapus Riwayat',
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.error),
+                      fontSize: 12, color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
@@ -817,8 +900,7 @@ class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       fontSize: 11,
-                      color:
-                          Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               );
             },

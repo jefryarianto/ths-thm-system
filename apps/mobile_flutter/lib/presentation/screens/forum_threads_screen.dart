@@ -46,114 +46,133 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (mounted) {
-        context.read<ForumBloc>().add(
-            ForumThreadsLoadRequested(categoryId: widget.categoryId, search: q));
+        context.read<ForumBloc>().add(ForumThreadsLoadRequested(
+            categoryId: widget.categoryId, search: q));
       }
     });
+  }
+
+  void _restoreCategoriesIfEmpty() {
+    final state = context.read<ForumBloc>().state;
+    if (state is ForumInitial || state.cachedCategories.isEmpty) {
+      context.read<ForumBloc>().add(const ForumCategoriesLoadRequested());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-      appBar: AppBar(
-        title: AppBarIconTitle(
-          icon: Icons.forum_outlined,
-          title: widget.categoryName.isNotEmpty ? widget.categoryName : 'Forum',
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && mounted) {
+          _restoreCategoriesIfEmpty();
+        }
+      },
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+        appBar: AppBar(
+          title: AppBarIconTitle(
+            icon: Icons.forum_outlined,
+            title:
+                widget.categoryName.isNotEmpty ? widget.categoryName : 'Forum',
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Buat Thread Baru',
+              onPressed: () => context.push<void>('/forum/create'),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Buat Thread Baru',
-            onPressed: () => context.push<void>('/forum/create'),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // ── Search Bar ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppTheme.space16,
-              AppTheme.space12,
-              AppTheme.space16,
-              AppTheme.space8,
+        body: Column(
+          children: [
+            // ── Search Bar ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.space16,
+                AppTheme.space12,
+                AppTheme.space16,
+                AppTheme.space8,
+              ),
+              child: AppSearchField(
+                controller: _search,
+                hintText: 'Cari topik diskusi...',
+                onChanged: _doSearch,
+              ),
             ),
-            child: AppSearchField(
-              controller: _search,
-              hintText: 'Cari topik diskusi...',
-              onChanged: _doSearch,
-            ),
-          ),
 
-          // ── Thread List ──
-          Expanded(
-            child: BlocBuilder<ForumBloc, ForumState>(
-              builder: (context, state) {
-                final threads = state is ForumThreadsLoaded
-                    ? state.threads
-                    : state.cachedThreads;
+            // ── Thread List ──
+            Expanded(
+              child: BlocBuilder<ForumBloc, ForumState>(
+                builder: (context, state) {
+                  final threads = state is ForumThreadsLoaded
+                      ? state.threads
+                      : state.cachedThreads;
 
-                if (threads.isNotEmpty) {
-                  final list = ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: threads.length,
-                    itemBuilder: (context, i) {
-                      final t = threads[i];
-                      return ForumThreadRow(thread: t);
-                    },
-                  );
+                  if (threads.isNotEmpty) {
+                    final list = ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: threads.length,
+                      itemBuilder: (context, i) {
+                        final t = threads[i];
+                        return ForumThreadRow(thread: t);
+                      },
+                    );
 
-                  final refreshList = RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<ForumBloc>().add(
-                          ForumThreadsLoadRequested(categoryId: widget.categoryId));
-                    },
-                    child: list,
-                  );
+                    final refreshList = RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<ForumBloc>().add(ForumThreadsLoadRequested(
+                            categoryId: widget.categoryId));
+                      },
+                      child: list,
+                    );
 
-                  if (state is ForumThreadsLoaded && state.isStale) {
-                    return Column(
-                      children: [
-                        StaleDataBanner(
-                          errorMessage: state.errorMessage,
-                          onRefresh: () => context.read<ForumBloc>().add(
-                              ForumThreadsLoadRequested(categoryId: widget.categoryId)),
-                        ),
-                        Expanded(child: refreshList),
-                      ],
+                    if (state is ForumThreadsLoaded && state.isStale) {
+                      return Column(
+                        children: [
+                          StaleDataBanner(
+                            errorMessage: state.errorMessage,
+                            onRefresh: () => context.read<ForumBloc>().add(
+                                ForumThreadsLoadRequested(
+                                    categoryId: widget.categoryId)),
+                          ),
+                          Expanded(child: refreshList),
+                        ],
+                      );
+                    }
+
+                    return refreshList;
+                  }
+
+                  if (state is ForumLoading) {
+                    return const AppLoadingSpinner(message: 'Memuat topik...');
+                  }
+                  if (state is ForumError) {
+                    return ErrorStateView(
+                      message: state.message,
+                      onRetry: () => context.read<ForumBloc>().add(
+                          ForumThreadsLoadRequested(
+                              categoryId: widget.categoryId)),
                     );
                   }
 
-                  return refreshList;
-                }
-
-                if (state is ForumLoading) {
-                  return const AppLoadingSpinner(message: 'Memuat topik...');
-                }
-                if (state is ForumError) {
-                  return ErrorStateView(
-                    message: state.message,
-                    onRetry: () => context.read<ForumBloc>().add(
-                        ForumThreadsLoadRequested(categoryId: widget.categoryId)),
+                  return EmptyStateView(
+                    icon: Icons.forum_outlined,
+                    title: 'Belum ada thread',
+                    message: _search.text.isNotEmpty
+                        ? 'Tidak ditemukan topik sesuai pencarian Anda.'
+                        : 'Jadilah anggota pertama yang memulai topik di kategori ini.',
+                    actionLabel: 'Buat Thread Baru',
+                    onAction: () => context.push<void>('/forum/create'),
                   );
-                }
-
-                return EmptyStateView(
-                  icon: Icons.forum_outlined,
-                  title: 'Belum ada thread',
-                  message: _search.text.isNotEmpty
-                      ? 'Tidak ditemukan topik sesuai pencarian Anda.'
-                      : 'Jadilah anggota pertama yang memulai topik di kategori ini.',
-                  actionLabel: 'Buat Thread Baru',
-                  onAction: () => context.push<void>('/forum/create'),
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

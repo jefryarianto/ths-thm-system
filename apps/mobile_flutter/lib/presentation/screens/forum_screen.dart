@@ -29,7 +29,7 @@ class _ForumScreenState extends State<ForumScreen> {
   void initState() {
     super.initState();
     final state = context.read<ForumBloc>().state;
-    if (state is ForumInitial) {
+    if (state is ForumInitial || state.cachedCategories.isEmpty) {
       context.read<ForumBloc>().add(const ForumCategoriesLoadRequested());
     }
   }
@@ -38,58 +38,75 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-      appBar: AppBar(
-        title: const AppBarIconTitle(
-          icon: Icons.forum_outlined,
-          title: 'Forum Komunitas',
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Buat Thread',
-            onPressed: () => context.push<void>('/forum/create'),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && mounted) {
+          context.read<ForumBloc>().add(const ForumCategoriesLoadRequested());
+        }
+      },
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+        appBar: AppBar(
+          title: const AppBarIconTitle(
+            icon: Icons.forum_outlined,
+            title: 'Forum Komunitas',
           ),
-        ],
-      ),
-      body: BlocBuilder<ForumBloc, ForumState>(
-        builder: (context, state) {
-          final categories = state is ForumCategoriesLoaded
-              ? state.categories
-              : state.cachedCategories;
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Buat Thread',
+              onPressed: () => context.push<void>('/forum/create'),
+            ),
+          ],
+        ),
+        body: BlocBuilder<ForumBloc, ForumState>(
+          builder: (context, state) {
+            final categories = state is ForumCategoriesLoaded
+                ? state.categories
+                : state.cachedCategories;
 
-          if (categories.isNotEmpty) {
-            final content = _categoriesList(context, categories);
-            if (state is ForumCategoriesLoaded && state.isStale) {
-              return Column(
-                children: [
-                  StaleDataBanner(
-                    errorMessage: state.errorMessage,
-                    onRefresh: () => context
-                        .read<ForumBloc>()
-                        .add(const ForumCategoriesLoadRequested()),
-                  ),
-                  Expanded(child: content),
-                ],
+            if (categories.isNotEmpty) {
+              final content = _categoriesList(context, categories);
+              if (state is ForumCategoriesLoaded && state.isStale) {
+                return Column(
+                  children: [
+                    StaleDataBanner(
+                      errorMessage: state.errorMessage,
+                      onRefresh: () => context
+                          .read<ForumBloc>()
+                          .add(const ForumCategoriesLoadRequested()),
+                    ),
+                    Expanded(child: content),
+                  ],
+                );
+              }
+              return content;
+            }
+
+            if (state is ForumLoading) {
+              return const SkeletonNotificationList();
+            }
+            if (state is ForumError) {
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context
+                    .read<ForumBloc>()
+                    .add(const ForumCategoriesLoadRequested()),
               );
             }
-            return content;
-          }
 
-          if (state is ForumLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && categories.isEmpty) {
+                context
+                    .read<ForumBloc>()
+                    .add(const ForumCategoriesLoadRequested());
+              }
+            });
             return const SkeletonNotificationList();
-          }
-          if (state is ForumError) {
-            return ErrorStateView(
-              message: state.message,
-              onRetry: () => context
-                  .read<ForumBloc>()
-                  .add(const ForumCategoriesLoadRequested()),
-            );
-          }
-          return const SkeletonNotificationList();
-        },
+          },
+        ),
       ),
     );
   }
@@ -140,7 +157,8 @@ class _ForumScreenState extends State<ForumScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
@@ -148,7 +166,8 @@ class _ForumScreenState extends State<ForumScreen> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                          Icon(Icons.auto_awesome,
+                              size: 12, color: Colors.white),
                           SizedBox(width: 4),
                           Text(
                             'KOMUNITAS THS-THM',
@@ -186,7 +205,8 @@ class _ForumScreenState extends State<ForumScreen> {
                   children: [
                     _statPill(Icons.folder_outlined, '${cats.length} Kategori'),
                     const SizedBox(width: 8),
-                    _statPill(Icons.chat_bubble_outline, '$totalThreads Thread'),
+                    _statPill(
+                        Icons.chat_bubble_outline, '$totalThreads Thread'),
                   ],
                 ),
               ],
@@ -216,7 +236,9 @@ class _ForumScreenState extends State<ForumScreen> {
                 color: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: isDark ? AppTheme.darkSurfaceVariant : AppTheme.lightSurfaceDim,
+                  color: isDark
+                      ? AppTheme.darkSurfaceVariant
+                      : AppTheme.lightSurfaceDim,
                   width: 0.8,
                 ),
                 boxShadow: [
@@ -278,7 +300,8 @@ class _ForumScreenState extends State<ForumScreen> {
                             ],
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? AppTheme.darkSurfaceVariant
@@ -305,7 +328,8 @@ class _ForumScreenState extends State<ForumScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+                      const Icon(Icons.chevron_right,
+                          color: AppTheme.textMuted),
                     ],
                   ),
                 ),

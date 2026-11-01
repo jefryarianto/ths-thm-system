@@ -58,9 +58,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               );
             },
           ),
-PopupMenuButton<String>(
-                color: Theme.of(context).colorScheme.surface,
-                onSelected: (value) {
+          PopupMenuButton<String>(
+            color: Theme.of(context).colorScheme.surface,
+            onSelected: (value) {
               if (value == 'delete_all') _confirmDeleteAll(context);
             },
             itemBuilder: (context) => [
@@ -136,8 +136,9 @@ PopupMenuButton<String>(
                                   padding: const EdgeInsets.only(
                                       right: AppTheme.space20),
                                   decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.errorContainer,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .errorContainer,
                                     borderRadius:
                                         BorderRadius.circular(AppTheme.space12),
                                   ),
@@ -310,7 +311,7 @@ PopupMenuButton<String>(
         if (threadId != null && threadId.isNotEmpty) {
           return '/forum/t/$threadId';
         }
-        return '/forum';
+        return '/forum-tab';
       case 'document':
       case 'dokumen':
         final documentId = data['documentId']?.toString();
@@ -356,7 +357,7 @@ PopupMenuButton<String>(
       case 'pendadaran':
         return '/pendadaran';
       case 'forum':
-        return '/forum';
+        return '/forum-tab';
       case 'documents':
       case 'document':
         return '/documents';
