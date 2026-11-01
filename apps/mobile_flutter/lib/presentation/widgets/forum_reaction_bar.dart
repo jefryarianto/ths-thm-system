@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 const List<String> kForumReactionEmojis = [
   '👍',
   '❤️',
+  '🟢',
   '😂',
   '😮',
   '😢',

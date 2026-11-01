@@ -55,6 +55,28 @@ class _ForumScreenState extends State<ForumScreen> {
       ),
       body: BlocBuilder<ForumBloc, ForumState>(
         builder: (context, state) {
+          final categories = state is ForumCategoriesLoaded
+              ? state.categories
+              : state.cachedCategories;
+
+          if (categories.isNotEmpty) {
+            final content = _categoriesList(context, categories);
+            if (state is ForumCategoriesLoaded && state.isStale) {
+              return Column(
+                children: [
+                  StaleDataBanner(
+                    errorMessage: state.errorMessage,
+                    onRefresh: () => context
+                        .read<ForumBloc>()
+                        .add(const ForumCategoriesLoadRequested()),
+                  ),
+                  Expanded(child: content),
+                ],
+              );
+            }
+            return content;
+          }
+
           if (state is ForumLoading) {
             return const SkeletonNotificationList();
           }
@@ -66,26 +88,7 @@ class _ForumScreenState extends State<ForumScreen> {
                   .add(const ForumCategoriesLoadRequested()),
             );
           }
-          if (state is! ForumCategoriesLoaded) {
-            return const SkeletonNotificationList();
-          }
-
-          final content = _categoriesList(context, state.categories);
-
-          if (state.isStale) {
-            return Column(
-              children: [
-                StaleDataBanner(
-                  errorMessage: state.errorMessage,
-                  onRefresh: () => context
-                      .read<ForumBloc>()
-                      .add(const ForumCategoriesLoadRequested()),
-                ),
-                Expanded(child: content),
-              ],
-            );
-          }
-          return content;
+          return const SkeletonNotificationList();
         },
       ),
     );

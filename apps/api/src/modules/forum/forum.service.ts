@@ -48,6 +48,7 @@ type ForumPostTreeNode = ForumPostWithAuthor & {
 export const VALID_REACTION_EMOJIS = [
   '👍',
   '❤️',
+  '🟢',
   '😂',
   '😮',
   '😢',

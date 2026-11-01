@@ -5,10 +5,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/kaskus_rank.dart';
 import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/forum_reaction_bar.dart';
@@ -161,6 +163,21 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
       ),
     );
     if (source == null || !mounted) return;
+    if (source == ImageSource.camera) {
+      final camStatus = await Permission.camera.request();
+      if (!camStatus.isGranted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin kamera diperlukan untuk mengambil foto.'),
+            action: SnackBarAction(
+              label: 'Pengaturan',
+              onPressed: openAppSettings,
+            ),
+          ),
+        );
+        return;
+      }
+    }
     try {
       final result = await _imagePicker.pickImage(
         source: source,
@@ -173,7 +190,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal memilih gambar')),
+          const SnackBar(content: Text('Gagal mengambil gambar')),
         );
       }
     }
@@ -193,6 +210,17 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
     });
   }
 
+  void _quote(String author, String text) {
+    final snippet = text.length > 150 ? '${text.substring(0, 150)}...' : text;
+    final quoteStr = '> Kutipan @$author:\n> "$snippet"\n\n';
+    _replyCtrl.text = _replyCtrl.text.isNotEmpty
+        ? '${_replyCtrl.text}\n\n$quoteStr'
+        : quoteStr;
+    _replyCtrl.selection = TextSelection.fromPosition(
+      TextPosition(offset: _replyCtrl.text.length),
+    );
+  }
+
   void _reactThread(String emoji) {
     context
         .read<ForumBloc>()
@@ -205,6 +233,103 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
   }
 
   String _absolute(String path) => ApiClient.resolveAbsolute(path);
+
+  Widget _buildKaskusBody(String text) {
+    if (text.isEmpty) return const SizedBox.shrink();
+    if (!text.contains('>')) {
+      return Text(text, style: const TextStyle(fontSize: 13, height: 1.5));
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lines = text.split('\n');
+    final widgets = <Widget>[];
+    final currentQuote = <String>[];
+    final currentNormal = <String>[];
+
+    void flushNormal() {
+      if (currentNormal.isNotEmpty) {
+        widgets.add(Text(
+          currentNormal.join('\n'),
+          style: const TextStyle(fontSize: 13, height: 1.5),
+        ));
+        currentNormal.clear();
+      }
+    }
+
+    void flushQuote() {
+      if (currentQuote.isNotEmpty) {
+        final quoteBody = currentQuote
+            .map((l) => l.startsWith('>') ? l.substring(1).trimLeft() : l)
+            .join('\n');
+        widgets.add(
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.all(AppTheme.space8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppTheme.darkSurfaceVariant.withValues(alpha: 0.3)
+                  : AppTheme.lightSurfaceDim.withValues(alpha: 0.6),
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(8),
+                bottomRight: Radius.circular(8),
+              ),
+              border: const Border(
+                left: BorderSide(color: Color(0xFF10B981), width: 3.5),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.format_quote, size: 12, color: Color(0xFF10B981)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Kutipan',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  quoteBody,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        currentQuote.clear();
+      }
+    }
+
+    for (final line in lines) {
+      if (line.trim().startsWith('>')) {
+        flushNormal();
+        currentQuote.add(line);
+      } else {
+        flushQuote();
+        currentNormal.add(line);
+      }
+    }
+    flushNormal();
+    flushQuote();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
 
   Widget _buildImages(List<String> images, double size) {
     if (images.isEmpty) return const SizedBox.shrink();
@@ -441,6 +566,30 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                                 ),
                                               ),
                                             ],
+                                            (() {
+                                              final rank = KaskusRank.fromPostCount(opAuthor.postCount);
+                                              return Padding(
+                                                padding: const EdgeInsets.only(left: 4),
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                  decoration: BoxDecoration(
+                                                    color: rank.backgroundColor,
+                                                    borderRadius: BorderRadius.circular(3),
+                                                    border: rank.borderColor != null
+                                                        ? Border.all(color: rank.borderColor!, width: 0.5)
+                                                        : null,
+                                                  ),
+                                                  child: Text(
+                                                    rank.title,
+                                                    style: TextStyle(
+                                                      fontSize: 8.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: rank.textColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            })(),
                                           ],
                                         ),
                                         const SizedBox(height: 2),
@@ -454,20 +603,49 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                       ],
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryContainer,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      '#1 OP',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.onPrimaryContainer,
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.primaryContainer,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          '#1 OP',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.onPrimaryContainer,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (!thread.isLocked) ...[
+                                        const SizedBox(height: 4),
+                                        InkWell(
+                                          onTap: () => _quote(opAuthorName, thread.konten),
+                                          child: const Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.format_quote, size: 12, color: AppTheme.primary),
+                                                SizedBox(width: 2),
+                                                Text(
+                                                  'Kutip',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppTheme.primary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
@@ -475,10 +653,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                             const SizedBox(height: AppTheme.space16),
 
                             // Konten
-                            Text(
-                              thread.konten,
-                              style: const TextStyle(fontSize: 14, height: 1.55),
-                            ),
+                            _buildKaskusBody(thread.konten),
                             _buildImages(thread.images, 96),
                             const SizedBox(height: AppTheme.space12),
 
@@ -560,37 +735,85 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                                             ),
                                           ),
                                         ),
-                                        if (pAuthor.tingkat != null && pAuthor.tingkat!.isNotEmpty) ...[
-                                          const SizedBox(width: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.primaryContainer,
-                                              borderRadius: BorderRadius.circular(3),
-                                            ),
-                                            child: Text(
-                                              pAuthor.tingkat!,
-                                              style: const TextStyle(
-                                                fontSize: 8,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.onPrimaryContainer,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    Text(
-                                      Formatters.relative(p.createdAt),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (p.isSolution)
+                                         if (pAuthor.tingkat != null && pAuthor.tingkat!.isNotEmpty) ...[
+                                           const SizedBox(width: 4),
+                                           Container(
+                                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                             decoration: BoxDecoration(
+                                               color: AppTheme.primaryContainer,
+                                               borderRadius: BorderRadius.circular(3),
+                                             ),
+                                             child: Text(
+                                               pAuthor.tingkat!,
+                                               style: const TextStyle(
+                                                 fontSize: 8,
+                                                 fontWeight: FontWeight.bold,
+                                                 color: AppTheme.onPrimaryContainer,
+                                               ),
+                                             ),
+                                           ),
+                                         ],
+                                         (() {
+                                           final rank = KaskusRank.fromPostCount(pAuthor.postCount);
+                                           return Padding(
+                                             padding: const EdgeInsets.only(left: 4),
+                                             child: Container(
+                                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                               decoration: BoxDecoration(
+                                                 color: rank.backgroundColor,
+                                                 borderRadius: BorderRadius.circular(3),
+                                                 border: rank.borderColor != null
+                                                     ? Border.all(color: rank.borderColor!, width: 0.5)
+                                                     : null,
+                                               ),
+                                               child: Text(
+                                                 rank.title,
+                                                 style: TextStyle(
+                                                   fontSize: 8,
+                                                   fontWeight: FontWeight.bold,
+                                                   color: rank.textColor,
+                                                 ),
+                                               ),
+                                             ),
+                                           );
+                                         })(),
+                                       ],
+                                     ),
+                                     Text(
+                                       Formatters.relative(p.createdAt),
+                                       style: const TextStyle(
+                                         fontSize: 10,
+                                         color: AppTheme.textMuted,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                               if (!thread.isLocked) ...[
+                                 InkWell(
+                                   onTap: () => _quote(pAuthorName, p.konten),
+                                   child: const Padding(
+                                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                     child: Row(
+                                       mainAxisSize: MainAxisSize.min,
+                                       children: [
+                                         Icon(Icons.format_quote, size: 12, color: AppTheme.primary),
+                                         SizedBox(width: 2),
+                                         Text(
+                                           'Kutip',
+                                           style: TextStyle(
+                                             fontSize: 10,
+                                             fontWeight: FontWeight.w600,
+                                             color: AppTheme.primary,
+                                           ),
+                                         ),
+                                       ],
+                                     ),
+                                   ),
+                                 ),
+                                 const SizedBox(width: 4),
+                               ],
+                               if (p.isSolution)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                   decoration: BoxDecoration(
@@ -625,10 +848,7 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: AppTheme.space8),
-                          Text(
-                            p.konten,
-                            style: const TextStyle(fontSize: 13, height: 1.45),
-                          ),
+                          _buildKaskusBody(p.konten),
                           _buildImages(p.images, 72),
                           const SizedBox(height: AppTheme.space8),
                           ForumReactionBar(

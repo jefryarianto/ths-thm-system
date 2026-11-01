@@ -1,44 +1,50 @@
 part of 'forum_bloc.dart';
 
 abstract class ForumState extends Equatable {
-  const ForumState();
+  final List<ForumCategory> cachedCategories;
+  final List<ForumThread> cachedThreads;
+
+  const ForumState({
+    this.cachedCategories = const [],
+    this.cachedThreads = const [],
+  });
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [cachedCategories, cachedThreads];
 }
 
-class ForumInitial extends ForumState {}
+class ForumInitial extends ForumState {
+  const ForumInitial();
+}
 
-class ForumLoading extends ForumState {}
+class ForumLoading extends ForumState {
+  const ForumLoading({
+    super.cachedCategories,
+    super.cachedThreads,
+  });
+}
 
 class ForumCategoriesLoaded extends ForumState {
   final List<ForumCategory> categories;
-
-  /// true bila data berasal dari cache offline (bukan server).
   final bool isStale;
-
-  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
   final String? errorMessage;
 
   const ForumCategoriesLoaded({
     required this.categories,
     this.isStale = false,
     this.errorMessage,
-  });
+    super.cachedThreads,
+  }) : super(cachedCategories: categories);
 
   @override
-  List<Object> get props => [categories, isStale, errorMessage ?? ''];
+  List<Object> get props => [categories, isStale, errorMessage ?? '', cachedThreads];
 }
 
 class ForumThreadsLoaded extends ForumState {
   final List<ForumThread> threads;
   final String categoryId;
   final String search;
-
-  /// true bila data berasal dari cache offline (bukan server).
   final bool isStale;
-
-  /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
   final String? errorMessage;
 
   const ForumThreadsLoaded({
@@ -47,34 +53,46 @@ class ForumThreadsLoaded extends ForumState {
     this.search = '',
     this.isStale = false,
     this.errorMessage,
-  });
+    super.cachedCategories,
+  }) : super(cachedThreads: threads);
 
   @override
-  List<Object> get props => [threads, categoryId, search, isStale, errorMessage ?? ''];
+  List<Object> get props => [
+        threads,
+        categoryId,
+        search,
+        isStale,
+        errorMessage ?? '',
+        cachedCategories,
+      ];
 }
 
 class ForumThreadLoaded extends ForumState {
   final ForumThread thread;
   final List<ForumPost> posts;
-
-  /// true bila data berasal dari cache offline (bukan server).
   final bool isStale;
 
   const ForumThreadLoaded({
     required this.thread,
     required this.posts,
     this.isStale = false,
+    super.cachedCategories,
+    super.cachedThreads,
   });
 
   @override
-  List<Object> get props => [thread, posts, isStale];
+  List<Object> get props => [thread, posts, isStale, cachedCategories, cachedThreads];
 }
 
 class ForumError extends ForumState {
   final String message;
 
-  const ForumError({required this.message});
+  const ForumError({
+    required this.message,
+    super.cachedCategories,
+    super.cachedThreads,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, cachedCategories, cachedThreads];
 }

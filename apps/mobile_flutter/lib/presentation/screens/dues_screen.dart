@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -455,6 +456,14 @@ class _ProofSectionState extends State<_ProofSection> {
     );
 
     if (source == null || !mounted) return;
+
+    if (source == ImageSource.camera) {
+      final camStatus = await Permission.camera.request();
+      if (!camStatus.isGranted && mounted) {
+        showCenteredSnackBar(context, 'Izin kamera diperlukan untuk mengambil foto');
+        return;
+      }
+    }
 
     try {
       final result = await _imagePicker.pickImage(

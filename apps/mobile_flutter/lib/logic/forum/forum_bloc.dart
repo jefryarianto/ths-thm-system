@@ -13,7 +13,7 @@ part 'forum_event.dart';
 part 'forum_state.dart';
 
 class ForumBloc extends Bloc<ForumEvent, ForumState> {
-  ForumBloc() : super(ForumInitial()) {
+  ForumBloc() : super(const ForumInitial()) {
     on<ForumCategoriesLoadRequested>(_onCategories);
     on<ForumThreadsLoadRequested>(_onThreads);
     on<ForumThreadLoadRequested>(_onThread);
@@ -181,6 +181,7 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     ForumCategoriesLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
+    final cachedThreads = state.cachedThreads;
     // Sajikan cache kategori segera bila ada.
     CachedPayload<List<dynamic>>? cached;
     try {
@@ -195,12 +196,13 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
         emit(ForumCategoriesLoaded(
           categories: list,
           isStale: cached.isStale,
+          cachedThreads: cachedThreads,
         ));
       } else {
-        emit(ForumLoading());
+        emit(ForumLoading(cachedThreads: cachedThreads));
       }
     } catch (_) {
-      emit(ForumLoading());
+      emit(ForumLoading(cachedThreads: cachedThreads));
     }
 
     try {
@@ -210,10 +212,13 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           .toList(growable: false);
       final list = _parseList(res.data, ForumCategory.fromJson);
       await ApiCache.instance.set(CacheKeys.forumCategories, rawList ?? list);
-      emit(ForumCategoriesLoaded(categories: list));
+      emit(ForumCategoriesLoaded(
+        categories: list,
+        cachedThreads: state.cachedThreads,
+      ));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(ForumInitial());
+        emit(const ForumInitial());
       } else if (cached != null) {
         final list = cached.data
             .whereType<Map<String, dynamic>>()
@@ -223,19 +228,20 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           categories: list,
           isStale: true,
           errorMessage: _message(e),
+          cachedThreads: state.cachedThreads,
         ));
       } else {
-        emit(ForumError(message: _message(e)));
+        emit(ForumError(message: _message(e), cachedThreads: state.cachedThreads));
       }
     } catch (e) {
-      emit(ForumError(message: e.toString()));
+      emit(ForumError(message: e.toString(), cachedThreads: state.cachedThreads));
     }
   }
-
   Future<void> _onThreads(
     ForumThreadsLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
+    final cachedCategories = state.cachedCategories;
     final cacheKey =
         '${CacheKeys.forumThreads}:${event.categoryId}:${event.search.trim()}';
     // Sajikan cache thread segera bila ada.
@@ -252,12 +258,13 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           categoryId: event.categoryId,
           search: event.search,
           isStale: cached.isStale,
+          cachedCategories: cachedCategories,
         ));
       } else {
-        emit(ForumLoading());
+        emit(ForumLoading(cachedCategories: cachedCategories));
       }
     } catch (_) {
-      emit(ForumLoading());
+      emit(ForumLoading(cachedCategories: cachedCategories));
     }
 
     try {
@@ -276,10 +283,12 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
         threads: list,
         categoryId: event.categoryId,
         search: event.search,
+        cachedCategories: cachedCategories,
       ));
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(ForumInitial());
+      if (e.response?.statusCode == 401 ||
+          e.response?.statusCode == 403) {
+        emit(const ForumInitial());
       } else if (cached != null) {
         // Segarkan gagal tetapi cache tersedia — tetap tampilkan data lama.
         final list = cached.data
@@ -292,9 +301,10 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           search: event.search,
           isStale: true,
           errorMessage: _message(e),
+          cachedCategories: cachedCategories,
         ));
       } else {
-        emit(ForumError(message: _message(e)));
+        emit(ForumError(message: _message(e), cachedCategories: cachedCategories));
       }
     } catch (e) {
       if (cached != null) {
@@ -308,9 +318,10 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           search: event.search,
           isStale: true,
           errorMessage: e.toString(),
+          cachedCategories: cachedCategories,
         ));
       } else {
-        emit(ForumError(message: e.toString()));
+        emit(ForumError(message: e.toString(), cachedCategories: cachedCategories));
       }
     }
   }
@@ -319,6 +330,8 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     ForumThreadLoadRequested event,
     Emitter<ForumState> emit,
   ) async {
+    final cachedCategories = state.cachedCategories;
+    final cachedThreads = state.cachedThreads;
     final cacheKey = '${CacheKeys.forumThread}:${event.id}';
     // Sajikan cache thread segera bila ada.
     CachedPayload<Map<String, dynamic>>? cached;
@@ -337,12 +350,20 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           thread: thread,
           posts: posts,
           isStale: cached.isStale,
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
         ));
       } else {
-        emit(ForumLoading());
+        emit(ForumLoading(
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
+        ));
       }
     } catch (_) {
-      emit(ForumLoading());
+      emit(ForumLoading(
+        cachedCategories: cachedCategories,
+        cachedThreads: cachedThreads,
+      ));
     }
 
     try {
@@ -358,10 +379,15 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
               .toList()
           : const <ForumPost>[];
       await ApiCache.instance.set(cacheKey, rawData);
-      emit(ForumThreadLoaded(thread: thread, posts: posts));
+      emit(ForumThreadLoaded(
+        thread: thread,
+        posts: posts,
+        cachedCategories: cachedCategories,
+        cachedThreads: cachedThreads,
+      ));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(ForumInitial());
+        emit(const ForumInitial());
       } else if (cached != null) {
         // Segarkan gagal tetapi cache tersedia — tetap tampilkan data lama.
         final thread = ForumThread.fromJson(cached.data);
@@ -376,9 +402,15 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           thread: thread,
           posts: posts,
           isStale: true,
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
         ));
       } else {
-        emit(ForumError(message: _message(e)));
+        emit(ForumError(
+          message: _message(e),
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
+        ));
       }
     } catch (e) {
       if (cached != null) {
@@ -394,9 +426,15 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
           thread: thread,
           posts: posts,
           isStale: true,
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
         ));
       } else {
-        emit(ForumError(message: e.toString()));
+        emit(ForumError(
+          message: e.toString(),
+          cachedCategories: cachedCategories,
+          cachedThreads: cachedThreads,
+        ));
       }
     }
   }
@@ -531,7 +569,7 @@ class ForumBloc extends Bloc<ForumEvent, ForumState> {
     Emitter<ForumState> emit,
   ) async {
     RealtimeService.instance.disconnect();
-    emit(ForumInitial());
+    emit(const ForumInitial());
   }
 
   // ── Helpers ────────────────────────────────────────────────

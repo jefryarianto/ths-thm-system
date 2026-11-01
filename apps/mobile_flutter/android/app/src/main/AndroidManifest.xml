@@ -2,12 +2,17 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- Akses internet untuk API & dokumen -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Kamera untuk scanner QR -->
+    <!-- Kamera untuk scanner QR & lampiran foto -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Deklarasi fitur hardware kamera (required false agar tidak memblokir perangkat) -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <!-- Notifikasi push (FCM) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Receiver wajib flutter_local_notifications (ScheduledNotificationBootReceiver menangkap BOOT_COMPLETED) -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>st
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Izin media untuk Android 13-14 (API 33+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <!-- Izin menampilkan installer APK (update mandiri dari server) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <!-- Izin tulis media untuk menyimpan kartu KTA ke galeri (Android < 10).
@@ -73,6 +78,23 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Package visibility untuk membuka link website/WhatsApp/email -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tel" />
+        </intent>
+        <!-- Package visibility untuk membuka aplikasi kamera (Android 11-14) -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
     </queries>
 </manifest>

@@ -17,6 +17,7 @@ import {
   Calendar,
   Layers,
   Clock,
+  Quote,
 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useAuth } from '@/hooks/use-auth';
@@ -28,6 +29,7 @@ import Button from '@/components/ui/button';
 import { MemberAvatar } from '@/components/ui/member-avatar';
 import { useToast } from '@/components/ui/toast';
 import { getForumAuthorName } from '@/lib/forum-author';
+import { getKaskusRank } from '@/lib/kaskus-rank';
 import { useForumRealtime } from '@/lib/hooks/use-forum-realtime';
 import { ReactionBar, type ReactionState } from '@/components/forum/reaction-bar';
 import { ForumComposer } from '@/components/forum/forum-composer';
@@ -233,6 +235,14 @@ export default function ThreadDetailPage() {
     }
   };
 
+  const handleQuote = (authorName: string, text: string) => {
+    const snippet = text.length > 250 ? `${text.slice(0, 250)}...` : text;
+    const quoteMarkdown = `> **Kutipan dari @${authorName}:**\n> "${snippet}"\n\n`;
+    setReply((prev) => (prev ? `${prev}\n\n${quoteMarkdown}` : quoteMarkdown));
+    const composer = document.getElementById('reply-composer');
+    composer?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (loading)
     return (
       <PageContainer>
@@ -356,11 +366,21 @@ export default function ThreadDetailPage() {
               <MemberAvatar name={threadAuthorName} className="w-14 h-14 text-lg shadow-sm" />
               <div className="flex-1 sm:flex-initial text-left sm:text-center min-w-0">
                 <div className="font-bold text-sm text-text truncate">{threadAuthorName}</div>
-                {threadAuthorTingkat && (
-                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-container text-primary-on-container">
-                    <Shield size={10} /> {threadAuthorTingkat}
-                  </span>
-                )}
+                <div className="flex flex-wrap gap-1 justify-center mt-1">
+                  {threadAuthorTingkat && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-container text-primary-on-container">
+                      <Shield size={9} /> {threadAuthorTingkat}
+                    </span>
+                  )}
+                  {(() => {
+                    const rank = getKaskusRank(threadAuthorPostCount);
+                    return (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${rank.badgeClass}`}>
+                        {rank.title}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="mt-2 space-y-0.5 text-[11px] text-muted">
                   {thread.author?.nomorAnggota && (
                     <div className="truncate">No: {thread.author.nomorAnggota}</div>
@@ -394,13 +414,11 @@ export default function ThreadDetailPage() {
                 </div>
 
                 {/* Content */}
-                <div className="text-[15px] leading-relaxed text-text/95 whitespace-pre-wrap">
-                  {thread.konten}
-                </div>
+                <KaskusContentRenderer text={thread.konten} />
                 <ImageGrid images={thread.images} />
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border/60">
+              <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between flex-wrap gap-2">
                 <ReactionBar
                   targetType="thread"
                   targetId={thread.id}
@@ -408,6 +426,14 @@ export default function ThreadDetailPage() {
                   currentUserEmoji={thread.currentUserEmoji}
                   onChange={handleThreadReaction}
                 />
+                {!thread.isLocked && (
+                  <button
+                    onClick={() => handleQuote(threadAuthorName, thread.konten)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-semibold text-muted hover:text-primary hover:border-primary/40 transition-colors"
+                  >
+                    <Quote size={13} /> Kutip Thread
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -447,11 +473,21 @@ export default function ThreadDetailPage() {
                       <MemberAvatar name={postAuthorName} className="w-12 h-12 text-base shadow-sm" />
                       <div className="flex-1 sm:flex-initial text-left sm:text-center min-w-0">
                         <div className="font-bold text-sm text-text truncate">{postAuthorName}</div>
-                        {postAuthorTingkat && (
-                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-container text-primary-on-container">
-                            <Shield size={9} /> {postAuthorTingkat}
-                          </span>
-                        )}
+                        <div className="flex flex-wrap gap-1 justify-center mt-1">
+                          {postAuthorTingkat && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-container text-primary-on-container">
+                              <Shield size={9} /> {postAuthorTingkat}
+                            </span>
+                          )}
+                          {(() => {
+                            const rank = getKaskusRank(postAuthorPostCount);
+                            return (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${rank.badgeClass}`}>
+                                {rank.title}
+                              </span>
+                            );
+                          })()}
+                        </div>
                         <div className="mt-1.5 space-y-0.5 text-[11px] text-muted">
                           {post.author?.nomorAnggota && (
                             <div className="truncate">No: {post.author.nomorAnggota}</div>
@@ -480,6 +516,15 @@ export default function ThreadDetailPage() {
 
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] font-medium text-muted">#{index + 2}</span>
+                            {!thread.isLocked && (
+                              <button
+                                onClick={() => handleQuote(postAuthorName, post.konten)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-muted hover:text-primary hover:bg-surface-variant transition-colors"
+                                title="Kutip balasan ini"
+                              >
+                                <Quote size={12} /> Kutip
+                              </button>
+                            )}
                             <div className="flex items-center gap-0.5">
                               <button
                                 onClick={() => startEditPost(post)}
@@ -545,9 +590,7 @@ export default function ThreadDetailPage() {
                           </div>
                         ) : (
                           <>
-                            <div className="text-sm leading-relaxed text-text/90 whitespace-pre-wrap">
-                              {post.konten}
-                            </div>
+                            <KaskusContentRenderer text={post.konten} />
                             <ImageGrid images={post.images} />
                           </>
                         )}
@@ -583,7 +626,7 @@ export default function ThreadDetailPage() {
 
         {/* ── Quick Reply Composer ── */}
         {!thread.isLocked ? (
-          <div className="bg-surface rounded-xl border border-border shadow-elegant p-5">
+          <div id="reply-composer" className="bg-surface rounded-xl border border-border shadow-elegant p-5">
             <h3 className="text-sm font-bold text-text mb-3 flex items-center gap-1.5">
               <MessageSquare size={15} className="text-primary" />
               Tulis Balasan Cepat
@@ -607,6 +650,64 @@ export default function ThreadDetailPage() {
       </PageContainer>
     </PermissionGuard>
   );
+}
+
+function KaskusContentRenderer({ text }: { text: string }) {
+  if (!text) return null;
+
+  // Split lines into quote blocks vs normal text
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentQuote: string[] = [];
+  let currentNormal: string[] = [];
+
+  const flushNormal = () => {
+    if (currentNormal.length > 0) {
+      elements.push(
+        <div
+          key={`norm-${elements.length}`}
+          className="text-[15px] leading-relaxed text-text/95 whitespace-pre-wrap my-1"
+        >
+          {currentNormal.join('\n')}
+        </div>,
+      );
+      currentNormal = [];
+    }
+  };
+
+  const flushQuote = () => {
+    if (currentQuote.length > 0) {
+      const quoteBody = currentQuote.map((l) => l.replace(/^>\s?/, '')).join('\n');
+      elements.push(
+        <div
+          key={`quote-${elements.length}`}
+          className="my-3 p-3.5 rounded-r-xl border-l-4 border-emerald-500 bg-surface-variant/40 dark:bg-surface-variant/25 text-sm"
+        >
+          <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1.5">
+            <Quote size={12} /> Kutipan Forum
+          </div>
+          <div className="italic text-text/85 whitespace-pre-wrap leading-relaxed text-[14px]">
+            {quoteBody}
+          </div>
+        </div>,
+      );
+      currentQuote = [];
+    }
+  };
+
+  for (const line of lines) {
+    if (line.trim().startsWith('>')) {
+      flushNormal();
+      currentQuote.push(line);
+    } else {
+      flushQuote();
+      currentNormal.push(line);
+    }
+  }
+  flushNormal();
+  flushQuote();
+
+  return <div className="space-y-1">{elements}</div>;
 }
 
 function ImageGrid({ images }: { images?: string[] }) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/kaskus_rank.dart';
 import '../../data/models/forum.dart';
 
 /// Baris thread padat dengan gaya perpaduan Kaskus & iOsGods.
@@ -250,24 +251,30 @@ class ForumThreadRow extends StatelessWidget {
                           ),
                         ),
                       ],
-                      if (postCount > 0) ...[
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppTheme.darkSurfaceVariant : AppTheme.lightSurfaceDim,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            '$postCount post',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textMuted,
+                      (() {
+                        final rank = KaskusRank.fromPostCount(postCount);
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: rank.backgroundColor,
+                              borderRadius: BorderRadius.circular(3),
+                              border: rank.borderColor != null
+                                  ? Border.all(color: rank.borderColor!, width: 0.5)
+                                  : null,
+                            ),
+                            child: Text(
+                              rank.title,
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: rank.textColor,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                      })(),
                       const SizedBox(width: 4),
                       Text(
                         '• ${_formatDate(thread.createdAt)}',

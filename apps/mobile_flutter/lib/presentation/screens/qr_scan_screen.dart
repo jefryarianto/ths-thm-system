@@ -94,9 +94,8 @@ class QrScanScreen extends StatefulWidget {
   State<QrScanScreen> createState() => _QrScanScreenState();
 }
 
-class _QrScanScreenState extends State<QrScanScreen> {
-  MobileScannerController _scanner =
-      MobileScannerController(formats: const [BarcodeFormat.qrCode]);
+class _QrScanScreenState extends State<QrScanScreen> with WidgetsBindingObserver {
+  late MobileScannerController _scanner;
   final ApiClient _api = ApiClient();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -107,19 +106,38 @@ class _QrScanScreenState extends State<QrScanScreen> {
   String? _selectedKegiatanId;
   bool _loadingKegiatan = true;
   ScanResultData? _result;
+  bool _cameraPermissionGranted = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scanner = MobileScannerController(
+      formats: const [BarcodeFormat.qrCode],
+      autoStart: false,
+    );
     _requestCameraPermission();
     _loadHistory();
     _fetchKegiatan();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_cameraPermissionGranted) {
+      _requestCameraPermission();
+    }
+  }
+
   Future<void> _requestCameraPermission() async {
     final status = await Permission.camera.request();
-    if (!status.isGranted && !mounted) return;
-    if (!status.isGranted && mounted) {
+    if (!mounted) return;
+    if (status.isGranted) {
+      setState(() => _cameraPermissionGranted = true);
+      try {
+        await _scanner.start();
+      } catch (_) {}
+    } else {
+      setState(() => _cameraPermissionGranted = false);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,6 +155,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scanner.dispose();
     super.dispose();
   }
@@ -615,12 +634,23 @@ class _QrScanScreenState extends State<QrScanScreen> {
                       ),
                       const SizedBox(height: 14),
                       OutlinedButton.icon(
-                        onPressed: openAppSettings,
-                        icon: const Icon(Icons.settings, size: 16),
-                        label: const Text('Buka Pengaturan'),
+                        onPressed: () async {
+                          await _requestCameraPermission();
+                        },
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Coba Lagi'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white70),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: openAppSettings,
+                        icon: const Icon(Icons.settings, size: 14),
+                        label: const Text('Buka Pengaturan'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
                         ),
                       ),
                       const SizedBox(height: 6),

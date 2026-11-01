@@ -5,7 +5,7 @@ import { SmilePlus } from 'lucide-react';
 import apiClient, { unwrap, extractErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/components/ui/toast';
 
-export const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '💡', '🎉', '👎'];
+export const REACTION_EMOJIS = ['👍', '❤️', '🟢', '😂', '😮', '😢', '🙏', '🔥', '💡', '🎉', '👎'];
 
 export interface ReactionState {
   reactions: Record<string, number>;

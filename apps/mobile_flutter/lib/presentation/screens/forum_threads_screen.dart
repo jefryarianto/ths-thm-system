@@ -92,6 +92,44 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
           Expanded(
             child: BlocBuilder<ForumBloc, ForumState>(
               builder: (context, state) {
+                final threads = state is ForumThreadsLoaded
+                    ? state.threads
+                    : state.cachedThreads;
+
+                if (threads.isNotEmpty) {
+                  final list = ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: threads.length,
+                    itemBuilder: (context, i) {
+                      final t = threads[i];
+                      return ForumThreadRow(thread: t);
+                    },
+                  );
+
+                  final refreshList = RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<ForumBloc>().add(
+                          ForumThreadsLoadRequested(categoryId: widget.categoryId));
+                    },
+                    child: list,
+                  );
+
+                  if (state is ForumThreadsLoaded && state.isStale) {
+                    return Column(
+                      children: [
+                        StaleDataBanner(
+                          errorMessage: state.errorMessage,
+                          onRefresh: () => context.read<ForumBloc>().add(
+                              ForumThreadsLoadRequested(categoryId: widget.categoryId)),
+                        ),
+                        Expanded(child: refreshList),
+                      ],
+                    );
+                  }
+
+                  return refreshList;
+                }
+
                 if (state is ForumLoading) {
                   return const AppLoadingSpinner(message: 'Memuat topik...');
                 }
@@ -102,54 +140,16 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
                         ForumThreadsLoadRequested(categoryId: widget.categoryId)),
                   );
                 }
-                if (state is! ForumThreadsLoaded) {
-                  return const AppLoadingSpinner();
-                }
 
-                final threads = state.threads;
-                if (threads.isEmpty) {
-                  return EmptyStateView(
-                    icon: Icons.forum_outlined,
-                    title: 'Belum ada thread',
-                    message: _search.text.isNotEmpty
-                        ? 'Tidak ditemukan topik sesuai pencarian Anda.'
-                        : 'Jadilah anggota pertama yang memulai topik di kategori ini.',
-                    actionLabel: 'Buat Thread Baru',
-                    onAction: () => context.push<void>('/forum/create'),
-                  );
-                }
-
-                final list = ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: threads.length,
-                  itemBuilder: (context, i) {
-                    final t = threads[i];
-                    return ForumThreadRow(thread: t);
-                  },
+                return EmptyStateView(
+                  icon: Icons.forum_outlined,
+                  title: 'Belum ada thread',
+                  message: _search.text.isNotEmpty
+                      ? 'Tidak ditemukan topik sesuai pencarian Anda.'
+                      : 'Jadilah anggota pertama yang memulai topik di kategori ini.',
+                  actionLabel: 'Buat Thread Baru',
+                  onAction: () => context.push<void>('/forum/create'),
                 );
-
-                final refreshList = RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<ForumBloc>().add(
-                        ForumThreadsLoadRequested(categoryId: widget.categoryId));
-                  },
-                  child: list,
-                );
-
-                if (state.isStale) {
-                  return Column(
-                    children: [
-                      StaleDataBanner(
-                        errorMessage: state.errorMessage,
-                        onRefresh: () => context.read<ForumBloc>().add(
-                            ForumThreadsLoadRequested(categoryId: widget.categoryId)),
-                      ),
-                      Expanded(child: refreshList),
-                    ],
-                  );
-                }
-
-                return refreshList;
               },
             ),
           ),
