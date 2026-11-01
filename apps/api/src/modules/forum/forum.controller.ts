@@ -224,7 +224,11 @@ export class ForumController {
     const file = req.file;
     if (!file) throw new BadRequestException('File gambar harus diupload');
     if (!validateImageMagicBytes(file.path)) {
-      try { unlinkSync(file.path); } catch {}
+      try {
+        unlinkSync(file.path);
+      } catch {
+        // best-effort cleanup — file mungkin sudah terhapus
+      }
       throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
     }
     await validateImageUploadSecurity(file.path, file.originalname);
