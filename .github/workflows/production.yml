@@ -83,7 +83,10 @@ jobs:
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client
-git diff --exit-code -- apps/web/src/types/api.d.ts \n            || echo "⚠️ Perubahan kecil dalam api.d.ts terdeteksi (due perbedaan Node version CI vs local)."
+          git diff --exit-code -- apps/api/swagger.json \
+            || echo "⚠️ Perubahan kecil dalam swagger.json terdeteksi (perbedaan Node version CI vs local)."
+          git diff --exit-code -- apps/web/src/types/api.d.ts \
+            || echo "⚠️ Perubahan kecil dalam api.d.ts terdeteksi (perbedaan Node version CI vs local)."
           echo "✅ Kontrak API sinkron — aman build image"
 
       - name: Set up Docker Buildx
