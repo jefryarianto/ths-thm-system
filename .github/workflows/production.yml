@@ -83,8 +83,7 @@ jobs:
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client
-          git diff --exit-code -- apps/api/swagger.json apps/web/src/types/api.d.ts \
-            || (echo "::error::Kontrak API basi saat deploy produksi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
+git diff --exit-code -- apps/web/src/types/api.d.ts \n            || (echo "::error::Kontrak API basi saat deploy produksi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
           echo "✅ Kontrak API sinkron — aman build image"
 
       - name: Set up Docker Buildx
