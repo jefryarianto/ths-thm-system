@@ -32,17 +32,47 @@ class ForumAuthor {
   final String id;
   final String namaLengkap;
   final String nomorAnggota;
+  final String? tingkat;
+  final String? createdAt;
+  final int postCount;
 
   const ForumAuthor({
     required this.id,
     required this.namaLengkap,
     required this.nomorAnggota,
+    this.tingkat,
+    this.createdAt,
+    this.postCount = 0,
   });
 
   factory ForumAuthor.fromJson(Map<String, dynamic> json) => ForumAuthor(
         id: json['id']?.toString() ?? '',
         namaLengkap: json['namaLengkap']?.toString() ?? '',
         nomorAnggota: json['nomorAnggota']?.toString() ?? '',
+        tingkat: json['tingkat']?.toString(),
+        createdAt: json['createdAt']?.toString(),
+        postCount: (json['postCount'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class ForumLastPost {
+  final String createdAt;
+  final String authorName;
+  final String? authorNomorAnggota;
+  final String? authorTingkat;
+
+  const ForumLastPost({
+    required this.createdAt,
+    required this.authorName,
+    this.authorNomorAnggota,
+    this.authorTingkat,
+  });
+
+  factory ForumLastPost.fromJson(Map<String, dynamic> json) => ForumLastPost(
+        createdAt: json['createdAt']?.toString() ?? '',
+        authorName: json['authorName']?.toString() ?? 'Admin',
+        authorNomorAnggota: json['authorNomorAnggota']?.toString(),
+        authorTingkat: json['authorTingkat']?.toString(),
       );
 }
 
@@ -69,12 +99,15 @@ class ForumThread {
   final String? currentUserEmoji;
   final bool isPinned;
   final bool isLocked;
+  final bool isHot;
+  final int authorPostCount;
   final int viewCount;
   final String createdAt;
   final String updatedAt;
   final ForumAuthor author;
   final ForumCategory? category;
   final int postCount;
+  final ForumLastPost? lastPost;
 
   const ForumThread({
     required this.id,
@@ -87,12 +120,15 @@ class ForumThread {
     this.currentUserEmoji,
     required this.isPinned,
     required this.isLocked,
+    this.isHot = false,
+    this.authorPostCount = 0,
     required this.viewCount,
     required this.createdAt,
     required this.updatedAt,
     required this.author,
     this.category,
     required this.postCount,
+    this.lastPost,
   });
 
   ForumThread copyWith({
@@ -100,6 +136,13 @@ class ForumThread {
     String? currentUserEmoji,
     bool clearEmoji = false,
     List<String>? images,
+    bool? isPinned,
+    bool? isLocked,
+    bool? isHot,
+    int? authorPostCount,
+    int? viewCount,
+    int? postCount,
+    ForumLastPost? lastPost,
   }) {
     return ForumThread(
       id: id,
@@ -110,14 +153,17 @@ class ForumThread {
       images: images ?? this.images,
       reactions: reactions ?? this.reactions,
       currentUserEmoji: clearEmoji ? null : (currentUserEmoji ?? this.currentUserEmoji),
-      isPinned: isPinned,
-      isLocked: isLocked,
-      viewCount: viewCount,
+      isPinned: isPinned ?? this.isPinned,
+      isLocked: isLocked ?? this.isLocked,
+      isHot: isHot ?? this.isHot,
+      authorPostCount: authorPostCount ?? this.authorPostCount,
+      viewCount: viewCount ?? this.viewCount,
       createdAt: createdAt,
       updatedAt: updatedAt,
       author: author,
       category: category,
-      postCount: postCount,
+      postCount: postCount ?? this.postCount,
+      lastPost: lastPost ?? this.lastPost,
     );
   }
 
@@ -125,6 +171,8 @@ class ForumThread {
     final count = json['_count'];
     final rawAuthor = json['author'];
     final rawCategory = json['category'];
+    final rawLastPost = json['lastPost'];
+
     return ForumThread(
       id: json['id']?.toString() ?? '',
       categoryId: json['categoryId']?.toString() ?? '',
@@ -136,6 +184,8 @@ class ForumThread {
       currentUserEmoji: json['currentUserEmoji']?.toString(),
       isPinned: json['isPinned'] as bool? ?? false,
       isLocked: json['isLocked'] as bool? ?? false,
+      isHot: json['isHot'] as bool? ?? false,
+      authorPostCount: (json['authorPostCount'] as num?)?.toInt() ?? 0,
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
       createdAt: json['createdAt']?.toString() ?? '',
       updatedAt: json['updatedAt']?.toString() ?? '',
@@ -148,6 +198,9 @@ class ForumThread {
       postCount: count is Map<String, dynamic>
           ? (count['posts'] as num?)?.toInt() ?? 0
           : 0,
+      lastPost: rawLastPost is Map<String, dynamic>
+          ? ForumLastPost.fromJson(rawLastPost)
+          : null,
     );
   }
 }

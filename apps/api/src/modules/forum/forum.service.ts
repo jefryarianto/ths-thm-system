@@ -11,7 +11,14 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../notifications/events.gateway';
 import { paginate } from '../../common/utils/pagination';
 
-type PostAuthor = { id: string; namaLengkap: string; nomorAnggota: string };
+type PostAuthor = {
+  id: string;
+  namaLengkap: string;
+  nomorAnggota: string;
+  tingkat?: string | null;
+  createdAt?: Date;
+  postCount?: number;
+};
 
 type ForumActor = { id: string; role?: string; namaLengkap?: string };
 
@@ -216,7 +223,15 @@ export class ForumService {
         take: limit,
         orderBy: orderBy as unknown as Record<string, 'asc' | 'desc'>[],
         include: {
-          author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
+          author: {
+            select: {
+              id: true,
+              namaLengkap: true,
+              nomorAnggota: true,
+              tingkat: true,
+              createdAt: true,
+            },
+          },
           category: { select: { id: true, nama: true } },
           _count: { select: { posts: true } },
         },
@@ -224,12 +239,72 @@ export class ForumService {
       this.prisma.forumThread.count({ where }),
     ]);
 
-    const dataWithPreview = data.map((thread) => ({
-      ...thread,
-      konten: thread.konten.length > 400
-        ? `${thread.konten.slice(0, 400)}…`
-        : thread.konten,
-    }));
+    const threadIds = data.map((t) => t.id);
+    const authorIds = Array.from(
+      new Set(data.map((t) => t.authorId).filter((id): id is string => !!id)),
+    );
+
+    const [latestPosts, authorPostCounts] = await Promise.all([
+      threadIds.length > 0
+        ? this.prisma.forumPost.findMany({
+            where: { threadId: { in: threadIds } },
+            distinct: ['threadId'],
+            orderBy: [{ threadId: 'asc' }, { createdAt: 'desc' }],
+            select: {
+              threadId: true,
+              createdAt: true,
+              authorName: true,
+              author: {
+                select: { id: true, namaLengkap: true, nomorAnggota: true, tingkat: true },
+              },
+            },
+          })
+        : Promise.resolve([]),
+      authorIds.length > 0
+        ? this.prisma.forumPost.groupBy({
+            by: ['authorId'],
+            where: { authorId: { in: authorIds } },
+            _count: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const latestPostByThread = new Map<string, (typeof latestPosts)[0]>();
+    for (const p of latestPosts) {
+      latestPostByThread.set(p.threadId, p);
+    }
+
+    const postCountByAuthor = new Map<string, number>();
+    for (const c of authorPostCounts) {
+      if (c.authorId) {
+        postCountByAuthor.set(c.authorId, c._count.id);
+      }
+    }
+
+    const dataWithPreview = data.map((thread) => {
+      const lp = latestPostByThread.get(thread.id);
+      const postCount = thread._count?.posts ?? 0;
+      const isHot = thread.viewCount >= 50 || postCount >= 10;
+      const authorPostCount = thread.authorId ? (postCountByAuthor.get(thread.authorId) ?? 0) : 0;
+
+      return {
+        ...thread,
+        isHot,
+        authorPostCount,
+        lastPost: lp
+          ? {
+              createdAt: lp.createdAt,
+              authorName: lp.author?.namaLengkap || lp.authorName || 'Admin',
+              authorNomorAnggota: lp.author?.nomorAnggota ?? null,
+              authorTingkat: lp.author?.tingkat ?? null,
+            }
+          : null,
+        konten:
+          thread.konten.length > 400
+            ? `${thread.konten.slice(0, 400)}…`
+            : thread.konten,
+      };
+    });
 
     return {
       data: dataWithPreview,
@@ -241,7 +316,15 @@ export class ForumService {
     const thread = await this.prisma.forumThread.findUnique({
       where: { id },
       include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
+        author: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            nomorAnggota: true,
+            tingkat: true,
+            createdAt: true,
+          },
+        },
         category: { select: { id: true, nama: true } },
       },
     });
@@ -258,7 +341,15 @@ export class ForumService {
           where: { threadId: id },
           orderBy: { createdAt: 'asc' },
           include: {
-            author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
+            author: {
+              select: {
+                id: true,
+                namaLengkap: true,
+                nomorAnggota: true,
+                tingkat: true,
+                createdAt: true,
+              },
+            },
           },
         }),
         this.prisma.forumThreadReaction.groupBy({
@@ -285,6 +376,30 @@ export class ForumService {
           : Promise.resolve([]),
       ]);
 
+    const allAuthorIds = Array.from(
+      new Set(
+        [thread.authorId, ...posts.map((p) => p.authorId)].filter((aid): aid is string => !!aid),
+      ),
+    );
+    const authorPostCounts =
+      allAuthorIds.length > 0
+        ? await this.prisma.forumPost.groupBy({
+            by: ['authorId'],
+            where: { authorId: { in: allAuthorIds } },
+            _count: { id: true },
+          })
+        : [];
+    const postCountByAuthor = new Map<string, number>();
+    for (const c of authorPostCounts) {
+      if (c.authorId) {
+        postCountByAuthor.set(c.authorId, c._count.id);
+      }
+    }
+
+    const threadAuthorPostCount = thread.authorId
+      ? (postCountByAuthor.get(thread.authorId) ?? 0)
+      : 0;
+
     const threadReactions: Record<string, number> = {};
     for (const r of threadReactionsData) threadReactions[r.emoji] = r._count.emoji;
 
@@ -299,12 +414,27 @@ export class ForumService {
 
     const postsWithReactions = posts.map((post) => ({
       ...post,
+      author: post.author
+        ? {
+            ...post.author,
+            postCount: post.authorId ? (postCountByAuthor.get(post.authorId) ?? 0) : 0,
+          }
+        : null,
       reactions: postReactionsByPost.get(post.id) ?? {},
       currentUserEmoji: currentUserEmojiByPost.get(post.id) ?? null,
     }));
 
+    const isHot = thread.viewCount >= 50 || posts.length >= 10;
+
     return {
       ...thread,
+      isHot,
+      author: thread.author
+        ? {
+            ...thread.author,
+            postCount: threadAuthorPostCount,
+          }
+        : null,
       reactions: threadReactions,
       currentUserEmoji: threadUserReaction?.emoji ?? null,
       posts: this.buildPostTree(postsWithReactions),

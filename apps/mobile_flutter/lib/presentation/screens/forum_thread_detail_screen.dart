@@ -285,109 +285,359 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
                   itemCount: itemCount,
                   itemBuilder: (context, index) {
                     if (index == 0) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(thread.judul,
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: AppTheme.space8),
-                          Row(children: [
-                            CircleAvatar(
-                                radius: 14,
-                                backgroundColor:
-                                    AppTheme.primary.withValues(alpha: 0.1),
-                                child: Text(
-                                    thread.author.namaLengkap.isNotEmpty
-                                        ? thread.author.namaLengkap[0]
-                                        : '?',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary))),
-                            const SizedBox(width: AppTheme.space8),
-                            Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(thread.author.namaLengkap,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600)),
-                                  Text(Formatters.dateLong(thread.createdAt),
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant)),
-                                ]),
-                          ]),
-                          const SizedBox(height: AppTheme.space12),
-                          Text(thread.konten,
-                              style: const TextStyle(height: 1.5)),
-                          _buildImages(thread.images, 96),
-                          ForumReactionBar(
-                            reactions: thread.reactions,
-                            currentUserEmoji: thread.currentUserEmoji,
-                            onReact: _reactThread,
+                      final opAuthor = thread.author;
+                      final opAuthorName = opAuthor.namaLengkap.isNotEmpty
+                          ? opAuthor.namaLengkap
+                          : 'Anggota';
+                      final opTingkat = opAuthor.tingkat;
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: AppTheme.space16),
+                        padding: const EdgeInsets.all(AppTheme.space16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? AppTheme.darkSurfaceVariant : AppTheme.lightSurfaceDim,
+                            width: 0.8,
                           ),
-                          const Divider(height: 32),
-                          Text('${posts.length} Balasan',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700)),
-                          const SizedBox(height: AppTheme.space8),
-                        ],
-                      );
-                    }
-                    final p = posts[index - 1];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppTheme.space12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [
-                              CircleAvatar(
-                                  radius: 10,
-                                  backgroundColor: AppTheme.primary
-                                      .withValues(alpha: 0.1),
-                                  child: Text(
-                                      p.author.namaLengkap.isNotEmpty
-                                          ? p.author.namaLengkap[0]
-                                          : '?',
-                                      style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary))),
-                              const SizedBox(width: 6),
-                              Text(p.author.namaLengkap,
-                                  style: const TextStyle(
-                                      fontSize: 12, fontWeight: FontWeight.w600)),
-                              const Spacer(),
-                              Text(Formatters.relative(p.createdAt),
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant)),
-                            ]),
-                            const SizedBox(height: AppTheme.space8),
-                            Text(p.konten,
-                                style: const TextStyle(
-                                    fontSize: 13, height: 1.4)),
-                            _buildImages(p.images, 72),
-                            ForumReactionBar(
-                              compact: true,
-                              reactions: p.reactions,
-                              currentUserEmoji: p.currentUserEmoji,
-                              onReact: (emoji) => _reactPost(p.id, emoji),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Badges (Pin, Hot, Lock)
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (thread.isPinned)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '📌 SEMATAN',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ),
+                                if (thread.isHot)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Text(
+                                      '🔥 HOT',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
+                                      ),
+                                    ),
+                                  ),
+                                if (thread.isLocked)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.errorContainer,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '🔒 KUNCI',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.onErrorContainer,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: AppTheme.space8),
+
+                            // Judul Thread
+                            Text(
+                              thread.judul,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: AppTheme.space12),
+
+                            // Author Box (Kaskus / iOsGods style)
+                            Container(
+                              padding: const EdgeInsets.all(AppTheme.space12),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppTheme.darkSurfaceVariant.withValues(alpha: 0.35)
+                                    : AppTheme.lightSurfaceDim.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: AppTheme.primary,
+                                    child: Text(
+                                      opAuthorName.isNotEmpty ? opAuthorName[0].toUpperCase() : 'A',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppTheme.space12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                opAuthorName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            if (opTingkat != null && opTingkat.isNotEmpty) ...[
+                                              const SizedBox(width: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryContainer,
+                                                  borderRadius: BorderRadius.circular(3),
+                                                ),
+                                                child: Text(
+                                                  opTingkat,
+                                                  style: const TextStyle(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppTheme.onPrimaryContainer,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Diposting ${Formatters.dateLong(thread.createdAt)} • ${thread.viewCount} views',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      '#1 OP',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: AppTheme.space16),
+
+                            // Konten
+                            Text(
+                              thread.konten,
+                              style: const TextStyle(fontSize: 14, height: 1.55),
+                            ),
+                            _buildImages(thread.images, 96),
+                            const SizedBox(height: AppTheme.space12),
+
+                            ForumReactionBar(
+                              reactions: thread.reactions,
+                              currentUserEmoji: thread.currentUserEmoji,
+                              onReact: _reactThread,
+                            ),
+                            const Divider(height: 32),
+                            Row(
+                              children: [
+                                const Icon(Icons.chat_bubble_outline, size: 16, color: AppTheme.primary),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${posts.length} Balasan Diskusi',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    final p = posts[index - 1];
+                    final pAuthor = p.author;
+                    final pAuthorName = pAuthor.namaLengkap.isNotEmpty
+                        ? pAuthor.namaLengkap
+                        : 'Anggota';
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(AppTheme.space12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: p.isSolution
+                              ? AppTheme.success
+                              : (isDark ? AppTheme.darkSurfaceVariant : AppTheme.lightSurfaceDim),
+                          width: p.isSolution ? 1.5 : 0.8,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppTheme.primary,
+                                child: Text(
+                                  pAuthorName.isNotEmpty ? pAuthorName[0].toUpperCase() : 'A',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.space8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            pAuthorName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        if (pAuthor.tingkat != null && pAuthor.tingkat!.isNotEmpty) ...[
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primaryContainer,
+                                              borderRadius: BorderRadius.circular(3),
+                                            ),
+                                            child: Text(
+                                              pAuthor.tingkat!,
+                                              style: const TextStyle(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.onPrimaryContainer,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    Text(
+                                      Formatters.relative(p.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (p.isSolution)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.successContainer,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle, size: 10, color: AppTheme.onSuccessContainer),
+                                      SizedBox(width: 2),
+                                      Text(
+                                        'SOLUSI',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.onSuccessContainer,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '#${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.space8),
+                          Text(
+                            p.konten,
+                            style: const TextStyle(fontSize: 13, height: 1.45),
+                          ),
+                          _buildImages(p.images, 72),
+                          const SizedBox(height: AppTheme.space8),
+                          ForumReactionBar(
+                            compact: true,
+                            reactions: p.reactions,
+                            currentUserEmoji: p.currentUserEmoji,
+                            onReact: (emoji) => _reactPost(p.id, emoji),
+                          ),
+                        ],
                       ),
                     );
                   },

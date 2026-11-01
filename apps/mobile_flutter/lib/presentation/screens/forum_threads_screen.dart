@@ -9,6 +9,7 @@ import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/app_search_field.dart';
+import '../widgets/forum_thread_row.dart';
 import '../widgets/stale_data_banner.dart';
 import '../widgets/state_views.dart';
 
@@ -53,152 +54,107 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
       appBar: AppBar(
         title: AppBarIconTitle(
           icon: Icons.forum_outlined,
-          title:
-              widget.categoryName.isNotEmpty ? widget.categoryName : 'Thread',
+          title: widget.categoryName.isNotEmpty ? widget.categoryName : 'Forum',
         ),
         actions: [
           IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => context.push<void>('/forum/create')),
+            icon: const Icon(Icons.add),
+            tooltip: 'Buat Thread Baru',
+            onPressed: () => context.push<void>('/forum/create'),
+          ),
         ],
       ),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppTheme.space16,
-            AppTheme.space12,
-            AppTheme.space16,
-            AppTheme.space8,
+      body: Column(
+        children: [
+          // ── Search Bar ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.space16,
+              AppTheme.space12,
+              AppTheme.space16,
+              AppTheme.space8,
+            ),
+            child: AppSearchField(
+              controller: _search,
+              hintText: 'Cari topik diskusi...',
+              onChanged: _doSearch,
+            ),
           ),
-          child: AppSearchField(
-            controller: _search,
-            hintText: 'Cari thread...',
-            onChanged: _doSearch,
-          ),
-        ),
-        Expanded(
-          child: BlocBuilder<ForumBloc, ForumState>(
-            builder: (context, state) {
-              if (state is ForumLoading) {
-                return const AppLoadingSpinner(message: 'Memuat thread...');
-              }
-              if (state is ForumError) {
-                return ErrorStateView(message: state.message);
-              }
-              if (state is! ForumThreadsLoaded) {
-                return const AppLoadingSpinner();
-              }
-              final threads = state.threads;
-              if (threads.isEmpty) {
-                return EmptyStateView(
-                  icon: Icons.forum_outlined,
-                  title: 'Belum ada thread',
-                  message: 'Jadilah yang pertama memulai diskusi baru.',
-                  actionLabel: 'Buat Thread',
-                  onAction: () => context.push<void>('/forum/create'),
-                );
-              }
-              final list = ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppTheme.space12),
-                itemCount: threads.length,
-                itemBuilder: (context, i) {
-                  final t = threads[i];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Row(children: [
-                        if (t.isPinned)
-                          Icon(Icons.push_pin,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.primary),
-                        if (t.isPinned) const SizedBox(width: AppTheme.space4),
-                        Expanded(
-                            child: Text(t.judul,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600))),
-                      ]),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(t.konten,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant)),
-                              const SizedBox(height: 6),
-                              Row(children: [
-                                CircleAvatar(
-                                    radius: 10,
-                                    backgroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withValues(alpha: 0.12),
-                                    child: Text(
-                                        t.author.namaLengkap.isNotEmpty
-                                            ? t.author.namaLengkap[0]
-                                            : '?',
-                                        style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary))),
-                                const SizedBox(width: 6),
-                                Text(t.author.namaLengkap,
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant)),
-                                Text('${t.postCount} balasan',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant)),
-                              ]),
-                            ]),
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push<void>('/forum/t/${t.id}'),
-                    ),
+
+          // ── Thread List ──
+          Expanded(
+            child: BlocBuilder<ForumBloc, ForumState>(
+              builder: (context, state) {
+                if (state is ForumLoading) {
+                  return const AppLoadingSpinner(message: 'Memuat topik...');
+                }
+                if (state is ForumError) {
+                  return ErrorStateView(
+                    message: state.message,
+                    onRetry: () => context.read<ForumBloc>().add(
+                        ForumThreadsLoadRequested(categoryId: widget.categoryId)),
                   );
-                },
-              );
-              if (state.isStale) {
-                return Column(children: [
-                  StaleDataBanner(
-                    errorMessage: state.errorMessage,
-                    onRefresh: () => _doSearch(_search.text),
-                  ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () async => _doSearch(_search.text),
-                      child: list,
-                    ),
-                  ),
-                ]);
-              }
-              return RefreshIndicator(
-                onRefresh: () async => _doSearch(_search.text),
-                child: list,
-              );
-            },
+                }
+                if (state is! ForumThreadsLoaded) {
+                  return const AppLoadingSpinner();
+                }
+
+                final threads = state.threads;
+                if (threads.isEmpty) {
+                  return EmptyStateView(
+                    icon: Icons.forum_outlined,
+                    title: 'Belum ada thread',
+                    message: _search.text.isNotEmpty
+                        ? 'Tidak ditemukan topik sesuai pencarian Anda.'
+                        : 'Jadilah anggota pertama yang memulai topik di kategori ini.',
+                    actionLabel: 'Buat Thread Baru',
+                    onAction: () => context.push<void>('/forum/create'),
+                  );
+                }
+
+                final list = ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: threads.length,
+                  itemBuilder: (context, i) {
+                    final t = threads[i];
+                    return ForumThreadRow(thread: t);
+                  },
+                );
+
+                final refreshList = RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<ForumBloc>().add(
+                        ForumThreadsLoadRequested(categoryId: widget.categoryId));
+                  },
+                  child: list,
+                );
+
+                if (state.isStale) {
+                  return Column(
+                    children: [
+                      StaleDataBanner(
+                        errorMessage: state.errorMessage,
+                        onRefresh: () => context.read<ForumBloc>().add(
+                            ForumThreadsLoadRequested(categoryId: widget.categoryId)),
+                      ),
+                      Expanded(child: refreshList),
+                    ],
+                  );
+                }
+
+                return refreshList;
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }

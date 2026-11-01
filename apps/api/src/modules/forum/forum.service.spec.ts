@@ -90,7 +90,8 @@ describe('ForumService', () => {
     },
     forumPost: {
       findUnique: jest.fn(),
-      findMany: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      groupBy: jest.fn().mockResolvedValue([]),
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
@@ -161,10 +162,29 @@ describe('ForumService', () => {
   });
 
   describe('getThreads', () => {
-    it('should return threads for a category', async () => {
-      mockPrisma.forumThread.findMany.mockResolvedValue([mockThread]);
+    it('should return threads for a category with lastPost, isHot and authorPostCount', async () => {
+      mockPrisma.forumThread.findMany.mockResolvedValue([
+        { ...mockThread, viewCount: 60, _count: { posts: 5 } },
+      ]);
+      mockPrisma.forumThread.count.mockResolvedValue(1);
+      mockPrisma.forumPost.findMany.mockResolvedValue([
+        {
+          threadId: 'thread1',
+          createdAt: new Date('2026-01-01'),
+          authorName: 'Reply User',
+          author: { id: 'rep1', namaLengkap: 'Reply User', nomorAnggota: '002', tingkat: 'Warga' },
+        },
+      ]);
+      mockPrisma.forumPost.groupBy.mockResolvedValue([
+        { authorId: 'user1', _count: { id: 12 } },
+      ]);
+
       const result = await service.getThreads('cat1', {});
       expect(result.data).toBeDefined();
+      expect(result.data[0].isHot).toBe(true);
+      expect(result.data[0].authorPostCount).toBe(12);
+      expect(result.data[0].lastPost?.authorName).toBe('Reply User');
+      expect(result.data[0].lastPost?.authorTingkat).toBe('Warga');
     });
   });
 
