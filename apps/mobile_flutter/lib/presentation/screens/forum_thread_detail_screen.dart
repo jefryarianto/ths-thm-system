@@ -335,38 +335,35 @@ class _ForumThreadDetailScreenState extends State<ForumThreadDetailScreen> {
     if (images.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: AppTheme.space8),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final path in images)
-            GestureDetector(
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => _FullScreenImage(url: _absolute(path)),
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: _absolute(path),
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    width: size,
-                    height: size,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => _FullScreenImage(url: _absolute(path)),
                   ),
-                  errorWidget: (_, __, ___) => Container(
-                    width: size,
-                    height: size,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
-                    child: const Icon(Icons.broken_image_outlined, size: 20),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: CachedNetworkImage(
+                      imageUrl: _absolute(path),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Center(child: AppLoadingSpinner.small()),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Icon(Icons.broken_image_outlined, size: 32),
+                      ),
+                    ),
                   ),
                 ),
               ),

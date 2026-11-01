@@ -104,10 +104,12 @@ class _DuesScreenState extends State<DuesScreen> {
               message: 'Riwayat iuran Anda akan muncul di sini.',
             );
           }
-          final lunas = dues.where((d) => _isPaid(d.status)).length;
-          return Column(
-            children: [
-              _SummaryBar(total: dues.length, lunas: lunas),
+      final lunas = dues.where((d) => _isPaid(d.status)).length;
+      final paidSum = dues.where((d) => _isPaid(d.status)).fold<double>(0, (s, d) => s + d.jumlah);
+      final unpaidSum = dues.where((d) => !_isPaid(d.status)).fold<double>(0, (s, d) => s + d.jumlah);
+      return Column(
+        children: [
+          _SummaryBar(total: dues.length, lunas: lunas, paidSum: paidSum, unpaidSum: unpaidSum),
               if (state is DuesLoaded && state.isStale)
                 StaleDataBanner(
                   errorMessage: state.errorMessage,
@@ -237,7 +239,14 @@ class _DuesScreenState extends State<DuesScreen> {
 class _SummaryBar extends StatelessWidget {
   final int total;
   final int lunas;
-  const _SummaryBar({required this.total, required this.lunas});
+  final double paidSum;
+  final double unpaidSum;
+  const _SummaryBar({
+    required this.total,
+    required this.lunas,
+    required this.paidSum,
+    required this.unpaidSum,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,17 +255,27 @@ class _SummaryBar extends StatelessWidget {
       margin: const EdgeInsets.all(AppTheme.space12),
       padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
-        // Gradien brand sadar tema — putih lolos WCAG di kedua ujung gradien
-        // (versi lama berakhir di primaryContainer: putih hanya 1,26:1).
         gradient: AppTheme.statGradient(theme.brightness),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _stat(theme, 'Total Iuran', '$total'),
-          _stat(theme, 'Lunas', '$lunas'),
-          _stat(theme, 'Belum Lunas', '${total - lunas}'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _stat(theme, 'Total Iuran', '$total'),
+              _stat(theme, 'Lunas', '$lunas'),
+              _stat(theme, 'Belum Lunas', '${total - lunas}'),
+            ],
+          ),
+          const SizedBox(height: AppTheme.space8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _stat(theme, 'Terbayar', 'Rp ${paidSum.toStringAsFixed(0)}'),
+              _stat(theme, 'Belum Bayar', 'Rp ${unpaidSum.toStringAsFixed(0)}'),
+            ],
+          ),
         ],
       ),
     );
@@ -296,7 +315,7 @@ class _BankInfoPanel extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.space12),
       padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: theme.colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
@@ -306,55 +325,73 @@ class _BankInfoPanel extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.account_balance_wallet_outlined,
-                  size: 18, color: theme.colorScheme.primary),
+              Icon(Icons.account_balance_wallet_outlined, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: AppTheme.space8),
-              Text('Rekening Tujuan Pembayaran',
+              Expanded(
+                child: Text(
+                  'Rekening Tujuan Pembayaran',
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface)),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.content_copy, size: 16),
+                onPressed: () {
+                  // copy functionality
+                },
+                tooltip: 'Copy',
+              ),
             ],
           ),
           const SizedBox(height: AppTheme.space12),
-          ...bankInfos.map((info) => Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppTheme.space8,
-                  horizontal: AppTheme.space4,
+          ...bankInfos.map((info) => Container(
+                margin: const EdgeInsets.only(bottom: AppTheme.space8),
+                padding: const EdgeInsets.all(AppTheme.space12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      info.bankName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          '${info.bankName} • ${info.accountNumber}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        if (info.accountName.isNotEmpty)
-                          SizedBox(
-                            width: 120,
-                            child: Text(
-                              'Ats. ${info.accountName}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
+                        Expanded(
+                          child: Text(
+                            '${info.accountNumber}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Copy'),
+                        ),
                       ],
                     ),
-                    if (info.qrisImageUrl != null && info.qrisImageUrl!.isNotEmpty)
-                      SizedBox(
-                        height: 16,
+                    if (info.accountName.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'QRIS: ${info.qrisImageUrl}',
+                          'a.n ${info.accountName}',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -367,6 +404,8 @@ class _BankInfoPanel extends StatelessWidget {
     );
   }
 }
+
+/// Tadapan ringan bila endpoint rekening tujuan tidak tersedia.
 
 /// Tadapan ringan bila endpoint rekening tujuan tidak tersedia.
 class _BankInfoError extends StatelessWidget {

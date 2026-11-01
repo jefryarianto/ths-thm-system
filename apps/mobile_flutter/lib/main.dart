@@ -312,6 +312,10 @@ class AppRouter {
         path: '/berita/status',
         builder: (context, state) => const BeritaStatusScreen(),
       ),
+      GoRoute(
+        path: '/berita',
+        builder: (context, state) => const BeritaOverviewScreen(),
+      ),
       // ── Publik: Registrasi & Klaim ──
       GoRoute(
         path: '/register',

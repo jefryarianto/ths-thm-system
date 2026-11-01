@@ -185,8 +185,7 @@ List<_ChipItem> _menuItems(String? role) => [
       const _ChipItem(Icons.qr_code_scanner, 'Scan QR', '/qr-scan'),
       const _ChipItem(Icons.forum_outlined, 'Forum', '/forum-tab'),
       const _ChipItem(Icons.emoji_events_outlined, 'Poin', '/gamification'),
-      const _ChipItem(Icons.newspaper, 'Pengajuan Berita', '/berita/submit'),
-      const _ChipItem(Icons.list_alt, 'Status Pengajuan', '/berita/status'),
+      const _ChipItem(Icons.newspaper, 'Berita', '/berita'),
       if (role == 'penguji' ||
           role == 'admin_kegiatan' ||
           role == 'admin_ranting' ||
