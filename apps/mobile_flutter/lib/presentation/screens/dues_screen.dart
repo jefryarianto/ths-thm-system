@@ -32,6 +32,17 @@ class _DuesScreenState extends State<DuesScreen> {
   bool _bankInfosLoaded = false;
   String? _bankInfosError;
 
+  /// Pencarian daftar iuran.
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  /// Status accordion panel ringkasan & rekening.
+  bool _summaryExpanded = true;
+  bool _bankExpanded = true;
+
+  /// Status visibilitas nomor rekening (eye icon).
+  bool _obscureAccountNumbers = true;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +51,12 @@ class _DuesScreenState extends State<DuesScreen> {
       context.read<DuesBloc>().add(const DuesLoadRequested());
     }
     _fetchBankInfo();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   /// Ambil rekening tujuan dari API agar daftar iuran bisa menunjuk target
@@ -105,11 +122,39 @@ class _DuesScreenState extends State<DuesScreen> {
             );
           }
       final lunas = dues.where((d) => _isPaid(d.status)).length;
+      final unpaid = dues.where((d) => !_isPaid(d.status)).length;
       final paidSum = dues.where((d) => _isPaid(d.status)).fold<double>(0, (s, d) => s + d.jumlah);
       final unpaidSum = dues.where((d) => !_isPaid(d.status)).fold<double>(0, (s, d) => s + d.jumlah);
+      final hasUnpaid = unpaid > 0;
+      final filteredDues = _searchQuery.isEmpty
+          ? dues
+          : dues.where((d) {
+              final q = _searchQuery.toLowerCase();
+              return d.periode.toLowerCase().contains(q) ||
+                  d.status.toLowerCase().contains(q) ||
+                  d.jumlah.toString().contains(q) ||
+                  (d.tanggalBayar ?? '').toLowerCase().contains(q) ||
+                  (d.tanggalJatuhTempo ?? '').toLowerCase().contains(q);
+            }).toList();
       return Column(
         children: [
-          _SummaryBar(total: dues.length, lunas: lunas, paidSum: paidSum, unpaidSum: unpaidSum),
+          // ── Notifikasi tunggakan persistent ──────────────────────
+          if (hasUnpaid) _TunggakanBanner(
+            unpaidCount: unpaid,
+            unpaidSum: unpaidSum,
+            onTap: () {
+              final firstUnpaid = dues.firstWhere((d) => !_isPaid(d.status));
+              _showDueDetail(context, firstUnpaid);
+            },
+          ),
+          _SummaryBar(
+            total: dues.length,
+            lunas: lunas,
+            paidSum: paidSum,
+            unpaidSum: unpaidSum,
+            expanded: _summaryExpanded,
+            onToggle: () => setState(() => _summaryExpanded = !_summaryExpanded),
+          ),
               if (state is DuesLoaded && state.isStale)
                 StaleDataBanner(
                   errorMessage: state.errorMessage,
@@ -128,37 +173,80 @@ class _DuesScreenState extends State<DuesScreen> {
                   ),
                 )
               else if (_bankInfos != null && _bankInfos!.isNotEmpty)
-                _BankInfoPanel(bankInfos: _bankInfos!)
+                _BankInfoPanel(
+                  bankInfos: _bankInfos!,
+                  expanded: _bankExpanded,
+                  obscureAccount: _obscureAccountNumbers,
+                  onToggleExpand: () =>
+                      setState(() => _bankExpanded = !_bankExpanded),
+                  onToggleObscure: () => setState(
+                      () => _obscureAccountNumbers = !_obscureAccountNumbers),
+                )
               else if (_bankInfosError != null)
                 _BankInfoError(message: _bankInfosError!)
               else
                 const SizedBox.shrink(),
+              // ── Pencarian daftar iuran ───────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppTheme.space12, 0, AppTheme.space12, AppTheme.space4),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                  decoration: InputDecoration(
+                    hintText: 'Cari iuran (periode, status, nominal)...',
+                    hintStyle: const TextStyle(fontSize: 13),
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async =>
                       context.read<DuesBloc>().add(const DuesLoadRequested()),
-                  child: dues.isEmpty
+                  child: filteredDues.isEmpty
                       ? ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 80),
+                          children: [
+                            const SizedBox(height: 80),
                             EmptyStateView(
-                              icon: Icons.receipt_long_outlined,
-                              title: 'Tidak ada data iuran',
-                              message:
-                                  'Belum ada riwayat iuran pada periode ini.',
+                              icon: _searchQuery.isNotEmpty
+                                  ? Icons.search_off
+                                  : Icons.receipt_long_outlined,
+                              title: _searchQuery.isNotEmpty
+                                  ? 'Tidak ditemukan'
+                                  : 'Tidak ada data iuran',
+                              message: _searchQuery.isNotEmpty
+                                  ? 'Coba kata kunci lain.'
+                                  : 'Belum ada riwayat iuran pada periode ini.',
                             ),
                           ],
                         )
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(AppTheme.space12),
-                          itemCount: dues.length,
+                          itemCount: filteredDues.length,
                           itemBuilder: (context, i) => DueItemCard(
-                            due: dues[i],
-                            onTap: () => _showDueDetail(context, dues[i]),
-                            onUpload: _dueCanUpload(dues[i])
-                                ? () => _showDueDetail(context, dues[i])
+                            due: filteredDues[i],
+                            onTap: () => _showDueDetail(context, filteredDues[i]),
+                            onUpload: _dueCanUpload(filteredDues[i])
+                                ? () => _showDueDetail(context, filteredDues[i])
                                 : null,
                           ),
                         ),
@@ -236,16 +324,104 @@ class _DuesScreenState extends State<DuesScreen> {
   }
 }
 
+/// Banner notifikasi tunggakan — persistent, tidak bisa di-dismiss selama
+/// masih ada iuran belum lunas. Ketuk → buka detail iuran pertama yang belum
+/// dibayar.
+class _TunggakanBanner extends StatelessWidget {
+  final int unpaidCount;
+  final double unpaidSum;
+  final VoidCallback onTap;
+
+  const _TunggakanBanner({
+    required this.unpaidCount,
+    required this.unpaidSum,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(
+            AppTheme.space12, AppTheme.space8, AppTheme.space12, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.error,
+              theme.colorScheme.error.withValues(alpha: 0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.error.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$unpaidCount iuran belum lunas',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Total: ${Formatters.rupiah(unpaidSum)} — ketuk untuk bayar',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white, size: 28),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SummaryBar extends StatelessWidget {
   final int total;
   final int lunas;
   final double paidSum;
   final double unpaidSum;
+  final bool expanded;
+  final VoidCallback onToggle;
+
   const _SummaryBar({
     required this.total,
     required this.lunas,
     required this.paidSum,
     required this.unpaidSum,
+    required this.expanded,
+    required this.onToggle,
   });
 
   @override
@@ -260,21 +436,62 @@ class _SummaryBar extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _stat(theme, 'Total Iuran', '$total'),
-              _stat(theme, 'Lunas', '$lunas'),
-              _stat(theme, 'Belum Lunas', '${total - lunas}'),
-            ],
+          GestureDetector(
+            onTap: onToggle,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                const Icon(Icons.summarize_outlined,
+                    color: AppTheme.onStatGradient, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Ringkasan Iuran',
+                    style: TextStyle(
+                      color: AppTheme.onStatGradient,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: expanded ? 0 : 0.5,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.expand_more,
+                      color: AppTheme.onStatGradient, size: 26),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppTheme.space8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _stat(theme, 'Terbayar', 'Rp ${paidSum.toStringAsFixed(0)}'),
-              _stat(theme, 'Belum Bayar', 'Rp ${unpaidSum.toStringAsFixed(0)}'),
-            ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Column(
+                    children: [
+                      const SizedBox(height: AppTheme.space12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _stat(theme, 'Total Iuran', '$total'),
+                          _stat(theme, 'Lunas', '$lunas'),
+                          _stat(theme, 'Belum Lunas', '${total - lunas}'),
+                        ],
+                      ),
+                      const SizedBox(height: AppTheme.space8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _stat(theme, 'Terbayar',
+                              'Rp ${paidSum.toStringAsFixed(0)}'),
+                          _stat(theme, 'Belum Bayar',
+                              'Rp ${unpaidSum.toStringAsFixed(0)}'),
+                        ],
+                      ),
+                    ],
+                  )
+                : const SizedBox(height: 4),
           ),
         ],
       ),
@@ -303,17 +520,34 @@ class _SummaryBar extends StatelessWidget {
 /// viewer layar penuh (zoom). Tanpa bukti → placeholder sesuai status.
 
 /// Panel rekening tujuan — tampil di atas daftar iuran.
+/// Mendukung accordion (expand/collapse) dan penyembunyian nomor rekening
+/// via icon mata (eye toggle).
 class _BankInfoPanel extends StatelessWidget {
   final List<BankInfo> bankInfos;
+  final bool expanded;
+  final bool obscureAccount;
+  final VoidCallback onToggleExpand;
+  final VoidCallback onToggleObscure;
 
-  const _BankInfoPanel({required this.bankInfos});
+  const _BankInfoPanel({
+    required this.bankInfos,
+    required this.expanded,
+    required this.obscureAccount,
+    required this.onToggleExpand,
+    required this.onToggleObscure,
+  });
+
+  /// Sembunyikan nomor rekening: tampilkan titik-titik sesuai panjang asli.
+  String _maskedAccount(String account) {
+    if (account.length <= 4) return '••••';
+    return '•••• •••• ${account.substring(account.length - 4)}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.space12),
-      padding: const EdgeInsets.all(AppTheme.space16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
@@ -322,83 +556,150 @@ class _BankInfoPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.account_balance_wallet_outlined, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: AppTheme.space8),
-              Expanded(
-                child: Text(
-                  'Rekening Tujuan Pembayaran',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.content_copy, size: 16),
-                onPressed: () {
-                  // copy functionality
-                },
-                tooltip: 'Copy',
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.space12),
-          ...bankInfos.map((info) => Container(
-                margin: const EdgeInsets.only(bottom: AppTheme.space8),
-                padding: const EdgeInsets.all(AppTheme.space12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      info.bankName,
+          // ── Header accordion ───────────────────────────────────
+          GestureDetector(
+            onTap: onToggleExpand,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.space16),
+              child: Row(
+                children: [
+                  Icon(Icons.account_balance_wallet_outlined,
+                      size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: AppTheme.space8),
+                  Expanded(
+                    child: Text(
+                      'Rekening Tujuan Pembayaran',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                  ),
+                  // Eye toggle: sembunyikan/tampilkan nomor rekening.
+                  IconButton(
+                    icon: Icon(
+                      obscureAccount
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 18,
+                    ),
+                    onPressed: onToggleObscure,
+                    tooltip: obscureAccount
+                        ? 'Tampilkan nomor rekening'
+                        : 'Sembunyikan nomor rekening',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                        minWidth: 36, minHeight: 36),
+                  ),
+                  AnimatedRotation(
+                    turns: expanded ? 0 : 0.5,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.expand_more,
+                        size: 24, color: theme.colorScheme.outline),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // ── Konten accordion ───────────────────────────────────
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppTheme.space16, 0, AppTheme.space16, AppTheme.space16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            '${info.accountNumber}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text('Copy'),
-                        ),
+                        const Divider(height: 1),
+                        const SizedBox(height: AppTheme.space12),
+                        ...bankInfos.map((info) => Container(
+                              margin:
+                                  const EdgeInsets.only(bottom: AppTheme.space8),
+                              padding: const EdgeInsets.all(AppTheme.space12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: theme.colorScheme.outlineVariant
+                                        .withValues(alpha: 0.5)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    info.bankName,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          obscureAccount
+                                              ? _maskedAccount(
+                                                  info.accountNumber)
+                                              : info.accountNumber,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme.onSurface,
+                                            letterSpacing:
+                                                obscureAccount ? 1.5 : 0,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          obscureAccount
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          size: 16,
+                                        ),
+                                        onPressed: onToggleObscure,
+                                        tooltip: obscureAccount
+                                            ? 'Tampilkan'
+                                            : 'Sembunyikan',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(
+                                            minWidth: 32, minHeight: 32),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          // Copy functionality
+                                        },
+                                        child: const Text('Copy'),
+                                      ),
+                                    ],
+                                  ),
+                                  if (info.accountName.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'a.n ${info.accountName}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            )),
                       ],
                     ),
-                    if (info.accountName.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'a.n ${info.accountName}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              )),
+                  )
+                : const SizedBox(height: 0),
+          ),
         ],
       ),
     );
