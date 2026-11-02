@@ -111,6 +111,9 @@ class _QrScanScreenState extends State<QrScanScreen>
   bool _isCheckingPermission = true;
   String? _cameraErrorMessage;
   bool _permissionCheckInFlight = false;
+  bool _startInFlight = false;
+  bool _cameraPermanentlyDenied = false;
+  Timer? _cameraWatchdog;
 
   @override
   void initState() {
@@ -123,9 +126,42 @@ class _QrScanScreenState extends State<QrScanScreen>
     _scanner = MobileScannerController(
       formats: const [BarcodeFormat.qrCode],
     );
+    _scanner.addListener(_onScannerStateChanged);
     _checkCameraPermission();
     _loadHistory();
     _fetchKegiatan();
+  }
+
+  /// Pantau state controller: jika kamera tidak pernah `isRunning` dalam
+  /// waktu wajar setelah izin diberikan, tampilkan pesan yang bisa ditindak-
+  /// lanjuti pengguna (bukan layar hitam tanpa keterangan).
+  void _onScannerStateChanged() {
+    final state = _scanner.value;
+    if (state.isRunning) {
+      _cameraWatchdog?.cancel();
+      _cameraWatchdog = null;
+      // Kamera hidup — bersihkan pesan watchdog agar tidak memblokir render.
+      if (_cameraErrorMessage != null && mounted) {
+        setState(() => _cameraErrorMessage = null);
+      }
+      return;
+    }
+    if (!_cameraPermissionGranted || state.isStarting) return;
+    // Izin sudah diberikan tetapi kamera tidak berjalan dan tidak sedang
+    // proses start — mulai watchdog agar pengguna tidak melihat layar hitam
+    // tanpa petunjuk.
+    if (_cameraWatchdog == null && state.error == null) {
+      _cameraWatchdog = Timer(const Duration(seconds: 6), () {
+        if (!mounted) return;
+        final s = _scanner.value;
+        if (s.isRunning || s.isStarting) return;
+        setState(() {
+          _cameraErrorMessage =
+              'Kamera tidak berhasil dinyalakan. Coba muat ulang atau buka pengaturan.';
+        });
+        _cameraWatchdog = null;
+      });
+    }
   }
 
   @override
@@ -149,11 +185,24 @@ class _QrScanScreenState extends State<QrScanScreen>
   /// Kegagalan nyata dilaporkan controller lewat `value.error` dan dirender
   /// oleh `errorBuilder` pada widget `MobileScanner`; exception yang dilempar
   /// hanya untuk pemakaian yang tidak valid (mis. `start()` sebelum widget
-  /// ter-attach), jadi aman diabaikan di sini.
+  /// ter-attach), jadi dicatat ke log agar mudah didiagnosis, bukan ditelan
+  /// diam-diam.
   Future<void> _startScanner() async {
+    if (_startInFlight) return;
+    _startInFlight = true;
+    _cameraWatchdog?.cancel();
+    _cameraWatchdog = null;
     try {
       await _scanner.start();
-    } catch (_) {}
+    } on MobileScannerException catch (e) {
+      // controllerInitializing / controllerNotAttached: start sudah berjalan
+      // atau widget belum attach — biarkan autoStart yang menanganinya.
+      debugPrint('MobileScanner.start() menolak: ${e.errorCode}');
+    } catch (e, st) {
+      debugPrint('MobileScanner.start() gagal: $e\n$st');
+    } finally {
+      _startInFlight = false;
+    }
   }
 
   /// Pesan error kamera yang ramah pengguna; kode plugin berbahasa Inggris.
@@ -189,7 +238,14 @@ class _QrScanScreenState extends State<QrScanScreen>
       final currentStatus = await Permission.camera.status;
       PermissionStatus status = currentStatus;
       if (!currentStatus.isGranted) {
-        status = await Permission.camera.request();
+        // Beberapa ROM (MIUI/EMUI) bisa menggantung pada dialog izin.
+        // Beri batas waktu agar pengguna tidak terjebak di spinner.
+        status = await Permission.camera
+            .request()
+            .timeout(const Duration(seconds: 30), onTimeout: () {
+          debugPrint('Permission.camera.request() timeout — memakai status terakhir');
+          return PermissionStatus.denied;
+        });
       }
 
       if (!mounted) return;
@@ -201,11 +257,13 @@ class _QrScanScreenState extends State<QrScanScreen>
           _cameraPermissionGranted = true;
           _isCheckingPermission = false;
           _cameraErrorMessage = null;
+          _cameraPermanentlyDenied = false;
         });
       } else {
         setState(() {
           _cameraPermissionGranted = false;
           _isCheckingPermission = false;
+          _cameraPermanentlyDenied = status.isPermanentlyDenied;
           _cameraErrorMessage = status.isPermanentlyDenied
               ? 'Izin kamera ditolak permanen. Buka pengaturan untuk mengaktifkan.'
               : 'Izin kamera dibutuhkan untuk memindai QR code.';
@@ -225,6 +283,8 @@ class _QrScanScreenState extends State<QrScanScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cameraWatchdog?.cancel();
+    _scanner.removeListener(_onScannerStateChanged);
     _scanner.dispose();
     super.dispose();
   }
@@ -725,23 +785,45 @@ class _QrScanScreenState extends State<QrScanScreen>
                           fontSize: 12),
                     ),
                     const SizedBox(height: 14),
-                    ElevatedButton.icon(
-                      onPressed: _checkCameraPermission,
-                      icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text('Izinkan / Coba Lagi'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
+                    if (_cameraPermanentlyDenied) ...[
+                      // Izin ditolak permanen: "Coba Lagi" tidak akan memunculkan
+                      // dialog lagi — arahkan langsung ke pengaturan aplikasi.
+                      ElevatedButton.icon(
+                        onPressed: openAppSettings,
+                        icon: const Icon(Icons.settings, size: 16),
+                        label: const Text('Buka Pengaturan HP'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextButton.icon(
-                      onPressed: openAppSettings,
-                      icon: const Icon(Icons.settings, size: 14),
-                      label: const Text('Buka Pengaturan HP'),
-                      style:
-                          TextButton.styleFrom(foregroundColor: Colors.white70),
-                    ),
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        onPressed: _checkCameraPermission,
+                        icon: const Icon(Icons.refresh, size: 14),
+                        label: const Text('Periksa Lagi'),
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.white70),
+                      ),
+                    ] else ...[
+                      ElevatedButton.icon(
+                        onPressed: _checkCameraPermission,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Izinkan / Coba Lagi'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        onPressed: openAppSettings,
+                        icon: const Icon(Icons.settings, size: 14),
+                        label: const Text('Buka Pengaturan HP'),
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.white70),
+                      ),
+                    ],
                   ],
                 ),
               ),
