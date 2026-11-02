@@ -18,7 +18,7 @@ export class RegistrationsController {
   constructor(private readonly service: RegistrationsService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Daftar semua registrasi',
   })
   @ApiBearerAuth()
@@ -27,7 +27,7 @@ export class RegistrationsController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Detail registrasi',
   })
   @ApiBearerAuth()
@@ -44,7 +44,7 @@ export class RegistrationsController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui registrasi',
   })
   @ApiBearerAuth()
@@ -53,7 +53,7 @@ export class RegistrationsController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Hapus registrasi',
   })
   @ApiBearerAuth()
@@ -62,7 +62,7 @@ export class RegistrationsController {
   }
 
   @Post(':id/verify')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Verifikasi registrasi',
   })
   @ApiBearerAuth()
@@ -71,7 +71,7 @@ export class RegistrationsController {
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Setujui registrasi',
   })
   @ApiBearerAuth()
@@ -80,7 +80,7 @@ export class RegistrationsController {
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tolak registrasi',
   })
   @ApiBearerAuth()
@@ -89,7 +89,7 @@ export class RegistrationsController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Impor data registrasi',
   })
   @ApiBearerAuth()

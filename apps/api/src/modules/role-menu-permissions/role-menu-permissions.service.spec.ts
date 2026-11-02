@@ -30,10 +30,7 @@ describe('RoleMenuPermissionsService', () => {
     );
 
     module = await Test.createTestingModule({
-      providers: [
-        RoleMenuPermissionsService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [RoleMenuPermissionsService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get<RoleMenuPermissionsService>(RoleMenuPermissionsService);
@@ -296,7 +293,7 @@ describe('RoleMenuPermissionsController', () => {
   });
 
   describe('urutan route my-menus vs :role', () => {
-    it('GET /role-menu-permissions/my-menus tidak tertangkap oleh @Get(\':role\')', async () => {
+    it("GET /role-menu-permissions/my-menus tidak tertangkap oleh @Get(':role')", async () => {
       // Regresi urutan deklarasi: bila my-menus dideklarasikan setelah :role,
       // Express mencocokkan literal 'my-menus' sebagai param :role dan
       // getForRole yang terpanggil → respons { permissions } tidak pernah ada.

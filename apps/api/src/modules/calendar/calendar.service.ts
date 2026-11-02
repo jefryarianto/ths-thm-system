@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { ScopeService } from '../../common/scope/scope.service';
 
 @Injectable()
 export class CalendarService {
@@ -10,6 +11,7 @@ export class CalendarService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly scopeService?: ScopeService,
   ) {}
 
   async getHolidays(year?: number) {

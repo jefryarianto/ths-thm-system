@@ -31,9 +31,7 @@ function collectText(el: any): string {
   if (typeof el === 'string' || typeof el === 'number') return String(el);
   let out = '';
   if (el.props && el.props.children) {
-    const kids = Array.isArray(el.props.children)
-      ? el.props.children
-      : [el.props.children];
+    const kids = Array.isArray(el.props.children) ? el.props.children : [el.props.children];
     for (const k of kids) out += ` ${collectText(k)}`;
   }
   return out;
@@ -43,9 +41,7 @@ const baseProps = {
   recipientName: 'Budi Santoso',
   awardNumber: 'PP-2026-AB12CD34',
   issuedDate: '10 Oktober 2026',
-  signers: [
-    { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' },
-  ],
+  signers: [{ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }],
 };
 
 describe('buildAwardPdf (Piagam Penghargaan — A4 landscape)', () => {

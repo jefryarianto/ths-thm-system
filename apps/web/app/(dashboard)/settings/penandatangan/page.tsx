@@ -586,13 +586,16 @@ export default function PenandatanganPage() {
                         >
                           <Edit3 size={14} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(row)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {/* DELETE /penandatangan/:id hanya superadmin. */}
+                        {isSuperadmin && (
+                          <button
+                            onClick={() => handleDelete(row)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                            title="Hapus"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -951,7 +954,8 @@ export default function PenandatanganPage() {
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+                {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />}{' '}
+                {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
               </button>
             </div>
           </div>
@@ -999,7 +1003,8 @@ export default function PenandatanganPage() {
                 disabled={savingTtd}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {savingTtd ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingTtd ? 'Mengunggah...' : 'Upload'}
+                {savingTtd ? <SmallLogoSpinner size={14} /> : <Upload size={14} />}{' '}
+                {savingTtd ? 'Mengunggah...' : 'Upload'}
               </button>
             </div>
           </div>
@@ -1042,7 +1047,8 @@ export default function PenandatanganPage() {
                 disabled={savingStamp}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingStamp ? 'Mengunggah...' : 'Upload'}
+                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />}{' '}
+                {savingStamp ? 'Mengunggah...' : 'Upload'}
               </button>
             </div>
           </div>

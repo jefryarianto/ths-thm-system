@@ -120,7 +120,8 @@ const FIELD_GROUPS: TemplateGroup[] = [
       {
         key: 'docTemplate.sertifikat_pelatihan.body',
         label: 'Isi / Body Sertifikat',
-        placeholder: 'Diberikan kepada {{nama}}, atas partisipasi dalam pelatihan {{kegiatan}} di {{lokasi}}.',
+        placeholder:
+          'Diberikan kepada {{nama}}, atas partisipasi dalam pelatihan {{kegiatan}} di {{lokasi}}.',
         textarea: true,
         rows: 5,
         hint: 'Kosongkan untuk memakai teks bawaan. Placeholder: {{nama}}, {{nomor}}, {{kegiatan}}, {{lokasi}}, {{ranting}}, {{wilayah}}, {{distrik}}, {{nilai}}, {{predikat}}, {{status}}, {{tanggal}}',
@@ -210,7 +211,11 @@ const FIELD_GROUPS: TemplateGroup[] = [
     imageKey: 'docTemplate.sertifikat_wasit_dan_juri.image',
     imageHint: 'Rasio potret (mis. 1188×1680 px) — menutupi seluruh halaman sertifikat.',
     fields: [
-      { key: 'docTemplate.sertifikat_wasit_dan_juri.judul', label: 'Judul', placeholder: 'SERTIFIKAT' },
+      {
+        key: 'docTemplate.sertifikat_wasit_dan_juri.judul',
+        label: 'Judul',
+        placeholder: 'SERTIFIKAT',
+      },
       {
         key: 'docTemplate.sertifikat_wasit_dan_juri.subJudul',
         label: 'Sub Judul',
@@ -235,11 +240,16 @@ const FIELD_GROUPS: TemplateGroup[] = [
     imageKey: 'docTemplate.piagam_prestasi.image',
     imageHint: 'Rasio lanskap (mis. 1188×840 px) — menutupi seluruh halaman piagam.',
     fields: [
-      { key: 'docTemplate.piagam_prestasi.judul', label: 'Judul', placeholder: 'PIAGAM PENGHARGAAN' },
+      {
+        key: 'docTemplate.piagam_prestasi.judul',
+        label: 'Judul',
+        placeholder: 'PIAGAM PENGHARGAAN',
+      },
       {
         key: 'docTemplate.piagam_prestasi.body',
         label: 'Isi / Body Piagam',
-        placeholder: 'Diberikan kepada {{nama}} atas prestasi dalam {{kegiatan}} di {{lokasi}} dengan predikat {{predikat}}.',
+        placeholder:
+          'Diberikan kepada {{nama}} atas prestasi dalam {{kegiatan}} di {{lokasi}} dengan predikat {{predikat}}.',
         textarea: true,
         rows: 5,
         hint: 'Kosongkan untuk memakai teks bawaan. Placeholder: {{nama}}, {{nomor}}, {{kegiatan}}, {{lokasi}}, {{predikat}}, {{tanggal}}',
@@ -250,7 +260,8 @@ const FIELD_GROUPS: TemplateGroup[] = [
     key: 'piagam_seroja',
     title: 'Piagam Seroja',
     icon: Award,
-    description: 'Judul, sub-judul, isi & gambar latar piagam penghargaan seroja (lambang perjuangan).',
+    description:
+      'Judul, sub-judul, isi & gambar latar piagam penghargaan seroja (lambang perjuangan).',
     imageKey: 'docTemplate.piagam_seroja.image',
     imageHint: 'Rasio lanskap (mis. 1188×840 px) — menutupi seluruh halaman piagam.',
     fields: [
@@ -275,7 +286,8 @@ const FIELD_GROUPS: TemplateGroup[] = [
     key: 'piagam_melati',
     title: 'Piagam Melati',
     icon: Award,
-    description: 'Judul, sub-judul, isi & gambar latar piagam penghargaan melati (lambang kesetiaan).',
+    description:
+      'Judul, sub-judul, isi & gambar latar piagam penghargaan melati (lambang kesetiaan).',
     imageKey: 'docTemplate.piagam_melati.image',
     imageHint: 'Rasio lanskap (mis. 1188×840 px) — menutupi seluruh halaman piagam.',
     fields: [
@@ -300,7 +312,8 @@ const FIELD_GROUPS: TemplateGroup[] = [
     key: 'piagam_mawar',
     title: 'Piagam Mawar',
     icon: Award,
-    description: 'Judul, sub-judul, isi & gambar latar piagam penghargaan mawar (lambang kesucian dan kemuliaan).',
+    description:
+      'Judul, sub-judul, isi & gambar latar piagam penghargaan mawar (lambang kesucian dan kemuliaan).',
     imageKey: 'docTemplate.piagam_mawar.image',
     imageHint: 'Rasio lanskap (mis. 1188×840 px) — menutupi seluruh halaman piagam.',
     fields: [

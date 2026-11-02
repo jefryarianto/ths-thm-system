@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useAuth } from '@/hooks/use-auth';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -84,6 +85,9 @@ export default function ActivityDetailPage() {
   const router = useRouter();
   const id = params?.id as string;
   const toast = useToast();
+  const { hasMinRole } = useAuth();
+  const canManageActivity = hasMinRole('admin_kegiatan');
+  const canDeleteActivity = hasMinRole('admin_ranting');
 
   const [activity, setActivity] = useState<ActivityDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -228,46 +232,54 @@ export default function ActivityDetailPage() {
               </div>
               {/* Actions - ikon saja */}
               <div className="flex items-center gap-1 mt-4 sm:mt-0">
-                {activity.status !== 'published' && (
+                {/* PATCH /activities/:id = admin_kegiatan ke atas */}
+                {canManageActivity && (
+                  <>
+                    {activity.status !== 'published' && (
+                      <button
+                        onClick={() => setStatusModal('published')}
+                        disabled={statusSaving}
+                        title="Publish"
+                        aria-label="Publish"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                      >
+                        <CheckCircle2 size={14} />
+                        <span className="hidden sm:inline">Publish</span>
+                      </button>
+                    )}
+                    {activity.status === 'published' && (
+                      <button
+                        onClick={() => setStatusModal('closed')}
+                        disabled={statusSaving}
+                        title="Tutup"
+                        aria-label="Tutup"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-600 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                      >
+                        <XCircle size={14} />
+                        <span className="hidden sm:inline">Tutup</span>
+                      </button>
+                    )}
+                    <Link
+                      href={`/activities/${activity.id}/edit`}
+                      title="Edit"
+                      aria-label="Edit"
+                      className="p-2 rounded-lg border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                    >
+                      <Edit size={15} />
+                    </Link>
+                  </>
+                )}
+                {/* DELETE /activities/:id = admin_ranting ke atas */}
+                {canDeleteActivity && (
                   <button
-                    onClick={() => setStatusModal('published')}
-                    disabled={statusSaving}
-                    title="Publish"
-                    aria-label="Publish"
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                    onClick={() => setShowDeleteModal(true)}
+                    title="Hapus kegiatan"
+                    aria-label="Hapus kegiatan"
+                    className="p-2 rounded-lg border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
                   >
-                    <CheckCircle2 size={14} />
-                    <span className="hidden sm:inline">Publish</span>
+                    <Trash2 size={15} aria-hidden="true" />
                   </button>
                 )}
-                {activity.status === 'published' && (
-                  <button
-                    onClick={() => setStatusModal('closed')}
-                    disabled={statusSaving}
-                    title="Tutup"
-                    aria-label="Tutup"
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-600 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-                  >
-                    <XCircle size={14} />
-                    <span className="hidden sm:inline">Tutup</span>
-                  </button>
-                )}
-                <Link
-                  href={`/activities/${activity.id}/edit`}
-                  title="Edit"
-                  aria-label="Edit"
-                  className="p-2 rounded-lg border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                >
-                  <Edit size={15} />
-                </Link>
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  title="Hapus kegiatan"
-                  aria-label="Hapus kegiatan"
-                  className="p-2 rounded-lg border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
-                >
-                  <Trash2 size={15} aria-hidden="true" />
-                </button>
               </div>
             </div>
           </div>

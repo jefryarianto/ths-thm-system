@@ -50,13 +50,13 @@ tanpa `selfMemberId` = superadmin, **bukan** anggota.
 `ScopeHelper` mendapat tiga method baru: `buildSelfScopeFilter()`, `isOwnMemberRow()`,
 `selfCacheSegment()`. Semua dipakai untuk membatasi query dan memisahkan bucket cache:
 
-| Modul                              | Perubahan                                                   |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `documents.service`                | filter `anggotaId = selfMemberId` pada list + generate      |
-| `members.service`                  | `selfScopeField: 'id'` + filter `id = selfMemberId`         |
-| `members` (BaseCrud `verifyScope`) | cek `anggotaId`/`id` = `selfMemberId` sebelum cek hierarki  |
-| `search.service`                   | self-filter pada grup `members` & `documents`               |
-| `assessments` / `graduations`      | cabang `penguji` didahulukan sebelum filter hierarki        |
+| Modul                              | Perubahan                                                  |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `documents.service`                | filter `anggotaId = selfMemberId` pada list + generate     |
+| `members.service`                  | `selfScopeField: 'id'` + filter `id = selfMemberId`        |
+| `members` (BaseCrud `verifyScope`) | cek `anggotaId`/`id` = `selfMemberId` sebelum cek hierarki |
+| `search.service`                   | self-filter pada grup `members` & `documents`              |
+| `assessments` / `graduations`      | cabang `penguji` didahulukan sebelum filter hierarki       |
 
 ### 3.4 Bug laten `calendar.service` — terungkap oleh fix
 
@@ -113,10 +113,10 @@ ranting, bukan filter "milik sendiri".
 
 ## 2. Dampak
 
-| Yang terpengaruh                          | Sebelum                      | Sesudah                              |
-| ----------------------------------------- | ---------------------------- | ------------------------------------ |
-| Login & semua endpoint `anggota`/`penguji`| 403 di seluruh modul         | 200, berfungsi normal                |
-| `GET /members`, `GET /documents` (anggota)| (403 — tidak bisa diuji)     | hanya record milik sendiri           |
-| `GET /search?q=...` (anggota)             | (403)                        | tidak mengekspos anggota lain        |
-| `GET /calendar/events` (anggota)          | (403)                        | 200 — bug Prisma laten ikut terlihat |
-| `GET /members/:otherId` (anggota)         | (403)                        | 403 Forbidden — akses antar-anggota  |
+| Yang terpengaruh                           | Sebelum                  | Sesudah                              |
+| ------------------------------------------ | ------------------------ | ------------------------------------ |
+| Login & semua endpoint `anggota`/`penguji` | 403 di seluruh modul     | 200, berfungsi normal                |
+| `GET /members`, `GET /documents` (anggota) | (403 — tidak bisa diuji) | hanya record milik sendiri           |
+| `GET /search?q=...` (anggota)              | (403)                    | tidak mengekspos anggota lain        |
+| `GET /calendar/events` (anggota)           | (403)                    | 200 — bug Prisma laten ikut terlihat |
+| `GET /members/:otherId` (anggota)          | (403)                    | 403 Forbidden — akses antar-anggota  |

@@ -58,6 +58,7 @@ export class DocumentsController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   @RequireScope('branch')
@@ -87,6 +88,7 @@ export class DocumentsController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   @RequireScope('branch')
@@ -104,6 +106,7 @@ export class DocumentsController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   @RequireScope('branch')
@@ -305,6 +308,7 @@ export class DocumentsController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   @RequireScope('branch')

@@ -123,11 +123,17 @@ describe('OrgChartService', () => {
   it('filters by rantingId when ranting scope is provided', async () => {
     mockPrismaService.nasional.findMany.mockResolvedValueOnce(mockNasionalData);
 
-    await service.getOrgChart(false, { rantingId: 'ran-1', wilayahId: 'wil-1', distrikId: 'dis-1' });
+    await service.getOrgChart(false, {
+      rantingId: 'ran-1',
+      wilayahId: 'wil-1',
+      distrikId: 'dis-1',
+    });
 
     expect(prisma.nasional.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { distriks: { some: { wilayahs: { some: { rantings: { some: { id: 'ran-1' } } } } } } },
+        where: {
+          distriks: { some: { wilayahs: { some: { rantings: { some: { id: 'ran-1' } } } } } },
+        },
       }),
     );
   });

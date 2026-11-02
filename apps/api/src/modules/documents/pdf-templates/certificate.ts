@@ -441,7 +441,8 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
   const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const judulText = template?.judul || 'SERTIFIKAT';
   const subJudulText = template?.subJudul || (variant === 'pelatihan' ? 'PELATIHAN' : 'PENDADARAN');
-  const backTitleText = variant === 'pelatihan' ? 'RINCIAN PENILAIAN PELATIHAN' : 'RINCIAN PENILAIAN PENDADARAN';
+  const backTitleText =
+    variant === 'pelatihan' ? 'RINCIAN PENILAIAN PELATIHAN' : 'RINCIAN PENILAIAN PENDADARAN';
   const watermarkLabel = watermarkText || 'THS';
   const watermarkAlpha = watermarkOpacity ?? 0.045;
   // Body/isi dari pengaturan — menggantikan keterangan bawaan bila diisi.
@@ -499,9 +500,7 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
       Page,
       { size: [1188, 840], style: styles.page, key: 'front' },
       // Latar (background) opsional dari pengaturan Template Dokumen
-      background
-        ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage })
-        : null,
+      background ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage }) : null,
       h(
         View,
         { style: { ...styles.watermark, opacity: watermarkAlpha } },
@@ -529,12 +528,7 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
           h(Text, { style: styles.districtName }, `KOORDINATORAT DISTRIK ${distrik.toUpperCase()}`),
         ),
         // QR verifikasi (kanan)
-        qrDataUrl
-          ? h(
-              Image,
-              { src: qrDataUrl, style: styles.qrImage },
-            )
-          : null,
+        qrDataUrl ? h(Image, { src: qrDataUrl, style: styles.qrImage }) : null,
       ),
       // Title
       h(
@@ -638,9 +632,7 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
       Page,
       { size: [1188, 840], style: styles.page, key: 'back' },
       // Latar (background) opsional — sama dengan sisi depan
-      background
-        ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage })
-        : null,
+      background ? h(Image, { key: 'bg', src: background, style: styles.backgroundImage }) : null,
       h(
         View,
         { style: { ...styles.watermark, opacity: watermarkAlpha } },

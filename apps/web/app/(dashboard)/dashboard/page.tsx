@@ -54,7 +54,6 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { ChartSkeleton } from '@/components/ui/skeleton';
 
-
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex items-center justify-center h-64">
@@ -260,7 +259,14 @@ export default function DashboardPage() {
     [],
   );
 
-  const { data, loading, error, refetch } = useApi<DashboardData>(fetchDashboard, []);
+  // Role activity-scoped (admin_kegiatan & penguji) memakai
+  // ActivityScopedDashboard; /reports/dashboard tidak diizinkan untuk penguji,
+  // jadi jangan panggil sama sekali agar tidak menghasilkan 403.
+  const { data, loading, error, refetch } = useApi<DashboardData>(
+    fetchDashboard,
+    [],
+    !isActivityScoped,
+  );
 
   const fetchGrowthData = useCallback(async () => {
     setGrowthLoading(true);

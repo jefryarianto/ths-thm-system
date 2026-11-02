@@ -171,7 +171,9 @@ export class OrgStructureController {
   }
 
   @Get('tree')
-  @CrudAuth('superadmin', 'admin_nasional', { summary: 'Pohon organisasi (distrik → wilayah → ranting)' })
+  @CrudAuth('superadmin', 'admin_nasional', {
+    summary: 'Pohon organisasi (distrik → wilayah → ranting)',
+  })
   getOrgTree() {
     return this.service.getOrgTree();
   }

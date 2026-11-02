@@ -20,10 +20,7 @@ describe('MonitoringController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MonitoringController],
-      providers: [
-        { provide: MonitoringService, useValue: serviceMock },
-        Reflector,
-      ],
+      providers: [{ provide: MonitoringService, useValue: serviceMock }, Reflector],
     }).compile();
 
     controller = module.get<MonitoringController>(MonitoringController);

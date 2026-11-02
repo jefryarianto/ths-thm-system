@@ -1242,7 +1242,8 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload as any);
     const refreshToken = this.jwtService.sign(payload as any, {
       secret: this.envConfig.jwtRefreshSecret,
-      expiresIn: this.envConfig.jwtRefreshExpiresIn as `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`,
+      expiresIn: this.envConfig
+        .jwtRefreshExpiresIn as `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`,
     });
     return { accessToken, refreshToken };
   }

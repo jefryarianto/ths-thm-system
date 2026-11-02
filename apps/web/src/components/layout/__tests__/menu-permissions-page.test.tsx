@@ -179,7 +179,9 @@ describe('MenuPermissionsPage', () => {
     // Select-all saat terfilter: hanya 'reports' yang boleh berubah.
     fireEvent.click(headerAll('Admin Ranting'));
     expect(cell('Laporan Umum', 'Admin Ranting')).toBeChecked();
-    expect(await screen.findByText('1 role memiliki perubahan belum disimpan.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('1 role memiliki perubahan belum disimpan.'),
+    ).toBeInTheDocument();
 
     // 'forum' tidak tampil saat terfilter dan memang TIDAK ikut tercentang
     // (baseline false harus tetap false).

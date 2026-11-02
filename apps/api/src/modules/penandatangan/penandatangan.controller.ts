@@ -25,7 +25,7 @@ export class PenandatanganController {
   constructor(private readonly service: PenandatanganService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Daftar penandatangan (termasuk cakupan distrik masing-masing)',
   })
   findAll(@Req() req: ScopedRequest) {
@@ -36,7 +36,7 @@ export class PenandatanganController {
   }
 
   @Get('active')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Penandatangan aktif — rantai: distrik pemanggil → global',
   })
   findActive(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
@@ -44,7 +44,7 @@ export class PenandatanganController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary: 'Tambah penandatangan baru (scope distrik opsional)',
   })
   create(@Req() req: ScopedRequest, @Body() dto: CreatePenandatanganDto) {
@@ -53,7 +53,9 @@ export class PenandatanganController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Update penandatangan' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Update penandatangan',
+  })
   update(@Req() req: ScopedRequest, @Param('id') id: string, @Body() dto: UpdatePenandatanganDto) {
     return this.service.update(id, dto, {
       role: req?.user?.role,
@@ -64,7 +66,7 @@ export class PenandatanganController {
   // ── Penugasan per tipe dokumen (1-3 penandatangan, per scope distrik) ──
 
   @Get('dokumen')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary:
       'Penugasan penandatangan per tipe dokumen pada scope (query: distrikId, default global)',
   })
@@ -73,7 +75,7 @@ export class PenandatanganController {
   }
 
   @Put('dokumen/:type')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
     summary: 'Set penandatangan untuk satu tipe dokumen pada scope (1-3 orang)',
   })
   @ApiBody({

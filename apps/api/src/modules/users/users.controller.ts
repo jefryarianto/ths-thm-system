@@ -12,7 +12,7 @@ export class UsersController {
   constructor(private readonly service: UsersService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil semua pengguna',
   })
   findAll(@Query() query: UserFilterDto, @Req() req: ScopedRequest) {
@@ -20,7 +20,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil detail pengguna',
   })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -28,7 +28,7 @@ export class UsersController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tambah pengguna baru',
   })
   create(@Body() dto: CreateUserDto, @Req() req: ScopedRequest) {
@@ -36,7 +36,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui pengguna',
   })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto, @Req() req: ScopedRequest) {
@@ -44,7 +44,9 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus pengguna' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Hapus pengguna',
+  })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
   }

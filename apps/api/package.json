@@ -22,6 +22,8 @@
     "prisma:f3:seed": "ts-node prisma/seed-f3.ts",
     "seed:kepengurusan": "ts-node prisma/seed-kepengurusan.ts",
     "db:seed": "prisma db seed",
+    "db:reset:fresh": "node prisma/reset-produksi.js",
+    "db:seed:produksi": "node prisma/seed-produksi.js",
     "swagger:export": "ts-node scripts/generate-swagger.ts",
     "generate:client": "npx openapi-typescript ./swagger.json --output ../web/src/types/api.d.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",

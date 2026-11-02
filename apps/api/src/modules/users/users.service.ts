@@ -133,10 +133,14 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
 
     // Role tanpa scope organisasi (anggota, dll): jika client tidak memberi org
     // apa pun, turunkan dari scope aktor (perilaku lama: "auto-assign dari scope").
+    // admin_nasional: selalu tanpa scope organisasi, tidak terima distrik/wilayah/ranting.
     if (!level && !distrikId && !wilayahId && !rantingId && scope) {
-      distrikId = scope.distrikId ?? null;
-      wilayahId = scope.wilayahId ?? null;
-      rantingId = scope.rantingId ?? null;
+      // admin_nasional selalu tanpa scope organisasi (org-level = undefined)
+      if (scope.role !== 'admin_nasional') {
+        distrikId = scope.distrikId ?? null;
+        wilayahId = scope.wilayahId ?? null;
+        rantingId = scope.rantingId ?? null;
+      }
     }
 
     // Verifikasi ranting & turunkan wilayah/distriknya.
@@ -167,8 +171,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     const requiredId =
       level === 'distrik' ? distrikId : level === 'wilayah' ? wilayahId : rantingId;
     if (!requiredId) {
-      const label =
-        level === 'distrik' ? 'Distrik' : level === 'wilayah' ? 'Wilayah' : 'Ranting';
+      const label = level === 'distrik' ? 'Distrik' : level === 'wilayah' ? 'Wilayah' : 'Ranting';
       throw new BadRequestException(`${label} wajib dipilih untuk role ${effectiveRole}`);
     }
 

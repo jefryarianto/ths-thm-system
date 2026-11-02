@@ -1,6 +1,17 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post,
-  Req, Res, UploadedFile, UseInterceptors, ValidationPipe,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -34,33 +45,67 @@ export class GaleriController {
   @Post('upload')
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }))
-  upload(@UploadedFile() file: Express.Multer.File, @Body('judul', new ValidationPipe({ transform: true })) judul: string, @Req() req: ScopedRequest) {
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
+  upload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('judul', new ValidationPipe({ transform: true })) judul: string,
+    @Req() req: ScopedRequest,
+  ) {
     return this.service.upload(file, judul, req.user!.id);
   }
 
   @Get('mine')
   @ApiBearerAuth()
-  mine(@Req() req: ScopedRequest) { return this.service.listMine(req.user!.id); }
+  mine(@Req() req: ScopedRequest) {
+    return this.service.listMine(req.user!.id);
+  }
 
   @Get('admin/:id/image')
   @ApiBearerAuth()
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+  )
   async adminImage(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const image = await this.service.getStoredImage(id);
     res.setHeader('Content-Type', image.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(image.fileName)}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${encodeURIComponent(image.fileName)}"`,
+    );
     image.stream.pipe(res);
   }
 
   @Get('admin')
   @ApiBearerAuth()
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  adminList() { return this.service.listAdmin(); }
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+  )
+  adminList() {
+    return this.service.listAdmin();
+  }
 
   @Patch(':id/review')
   @ApiBearerAuth()
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+  )
   review(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ValidationPipe({ whitelist: true, transform: true })) body: ReviewGaleriDto,
@@ -79,7 +124,12 @@ export class GaleriController {
   @Public()
   async image(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const image = await this.service.getImage(id);
-    res.set({ 'Content-Type': image.mimeType, 'Content-Disposition': `inline; filename="${encodeURIComponent(image.fileName)}"`, 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' });
+    res.set({
+      'Content-Type': image.mimeType,
+      'Content-Disposition': `inline; filename="${encodeURIComponent(image.fileName)}"`,
+      'Cache-Control': 'public, max-age=86400',
+      'X-Content-Type-Options': 'nosniff',
+    });
     image.stream.pipe(res);
   }
 }

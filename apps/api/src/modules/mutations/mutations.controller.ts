@@ -12,7 +12,7 @@ export class MutationsController {
   constructor(private readonly service: MutationsService) {}
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ajukan mutasi anggota',
   })
   create(@Body() dto: CreateMutationDto, @Req() req: ScopedRequest) {
@@ -20,7 +20,7 @@ export class MutationsController {
   }
 
   @Get('member/:anggotaId')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Riwayat mutasi per anggota',
   })
   listForMember(@Param('anggotaId', ParseUUIDPipe) anggotaId: string, @Req() req: ScopedRequest) {
@@ -28,7 +28,7 @@ export class MutationsController {
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Daftar permintaan mutasi',
   })
   findAll(@Query('status') status: string | undefined, @Req() req: ScopedRequest) {
@@ -36,7 +36,7 @@ export class MutationsController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Detail permintaan mutasi',
   })
   findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: ScopedRequest) {
@@ -44,7 +44,7 @@ export class MutationsController {
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Setujui tahap mutasi',
   })
   approve(
@@ -56,7 +56,7 @@ export class MutationsController {
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tolak permintaan mutasi',
   })
   reject(

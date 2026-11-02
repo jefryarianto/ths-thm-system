@@ -97,12 +97,12 @@ export default function NewOrgDocumentPage() {
     try {
       const formData = new FormData();
       formData.append('file', f);
-        const res = await apiClient.post('/org-documents/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        const payload = unwrap<{ filePath: string; originalName: string; size: number }>(res);
-        if (!payload?.filePath) throw new Error('filePath tidak diterima dari server');
-        setUploadedPath(payload.filePath);
+      const res = await apiClient.post('/org-documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const payload = unwrap<{ filePath: string; originalName: string; size: number }>(res);
+      if (!payload?.filePath) throw new Error('filePath tidak diterima dari server');
+      setUploadedPath(payload.filePath);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
@@ -181,9 +181,7 @@ export default function NewOrgDocumentPage() {
           <div>
             <label className="block text-sm font-medium mb-1">File Dokumen</label>
             {!file ? (
-              <label
-                className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition"
-              >
+              <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition">
                 <Upload size={24} className="text-gray-400" />
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {uploading ? 'Mengupload...' : 'Klik untuk memilih file'}

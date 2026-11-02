@@ -181,11 +181,7 @@ export default function RewardsPage() {
                 disabled={redeemingId === reward.id || reward.stock <= 0}
                 className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium"
               >
-                {redeemingId === reward.id ? (
-                  <SmallLogoSpinner size={16} />
-                ) : (
-                  <Gift size={16} />
-                )}
+                {redeemingId === reward.id ? <SmallLogoSpinner size={16} /> : <Gift size={16} />}
                 {redeemingId === reward.id ? 'Memproses...' : 'Redeem'}
               </button>
             </div>

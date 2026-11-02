@@ -26,6 +26,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Ambil semua ujian praktek dalam pendadaran' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -44,6 +45,7 @@ export class UjianPraktekController {
   })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -59,6 +61,7 @@ export class UjianPraktekController {
   @ApiOperation({ summary: 'Ambil detail ujian praktek' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -72,7 +75,7 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek')
   @ApiOperation({ summary: 'Buat ujian praktek baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   create(@Param('kegiatanId') kegiatanId: string, @Body() dto: CreateUjianPraktekDto) {
     return this.service.create(kegiatanId, dto);
@@ -80,7 +83,7 @@ export class UjianPraktekController {
 
   @Patch(':kegiatanId/ujian-praktek/:id')
   @ApiOperation({ summary: 'Perbarui ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateUjianPraktekDto) {
     return this.service.update(id, dto);
@@ -88,7 +91,7 @@ export class UjianPraktekController {
 
   @Delete(':kegiatanId/ujian-praktek/:id')
   @ApiOperation({ summary: 'Hapus ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
@@ -98,7 +101,7 @@ export class UjianPraktekController {
   @ApiOperation({
     summary: 'Sinkronkan semua item aktif & penguji approved ke ujian (additive & idempoten)',
   })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   autoSync(@Param('id') id: string) {
     return this.service.autoSync(id);
@@ -108,7 +111,7 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/examiners')
   @ApiOperation({ summary: 'Tugaskan penguji ke ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   assignExaminer(@Param('id') id: string, @Body() dto: AssignExaminerDto) {
     return this.service.assignExaminer(id, dto);
@@ -116,7 +119,7 @@ export class UjianPraktekController {
 
   @Delete(':kegiatanId/ujian-praktek/:id/examiners')
   @ApiOperation({ summary: 'Hapus penguji dari ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   removeExaminer(@Param('id') id: string, @Body() dto: RemoveExaminerDto) {
     return this.service.removeExaminer(id, dto);
@@ -126,7 +129,7 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/items')
   @ApiOperation({ summary: 'Tambah item penilaian ke ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   assignItem(@Param('id') id: string, @Body() dto: AssignItemDto) {
     return this.service.assignItem(id, dto);
@@ -134,7 +137,7 @@ export class UjianPraktekController {
 
   @Delete(':kegiatanId/ujian-praktek/:id/items/:itemPenilaianId')
   @ApiOperation({ summary: 'Hapus item penilaian dari ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   removeItem(@Param('id') id: string, @Param('itemPenilaianId') itemPenilaianId: string) {
     return this.service.removeItem(id, itemPenilaianId);
@@ -144,7 +147,14 @@ export class UjianPraktekController {
 
   @Get(':kegiatanId/ujian-praktek/:id/scores')
   @ApiOperation({ summary: 'Ambil nilai ujian praktek' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   getScores(@Param('id') id: string) {
     return this.service.getScores(id);
@@ -152,7 +162,14 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/score')
   @ApiOperation({ summary: 'Input nilai ujian praktek (bulk per penguji)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   scoreCandidate(@Param('id') id: string, @Body() dto: BulkScoreDto, @Req() req: ScopedRequest) {
     return this.service.scoreCandidate(id, dto, req.user?.id || 'system');
@@ -165,7 +182,7 @@ export class UjianPraktekController {
     summary:
       'Ambil item penilaian yang tersedia (utamakan set milik pendadaran, fallback template)',
   })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   getAvailableItems(@Param('kegiatanId') kegiatanId: string) {
     return this.service.getAvailableItems(kegiatanId);
@@ -173,7 +190,7 @@ export class UjianPraktekController {
 
   @Get(':kegiatanId/ujian-praktek/available-examiners')
   @ApiOperation({ summary: 'Ambil penguji yang tersedia' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
   getAvailableExaminers(@Param('kegiatanId') kegiatanId: string) {
     return this.service.getAvailableExaminers(kegiatanId);
@@ -185,7 +202,14 @@ export class UjianPraktekController {
 
   @Get(':kegiatanId/ujian-praktek/:id/sesi')
   @ApiOperation({ summary: 'Daftar sesi ujian semua peserta + sisa waktu (server-side)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   getSesi(@Param('id') id: string) {
     return this.service.getSesi(id);
@@ -193,7 +217,14 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/start')
   @ApiOperation({ summary: 'Mulai sesi ujian peserta (sekali — 1 peserta hanya 1 sesi)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   startSesi(
     @Param('id') id: string,
@@ -206,7 +237,14 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/extend')
   @ApiOperation({ summary: 'Tambah waktu +10 menit (maksimal sekali per peserta)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   extendSesi(
     @Param('id') id: string,
@@ -218,7 +256,14 @@ export class UjianPraktekController {
 
   @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/finish')
   @ApiOperation({ summary: 'Akhiri sesi ujian peserta (opsional — waktu hanya pedoman)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_kegiatan',
+    'penguji',
+  )
   @RequireScope('branch')
   finishSesi(@Param('id') id: string, @Param('calonAnggotaId') calonAnggotaId: string) {
     return this.service.finishSesi(id, calonAnggotaId);

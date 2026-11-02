@@ -807,16 +807,16 @@ export default function KepengurusanPage() {
                               selectedMemberName: item.user.namaLengkap,
                               jabatanId: item.jabatanId,
                               periodeId: item.periodeId,
-                            parentId: item.parentId || '',
-                            startDate: item.startDate ? item.startDate.split('T')[0] : '',
-                            endDate: item.endDate ? item.endDate.split('T')[0] : '',
-                          });
-                          setShowModal(true);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
-                      >
-                        <Edit3 size={14} />
-                      </button>
+                              parentId: item.parentId || '',
+                              startDate: item.startDate ? item.startDate.split('T')[0] : '',
+                              endDate: item.endDate ? item.endDate.split('T')[0] : '',
+                            });
+                            setShowModal(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+                        >
+                          <Edit3 size={14} />
+                        </button>
                       </Can>
                       <Can module="kepengurusan" action="delete">
                         <button

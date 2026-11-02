@@ -159,9 +159,7 @@ describe('ExportService', () => {
 
     it('should not add a hierarchy filter for national scope (trainings)', async () => {
       await service.exportData('trainings', 'csv', {});
-      expect(prisma.latihan.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: {} }),
-      );
+      expect(prisma.latihan.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {} }));
     });
   });
 });

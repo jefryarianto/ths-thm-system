@@ -8,14 +8,7 @@
  * Penandatangan: Koordinator Nasional THS-THM + Ketua Panitia Ujian Kenaikan Tingkat.
  */
 const React = require('react');
-const {
-  Document,
-  Page,
-  View,
-  Text,
-  Image,
-  StyleSheet,
-} = require('@react-pdf/renderer');
+const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
 import { fillTemplateText } from './template-text';
 
 const BLUE_900 = '#1e3a5f';
@@ -267,8 +260,12 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
     h(
       View,
       { key: `signer-${i}`, style: styles.signerBlock },
-      s.signerName ? h(Text, { style: { fontSize: 15, fontWeight: 'bold', color: BLUE_950 } }, s.signerName) : null,
-      s.signerTitle ? h(Text, { style: { fontSize: 12, color: '#64748b', marginTop: 2 } }, s.signerTitle) : null,
+      s.signerName
+        ? h(Text, { style: { fontSize: 15, fontWeight: 'bold', color: BLUE_950 } }, s.signerName)
+        : null,
+      s.signerTitle
+        ? h(Text, { style: { fontSize: 12, color: '#64748b', marginTop: 2 } }, s.signerTitle)
+        : null,
     ),
   );
 
@@ -285,7 +282,9 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
         { style: styles.headerSection },
         h(View, { style: styles.logoCircle }, h(Text, { style: styles.logoInner }, 'THS')),
         h(Text, { style: styles.orgName }, orgNama),
-        ...(orgAlamat ? [h(Text, { style: { fontSize: 12, color: '#777', marginTop: 4 } }, orgAlamat)] : []),
+        ...(orgAlamat
+          ? [h(Text, { style: { fontSize: 12, color: '#777', marginTop: 4 } }, orgAlamat)]
+          : []),
         h(Text, { style: styles.districtName }, 'KOORDINATORAT NASIONAL'),
       ),
       // Judul
@@ -303,7 +302,11 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
         h(Text, { style: styles.diberikanText }, 'Sertifikat ini diberikan kepada'),
         h(View, { style: styles.namaBox }, h(Text, { style: styles.namaText }, recipientName)),
         bodyText
-          ? h(Text, { style: { fontSize: 16, color: '#475569', marginTop: 22, lineHeight: 1.7 } }, bodyText)
+          ? h(
+              Text,
+              { style: { fontSize: 16, color: '#475569', marginTop: 22, lineHeight: 1.7 } },
+              bodyText,
+            )
           : h(
               Text,
               { style: styles.lulusText },
@@ -314,19 +317,27 @@ export function buildSertifikatTingkatanPdf(props: SertifikatTingkatanProps) {
       h(
         View,
         { style: styles.infoGrid },
-        h(View, { style: styles.infoBox },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Ranting'),
           h(Text, { style: styles.infoValue }, ranting),
         ),
-        h(View, { style: styles.infoBox },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Distrik'),
           h(Text, { style: styles.infoValue }, districtName),
         ),
-        h(View, { style: styles.infoBox },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Ujian Kenaikan Tingkat'),
           h(Text, { style: styles.infoValue }, `${previousLevel} -> ${currentLevel}`),
         ),
-        h(View, { style: styles.infoBox },
+        h(
+          View,
+          { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Predikat'),
           h(Text, { style: styles.infoValueHighlight }, predikat),
         ),

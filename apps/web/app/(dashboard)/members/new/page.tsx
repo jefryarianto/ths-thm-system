@@ -392,7 +392,8 @@ export default function NewMemberPage() {
               disabled={saving}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {saving ? 'Menyimpan...' : 'Simpan'}
+              {saving ? <SmallLogoSpinner size={14} /> : <Save size={14} />}{' '}
+              {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </div>
         </form>

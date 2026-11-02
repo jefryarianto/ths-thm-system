@@ -48,10 +48,18 @@ export class PaymentsController {
   // ── Bank Info Management (Admin) ──
 
   @Get('bank-info')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    scope: 'self',
-    summary: 'Dapatkan daftar rekening bank & QRIS aktif',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'Dapatkan daftar rekening bank & QRIS aktif',
+    },
+  )
   getBankInfo() {
     return this.service.getBankInfo();
   }
@@ -100,10 +108,18 @@ export class PaymentsController {
 
   @Post(':id/upload-proof')
   @ApiConsumes('multipart/form-data')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', {
-    scope: 'self',
-    summary: 'Upload bukti pembayaran manual',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'Upload bukti pembayaran manual',
+    },
+  )
   @UseInterceptors(
     FileInterceptor('bukti', {
       storage: buildProofStorage(),

@@ -149,12 +149,13 @@ export default function GamificationAdminPage() {
                 />
                 <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
                 <Tooltip
-                  formatter={(value: number, _name: string, props: TooltipFormatterProps<PointsDistribution>) => {
+                  formatter={(
+                    value: number,
+                    _name: string,
+                    props: TooltipFormatterProps<PointsDistribution>,
+                  ) => {
                     const entry = props.payload?.[0]?.payload;
-                    return [
-                      `${value} anggota`,
-                      `${entry?.icon} ${entry?.level}`,
-                    ];
+                    return [`${value} anggota`, `${entry?.icon} ${entry?.level}`];
                   }}
                   contentStyle={{
                     borderRadius: '8px',

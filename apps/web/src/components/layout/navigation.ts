@@ -128,10 +128,14 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
     items: [
-
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'penguji' },
       { href: '/galeri/upload', label: 'Kirim Foto Galeri', icon: Globe, minRole: 'anggota' },
-      { href: '/galeri/manage', label: 'Moderasi Galeri', icon: ClipboardCheck, minRole: 'admin_ranting' },
+      {
+        href: '/galeri/manage',
+        label: 'Moderasi Galeri',
+        icon: ClipboardCheck,
+        minRole: 'admin_ranting',
+      },
       { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
       { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
       { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },
@@ -176,7 +180,9 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/org-documents', label: 'Dokumen Organisasi', icon: Archive, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: IdCard, minRole: 'admin_distrik' },
-      { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'admin_nasional' },
+      // Semua aksi periode (GET daftar untuk pemilih + CRUD) hanya superadmin
+      // di halaman ini; admin_nasional memakai /settings/periods.
+      { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'superadmin' },
       {
         href: '/settings/kepengurusan',
         label: 'Kepengurusan',
@@ -268,7 +274,9 @@ export const menuGroups: MenuGroup[] = [
         href: '/gamification/scoreboard',
         label: 'Scoreboard',
         icon: TrendingUp,
-        minRole: 'admin_kegiatan',
+        // Halaman memakai /gamification/stats & /gamification/admin/* yang
+        // hanya untuk admin_ranting ke atas.
+        minRole: 'admin_ranting',
       },
       {
         href: '/gamification/report',

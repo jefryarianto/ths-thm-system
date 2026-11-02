@@ -275,7 +275,8 @@ function RootCauseEditor({
           disabled={saving}
           className="flex items-center gap-1 px-2.5 py-1 text-[10px] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded transition"
         >
-          {saving ? <SmallLogoSpinner size={10} /> : <Save size={10} />} {saving ? 'Saving...' : 'Save'}
+          {saving ? <SmallLogoSpinner size={10} /> : <Save size={10} />}{' '}
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>

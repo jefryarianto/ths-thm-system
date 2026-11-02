@@ -18,8 +18,12 @@ import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 export class PeriodeController {
   constructor(private readonly service: PeriodeService) {}
 
+  // Baca daftar periode dipakai pemilih periode di halaman kepengurusan & editor
+  // org chart (admin wilayah/distrik/ranting). Penulisan tetap superadmin.
   @Get()
-  @CrudAuth('superadmin', { summary: 'Daftar semua periode' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Daftar semua periode',
+  })
   findAll() {
     return this.service.findAll();
   }

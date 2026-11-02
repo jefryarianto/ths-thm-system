@@ -320,7 +320,7 @@ export class SettingsController {
   }
 
   @Post('organisasi/sync')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_nasional', {
     scope: 'national',
     summary: 'Sinkronkan kepengurusan nasional ke struktur organisasi publik',
   })

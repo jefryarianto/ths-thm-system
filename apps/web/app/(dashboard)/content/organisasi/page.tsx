@@ -224,11 +224,7 @@ export default function OrganisasiPage() {
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-navy-800 text-white rounded-lg hover:bg-navy-900 transition-colors disabled:opacity-50"
                   title="Ambil data pengurus nasional aktif"
                 >
-                  {syncing ? (
-                    <SmallLogoSpinner size={14} />
-                  ) : (
-                    <DownloadCloud size={14} />
-                  )}
+                  {syncing ? <SmallLogoSpinner size={14} /> : <DownloadCloud size={14} />}
                   Tarik dari Kepengurusan
                 </button>
                 <button

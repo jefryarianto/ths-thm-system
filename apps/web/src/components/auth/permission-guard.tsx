@@ -13,6 +13,8 @@ import type { Role } from '@/types';
 interface PermissionGuardProps {
   module: string;
   action?: keyof ModulePermission;
+  /** Gerbang tambahan: role minimum yang wajib dipenuhi (AND dengan module). */
+  minRole?: Role;
   children: ReactNode;
   negate?: boolean;
   fallback?: ReactNode;
@@ -25,6 +27,7 @@ interface PermissionGuardProps {
 export function PermissionGuard({
   module,
   action = 'view',
+  minRole,
   children,
   negate = false,
   fallback,
@@ -63,6 +66,10 @@ export function PermissionGuard({
     allowed = hasMinRole(requiredRole);
   }
 
+  // Gerbang tambahan (mis. halaman import yang butuh role lebih tinggi dari
+  // aksi `create` modulnya). Tidak bisa menaikkan hak di atas module.
+  if (minRole && !hasMinRole(minRole)) allowed = false;
+
   if (negate) allowed = !allowed;
 
   if (allowed) {
@@ -78,7 +85,7 @@ export function PermissionGuard({
       role={role}
       isAuthenticated={isAuthenticated}
       module={module}
-      requiredRole={requiredRole}
+      requiredRole={requiredRole ?? minRole}
     />
   );
 }

@@ -15,6 +15,7 @@ export class CalendarController {
   @ApiOperation({ summary: 'Ambil event kalender per bulan (latihan, kegiatan, pendadaran)' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -33,6 +34,7 @@ export class CalendarController {
   @ApiOperation({ summary: 'Ambil hari libur nasional (opsional filter tahun)' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -50,6 +52,7 @@ export class CalendarController {
   @ApiOperation({ summary: 'Ambil event 7 hari ke depan (latihan + iuran jatuh tempo)' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',

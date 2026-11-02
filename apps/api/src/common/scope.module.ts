@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScopeHelper } from './utils/scope-helpers';
+import { ScopeDeepModule } from './scope/scope.module';
 import { AuditService } from './services/audit.service';
 import { AuditLogStore } from './services/audit-log-store.service';
 import { AuditLogController } from './controllers/audit-log.controller';
@@ -25,7 +26,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
 
 @Global()
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, ScopeDeepModule],
   controllers: [
     AuditLogController,
     AuditSseController,

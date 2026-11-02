@@ -306,18 +306,24 @@ export class AuthController {
 
     // Fetch human‑readable names only when the corresponding IDs are present.
     const [distrik, wilayah, ranting] = await Promise.all([
-      distrikId ? this.prisma.distrik.findUnique({
-        where: { id: distrikId },
-        select: { nama: true },
-      }) : null,
-      wilayahId ? this.prisma.wilayah.findUnique({
-        where: { id: wilayahId },
-        select: { nama: true },
-      }) : null,
-      rantingId ? this.prisma.ranting.findUnique({
-        where: { id: rantingId },
-        select: { nama: true },
-      }) : null,
+      distrikId
+        ? this.prisma.distrik.findUnique({
+            where: { id: distrikId },
+            select: { nama: true },
+          })
+        : null,
+      wilayahId
+        ? this.prisma.wilayah.findUnique({
+            where: { id: wilayahId },
+            select: { nama: true },
+          })
+        : null,
+      rantingId
+        ? this.prisma.ranting.findUnique({
+            where: { id: rantingId },
+            select: { nama: true },
+          })
+        : null,
     ]);
 
     return {

@@ -9,7 +9,7 @@ export class DuesCronService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly duesService: DuesService
+    private readonly duesService: DuesService,
   ) {}
 
   // Jalankan setiap awal bulan tanggal 1 jam 00:00
@@ -22,11 +22,11 @@ export class DuesCronService {
       const periodMonth = String(now.getMonth() + 1).padStart(2, '0');
       const periodYear = now.getFullYear();
       const periode = `${periodYear}-${periodMonth}`;
-      
+
       // Hitung tanggal terakhir bulan ini sebagai dueDate
       const lastDayOfMonth = new Date(periodYear, now.getMonth() + 1, 0);
       lastDayOfMonth.setHours(23, 59, 59, 999);
-      
+
       // Ambil treshold 1 bulan yang lalu untuk anggota baru
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -38,7 +38,7 @@ export class DuesCronService {
           createdAt: { lte: oneMonthAgo }, // bergabung (data terbuat) lebih dari 1 bulan yg lalu
           deletedAt: null,
         },
-        select: { id: true, createdAt: true }
+        select: { id: true, createdAt: true },
       });
 
       let createdCount = 0;
@@ -50,8 +50,8 @@ export class DuesCronService {
             anggotaId_periode: {
               anggotaId: anggota.id,
               periode,
-            }
-          }
+            },
+          },
         });
 
         if (!existing) {
@@ -63,7 +63,7 @@ export class DuesCronService {
               jumlah: 50000, // asumsikan rate tetap 50000 / bln, bisa disesuaikan
               status: 'belum_dibayar',
               dueDate: lastDayOfMonth,
-            }
+            },
           });
           createdCount++;
         }

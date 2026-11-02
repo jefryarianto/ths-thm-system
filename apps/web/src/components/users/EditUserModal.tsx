@@ -77,8 +77,7 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
             password: '',
           });
           setOrg({
-            distrikId:
-              user.distrikId ?? user.ranting?.wilayah?.distrik?.id ?? '',
+            distrikId: user.distrikId ?? user.ranting?.wilayah?.distrik?.id ?? '',
             wilayahId: user.wilayahId ?? user.ranting?.wilayah?.id ?? '',
             rantingId: user.rantingId ?? '',
           });

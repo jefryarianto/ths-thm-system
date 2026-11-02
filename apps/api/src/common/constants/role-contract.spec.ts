@@ -3,7 +3,9 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { ROLE_VALUES, Role } from './roles.constant';
 
 import { ActivitiesController } from '../../modules/activities/activities.controller';
+import { CalendarController } from '../../modules/calendar/calendar.controller';
 import { CardTemplatesController } from '../../modules/card-templates/card-templates.controller';
+import { ChatController } from '../../modules/chat/chat.controller';
 import { ContentController } from '../../modules/content/content.controller';
 import { DocumentsController } from '../../modules/documents/documents.controller';
 import { DuesController } from '../../modules/dues/dues.controller';
@@ -16,12 +18,17 @@ import { OrgStructureController } from '../../modules/org-structure/org-structur
 import { PaymentsController } from '../../modules/payments/payments.controller';
 import { SearchController } from '../../modules/search/search.controller';
 import { SettingsController } from '../../modules/settings/settings.controller';
+import { TargetsController } from '../../modules/targets/targets.controller';
+import { TingkatanController } from '../../modules/tingkatan/tingkatan.controller';
+import { UjianPraktekController } from '../../modules/ujian-praktek/ujian-praktek.controller';
 
 type Endpoint = { controller: string; method: string; roles: string[] };
 
 const CONTROLLERS: Array<[string, Type<unknown>]> = [
   ['ActivitiesController', ActivitiesController],
+  ['CalendarController', CalendarController],
   ['CardTemplatesController', CardTemplatesController],
+  ['ChatController', ChatController],
   ['ContentController', ContentController],
   ['DocumentsController', DocumentsController],
   ['DuesController', DuesController],
@@ -34,6 +41,9 @@ const CONTROLLERS: Array<[string, Type<unknown>]> = [
   ['PaymentsController', PaymentsController],
   ['SearchController', SearchController],
   ['SettingsController', SettingsController],
+  ['TargetsController', TargetsController],
+  ['TingkatanController', TingkatanController],
+  ['UjianPraktekController', UjianPraktekController],
 ];
 
 /**
@@ -63,6 +73,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'update',
     'uploadDocument',
   ],
+  CalendarController: ['getEvents', 'getHolidays', 'getUpcoming'],
   CardTemplatesController: [
     'activate',
     'create',
@@ -72,6 +83,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'remove',
     'update',
   ],
+  ChatController: ['deleteMessage', 'getMessages', 'getRooms', 'markAsRead', 'sendMessage'],
   ContentController: [
     'createBerita',
     'deleteBerita',
@@ -160,6 +172,10 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'update',
   ],
   MembersController: [
+    'activateCard',
+    'approve',
+    'create',
+    'exportCsv',
     'findAll',
     'findOne',
     'generateDigitalCard',
@@ -173,7 +189,19 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'getIncompleteMembers',
     'getIncompleteStats',
     'getMe',
+    'getPrintedBatchPdf',
+    'getPrintedCardPdf',
+    'importCsv',
+    'issuePrintedCard',
+    'printBatch',
+    'reactivate',
+    'remove',
+    'resendCredentials',
+    'revokeCard',
     'searchMembers',
+    'suspend',
+    'update',
+    'validate',
   ],
   OrgStructureController: [
     'createDistrik',
@@ -200,8 +228,10 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'deleteBankInfo',
     'findOne',
     'getAllBankInfo',
+    'getBankInfo',
     'rejectPayment',
     'updateBankInfo',
+    'uploadProof',
     'verifyPayment',
   ],
   SearchController: ['search'],
@@ -220,6 +250,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'getStamp',
     'getStamps',
     'removeDocTemplateImage',
+    'syncFromKepengurusan',
     'updateBrandingColors',
     'updateOrganisasi',
     'updatePeriod',
@@ -228,6 +259,29 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'uploadDocTemplateImage',
     'uploadSignature',
     'uploadStamp',
+  ],
+  TargetsController: ['getTargets'],
+  TingkatanController: ['create', 'findAll', 'getVisuals', 'remove', 'update'],
+  UjianPraktekController: [
+    'assignExaminer',
+    'assignItem',
+    'autoSync',
+    'create',
+    'extendSesi',
+    'findAll',
+    'findOne',
+    'finishSesi',
+    'getAvailableExaminers',
+    'getAvailableItems',
+    'getMyScoreCard',
+    'getScores',
+    'getSesi',
+    'remove',
+    'removeExaminer',
+    'removeItem',
+    'scoreCandidate',
+    'startSesi',
+    'update',
   ],
 };
 

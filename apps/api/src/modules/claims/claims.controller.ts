@@ -14,7 +14,7 @@ export class ClaimsController {
   constructor(private readonly service: ClaimsService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil semua klaim',
   })
   findAll(@Query() q: ClaimFilterDto, @Req() req: ScopedRequest) {
@@ -22,7 +22,7 @@ export class ClaimsController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil detail klaim',
   })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -40,7 +40,7 @@ export class ClaimsController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui klaim',
   })
   update(@Param('id') id: string, @Body() dto: UpdateClaimDto, @Req() req: ScopedRequest) {
@@ -48,13 +48,15 @@ export class ClaimsController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus klaim' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Hapus klaim',
+  })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Setujui klaim',
   })
   approve(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -62,7 +64,7 @@ export class ClaimsController {
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tolak klaim',
   })
   reject(@Param('id') id: string, @Body() b: RejectClaimDto, @Req() req: ScopedRequest) {
@@ -70,7 +72,7 @@ export class ClaimsController {
   }
 
   @Post(':id/process')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Proses klaim',
   })
   process(@Param('id') id: string, @Req() req: ScopedRequest) {

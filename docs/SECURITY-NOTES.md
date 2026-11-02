@@ -9,16 +9,16 @@ Batch fix sebelumnya (2026-10-07) menutup **26 dari 30** alert lewat bump
 
 ## Status: 3 alert tersisa, semua tanpa fix upstream
 
-| Alert        | Package            | Severity | Rentang rentan | Fix ada? | Akses                      |
-| ------------ | ------------------ | -------- | -------------- | -------- | -------------------------- |
-| GHSA-86w9-…  | node-forge         | high     | `<= 1.4.0`     | TIDAK    | transitive via firebase-admin |
-| (braces)     | braces             | high     | `<= 3.0.3`     | belum publish | transitive via babel/micromatch |
-| GHSA-…-…     | sprintf-js         | medium   | `<= 1.1.3`     | TIDAK    | transitive (express logger)  |
+| Alert       | Package    | Severity | Rentang rentan | Fix ada?      | Akses                           |
+| ----------- | ---------- | -------- | -------------- | ------------- | ------------------------------- |
+| GHSA-86w9-… | node-forge | high     | `<= 1.4.0`     | TIDAK         | transitive via firebase-admin   |
+| (braces)    | braces     | high     | `<= 3.0.3`     | belum publish | transitive via babel/micromatch |
+| GHSA-…-…    | sprintf-js | medium   | `<= 1.1.3`     | TIDAK         | transitive (express logger)     |
 
 ## Alasan diterima (risk acceptance)
 
 **1. node-forge (`<= 1.4.0`, patched = NONE).**
-Versi 1.4.0 adalah rilis terbaru di npm — rentang `<= 1.4.0` mencakup *semua*
+Versi 1.4.0 adalah rilis terbaru di npm — rentang `<= 1.4.0` mencakup _semua_
 versi yang pernah ada, jadi downgrade tidak menyelesaikan apa pun. Fix upstream
 (issue digitalbazaar/forge#1149/#1152) belum dirilis. Tidak ada mitigasi versi
 yang mungkin. Alert ditahan sampai upstream merilis 1.4.1.

@@ -113,7 +113,9 @@ export default function DuesPage() {
   }, [fetchStats, fetchMonthlyTrend, isAdmin]);
 
   const handleRefresh = async () => {
-    await Promise.all([fetchStats(), fetchMonthlyTrend(), refetch()]);
+    // Sama seperti efek di atas: role non-admin tidak boleh memanggil endpoint
+    // agregat global, agar tidak menghasilkan 403 saat menekan Refresh.
+    await Promise.all(isAdmin ? [fetchStats(), fetchMonthlyTrend(), refetch()] : [refetch()]);
   };
 
   return (

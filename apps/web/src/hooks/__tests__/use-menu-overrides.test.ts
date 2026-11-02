@@ -32,9 +32,7 @@ describe('useMenuOverrides', () => {
     const { result } = renderHook(() => useMenuOverrides('admin_ranting', true));
 
     expect(result.current).toBeNull(); // belum termuat
-    await waitFor(() =>
-      expect(result.current).toEqual({ forum: false, reports: true }),
-    );
+    await waitFor(() => expect(result.current).toEqual({ forum: false, reports: true }));
     expect(getMock).toHaveBeenCalledWith('/role-menu-permissions/my-menus');
   });
 

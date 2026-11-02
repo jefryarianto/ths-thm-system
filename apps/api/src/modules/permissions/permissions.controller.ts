@@ -1,7 +1,7 @@
-import { Controller, Get, Patch, Body, Param, Query, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, Query } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RolePermission } from '@prisma/client';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 
 @Controller('permissions')
 export class PermissionsController {
@@ -20,12 +20,14 @@ export class PermissionsController {
 
   // GET /permissions/matrix - full matrix (admin only)
   @Get('matrix')
+  @CrudAuth('superadmin', { summary: 'Matriks izin semua role (khusus superadmin)' })
   async getMatrix() {
     return this.service.getAll();
   }
 
   // PATCH /permissions - toggle single permission
   @Patch()
+  @CrudAuth('superadmin', { summary: 'Ubah satu izin role (khusus superadmin)' })
   async toggle(@Body() body: { role: string; key: string; isEnabled: boolean }) {
     await this.prisma.rolePermission.upsert({
       where: { role_key: { role: body.role, key: body.key } },
@@ -38,7 +40,11 @@ export class PermissionsController {
 
   // PATCH /permissions/bulk/:role - bulk toggle for a role
   @Patch('bulk/:role')
-  async bulkToggle(@Param('role') role: string, @Body() body: { keys: string[]; isEnabled: boolean }) {
+  @CrudAuth('superadmin', { summary: 'Ubah banyak izin satu role (khusus superadmin)' })
+  async bulkToggle(
+    @Param('role') role: string,
+    @Body() body: { keys: string[]; isEnabled: boolean },
+  ) {
     for (const key of body.keys) {
       await this.prisma.rolePermission.upsert({
         where: { role_key: { role: role, key: key } },

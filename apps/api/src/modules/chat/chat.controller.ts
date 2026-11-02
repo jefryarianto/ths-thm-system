@@ -14,6 +14,7 @@ export class ChatController {
   @ApiOperation({ summary: 'Ambil ruang chat' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -28,6 +29,7 @@ export class ChatController {
   @ApiOperation({ summary: 'Kirim pesan' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -51,6 +53,7 @@ export class ChatController {
   @ApiOperation({ summary: 'Ambil pesan' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -69,6 +72,7 @@ export class ChatController {
   @ApiOperation({ summary: 'Hapus pesan' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -83,6 +87,7 @@ export class ChatController {
   @ApiOperation({ summary: 'Tandai pesan terbaca' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',

@@ -20,3 +20,9 @@ apps/web/next-env.d.ts
 # Lihat .github/workflows/ci.yml job `contract`.
 apps/api/swagger.json
 apps/web/src/types/api.d.ts
+
+# Klien API ter-generate (`generate:contracts` di package.json root). Header-nya
+# berbunyi "Do not make direct changes"; openapi-typescript memakai indentasi 4
+# spasi, jadi file ini selalu gagal prettier dan hasil formatnya hilang lagi
+# setiap regenerasi.
+packages/api-client/src/index.ts

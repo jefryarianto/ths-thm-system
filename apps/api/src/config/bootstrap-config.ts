@@ -19,7 +19,13 @@ export function setupCors(app: NestExpressApplication): void {
     : ['http://localhost:3000'];
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: function originFilter(reqOrigin: string | undefined): string | void {
+      if (!reqOrigin) return undefined;
+      for (const allowed of corsOrigins) {
+        if (reqOrigin === allowed) return reqOrigin;
+      }
+      return reqOrigin;
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   });

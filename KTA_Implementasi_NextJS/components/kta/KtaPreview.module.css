@@ -1,0 +1,27 @@
+@font-face { font-family: KtaDejaVu; src: url('/kta/DejaVuSans.ttf') format('truetype'); font-style: normal; font-weight: 400; font-display: block; }
+@font-face { font-family: KtaDejaVu; src: url('/kta/DejaVuSans-Bold.ttf') format('truetype'); font-style: normal; font-weight: 700; font-display: block; }
+.root { width: 100%; color: #111; }
+.controls { margin-bottom: 16px; font: 14px/1.5 system-ui, sans-serif; }
+.controls button { background:#0b377b; color:white; border:0; border-radius:5px; padding:10px 14px; cursor:pointer; }
+.controls button:disabled { opacity:.5; cursor:not-allowed; }
+.controls ul { color: #a92020; }
+.cards { display: flex; flex-wrap: wrap; gap: 24px; }
+.sheet { width: 85.6mm; max-width: 100%; position: relative; }
+.stage { position: relative; width:85.6mm; height:53.98mm; border-radius:3.18mm; overflow:hidden; box-shadow:0 4px 14px #00183330; transform-origin:top left; }
+.artwork { position:absolute; left:-2mm; top:-2mm; width:89.6mm; height:57.98mm; overflow:hidden; background-size:100% 100%; background-repeat:no-repeat; color:#000; font-family:KtaDejaVu,sans-serif; }
+.text { position:absolute; display:block; white-space:pre; line-height:1; }
+.photo { position:absolute; left:6.4mm; top:14.48mm; width:20mm; height:30mm; object-fit:cover; border-radius:1.4mm; }
+.qr { position:absolute; left:64.1mm; top:27.88mm; width:20.5mm; height:20.5mm; object-fit:contain; background:white; }
+.stripe { position:absolute; left:65.223mm; width:18.254mm; height:1.5mm; border-radius:.25mm; }
+.signature { position:absolute; left:50.1mm; top:44.58mm; width:19.5mm; height:5.1mm; object-fit:contain; }
+.signatureLine { position:absolute; left:50.1mm; top:50.28mm; border-top:.45pt solid #0b377b; }
+@page { size: 89.6mm 57.98mm; margin: 0; }
+@media print {
+  :global(html), :global(body) { margin:0 !important; padding:0 !important; }
+  .controls { display:none !important; }
+  .root, .cards { display:block !important; width:89.6mm !important; margin:0 !important; padding:0 !important; }
+  .sheet { display:block; width:89.6mm !important; height:57.98mm !important; max-width:none !important; margin:0 !important; page-break-after:always; break-after:page; }
+  .sheet:last-child { page-break-after:auto; break-after:auto; }
+  .stage { width:89.6mm; height:57.98mm; border-radius:0; box-shadow:none; overflow:hidden; transform:none !important; }
+  .artwork { left:0; top:0; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}

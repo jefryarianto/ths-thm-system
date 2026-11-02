@@ -395,7 +395,11 @@ describe('GamificationService', () => {
     it('filters by rantingId when ranting scope is provided', async () => {
       prismaMock.distrik.findMany.mockResolvedValue(mockDistriks);
 
-      await service.getOrgStructure({ rantingId: 'ranting-1', wilayahId: 'wilayah-1', distrikId: 'distrik-1' });
+      await service.getOrgStructure({
+        rantingId: 'ranting-1',
+        wilayahId: 'wilayah-1',
+        distrikId: 'distrik-1',
+      });
 
       expect(prismaMock.distrik.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

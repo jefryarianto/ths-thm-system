@@ -11,7 +11,7 @@ export class ApprovalController {
   constructor(private readonly service: ApprovalService) {}
 
   @Post('submit')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ajukan persetujuan baru',
   })
   submit(@Body() dto: SubmitApprovalDto, @Req() req: ScopedRequest) {
@@ -19,7 +19,7 @@ export class ApprovalController {
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Setujui pengajuan',
   })
   approve(
@@ -31,7 +31,7 @@ export class ApprovalController {
   }
 
   @Post(':id/reject')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tolak pengajuan',
   })
   reject(
@@ -43,7 +43,7 @@ export class ApprovalController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ambil detail pengajuan persetujuan',
   })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -51,7 +51,7 @@ export class ApprovalController {
   }
 
   @Get('pending')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Lihat pengajuan yang menunggu persetujuan',
   })
   getPending(@Req() req: ScopedRequest) {

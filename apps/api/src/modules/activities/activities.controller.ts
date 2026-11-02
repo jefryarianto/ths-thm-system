@@ -26,6 +26,7 @@ export class ActivitiesController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     { summary: 'Ambil semua kegiatan' },
   )
@@ -41,6 +42,7 @@ export class ActivitiesController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     { summary: 'Ambil detail kegiatan' },
   )
@@ -147,6 +149,7 @@ export class ActivitiesController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     { summary: 'Ambil presensi kegiatan' },
   )
@@ -178,6 +181,7 @@ export class ActivitiesController {
     'admin_ranting',
     'admin_nasional',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     { summary: 'Ambil dokumen kegiatan' },
   )

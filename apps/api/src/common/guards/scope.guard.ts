@@ -4,12 +4,13 @@ import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
 import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
 import { AuditService } from '../services/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeService } from '../scope/scope.service';
 
 /**
  * Role → minimum scope level mapping.
  * A role can access all resources at its level AND above.
  */
-const ROLE_SCOPE: Record<string, ScopeLevel> = {
+export const ROLE_SCOPE: Record<string, ScopeLevel> = {
   superadmin: 'national',
   admin_nasional: 'national',
   admin_distrik: 'district',
@@ -20,7 +21,7 @@ const ROLE_SCOPE: Record<string, ScopeLevel> = {
   anggota: 'self',
 };
 
-const SCOPE_ORDER: ScopeLevel[] = ['national', 'district', 'region', 'branch', 'self'];
+export const SCOPE_ORDER: ScopeLevel[] = ['national', 'district', 'region', 'branch', 'self'];
 
 /**
  * A 'self' scope user is allowed to pass *any* scope gate: the actual row-level
@@ -30,7 +31,7 @@ const SCOPE_ORDER: ScopeLevel[] = ['national', 'district', 'region', 'branch', '
  * The gate still depends on @Roles allowing the role first, so this early return
  * cannot escalate privilege on its own.
  */
-function hasRequiredScope(userRole: ScopeLevel, requiredScope: ScopeLevel): boolean {
+export function hasRequiredScope(userRole: ScopeLevel, requiredScope: ScopeLevel): boolean {
   if (userRole === 'self') return true;
   const userIndex = SCOPE_ORDER.indexOf(userRole);
   const requiredIndex = SCOPE_ORDER.indexOf(requiredScope);
@@ -52,6 +53,7 @@ export class ScopeGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly auditService: AuditService,
     private readonly prisma: PrismaService,
+    private readonly scopeService?: ScopeService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -82,7 +82,11 @@ export default function InvitationTab({
     setMsg(null);
     try {
       const res = await apiClient.post(`/graduations/${id}/invitations/generate`, {});
-      const d = unwrap<{ generated: number; skipped: number; total: number }>(res) || { generated: 0, skipped: 0, total: 0 };
+      const d = unwrap<{ generated: number; skipped: number; total: number }>(res) || {
+        generated: 0,
+        skipped: 0,
+        total: 0,
+      };
       setMsg({
         ok: true,
         text: `${d.generated} undangan dibuat (${d.skipped} dilewati dari ${d.total} anggota memenuhi kriteria)`,

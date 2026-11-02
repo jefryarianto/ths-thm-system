@@ -170,5 +170,4 @@ export class RoleMenuPermissionsService implements OnApplicationBootstrap {
       return updated;
     });
   }
-
 }

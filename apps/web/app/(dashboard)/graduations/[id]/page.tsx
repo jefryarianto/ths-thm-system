@@ -385,7 +385,10 @@ export default function GraduationDetailPage() {
     setCloningAspek(true);
     try {
       const res = await apiClient.post(`/graduations/${id}/clone-aspek`);
-      const r = unwrap<{ skipped?: boolean; total?: number; clonedAspects?: number; clonedItems?: number }>(res) || {};
+      const r =
+        unwrap<{ skipped?: boolean; total?: number; clonedAspects?: number; clonedItems?: number }>(
+          res,
+        ) || {};
       if (r.skipped) {
         toast('info', `Pendadaran sudah memiliki ${r.total} aspek penilaian sendiri`);
       } else if (r.clonedAspects === 0) {
@@ -508,11 +511,12 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/examiner-candidates`);
-      const data = unwrap<{
-        manajemenPenguji?: ExaminerOption[];
-        daftarHadir?: ExaminerOption[];
-        anggotaKegiatan?: ExaminerOption[];
-      }>(res) || {};
+      const data =
+        unwrap<{
+          manajemenPenguji?: ExaminerOption[];
+          daftarHadir?: ExaminerOption[];
+          anggotaKegiatan?: ExaminerOption[];
+        }>(res) || {};
       const manajemen: ExaminerOption[] = (data.manajemenPenguji || []).map(
         (m: ExaminerOption) => ({
           ...m,
@@ -547,10 +551,7 @@ export default function GraduationDetailPage() {
       ]);
       const participants =
         pRes.status === 'fulfilled' ? unwrap<Participant[]>(pRes.value) || [] : [];
-      const ex =
-        eRes.status === 'fulfilled'
-          ? unwrap<ExaminerAssignment[]>(eRes.value) || []
-          : [];
+      const ex = eRes.status === 'fulfilled' ? unwrap<ExaminerAssignment[]>(eRes.value) || [] : [];
       const evalData: CompletenessEval =
         aRes.status === 'fulfilled'
           ? unwrap<CompletenessEval>(aRes.value) || aRes.value.data
@@ -561,8 +562,7 @@ export default function GraduationDetailPage() {
         if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
       }
       const kData = kRes.status === 'fulfilled' ? unwrap<{ total?: number }>(kRes.value) : null;
-      const aspekTotal =
-        kRes.status === 'fulfilled' ? Number(kData?.total ?? 0) : aspekSet.size;
+      const aspekTotal = kRes.status === 'fulfilled' ? Number(kData?.total ?? 0) : aspekSet.size;
       // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
       // otomatis saat validasi disetujui - idempoten, satu per calon lulus).
       const hasilRows = rRes.status === 'fulfilled' ? unwrap<HasilRecord[]>(rRes.value) || [] : [];
@@ -570,8 +570,7 @@ export default function GraduationDetailPage() {
         (h: HasilRecord) => h.statusKelulusan === 'lulus' && h.statusValidasi === 'approved',
       ).length;
       setCompleteness({
-        calonAnggota: participants.filter((p) => p.status === 'mengikuti_pendadaran')
-          .length,
+        calonAnggota: participants.filter((p) => p.status === 'mengikuti_pendadaran').length,
         adminKegiatan: !!graduation?.adminKegiatanId,
         penguji: {
           total: ex.length,
@@ -610,7 +609,7 @@ export default function GraduationDetailPage() {
     try {
       const res = await apiClient.get(`/graduations/${id}/participants/eligible`);
       setEligibleCandidates(
-        unwrap<Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>>(res) || []
+        unwrap<Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>>(res) || [],
       );
     } catch {
       /* ignore */
@@ -720,7 +719,14 @@ export default function GraduationDetailPage() {
       const res = await apiClient.post(`/graduations/${id}/participants/import`, {
         data: importPreview,
       });
-      setImportResult(unwrap<{ imported: number; linked: number; created: number; errors: string[] }>(res) || { imported: 0, linked: 0, created: 0, errors: [] });
+      setImportResult(
+        unwrap<{ imported: number; linked: number; created: number; errors: string[] }>(res) || {
+          imported: 0,
+          linked: 0,
+          created: 0,
+          errors: [],
+        },
+      );
       await fetchData();
       await fetchCompleteness();
     } catch (err: unknown) {
@@ -823,7 +829,9 @@ export default function GraduationDetailPage() {
     if (!id) return;
     try {
       const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-examiners`);
-      const d = unwrap<{ allPenguji?: Array<{ id: string; namaLengkap: string; email: string }> }>(res);
+      const d = unwrap<{ allPenguji?: Array<{ id: string; namaLengkap: string; email: string }> }>(
+        res,
+      );
       setAvailableExaminers(d?.allPenguji || []);
     } catch {
       /* ignore */
@@ -1042,7 +1050,13 @@ export default function GraduationDetailPage() {
     setGenDocsResult(null);
     try {
       const res = await apiClient.post(`/graduations/${graduation.id}/generate-docs`, {});
-      setGenDocsResult(unwrap<{ generated: number; total: number; errors: string[] }>(res) || { generated: 0, total: 0, errors: [] });
+      setGenDocsResult(
+        unwrap<{ generated: number; total: number; errors: string[] }>(res) || {
+          generated: 0,
+          total: 0,
+          errors: [],
+        },
+      );
       await fetchResults();
       await fetchData();
     } catch (err) {
@@ -2251,7 +2265,11 @@ export default function GraduationDetailPage() {
                                   disabled={savingScores}
                                   className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                                 >
-                                  {savingScores ? <SmallLogoSpinner size={12} /> : <Save size={12} />}{' '}
+                                  {savingScores ? (
+                                    <SmallLogoSpinner size={12} />
+                                  ) : (
+                                    <Save size={12} />
+                                  )}{' '}
                                   {savingScores ? 'Menyimpan...' : 'Simpan Nilai'}
                                 </button>
                               )}
@@ -2538,7 +2556,11 @@ export default function GraduationDetailPage() {
                     disabled={approveScoresLoading}
                     className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                   >
-                    {approveScoresLoading ? <SmallLogoSpinner size={14} /> : <CheckCircle2 size={14} />}
+                    {approveScoresLoading ? (
+                      <SmallLogoSpinner size={14} />
+                    ) : (
+                      <CheckCircle2 size={14} />
+                    )}
                     {approveScoresLoading ? 'Menyetujui...' : 'Setujui Nilai Penguji'}
                   </button>
                   <button
@@ -2933,7 +2955,8 @@ export default function GraduationDetailPage() {
                 disabled={genDocsLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50 shrink-0"
               >
-                {genDocsLoading ? <SmallLogoSpinner size={14} /> : <FileEdit size={14} />} {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
+                {genDocsLoading ? <SmallLogoSpinner size={14} /> : <FileEdit size={14} />}{' '}
+                {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
               </button>
             </div>
 

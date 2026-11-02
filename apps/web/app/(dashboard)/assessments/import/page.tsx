@@ -204,7 +204,7 @@ export default function ImportAssessmentsPage() {
   }, {});
 
   return (
-    <PermissionGuard module="assessments" action="create">
+    <PermissionGuard module="assessments" action="create" minRole="admin_ranting">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">

@@ -13,6 +13,7 @@ export class TingkatanController {
   @Get()
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -28,6 +29,7 @@ export class TingkatanController {
   @Get('visuals')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -41,19 +43,25 @@ export class TingkatanController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah tingkatan' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Tambah tingkatan',
+  })
   create(@Body() dto: CreateTingkatanDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Update tingkatan' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Update tingkatan',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateTingkatanDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus tingkatan' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Hapus tingkatan',
+  })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

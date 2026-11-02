@@ -28,4 +28,3 @@ yang dikirim saat `POST /org-documents`.
 - Ekstensi diizinkan: `.pdf .doc .docx .xls .xlsx .ppt .pptx .txt .rtf .zip`
 - Maksimal 25MB (env `MAX_DOCUMENT_UPLOAD_MB`)
 - `uploadedBy` selalu diisi dari user terautentikasi, bukan input client
-

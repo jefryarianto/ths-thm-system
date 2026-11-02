@@ -155,32 +155,56 @@ export class AuthScopeResponseDto {
   @IsString()
   role: string;
 
-  @ApiPropertyOptional({ description: 'District ID (if scoped)', example: 'distrik-1', nullable: true })
+  @ApiPropertyOptional({
+    description: 'District ID (if scoped)',
+    example: 'distrik-1',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   distrikId: string | null;
 
-  @ApiPropertyOptional({ description: 'District name (for display)', example: 'Distrik A', nullable: true })
+  @ApiPropertyOptional({
+    description: 'District name (for display)',
+    example: 'Distrik A',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   distrikNama: string | null;
 
-  @ApiPropertyOptional({ description: 'Region ID (if scoped)', example: 'wilayah-1', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Region ID (if scoped)',
+    example: 'wilayah-1',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   wilayahId: string | null;
 
-  @ApiPropertyOptional({ description: 'Region name (for display)', example: 'Wilayah Utara', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Region name (for display)',
+    example: 'Wilayah Utara',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   wilayahNama: string | null;
 
-  @ApiPropertyOptional({ description: 'Branch ID (if scoped)', example: 'ranting-1', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Branch ID (if scoped)',
+    example: 'ranting-1',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   rantingId: string | null;
 
-  @ApiPropertyOptional({ description: 'Branch name (for display)', example: 'Ranting Utama', nullable: true })
+  @ApiPropertyOptional({
+    description: 'Branch name (for display)',
+    example: 'Ranting Utama',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   rantingNama: string | null;

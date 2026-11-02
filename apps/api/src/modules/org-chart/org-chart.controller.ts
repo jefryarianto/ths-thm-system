@@ -21,7 +21,16 @@ export class OrgChartController {
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Peta organisasi lengkap (Nasional → Distrik → Wilayah → Ranting)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
   getOrgChart(@Req() req: ScopedRequest) {
     return this.service.getOrgChart(false, req.scope);

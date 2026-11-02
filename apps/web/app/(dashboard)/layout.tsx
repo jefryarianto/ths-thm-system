@@ -7,10 +7,8 @@ import { sessionManager } from '@/lib/session-manager';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import { useAuth } from '@/hooks/use-auth';
 import { useMenuOverrides } from '@/hooks/use-menu-overrides';
-import {
-  getHomePathForRole,
-  getAdminDashboardRedirect,
-} from '@/lib/role-redirect';
+import { getHomePathForRole, getAdminDashboardRedirect } from '@/lib/role-redirect';
+import { extractScopeUnits, findScopeUnitName, resolveScopeBadgeTarget } from '@/lib/scope-badge';
 import Sidebar from '@/components/layout/sidebar';
 import DashboardHeader from '@/components/layout/dashboard-header';
 import {
@@ -86,10 +84,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
    * Hanya dihitung setelah mount → hydration guard.
    */
   const visibleGroups = useMemo(
-    () =>
-      mounted
-        ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole, menuOverrides })
-        : [],
+    () => (mounted ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole, menuOverrides }) : []),
     [mounted, isAdmin, hasMinRole, menuOverrides],
   );
 
@@ -308,29 +303,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [user]);
 
-  // Resolve scope name for badge
+  // Resolve scope name for badge (lihat lib/scope-badge.ts).
   useEffect(() => {
-    if (!user || !isAdmin) return;
-    const role = user.role;
-    if (role === 'superadmin' || !user.rantingId) return;
+    const target = resolveScopeBadgeTarget(user);
+    if (!target) return;
 
     apiClient
-      .get(`/org-structure/ranting/${user.rantingId}`)
+      .get(target.endpoint)
       .then(({ data }) => {
-        const ranting = data.data || data;
-        if (role === 'admin_distrik') {
-          setScopeName(ranting?.wilayah?.distrik?.nama || null);
-          setScopeLevel('Distrik');
-        } else if (role === 'admin_wilayah') {
-          setScopeName(ranting?.wilayah?.nama || null);
-          setScopeLevel('Wilayah');
-        } else if (role === 'admin_ranting') {
-          setScopeName(ranting?.nama || null);
-          setScopeLevel('Ranting');
-        }
+        const nama = findScopeUnitName(extractScopeUnits(data), target.orgId);
+        if (!nama) return;
+        setScopeName(nama);
+        setScopeLevel(target.level);
       })
-      .catch(() => {});
-  }, [user, isAdmin]);
+      .catch(() => {
+        // Badge hanya informasi: kegagalan memuat nama unit tidak perlu toast.
+      });
+  }, [user]);
 
   // Logout in flight (AUTH-008): disables the menu action so a second click
   // cannot start a parallel logout flow.

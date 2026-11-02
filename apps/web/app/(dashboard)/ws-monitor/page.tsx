@@ -1,16 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  Wifi,
-  WifiOff,
-  Users,
-  RefreshCw,
-  Activity,
-  Radio,
-  PlugZap,
-  Globe,
-} from 'lucide-react';
+import { Wifi, WifiOff, Users, RefreshCw, Activity, Radio, PlugZap, Globe } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';

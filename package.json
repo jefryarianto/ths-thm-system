@@ -28,6 +28,7 @@
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
     "db:migrate": "pnpm --filter @ths-thm/api prisma:migrate",
+    "db:go-live": "bash scripts/go-live-produksi.sh",
     "db:deploy": "pnpm --filter @ths-thm/api prisma:deploy",
     "db:seed": "pnpm --filter @ths-thm/api prisma:seed",
     "db:studio": "pnpm --filter @ths-thm/api prisma:studio",

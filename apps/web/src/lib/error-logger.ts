@@ -127,12 +127,7 @@ export function classifyError(error: unknown): {
   }
 
   // Axios HTTP error (has response with status)
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    hasResponse(error)
-  ) {
+  if (typeof error === 'object' && error !== null && 'response' in error && hasResponse(error)) {
     const status = getResponseStatus(error);
 
     if (status !== undefined) {
@@ -287,11 +282,11 @@ export function logError(error: unknown, context?: ErrorContext): void {
       // In production, use structured JSON format
       console.error(JSON.stringify(entry));
     } else {
-    // In development, use readable format
-    // eslint-disable-next-line no-console -- intended for local debugging only
-    console.error(
-      `[${context?.module || 'App'}] ${entry.message}${entry.stack ? '\n' + entry.stack : ''}`,
-    );
+      // In development, use readable format
+      // eslint-disable-next-line no-console -- intended for local debugging only
+      console.error(
+        `[${context?.module || 'App'}] ${entry.message}${entry.stack ? '\n' + entry.stack : ''}`,
+      );
     }
   } catch (loggingError) {
     // If logging itself fails, swallow silently to preserve original error flow

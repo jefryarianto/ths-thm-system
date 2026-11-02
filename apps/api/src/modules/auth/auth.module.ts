@@ -13,7 +13,10 @@ import { ApprovalModule } from '../approvals/approval.module';
     PassportModule,
     JwtModule.register({
       secret: env.jwtSecret,
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}` },
+      signOptions: {
+        expiresIn: (process.env.JWT_EXPIRES_IN ||
+          '15m') as `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`,
+      },
     }),
     ApprovalModule,
   ],

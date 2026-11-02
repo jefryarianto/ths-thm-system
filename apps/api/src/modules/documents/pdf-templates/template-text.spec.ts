@@ -2,9 +2,12 @@ import { fillTemplateText } from './template-text';
 
 describe('fillTemplateText', () => {
   it('mengganti placeholder {{kata}} dengan nilai dari vars', () => {
-    expect(fillTemplateText('Diberikan kepada {{nama}} dengan {{nomor}}', { nama: 'Budi', nomor: 'SPD-1' })).toBe(
-      'Diberikan kepada Budi dengan SPD-1',
-    );
+    expect(
+      fillTemplateText('Diberikan kepada {{nama}} dengan {{nomor}}', {
+        nama: 'Budi',
+        nomor: 'SPD-1',
+      }),
+    ).toBe('Diberikan kepada Budi dengan SPD-1');
   });
 
   it('mengizinkan spasi di dalam kurung ({{ nama }})', () => {
@@ -24,9 +27,9 @@ describe('fillTemplateText', () => {
   });
 
   it('nilai kosong/null/undefined tidak mengganti placeholder', () => {
-    expect(
-      fillTemplateText('{{a}}|{{b}}|{{c}}', { a: '', b: null, c: undefined }),
-    ).toBe('{{a}}|{{b}}|{{c}}');
+    expect(fillTemplateText('{{a}}|{{b}}|{{c}}', { a: '', b: null, c: undefined })).toBe(
+      '{{a}}|{{b}}|{{c}}',
+    );
   });
 
   it('teks tanpa placeholder dikembalikan utuh', () => {

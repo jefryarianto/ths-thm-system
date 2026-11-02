@@ -46,10 +46,12 @@ export class OrgDocumentsController extends BaseCrudController {
   @Get()
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     {
       summary: 'Ambil semua dokumen organisasi',
@@ -66,10 +68,12 @@ export class OrgDocumentsController extends BaseCrudController {
   @Get('categories')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     {
       summary: 'Ambil semua kategori dokumen',
@@ -80,15 +84,23 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Get('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil detail kategori dokumen',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil detail kategori dokumen',
+    },
+  )
   getCategory(@Param('id') id: string) {
     return this.service.getCategory(id);
   }
 
   @Post('categories')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tambah kategori dokumen baru',
   })
   createCategory(@Body() dto: CreateCategoryDto) {
@@ -96,7 +108,7 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Patch('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui kategori dokumen',
   })
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
@@ -104,7 +116,7 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Delete('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Hapus kategori dokumen',
   })
   async deleteCategory(@Param('id') id: string) {
@@ -127,7 +139,7 @@ export class OrgDocumentsController extends BaseCrudController {
       required: ['file'],
     },
   })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Upload file dokumen organisasi',
   })
   @UseInterceptors(FileInterceptor('file', buildDocumentUploadOptions()))
@@ -143,9 +155,17 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil detail dokumen organisasi',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil detail dokumen organisasi',
+    },
+  )
   findOne(@Param('id') id: string) {
     return super.findOne(id);
   }
@@ -153,10 +173,12 @@ export class OrgDocumentsController extends BaseCrudController {
   @Get(':id/download')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
     {
       summary: 'Download file dokumen organisasi',
@@ -174,7 +196,7 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tambah dokumen organisasi baru',
   })
   create(@Body() dto: CreateOrgDocumentDto, @Req() req?: ScopedRequest) {
@@ -182,7 +204,7 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui dokumen organisasi',
   })
   update(@Param('id') id: string, @Body() dto: UpdateOrgDocumentDto) {
@@ -190,7 +212,7 @@ export class OrgDocumentsController extends BaseCrudController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Hapus dokumen organisasi',
   })
   remove(@Param('id') id: string) {

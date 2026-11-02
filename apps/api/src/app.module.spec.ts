@@ -21,8 +21,7 @@ process.env.SKIP_DB_CONNECT = 'true';
 process.env.USE_BULLMQ = 'false';
 process.env.CRON_DISTRIBUTED_LOCK = 'false';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/ci_dummy';
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/ci_dummy';
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'app-module-spec-jwt-secret-0123456789abcdef0123';
 process.env.JWT_REFRESH_SECRET =
@@ -35,16 +34,12 @@ describe('AppModule (full DI graph)', () => {
   it('meresolve seluruh provider guard & controller tanpa error DI', () => {
     const script = join(__dirname, '..', 'scripts', 'boot-check.ts');
 
-    const result = spawnSync(
-      process.execPath,
-      ['-r', 'ts-node/register/transpile-only', script],
-      {
-        cwd: join(__dirname, '..'),
-        env: process.env,
-        encoding: 'utf8',
-        timeout: 120_000,
-      },
-    );
+    const result = spawnSync(process.execPath, ['-r', 'ts-node/register/transpile-only', script], {
+      cwd: join(__dirname, '..'),
+      env: process.env,
+      encoding: 'utf8',
+      timeout: 120_000,
+    });
 
     const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
 

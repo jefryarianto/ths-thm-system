@@ -38,6 +38,8 @@ export class DuesController {
     'admin_wilayah',
     'admin_ranting',
     'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
     'anggota',
     {
       summary: 'Daftar semua iuran',

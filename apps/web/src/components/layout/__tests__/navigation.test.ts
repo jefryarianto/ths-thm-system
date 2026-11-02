@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import {
   menuGroups,
   menuItems,
@@ -14,6 +16,20 @@ import type { Role } from '@/types';
  * memastikan SEMUA menu & route existing tetap ada, tidak duplikat,
  * dan logika filter role tidak berubah.
  */
+
+/**
+ * Cari folder route group `app/(dashboard)` mulai dari cwd (bisa
+ * `apps/web` saat `pnpm --filter web test`, atau root repo).
+ */
+function findDashboardAppRoot(): string {
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    const candidate = path.join(dir, 'app', '(dashboard)');
+    if (existsSync(candidate)) return candidate;
+    dir = path.dirname(dir);
+  }
+  throw new Error(`app/(dashboard) tidak ditemukan dari ${process.cwd()}`);
+}
 
 /** Seluruh href yang harus ada di navigasi terstruktur. */
 const EXPECTED_HREFS = [
@@ -120,6 +136,15 @@ describe('navigation config', () => {
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
+  it('setiap menu menunjuk ke page.tsx yang benar-benar ada', () => {
+    // Menu yang mengarah ke route tidak ada = tautan mati bagi semua role.
+    const appRoot = findDashboardAppRoot();
+    const missing = menuItems
+      .filter((item) => !existsSync(path.join(appRoot, `${item.href}/page.tsx`)))
+      .map((item) => item.href);
+    expect(missing, `menu tanpa halaman: ${missing.join(', ')}`).toEqual([]);
+  });
+
   it('setiap item punya label dan icon', () => {
     for (const item of menuItems) {
       expect(item.label.length).toBeGreaterThan(0);
@@ -159,7 +184,9 @@ describe('filterVisibleGroups', () => {
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
     expect(hrefs).toContain('/settings/kartu');
     expect(hrefs).toContain('/settings/dokumen');
-    expect(hrefs).toContain('/settings/periode');
+    // /settings/periode memakai /periode yang CRUD-nya hanya superadmin;
+    // admin_nasional mengelola periode lewat kartu di /settings.
+    expect(hrefs).not.toContain('/settings/periode');
     expect(hrefs).not.toContain('/monitoring');
     expect(hrefs).not.toContain('/settings/sessions');
     expect(hrefs).not.toContain('/settings/backup');
@@ -177,7 +204,6 @@ describe('filterVisibleGroups', () => {
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
     expect(hrefs).not.toContain('/monitoring');
   });
-
 
   it('anggota tidak melihat item adminOnly maupun menu di atas role-nya', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('anggota'));
@@ -209,6 +235,8 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/examiners');
     expect(hrefs).toContain('/candidates');
     expect(hrefs).not.toContain('/members');
+    // Halaman scoreboard memakai endpoint gamifikasi khusus admin.
+    expect(hrefs).not.toContain('/gamification/scoreboard');
   });
 });
 

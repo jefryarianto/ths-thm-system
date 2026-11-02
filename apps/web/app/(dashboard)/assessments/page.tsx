@@ -22,6 +22,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { Can, CanCreate } from '@/components/auth/can';
+import { useAuth } from '@/hooks/use-auth';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -62,6 +64,10 @@ export default function AssessmentsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
+  // Master data aspek & item hanya bisa dikelola admin_kegiatan ke atas
+  // (backend); penguji hanya mengisi nilai.
+  const { hasMinRole } = useAuth();
+  const canManageAssessments = hasMinRole('admin_kegiatan');
   const [tab, setTab] = useState<Tab>('aspek');
   // Fase 7: tampilkan juga aspek/item yang disembunyikan (isActive=false)
   const [showHidden, setShowHidden] = useState(false);
@@ -140,26 +146,33 @@ export default function AssessmentsPage() {
               Item
             </button>
           </div>
-          <button
-            onClick={() => router.push('/assessments/import')}
-            className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
-          >
-            <Upload size={14} /> Import CSV
-          </button>
+          {/* Backend import-from-list: admin_ranting ke atas (bukan penguji). */}
+          <Can minRole="admin_ranting">
+            <button
+              onClick={() => router.push('/assessments/import')}
+              className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+            >
+              <Upload size={14} /> Import CSV
+            </button>
+          </Can>
           {tab === 'aspek' ? (
-            <button
-              onClick={() => router.push('/assessments/aspects/new')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={14} /> Tambah Aspek
-            </button>
+            <CanCreate module="assessments">
+              <button
+                onClick={() => router.push('/assessments/aspects/new')}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={14} /> Tambah Aspek
+              </button>
+            </CanCreate>
           ) : (
-            <button
-              onClick={() => router.push('/assessments/items/new')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={14} /> Tambah Item
-            </button>
+            <CanCreate module="assessments">
+              <button
+                onClick={() => router.push('/assessments/items/new')}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={14} /> Tambah Item
+              </button>
+            </CanCreate>
           )}
         </PageHeader>
 
@@ -266,74 +279,79 @@ export default function AssessmentsPage() {
                     <XCircle size={16} className="text-red-500 mx-auto" />
                   )}
                 </td>
-                <td className="px-4 py-3 text-right hidden md:table-cell">
-                  <div className="flex items-center justify-end gap-1">
-                    <Link
-                      href={`/assessments/aspects/${row.id}/edit`}
-                      className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
-                      title="Edit aspek & item"
-                    >
-                      <Edit3 size={14} />
-                    </Link>
-                    {!row.isActive && (
+                {canManageAssessments && (
+                  <td className="px-4 py-3 text-right hidden md:table-cell">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/assessments/aspects/${row.id}/edit`}
+                        className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
+                        title="Edit aspek & item"
+                      >
+                        <Edit3 size={14} />
+                      </Link>
+                      {!row.isActive && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await apiClient.post(`/assessments/aspects/${row.id}/restore`);
+                              refetchAspek();
+                              toast(
+                                'success',
+                                'Aspek diaktifkan kembali. Item disembunyikan bisa di-restore dari Edit aspek.',
+                              );
+                            } catch {
+                              toast('error', 'Gagal mengaktifkan aspek');
+                            }
+                          }}
+                          className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                          title="Aktifkan kembali"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={async () => {
                           try {
-                            await apiClient.post(`/assessments/aspects/${row.id}/restore`);
+                            const newStatus = !row.isActive;
+                            await apiClient.patch(`/assessments/aspects/${row.id}`, {
+                              isActive: newStatus,
+                            });
                             refetchAspek();
                             toast(
                               'success',
-                              'Aspek diaktifkan kembali. Item disembunyikan bisa di-restore dari Edit aspek.',
+                              newStatus ? 'Aspek diaktifkan' : 'Aspek disembunyikan',
                             );
                           } catch {
-                            toast('error', 'Gagal mengaktifkan aspek');
+                            toast('error', 'Gagal mengubah status aspek');
                           }
                         }}
-                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                        title="Aktifkan kembali"
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                        title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                       >
-                        <RotateCcw size={14} />
+                        <Eye size={15} />
                       </button>
-                    )}
-                    <button
-                      onClick={async () => {
-                        try {
-                          const newStatus = !row.isActive;
-                          await apiClient.patch(`/assessments/aspects/${row.id}`, {
-                            isActive: newStatus,
-                          });
-                          refetchAspek();
-                          toast('success', newStatus ? 'Aspek diaktifkan' : 'Aspek disembunyikan');
-                        } catch {
-                          toast('error', 'Gagal mengubah status aspek');
-                        }
-                      }}
-                      className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                      title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                    >
-                      <Eye size={15} />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!(await confirm(`Hapus aspek "${row.namaAspek}"?`))) return;
-                        try {
-                          await apiClient.delete(`/assessments/aspects/${row.id}`);
-                          refetchAspek();
-                          toast(
-                            'success',
-                            'Aspek dinonaktifkan bersama item-itemnya. Pendadaran yang sudah punya kopie aspek tidak terpengaruh.',
-                          );
-                        } catch {
-                          toast('error', 'Gagal menghapus aspek');
-                        }
-                      }}
-                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                      title="Hapus (nonaktif aspek & items)"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
+                      <button
+                        onClick={async () => {
+                          if (!(await confirm(`Hapus aspek "${row.namaAspek}"?`))) return;
+                          try {
+                            await apiClient.delete(`/assessments/aspects/${row.id}`);
+                            refetchAspek();
+                            toast(
+                              'success',
+                              'Aspek dinonaktifkan bersama item-itemnya. Pendadaran yang sudah punya kopie aspek tidak terpengaruh.',
+                            );
+                          } catch {
+                            toast('error', 'Gagal menghapus aspek');
+                          }
+                        }}
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Hapus (nonaktif aspek & items)"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             )}
           />
@@ -395,49 +413,51 @@ export default function AssessmentsPage() {
                     <XCircle size={16} className="text-red-500 mx-auto" />
                   )}
                 </td>
-                <td className="px-4 py-3 text-right hidden md:table-cell">
-                  <div className="flex items-center justify-end gap-1">
-                    <Link
-                      href={`/assessments/items/${row.id}/edit`}
-                      className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors inline-flex"
-                      title="Edit"
-                    >
-                      <Edit3 size={14} />
-                    </Link>
-                    {!row.isActive && (
+                {canManageAssessments && (
+                  <td className="px-4 py-3 text-right hidden md:table-cell">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/assessments/items/${row.id}/edit`}
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors inline-flex"
+                        title="Edit"
+                      >
+                        <Edit3 size={14} />
+                      </Link>
+                      {!row.isActive && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await apiClient.post(`/assessments/items/${row.id}/restore`);
+                              refetchItems();
+                              toast('success', 'Item diaktifkan kembali');
+                            } catch {
+                              toast('error', 'Gagal mengaktifkan item');
+                            }
+                          }}
+                          className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                          title="Aktifkan kembali"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={async () => {
+                          if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
                           try {
-                            await apiClient.post(`/assessments/items/${row.id}/restore`);
+                            await apiClient.delete(`/assessments/items/${row.id}`);
                             refetchItems();
-                            toast('success', 'Item diaktifkan kembali');
                           } catch {
-                            toast('error', 'Gagal mengaktifkan item');
+                            toast('error', 'Gagal menghapus item');
                           }
                         }}
-                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                        title="Aktifkan kembali"
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Hapus"
                       >
-                        <RotateCcw size={14} />
+                        <Trash2 size={14} />
                       </button>
-                    )}
-                    <button
-                      onClick={async () => {
-                        if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
-                        try {
-                          await apiClient.delete(`/assessments/items/${row.id}`);
-                          refetchItems();
-                        } catch {
-                          toast('error', 'Gagal menghapus item');
-                        }
-                      }}
-                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
+                    </div>
+                  </td>
+                )}
               </tr>
             )}
           />

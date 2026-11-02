@@ -27,6 +27,7 @@ import {
   Users,
 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useAuth } from '@/hooks/use-auth';
 import Modal from '@/components/ui/modal';
 import JabatanSelect from '@/components/ui/jabatan-select';
 import Card from '@/components/cards/card';
@@ -169,6 +170,11 @@ function GoogleOAuthToggle() {
 export default function SettingsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
+  // Pengaturan organisasi, periode, dan autentikasi hanya bisa diubah oleh
+  // superadmin/admin_nasional (lihat settings.controller). Pengguna role lain
+  // tetap boleh melihat datanya, tetapi tombol yang akan 403 tidak ditampilkan.
+  const { hasMinRole } = useAuth();
+  const canEditOrgSettings = hasMinRole('admin_nasional');
   const [activeTab, setActiveTab] = useState<
     'organisasi' | 'autentikasi' | 'sistem' | 'pemeliharaan'
   >('organisasi');
@@ -453,18 +459,20 @@ export default function SettingsPage() {
             <Building2 size={16} />
             <span>Organisasi & Distrik</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('autentikasi')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-              activeTab === 'autentikasi'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-            }`}
-          >
-            <Lock size={16} />
-            <span>Autentikasi & Keamanan</span>
-          </button>
+          {hasMinRole('superadmin') && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('autentikasi')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+                activeTab === 'autentikasi'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              }`}
+            >
+              <Lock size={16} />
+              <span>Autentikasi & Keamanan</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setActiveTab('sistem')}
@@ -477,18 +485,20 @@ export default function SettingsPage() {
             <SettingsIcon size={16} />
             <span>Komunikasi & Dokumen</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('pemeliharaan')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
-              activeTab === 'pemeliharaan'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-            }`}
-          >
-            <Database size={16} />
-            <span>Pemeliharaan & Server</span>
-          </button>
+          {hasMinRole('superadmin') && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('pemeliharaan')}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+                activeTab === 'pemeliharaan'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+                  : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              }`}
+            >
+              <Database size={16} />
+              <span>Pemeliharaan & Server</span>
+            </button>
+          )}
         </div>
 
         {/* ── TAB 1: ORGANISASI & DISTRIK ── */}
@@ -598,7 +608,7 @@ export default function SettingsPage() {
               <Card
                 title="Informasi Organisasi"
                 action={
-                  org ? (
+                  org && canEditOrgSettings ? (
                     <button
                       onClick={openOrgEdit}
                       className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
@@ -672,13 +682,15 @@ export default function SettingsPage() {
               <Card
                 title="Daftar Periode"
                 action={
-                  <button
-                    onClick={openPeriodCreate}
-                    className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
-                    title="Tambah"
-                  >
-                    <Plus size={14} />
-                  </button>
+                  canEditOrgSettings && (
+                    <button
+                      onClick={openPeriodCreate}
+                      className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
+                      title="Tambah"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )
                 }
               >
                 {periods.length > 0 ? (
@@ -702,22 +714,24 @@ export default function SettingsPage() {
                             {p.isActive ? 'Aktif' : 'Nonaktif'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => openPeriodEdit(p)}
-                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
-                            title="Edit"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button
-                            onClick={() => deletePeriod(p.id)}
-                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
-                            title="Hapus"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                        {canEditOrgSettings && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => openPeriodEdit(p)}
+                              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button
+                              onClick={() => deletePeriod(p.id)}
+                              className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
+                              title="Hapus"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -808,7 +822,7 @@ export default function SettingsPage() {
         )}
 
         {/* ── TAB 2: AUTENTIKASI & KEAMANAN ── */}
-        {activeTab === 'autentikasi' && (
+        {activeTab === 'autentikasi' && hasMinRole('superadmin') && (
           <div className="space-y-6 animate-fade-in">
             <div className="space-y-4">
               <SectionHeader
@@ -992,7 +1006,7 @@ export default function SettingsPage() {
         )}
 
         {/* ── TAB 4: PEMELIHARAAN & SERVER ── */}
-        {activeTab === 'pemeliharaan' && (
+        {activeTab === 'pemeliharaan' && hasMinRole('superadmin') && (
           <div className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Link
@@ -1130,7 +1144,8 @@ export default function SettingsPage() {
                 disabled={savingOrg}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {savingOrg ? <SmallLogoSpinner size={14} /> : <Save size={14} />} {savingOrg ? 'Menyimpan...' : 'Simpan'}
+                {savingOrg ? <SmallLogoSpinner size={14} /> : <Save size={14} />}{' '}
+                {savingOrg ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
           </div>
@@ -1244,7 +1259,8 @@ export default function SettingsPage() {
                 disabled={savingStamp}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
+                {savingStamp ? <SmallLogoSpinner size={14} /> : <Upload size={14} />}{' '}
+                {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
               </button>
             </div>
           </div>
@@ -1323,7 +1339,8 @@ export default function SettingsPage() {
                 disabled={savingSignature}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {savingSignature ? <SmallLogoSpinner size={14} /> : <Upload size={14} />} {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
+                {savingSignature ? <SmallLogoSpinner size={14} /> : <Upload size={14} />}{' '}
+                {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
               </button>
             </div>
           </div>

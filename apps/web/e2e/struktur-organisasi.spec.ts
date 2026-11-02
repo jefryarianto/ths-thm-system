@@ -216,12 +216,11 @@ test.describe('Struktur Organisasi (Public)', () => {
   test('loads distrik options in dropdown', async ({ page }) => {
     // Options of a closed <select> have no box, so assert on option contents.
     const distrikSelect = page.locator('select[aria-label="Distrik"]');
-    await expect(
-      distrikSelect.locator('option', { hasText: 'Keuskupan Larantuka' }),
-    ).toHaveCount(1, { timeout: 10000 });
-    await expect(distrikSelect.locator('option', { hasText: 'Keuskupan Denpasar' })).toHaveCount(
+    await expect(distrikSelect.locator('option', { hasText: 'Keuskupan Larantuka' })).toHaveCount(
       1,
+      { timeout: 10000 },
     );
+    await expect(distrikSelect.locator('option', { hasText: 'Keuskupan Denpasar' })).toHaveCount(1);
     // "Semua Distrik" placeholder + the 2 mocked distriks.
     await expect(distrikSelect.locator('option')).toHaveCount(3);
   });

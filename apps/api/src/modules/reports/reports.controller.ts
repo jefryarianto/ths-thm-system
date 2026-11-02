@@ -35,7 +35,14 @@ export class ReportsController {
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Ambil data dashboard' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+  )
   @RequireScope('branch')
   async getDashboardData(@Req() req: ScopedRequest) {
     return this.reportsService.dashboardStats(req.scope, req.user.id);
@@ -43,7 +50,7 @@ export class ReportsController {
 
   @Get('scan-stats')
   @ApiOperation({ summary: 'Ambil statistik pemindaian' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   async getScanStats(@Req() req: ScopedRequest) {
     return this.reportsService.scanStats(req.scope);
@@ -51,7 +58,7 @@ export class ReportsController {
 
   @Get('chart/members-over-time')
   @ApiOperation({ summary: 'Grafik pertumbuhan anggota' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   async getMembersOverTime(@Req() req: ScopedRequest) {
     return this.reportsService.getMembersOverTime(req.scope);
@@ -59,7 +66,14 @@ export class ReportsController {
 
   @Get('chart/training-attendance')
   @ApiOperation({ summary: 'Grafik kehadiran pelatihan' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+  )
   @RequireScope('branch')
   async getTrainingAttendance(@Query('year') year: string, @Req() req: ScopedRequest) {
     const start = new Date(`${year}-01-01`);
@@ -97,7 +111,7 @@ export class ReportsController {
 
   @Get('export/:type')
   @ApiOperation({ summary: 'Ekspor data ke XLSX/CSV (teraudit)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   async exportData(
     @Param('type') type: string,

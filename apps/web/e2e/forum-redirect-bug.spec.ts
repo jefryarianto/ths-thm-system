@@ -84,9 +84,7 @@ test.describe('Forum redirect bug (anggota role)', () => {
     expect(forumDocs).toHaveLength(1);
   });
 
-  test('anggota di /forum tidak di-redirect ke /forum (bukan self-redirect)', async ({
-    page,
-  }) => {
+  test('anggota di /forum tidak di-redirect ke /forum (bukan self-redirect)', async ({ page }) => {
     // Hitung HANYA document request (navigasi halaman). Respons API seperti
     // /api/forum/categories JUGA mengandung '/forum' tapi bukan redirect —
     // menghitungnya membuat assertion ini racy: lolos/gagal tergantung apakah

@@ -136,7 +136,14 @@ export function useOrgFilter(): UseOrgFilterReturn {
       return wilayahId !== '' || rantingId !== '';
     }
     return distrikId !== '' || wilayahId !== '' || rantingId !== '';
-  }, [distrikId, wilayahId, rantingId, orgTree.length, availableWilayahs.length, availableRantings.length]);
+  }, [
+    distrikId,
+    wilayahId,
+    rantingId,
+    orgTree.length,
+    availableWilayahs.length,
+    availableRantings.length,
+  ]);
 
   return {
     distrikId,

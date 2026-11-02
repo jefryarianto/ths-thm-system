@@ -60,10 +60,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Hitung notifikasi belum dibaca' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   getCount(@CurrentUser() user: { id: string }) {
@@ -74,10 +76,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Ambil semua notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   findAll(@CurrentUser() user: { id: string }, @Query() query: NotificationFilterDto) {
@@ -88,10 +92,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Tandai notifikasi terbaca' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   markAsRead(@Param('id') id: string, @CurrentUser() user: { id: string }) {
@@ -102,10 +108,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Tandai semua notifikasi terbaca' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   markAllAsRead(@CurrentUser() user: { id: string }) {
@@ -123,10 +131,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Statistik notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   getStats(@CurrentUser() user: { id: string }) {
@@ -137,10 +147,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Ambil preferensi notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   getPreferences(@CurrentUser() user: { id: string }) {
@@ -151,10 +163,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Perbarui preferensi notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: Record<string, unknown>) {
@@ -175,10 +189,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Ambil detail notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   findOne(@Param('id') id: string, @CurrentUser() user: { id: string }) {
@@ -189,10 +205,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Hapus semua notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   deleteAll(@CurrentUser() user: { id: string }) {
@@ -203,10 +221,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Hapus notifikasi' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   delete(@Param('id') id: string, @CurrentUser() user: { id: string }) {
@@ -237,10 +257,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Daftarkan token FCM' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   registerToken(@CurrentUser() user: { id: string }, @Body() dto: RegisterDeviceTokenDto) {
@@ -260,10 +282,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Hapus token FCM' })
   @Roles(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'penguji',
     'anggota',
   )
   unregisterToken(@Param('id') id: string) {

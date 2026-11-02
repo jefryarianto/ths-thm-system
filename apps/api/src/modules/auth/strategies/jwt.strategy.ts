@@ -39,11 +39,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const distrikId =
       user.role === 'superadmin'
         ? null
-        : user.distrikId ?? user.ranting?.wilayah?.distrikId ?? null;
+        : (user.distrikId ?? user.ranting?.wilayah?.distrikId ?? null);
     const wilayahId =
-      user.role === 'superadmin'
-        ? null
-        : user.wilayahId ?? user.ranting?.wilayahId ?? null;
+      user.role === 'superadmin' ? null : (user.wilayahId ?? user.ranting?.wilayahId ?? null);
 
     // Set tenant context (distrikId) from user — skip for superadmin
     const ctx = requestContextStore.getStore();

@@ -124,7 +124,7 @@ export class MembersController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tambah anggota baru',
   })
   create(@Body() dto: CreateMemberDto, @Req() req: ScopedRequest) {
@@ -132,7 +132,7 @@ export class MembersController {
   }
 
   @Post('print-batch')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Terbitkan kartu fisik untuk banyak anggota (cetak batch)',
   })
   printBatch(@Body() body: { memberIds: string[]; reason?: string }, @Req() req: ScopedRequest) {
@@ -145,7 +145,7 @@ export class MembersController {
   }
 
   @Get('printed/batch/pdf')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'PDF cetak batch kartu fisik (banyak anggota)',
   })
   async getPrintedBatchPdf(
@@ -176,7 +176,7 @@ export class MembersController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui anggota',
   })
   update(@Param('id') id: string, @Body() dto: UpdateMemberDto, @Req() req: ScopedRequest) {
@@ -184,7 +184,7 @@ export class MembersController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Hapus anggota',
   })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -192,7 +192,7 @@ export class MembersController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Impor data anggota',
   })
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
@@ -200,7 +200,7 @@ export class MembersController {
   }
 
   @Get('export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Ekspor data anggota',
   })
   exportCsv(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
@@ -208,7 +208,7 @@ export class MembersController {
   }
 
   @Post(':id/validate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Validasi anggota',
   })
   validate(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -216,7 +216,7 @@ export class MembersController {
   }
 
   @Post(':id/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Setujui anggota',
   })
   approve(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -224,7 +224,7 @@ export class MembersController {
   }
 
   @Post(':id/resend-credentials')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Kirim ulang credential login anggota',
   })
   resendCredentials(@Param('id') id: string) {
@@ -232,7 +232,7 @@ export class MembersController {
   }
 
   @Patch(':id/suspend')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tangguhkan anggota',
   })
   suspend(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -240,7 +240,7 @@ export class MembersController {
   }
 
   @Patch(':id/reactivate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Aktifkan kembali anggota',
   })
   reactivate(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -406,7 +406,7 @@ export class MembersController {
   }
 
   @Patch(':id/digital-card/revoke')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Cabut kartu anggota digital (nonaktifkan QR)',
   })
   revokeCard(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -414,7 +414,7 @@ export class MembersController {
   }
 
   @Patch(':id/digital-card/activate')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Aktifkan kembali kartu anggota digital',
   })
   activateCard(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -422,7 +422,7 @@ export class MembersController {
   }
 
   @Post(':id/digital-card/printed')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Terbitkan kartu fisik (QR statis per-penerbitan)',
   })
   issuePrintedCard(
@@ -439,7 +439,7 @@ export class MembersController {
   }
 
   @Get(':id/digital-card/printed/pdf')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'PDF cetak kartu fisik (per penerbitan)',
   })
   async getPrintedCardPdf(

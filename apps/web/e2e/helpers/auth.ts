@@ -57,8 +57,33 @@ export async function mockAuth(
     mockImport?: boolean;
     mockCandidates?: boolean;
     mockDashboardPages?: boolean;
+    role?: string;
   },
 ) {
+  // Determine user data based on role
+  const userRole = options?.role || MOCK_USER.role;
+  let userRantingId: string | null = null;
+  if (userRole === 'superadmin' || userRole === 'admin_nasional') {
+    userRantingId = null;
+  } else if (userRole === 'admin_distrik') {
+    userRantingId = 'ranting-1';
+  } else if (userRole === 'admin_wilayah') {
+    userRantingId = 'ranting-1';
+  } else if (userRole === 'admin_ranting') {
+    userRantingId = 'ranting-1';
+  } else {
+    userRantingId = 'ranting-1';
+  }
+  const userData = {
+    id: 'mock-user-1',
+    email: 'test@ths-thm.org',
+    namaLengkap: 'Test User',
+    role: userRole,
+    isActive: true,
+    rantingId: userRantingId,
+    createdAt: '2024-01-01T00:00:00Z',
+  };
+
   // ── 1. Set auth cookies + localStorage (runs before any page JS) ──
   await page.addInitScript(
     (params: { accessToken: string; refreshToken: string; user: string }) => {
@@ -78,7 +103,7 @@ export async function mockAuth(
     {
       accessToken: MOCK_ACCESS_TOKEN,
       refreshToken: MOCK_REFRESH_TOKEN,
-      user: JSON.stringify(MOCK_USER),
+      user: JSON.stringify(userData),
     },
   );
 
@@ -127,7 +152,7 @@ export async function mockAuth(
   // API catch-all: unmocked API calls get an empty success response.
   // NOTE: pattern must match the ORIGIN the browser actually calls. apiClient
   // uses a relative `baseURL: '/api'`, so requests hit E2E_BASE_URL (the Next
-  // app), NOT NEXT_PUBLIC_API_URL (the backend origin — which is also unset in
+  // app), NOT NEXT_PUBLIC_API_URL (the backend origin — which is unset in
   // the Playwright test-runner process). Keying this to NEXT_PUBLIC_API_URL made
   // the catch-all never match, so unmocked calls fell through to the dead-port
   // rewrite (500) and broke pages whose data load (Promise.all) needs them.
@@ -148,7 +173,7 @@ export async function mockAuth(
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: MOCK_USER }),
+      body: JSON.stringify({ success: true, data: userData }),
     });
   });
 
@@ -186,7 +211,7 @@ export async function mockAuth(
           data: {
             accessToken: MOCK_ACCESS_TOKEN,
             refreshToken: MOCK_REFRESH_TOKEN,
-            user: MOCK_USER,
+            user: userData,
           },
         }),
       });

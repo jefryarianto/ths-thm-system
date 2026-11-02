@@ -328,9 +328,7 @@ export default function OrgChartEditorPage() {
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, node)}
           className={`flex items-center gap-2 p-3 mb-1 rounded-lg border transition-all ${
-            canEditStructure
-              ? 'cursor-grab active:cursor-grabbing'
-              : 'cursor-default opacity-90'
+            canEditStructure ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-90'
           } ${
             isDragOver
               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 ring-2 ring-indigo-300'
@@ -492,8 +490,8 @@ export default function OrgChartEditorPage() {
           </>
         ) : (
           <>
-            <strong>Mode lihat:</strong> Struktur organisasi hanya bisa diubah oleh admin_ranting
-            ke atas. Hubungi admin Anda bila perlu perubahan.
+            <strong>Mode lihat:</strong> Struktur organisasi hanya bisa diubah oleh admin_ranting ke
+            atas. Hubungi admin Anda bila perlu perubahan.
           </>
         )}
       </div>

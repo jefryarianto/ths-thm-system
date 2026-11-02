@@ -54,7 +54,8 @@ export class JabatanController {
 
   @Post()
   @CrudAuth('superadmin', 'admin_distrik', 'admin_nasional', {
-    summary: 'Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional)',
+    summary:
+      'Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional)',
   })
   create(
     @Req() req: ScopedRequest,

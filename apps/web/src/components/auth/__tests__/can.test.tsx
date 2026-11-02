@@ -29,10 +29,7 @@ beforeAll(() => {
  * `localStorage.user` before rendering is enough to drive <Can />.
  */
 function setRole(role: Role) {
-  localStorage.setItem(
-    'user',
-    JSON.stringify({ id: 'u1', role, namaLengkap: 'Test User' }),
-  );
+  localStorage.setItem('user', JSON.stringify({ id: 'u1', role, namaLengkap: 'Test User' }));
 }
 
 function renderCan(
@@ -51,9 +48,7 @@ async function expectVisible() {
 }
 
 async function expectHidden() {
-  await waitFor(() =>
-    expect(screen.queryByTestId('protected')).not.toBeInTheDocument(),
-  );
+  await waitFor(() => expect(screen.queryByTestId('protected')).not.toBeInTheDocument());
 }
 
 describe('MODULE_PERMISSIONS: settings modules', () => {

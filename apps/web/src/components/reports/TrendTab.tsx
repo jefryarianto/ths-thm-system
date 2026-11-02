@@ -23,9 +23,7 @@ interface TrendPoint {
 export default function TrendTab() {
   const { data, loading, error, refetch } = useApi<TrendPoint[]>(
     () =>
-      apiClient
-        .get('/reports/chart/members-over-time')
-        .then((res) => unwrap<TrendPoint[]>(res)),
+      apiClient.get('/reports/chart/members-over-time').then((res) => unwrap<TrendPoint[]>(res)),
     [],
   );
 

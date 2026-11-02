@@ -9,6 +9,7 @@ import {
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
+import { ScopeService } from '../scope/scope.service';
 import { CacheService } from '../services/cache.service';
 import { PersistentAuditService } from '../services/persistent-audit.service';
 import { RevisionService } from '../services/revision.service';
@@ -105,7 +106,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
 
   constructor(
     protected readonly prisma: PrismaService,
-    protected readonly scopeHelper: ScopeHelper,
+    protected readonly scopeHelper: ScopeHelper | ScopeService,
     protected readonly cache: CacheService,
     private readonly config: CrudConfig,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
@@ -218,7 +219,9 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       // miliknya sendiri. Cek hierarki saja tidak cukup — mereka bisa melihat
       // data anggota lain di ranting/wilayahnya.
       if (isSelfScope(scope) && entity.anggotaId !== scope.selfMemberId) {
-        throw new ForbiddenException('Akses ditolak: Anda hanya dapat mengakses data milik sendiri');
+        throw new ForbiddenException(
+          'Akses ditolak: Anda hanya dapat mengakses data milik sendiri',
+        );
       }
       const hasAccess = await this.scopeHelper.hasAccessToResourceAsync(
         this.prisma,
@@ -244,7 +247,9 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
         throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
       }
       if (entity[this.selfScopeField] !== selfValue) {
-        throw new ForbiddenException('Akses ditolak: Anda hanya dapat mengakses data milik sendiri');
+        throw new ForbiddenException(
+          'Akses ditolak: Anda hanya dapat mengakses data milik sendiri',
+        );
       }
       return;
     }

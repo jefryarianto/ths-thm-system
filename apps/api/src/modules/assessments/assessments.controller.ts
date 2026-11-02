@@ -51,6 +51,7 @@ export class AssessmentsController {
   @Get('aspects')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -66,6 +67,7 @@ export class AssessmentsController {
   @Get('aspects/:id')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -80,9 +82,17 @@ export class AssessmentsController {
   }
 
   @Post('aspects')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Tambah aspek penilaian baru',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Tambah aspek penilaian baru',
+    },
+  )
   @ApiBody({ type: CreateAspectDto, description: 'Data aspek penilaian baru' })
   @ApiCreatedResponse({ description: 'Aspek penilaian berhasil dibuat' })
   createAspect(@Body() dto: CreateAspectDto) {
@@ -90,9 +100,17 @@ export class AssessmentsController {
   }
 
   @Patch('aspects/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Perbarui aspek penilaian',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Perbarui aspek penilaian',
+    },
+  )
   @ApiParam({ name: 'id', description: 'ID Aspek Penilaian', required: true })
   @ApiBody({ type: UpdateAspectDto, description: 'Data aspek penilaian yang diperbarui' })
   @ApiOkResponse({ description: 'Aspek penilaian berhasil diperbarui' })
@@ -101,9 +119,17 @@ export class AssessmentsController {
   }
 
   @Delete('aspects/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Hapus aspek penilaian',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Hapus aspek penilaian',
+    },
+  )
   @ApiParam({ name: 'id', description: 'ID Aspek Penilaian', required: true })
   @ApiOkResponse({
     description: 'Aspek penilaian dinonaktifkan (soft-disable, tidak tampil di list)',
@@ -117,6 +143,7 @@ export class AssessmentsController {
   @Get('items')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -133,6 +160,7 @@ export class AssessmentsController {
   @Get('items/:id')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -147,9 +175,17 @@ export class AssessmentsController {
   }
 
   @Post('items')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Tambah item penilaian baru',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Tambah item penilaian baru',
+    },
+  )
   @ApiBody({ type: CreateItemDto, description: 'Data item penilaian baru' })
   @ApiCreatedResponse({ description: 'Item penilaian berhasil dibuat' })
   createItem(@Body() dto: CreateItemDto) {
@@ -157,9 +193,17 @@ export class AssessmentsController {
   }
 
   @Patch('items/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Perbarui item penilaian',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Perbarui item penilaian',
+    },
+  )
   @ApiParam({ name: 'id', description: 'ID Item Penilaian', required: true })
   @ApiBody({ type: UpdateItemDto, description: 'Data item penilaian yang diperbarui' })
   @ApiOkResponse({ description: 'Item penilaian berhasil diperbarui' })
@@ -168,9 +212,17 @@ export class AssessmentsController {
   }
 
   @Delete('items/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Hapus item penilaian',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Hapus item penilaian',
+    },
+  )
   @ApiParam({ name: 'id', description: 'ID Item Penilaian', required: true })
   @ApiOkResponse({ description: 'Item penilaian dinonaktifkan' })
   deleteItem(@Param('id') id: string) {
@@ -180,7 +232,7 @@ export class AssessmentsController {
   // ── Import ────────────────────────────────────────────
 
   @Post('import-from-list')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Import aspek & item penilaian dari list JSON',
   })
   @ApiBody({ description: 'Array data import (NO, ASPEK, ITEM, DESKRIPSI, SKOR_MAX)' })
@@ -201,7 +253,7 @@ export class AssessmentsController {
     description: 'Bila diisi, import menjadi milik pendadaran (bukan template global)',
   })
   @ApiBody({ description: 'File CSV untuk import aspek & item penilaian' })
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Upload file CSV untuk import aspek & item penilaian',
   })
   @UseInterceptors(FileInterceptor('file'))
@@ -217,18 +269,34 @@ export class AssessmentsController {
   // ── Restore (tampilkan kembali aspek/item yang disembunyikan) ──
 
   @Post('aspects/:id/restore')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Aktifkan kembali aspek yang disembunyikan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Aktifkan kembali aspek yang disembunyikan',
+    },
+  )
   @ApiOkResponse({ description: 'Aspek penilaian diaktifkan kembali' })
   restoreAspect(@Param('id') id: string) {
     return this.aspectService.restore(id);
   }
 
   @Post('items/:id/restore')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Aktifkan kembali item yang disembunyikan',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Aktifkan kembali item yang disembunyikan',
+    },
+  )
   @ApiOkResponse({ description: 'Item penilaian diaktifkan kembali' })
   restoreItem(@Param('id') id: string) {
     return this.service.restoreItem(id);
@@ -239,6 +307,7 @@ export class AssessmentsController {
   @Get('scores')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -260,6 +329,7 @@ export class AssessmentsController {
   @Post('scores')
   @CrudAuth(
     'superadmin',
+    'admin_nasional',
     'admin_distrik',
     'admin_wilayah',
     'admin_ranting',
@@ -274,9 +344,17 @@ export class AssessmentsController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Impor nilai',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Impor nilai',
+    },
+  )
   @ApiBody({ description: 'Array data nilai untuk diimpor' })
   @ApiCreatedResponse({ description: 'Nilai berhasil diimpor' })
   importScores(@Body() importDto: { data: Record<string, unknown>[] }) {

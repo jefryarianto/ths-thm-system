@@ -40,9 +40,20 @@ const DEFAULT_MODULE: ModulePermission = {
 };
 
 export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
-  galeri: { view: 'anggota', create: 'anggota', edit: 'admin_ranting', delete: 'admin_ranting', approve: 'admin_ranting' },
+  galeri: {
+    view: 'anggota',
+    create: 'anggota',
+    edit: 'admin_ranting',
+    delete: 'admin_ranting',
+    approve: 'admin_ranting',
+  },
   galeriUpload: { view: 'anggota', create: 'anggota' },
-  galeriManage: { view: 'admin_ranting', edit: 'admin_ranting', delete: 'admin_ranting', approve: 'admin_ranting' },
+  galeriManage: {
+    view: 'admin_ranting',
+    edit: 'admin_ranting',
+    delete: 'admin_ranting',
+    approve: 'admin_ranting',
+  },
   members: { ...DEFAULT_MODULE },
   // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
   candidates: { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
@@ -64,10 +75,18 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   payments: { ...DEFAULT_MODULE, admin: 'admin_distrik' },
   claims: { ...DEFAULT_MODULE },
   approvals: { ...DEFAULT_MODULE },
-  documents: { ...DEFAULT_MODULE, view: 'anggota' },
+  // Backend @Delete('documents/:id'): superadmin + admin_distrik + admin_nasional.
+  documents: { ...DEFAULT_MODULE, view: 'anggota', delete: 'admin_distrik' },
   letters: { ...DEFAULT_MODULE },
-  // Activity-scoped: penguji can manage assessments for kegiatan they're assigned to
-  assessments: { ...DEFAULT_MODULE, view: 'penguji', create: 'penguji', edit: 'penguji' },
+  // Penguji mengisi nilai (POST /assessments/scores), tetapi master data
+  // aspek & item hanya boleh dikelola admin_kegiatan ke atas (backend).
+  assessments: {
+    ...DEFAULT_MODULE,
+    view: 'penguji',
+    create: 'admin_kegiatan',
+    edit: 'admin_kegiatan',
+    delete: 'admin_kegiatan',
+  },
   notifications: { ...DEFAULT_MODULE, export: 'admin_ranting' },
   reports: { ...DEFAULT_MODULE, admin: 'admin_ranting' },
   'org-documents': {

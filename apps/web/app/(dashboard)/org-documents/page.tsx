@@ -160,12 +160,9 @@ export default function OrgDocumentsPage() {
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem('accessToken');
-                          const dlResponse = await fetch(
-                            `/api/org-documents/${row.id}/download`,
-                            {
-                              headers: { Authorization: `Bearer ${token}` },
-                            },
-                          );
+                          const dlResponse = await fetch(`/api/org-documents/${row.id}/download`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
                           if (!dlResponse.ok) {
                             toast('error', 'Dokumen tidak tersedia untuk didownload');
                             return;

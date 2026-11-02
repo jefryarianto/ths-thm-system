@@ -13,7 +13,7 @@ export class TargetsController {
 
   @Get()
   @ApiOperation({ summary: 'Target & progress organisasi (anggota, iuran, kandidat)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   getTargets(@Req() req: ScopedRequest) {
     return this.service.getTargets(req.scope);

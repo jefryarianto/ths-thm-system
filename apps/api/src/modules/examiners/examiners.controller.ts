@@ -20,23 +20,39 @@ export class ExaminersController extends BaseCrudController {
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil semua penguji',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil semua penguji',
+    },
+  )
   findAll(@Query() q: ExaminerFilterDto) {
     return super.findAll(q);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil detail penguji',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil detail penguji',
+    },
+  )
   findOne(@Param('id') id: string) {
     return super.findOne(id);
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Tambah penguji (dari anggota terdaftar; akun eksisting dipromosikan, idempoten)',
   })
   create(@Body() dto: CreateExaminerDto) {
@@ -44,7 +60,7 @@ export class ExaminersController extends BaseCrudController {
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Perbarui penguji',
   })
   update(@Param('id') id: string, @Body() dto: UpdateExaminerDto) {
@@ -52,13 +68,15 @@ export class ExaminersController extends BaseCrudController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus penguji' })
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', {
+    summary: 'Hapus penguji',
+  })
   remove(@Param('id') id: string) {
     return super.remove(id);
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Impor data penguji',
   })
   importCsv(@Body() importDto: { data: Record<string, unknown>[] }) {
@@ -66,25 +84,49 @@ export class ExaminersController extends BaseCrudController {
   }
 
   @Post(':id/assign')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Tugaskan penguji',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Tugaskan penguji',
+    },
+  )
   assign(@Param('id') id: string, @Body() dto: AssignExaminerDto, @Req() req: ScopedRequest) {
     return this.service.assign(id, dto, req.scope);
   }
 
   @Get(':id/assignments')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil penugasan penguji',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil penugasan penguji',
+    },
+  )
   getAssignments(@Param('id') id: string) {
     return this.service.getAssignments(id);
   }
 
   @Get(':id/schedules')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
-    summary: 'Ambil jadwal penguji',
-  })
+  @CrudAuth(
+    'superadmin',
+    'admin_nasional',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    {
+      summary: 'Ambil jadwal penguji',
+    },
+  )
   getSchedules(@Param('id') id: string) {
     return this.service.getSchedules(id);
   }

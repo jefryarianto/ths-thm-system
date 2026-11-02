@@ -153,7 +153,9 @@ describe('pdf-templates pedoman kesekretariatan (Lampiran 3–6 + Bab VI)', () =
     const textTingkatan = collectText(docTingkatan);
     expect(textTingkatan).toContain('SERTIFIKAT KUSTOM');
     expect(textTingkatan).toContain('UKT KHUSUS');
-    expect(textTingkatan).toContain('Selamat Anastasia Kappipang no 03-3-056 lulus UKT dari III ke IV di Tanatoraja tgl 1 Desember 2003.');
+    expect(textTingkatan).toContain(
+      'Selamat Anastasia Kappipang no 03-3-056 lulus UKT dari III ke IV di Tanatoraja tgl 1 Desember 2003.',
+    );
 
     const docSeroja = buildPiagamSerojaPdf({
       recipientName: 'Budi Santoso',
@@ -172,6 +174,8 @@ describe('pdf-templates pedoman kesekretariatan (Lampiran 3–6 + Bab VI)', () =
     const textSeroja = collectText(docSeroja);
     expect(textSeroja).toContain('PENGHARGAAN JUANG');
     expect(textSeroja).toContain('SEROJA EMAS');
-    expect(textSeroja).toContain('Diberikan ke Budi Santoso nomor SRJ-001 atas jasa Panitia Natal pada Jakarta, 10 Oktober 2026 di Ranting A.');
+    expect(textSeroja).toContain(
+      'Diberikan ke Budi Santoso nomor SRJ-001 atas jasa Panitia Natal pada Jakarta, 10 Oktober 2026 di Ranting A.',
+    );
   });
 });

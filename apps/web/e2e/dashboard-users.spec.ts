@@ -314,9 +314,7 @@ test.describe('Users Dashboard Page', () => {
     await page.getByPlaceholder('contoh@email.com').fill('ranting@ths-thm.or.id');
     await page.getByRole('button', { name: 'Simpan' }).click();
 
-    await expect(
-      page.getByText('Ranting wajib dipilih untuk role admin_ranting'),
-    ).toBeVisible();
+    await expect(page.getByText('Ranting wajib dipilih untuk role admin_ranting')).toBeVisible();
     expect(createBody).toBeNull();
   });
 
@@ -355,17 +353,26 @@ test.describe('Users Dashboard Page', () => {
         id: 'r1',
         nama: 'Ranting Menteng',
         wilayahId: 'w1',
-        wilayah: { id: 'w1', nama: 'Wilayah Jakarta Pusat', distrikId: 'd1', distrik: { id: 'd1', nama: 'Distrik Jakarta' } },
+        wilayah: {
+          id: 'w1',
+          nama: 'Wilayah Jakarta Pusat',
+          distrikId: 'd1',
+          distrik: { id: 'd1', nama: 'Distrik Jakarta' },
+        },
       },
     };
 
-    await page.route('**/api/users/20', (route) => route.fulfill(json({ success: true, data: EDIT_USER })));
+    await page.route('**/api/users/20', (route) =>
+      route.fulfill(json({ success: true, data: EDIT_USER })),
+    );
 
     let patchBody: Record<string, unknown> | null = null;
     await page.route('**/api/users/20', async (route) => {
       if (route.request().method() === 'PATCH') {
         patchBody = route.request().postDataJSON() as Record<string, unknown>;
-        await route.fulfill(json({ success: true, data: EDIT_USER, message: 'User berhasil diperbarui' }));
+        await route.fulfill(
+          json({ success: true, data: EDIT_USER, message: 'User berhasil diperbarui' }),
+        );
         return;
       }
       await route.fallback();
@@ -384,7 +391,12 @@ test.describe('Users Dashboard Page', () => {
     // Simpan tanpa menyentuh cascade → rantingId harus tetap terkirim.
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect.poll(() => patchBody).not.toBeNull();
-    expect(patchBody).toMatchObject({ role: 'admin_ranting', rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' });
+    expect(patchBody).toMatchObject({
+      role: 'admin_ranting',
+      rantingId: 'r1',
+      wilayahId: 'w1',
+      distrikId: 'd1',
+    });
   });
 
   test('edit user menjadi anggota menerima ranting yang dipilih (tidak selalu invalid)', async ({
@@ -442,9 +454,7 @@ test.describe('Users Dashboard Page', () => {
     await expect(page.getByText('Ranting wajib dipilih untuk role anggota')).toHaveCount(0);
     await expect.poll(() => patchBody).not.toBeNull();
     expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1' });
-  });
-
-  test('mengubah role TIDAK mereset penempatan organisasi yang sudah ter-prefill', async ({
+  });test('mengubah role TIDAK mereset penempatan organisasi yang sudah ter-prefill', async ({
     page,
   }) => {
     await mockOrgStructure(page);
@@ -477,6 +487,7 @@ test.describe('Users Dashboard Page', () => {
     await page.route('**/api/users/20', (route) =>
       route.fulfill(json({ success: true, data: EDIT_USER })),
     );
+
     let patchBody: Record<string, unknown> | null = null;
     await page.route('**/api/users/20', async (route) => {
       if (route.request().method() === 'PATCH') {
@@ -505,6 +516,45 @@ test.describe('Users Dashboard Page', () => {
     // Simpan → ranting lama tetap terkirim tanpa perlu memilih ulang.
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect.poll(() => patchBody).not.toBeNull();
-    expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' });
+    expect(patchBody).toMatchObject({
+      role: 'anggota',
+      rantingId: 'r1',
+      wilayahId: 'w1',
+      distrikId: 'd1',
+    });
+  });
+
+test('membuat user admin_nasional tanpa distrik/wilayah/ranting', async ({ page }) => {
+    // Mock auth as admin_nasional tanpa scope organisasi
+    await mockAuth(page, { mockMembers: true, role: 'admin_nasional' });
+
+    let createBody: Record<string, unknown> | null = null;
+    await page.route('**/api/users', async (route) => {
+      if (route.request().method() === 'POST') {
+        createBody = route.request().postDataJSON() as Record<string, unknown>;
+        await route.fulfill(
+          json({ success: true, data: { id: 'new-user' }, message: 'User berhasil dibuat' }),
+        );
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.goto('/users');
+    await page.getByRole('button', { name: /Tambah User/ }).click();
+
+    // Admin_nasional tidak perlu memilih distrik/wilayah/ranting — form harus terbuka
+    // dan submit harus berhasil tanpa field org.
+    await page.getByPlaceholder('Masukkan nama lengkap').fill('Admin Nasional Baru');
+    await page.getByPlaceholder('contoh@email.com').fill('nasional@ths-thm.or.id');
+    await page.getByRole('button', { name: 'Simpan' }).click();
+
+    await expect.poll(() => createBody).not.toBeNull();
+    // Admin_nasional: org fields harus dikosongkan (null) secara otomatis
+    expect(createBody).toMatchObject({ role: 'admin_nasional' });
+    // Pastikan form tidak memaksa distrik/wilayah/ranting untuk admin_nasional
+    expect(createBody.distrikId).toBeNull();
+    expect(createBody.wilayahId).toBeNull();
+    expect(createBody.rantingId).toBeNull();
   });
 });
