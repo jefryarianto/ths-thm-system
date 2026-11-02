@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ths_thm_staging
-      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD:-staging_password_change_me}
+      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD wajib diset (tidak ada default)}
       POSTGRES_DB: ths_thm_staging
     volumes:
       - staging_postgres_data:/var/lib/postgresql/data
@@ -59,7 +59,7 @@ services:
       start_period: 30s
       retries: 3
     environment:
-      DATABASE_URL: postgresql://ths_thm_staging:${STAGING_DB_PASSWORD:-staging_password_change_me}@postgres:5432/ths_thm_staging
+      DATABASE_URL: postgresql://ths_thm_staging:${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD wajib diset}@postgres:5432/ths_thm_staging
       REDIS_URL: redis://valkey:6379
       JWT_SECRET: ${STAGING_JWT_SECRET}
       JWT_REFRESH_SECRET: ${STAGING_JWT_REFRESH_SECRET}
