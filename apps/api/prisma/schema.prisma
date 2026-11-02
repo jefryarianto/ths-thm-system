@@ -278,6 +278,9 @@ model Anggota {
   deletedAt                 DateTime?                @map("deleted_at")
   tahunDadar                String?                  @map("tahun_dadar")
   tempatDadar               String?                  @map("tempat_dadar")
+  pekerjaan                 String?
+  tanggalTerbit             DateTime?                @map("tanggal_terbit")
+  tanggalBerlakuSampai      DateTime?                @map("tanggal_berlaku_sampai")
   isImported                Boolean                  @default(false) @map("is_imported")
   importSource              String?                  @map("import_source")
   importedAt                DateTime?                @map("imported_at")

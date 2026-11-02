@@ -53,6 +53,8 @@ describe('MembersDigitalCardService', () => {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      updateMany: jest.fn(),
+      update: jest.fn(),
     },
     dokumen: {
       create: jest.fn(),
@@ -143,19 +145,33 @@ describe('MembersDigitalCardService', () => {
     });
 
     it('should include signer dari tabel penandatangan (multi-signer)', async () => {
+      const existing = {
+        id: 'doc-signer',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'https://ths-thm.cloud/verify/abc123',
+        status: 'generated',
+      };
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
       const result = await service.getDigitalCard('m-lrt-1');
 
       expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith(
         'kartu_anggota',
         'd-lrt',
       );
-      expect(result.data.card.signers).toEqual(mockSigners);
+      expect(result.data.card?.signers).toEqual(mockSigners);
       // Backward-compat: signer pertama di signerName/signerTitle
-      expect(result.data.card.signerName).toBe('Yoseph Pehan Betan');
-      expect(result.data.card.signerTitle).toBe('Koordinator Distrik');
+      expect(result.data.card?.signerName).toBe('Yoseph Pehan Betan');
+      expect(result.data.card?.signerTitle).toBe('Koordinator Distrik');
     });
 
     it('should include levelVisual (strip tingkat) dari tabel tingkatan', async () => {
+      const existing = {
+        id: 'doc-lv',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'https://ths-thm.cloud/verify/abc123',
+        status: 'generated',
+      };
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
       const result = await service.getDigitalCard('m-lrt-1');
 
       expect(mockTingkatanService.resolveLevelVisual).toHaveBeenCalledWith('Muda');
@@ -166,10 +182,33 @@ describe('MembersDigitalCardService', () => {
       });
     });
 
-    it('should generate new card dokumen + QR validation when none exists', async () => {
+    it('should NOT auto-generate dokumen saat GET digital-card tanpa kartu', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] });
 
       const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
+      expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+      expect(result.data.generated).toBe(false);
+      expect(result.data.card).toBeNull();
+    });
+
+    it('generateDigitalCard membuat dokumen + QR + tanggal terbit/berlaku (3 tahun)', async () => {
+      const createdDocs: any[] = [];
+      mockPrisma.dokumen.create.mockImplementation(async ({ data }: any) => {
+        const doc = { id: 'doc-gen', ...data };
+        createdDocs.push(doc);
+        return doc;
+      });
+      // findUnique dipanggil dua kali (ensure + getDigitalCard) — kembalikan
+      // dokumen yang sudah dibuat agar kartu terdeteksi.
+      mockPrisma.anggota.findUnique.mockImplementation(async () => ({
+        ...mockMember,
+        dokumen: createdDocs,
+      }));
+      mockPrisma.anggota.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.generateDigitalCard('m-lrt-1');
 
       expect(mockPrisma.dokumen.create).toHaveBeenCalledTimes(1);
       expect(mockPrisma.qRValidation.create).toHaveBeenCalledTimes(1);
@@ -183,7 +222,18 @@ describe('MembersDigitalCardService', () => {
         }),
       );
       // Nomor dokumen memakai NRA baru
-      expect(result.data.card.nomorDokumen).toBe('KTA-LRT-0103-001-1994');
+      expect(result.data.card?.nomorDokumen).toBe('KTA-LRT-0103-001-1994');
+      expect(result.data.generated).toBe(true);
+      // Tanggal terbit & masa berlaku 3 tahun diisi saat generate
+      expect(mockPrisma.anggota.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'm-lrt-1', tanggalTerbit: null }),
+          data: expect.objectContaining({
+            tanggalTerbit: expect.any(Date),
+            tanggalBerlakuSampai: expect.any(Date),
+          }),
+        }),
+      );
     });
 
     it('should reuse existing card dokumen (tidak generate duplikat)', async () => {
@@ -199,8 +249,8 @@ describe('MembersDigitalCardService', () => {
 
       expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
       expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
-      expect(result.data.card.id).toBe('doc-existing');
-      expect(result.data.card.nomorDokumen).toBe('KTA-LRT-0103-001-1994');
+      expect(result.data.card?.id).toBe('doc-existing');
+      expect(result.data.card?.nomorDokumen).toBe('KTA-LRT-0103-001-1994');
     });
 
     it('should normalize verificationUrl legacy (/api/documents/verify/...) ke /verify/ agar dibuka di browser', async () => {
@@ -217,7 +267,7 @@ describe('MembersDigitalCardService', () => {
 
         const result = await service.getDigitalCard('m-lrt-1');
 
-        const url = result.data.card.verificationUrl as string;
+        const url = result.data.card!.verificationUrl as string;
         expect(url.startsWith('https://ths-thm.cloud/verify/')).toBe(true);
         expect(url).not.toContain('/api/documents/verify/');
         // Token pada URL adalah JWT QR bertanda tangan (3 segmen base64url)
@@ -238,6 +288,13 @@ describe('MembersDigitalCardService', () => {
     it('should generate QR dari verificationUrl', async () => {
       const { toDataURL } = jest.requireMock('qrcode');
       toDataURL.mockResolvedValue('data:image/png;base64,FAKEQR');
+      const existing = {
+        id: 'doc-qr',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'https://ths-thm.cloud/verify/abc123',
+        status: 'generated',
+      };
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
 
       const result = await service.getDigitalCard('m-lrt-1');
 
@@ -404,20 +461,32 @@ describe('MembersDigitalCardService', () => {
       );
     });
 
-    it('aktifkan kembali: status generated + QR aktif', async () => {
+    it('aktifkan kembali: status generated + QR aktif + perpanjang masa berlaku 3 bulan', async () => {
       mockPrisma.dokumen.findFirst.mockResolvedValue(
         ktaDoc({ status: 'generated', qrValidations: [{ id: 'qr-1', isValid: true }] }),
       );
-      const result = await service.setCardActive('m-lrt-1', true);
+      const before = new Date('2026-11-02T00:00:00Z');
+      jest.useFakeTimers().setSystemTime(before);
+      try {
+        const result = await service.setCardActive('m-lrt-1', true);
 
-      expect(result.data.status).toBe('generated');
-      expect(result.data.isValid).toBe(true);
-      expect(mockPrisma.dokumen.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'generated' }) }),
-      );
-      expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ isValid: true }) }),
-      );
+        expect(result.data.status).toBe('generated');
+        expect(result.data.isValid).toBe(true);
+        expect(mockPrisma.dokumen.update).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ status: 'generated' }) }),
+        );
+        expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
+          expect.objectContaining({ data: expect.objectContaining({ isValid: true }) }),
+        );
+        // Re-aktivasi: tanggalBerlakuSampai diperpanjang 3 bulan.
+        const updateArgs = mockPrisma.anggota.update.mock.calls[0][0];
+        expect(updateArgs.where.id).toBe('m-lrt-1');
+        const expiry: Date = updateArgs.data.tanggalBerlakuSampai;
+        expect(expiry.getUTCFullYear()).toBe(2027);
+        expect(expiry.getUTCMonth()).toBe(1); // Februari (0-based) = Nov + 3
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

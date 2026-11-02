@@ -295,6 +295,22 @@ export class MembersController {
     return this.digitalCardService.getDigitalCard(id, req.scope, req.user);
   }
 
+  @Post(':id/digital-card/generate')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    { scope: 'self', summary: 'Generate KTA manual dari member area' },
+  )
+  generateDigitalCard(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.generateDigitalCard(id, req.scope, req.user);
+  }
+
   @Get(':id/digital-card/pdf')
   @CrudAuth(
     'superadmin',

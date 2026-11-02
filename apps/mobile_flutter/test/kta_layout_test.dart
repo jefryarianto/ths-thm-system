@@ -23,6 +23,7 @@ MemberKta sample() {
     tanggalBerlakuSampai: '',
     namaKoordinator: 'E. HENDRIKUS MASAN BEDA',
     tandaTanganUrl: '',
+    stampImageUrl: '',
   );
 }
 
@@ -85,6 +86,7 @@ void main() {
       tanggalBerlakuSampai: '',
       namaKoordinator: '',
       tandaTanganUrl: '',
+      stampImageUrl: '',
     );
     final layout = KtaLayoutCalculator().calculate(kta);
     expect(layout.warnings,

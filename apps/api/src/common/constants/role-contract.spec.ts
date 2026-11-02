@@ -162,6 +162,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
   MembersController: [
     'findAll',
     'findOne',
+    'generateDigitalCard',
     'getCardIssuances',
     'getCardSecurity',
     'getDigitalCard',

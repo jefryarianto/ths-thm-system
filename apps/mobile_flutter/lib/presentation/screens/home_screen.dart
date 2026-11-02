@@ -275,6 +275,7 @@ class _KtaSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Kartu digambar persis seperti layar /kta: tanpa frame, gutter total 20
     // (16 sliver + 4) agar ukuran kartu identik dengan halaman KTA Digital.
+    final generated = cardData?.generated ?? false;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       // Kartu KTA lama dibungkus `SecureKtaContainer`: tata letak kartu TIDAK
@@ -283,7 +284,57 @@ class _KtaSectionCard extends StatelessWidget {
       // melindungi wrapper bertingkat dengan layar /kta maupun /kta/viewer).
       // Banner jam verifikasi live disembunyikan (default showLiveClock false).
       child: SecureKtaContainer(
-        childKtaExisting: KtaFlipCard(member: member, cardData: cardData),
+        childKtaExisting: generated
+            ? KtaFlipCard(member: member, cardData: cardData)
+            : _HomeGenerateKtaCard(member: member),
+      ),
+    );
+  }
+}
+
+/// Prompt "Generate KTA" ringkas untuk Beranda saat kartu belum dibuat.
+class _HomeGenerateKtaCard extends StatelessWidget {
+  final Member member;
+  const _HomeGenerateKtaCard({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: scheme.primaryContainer.withValues(alpha: 0.4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.space16),
+        child: Row(
+          children: [
+            Icon(Icons.badge_outlined, size: 40, color: scheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'KTA Belum Dibuat',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Generate kartu secara manual di halaman KTA Digital.',
+                    style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: () => context.push<void>('/kta'),
+              child: const Text('Generate'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -27,6 +27,11 @@ function maskIp(ip?: string | null): string | null {
   return ip.length > 24 ? `${ip.slice(0, 24)}...` : ip;
 }
 
+/** Masa berlaku KTA sejak diterbitkan (tahun). */
+const KTA_VALIDITY_YEARS = 3;
+/** Kewajiban re-aktivasi KTA — perpanjang masa berlaku setiap 3 bulan. */
+const KTA_REACTIVATION_MONTHS = 3;
+
 /**
  * SVG watermark diagonal (anti-fotokopi digital): teks diulang miring -28°
  * menutupi seluruh kanvas, semi-transparan. Dipakai pada PNG hasil simpan,
@@ -338,6 +343,11 @@ export class MembersDigitalCardService {
       await this.prisma.$transaction([
         this.prisma.dokumen.update({ where: { id: doc.id }, data: { status: newStatus } }),
         this.prisma.qRValidation.update({ where: { id: qr.id }, data: { isValid: true } }),
+        // Re-aktivasi: perpanjang masa berlaku 3 bulan (kewajiban re-aktivasi).
+        this.prisma.anggota.update({
+          where: { id: memberId },
+          data: { tanggalBerlakuSampai: this.extendExpiry(new Date()) },
+        }),
       ]);
     } else {
       await this.prisma.$transaction([
@@ -356,6 +366,13 @@ export class MembersDigitalCardService {
         isValid: active,
       },
     };
+  }
+
+  /** Tanggal kedaluwarsa: 3 bulan setelah tanggal acuan. */
+  private extendExpiry(from: Date): Date {
+    const expiry = new Date(from);
+    expiry.setMonth(expiry.getMonth() + KTA_REACTIVATION_MONTHS);
+    return expiry;
   }
 
   /** Riwayat penerbitan kartu (semua QR: digital + fisik). */
@@ -410,13 +427,29 @@ export class MembersDigitalCardService {
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { card, memberData, verificationUrl, levelVisual, distrikId } =
       await this.prepareDigitalCardData(memberId, scope, user);
-    const qrDataUrl = await this.buildQr(verificationUrl);
+    if (!card) {
+      return {
+        success: true,
+        data: {
+          generated: false,
+          card: null,
+          member: memberData,
+          qrCode: null,
+          levelVisual,
+          signatureImage: null,
+          stampImage: null,
+          template: null,
+        },
+      };
+    }
+    const qrDataUrl = await this.buildQr(verificationUrl!);
     const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
     const template = await this.resolveActiveTemplate(distrikId);
 
     return {
       success: true,
       data: {
+        generated: true,
         card,
         member: memberData,
         qrCode: qrDataUrl,
@@ -427,6 +460,17 @@ export class MembersDigitalCardService {
         template,
       },
     };
+  }
+
+  /**
+   * Generate KTA secara manual dari member area (idempoten).
+   * Membuat dokumen KTA + QR verifikasi bila belum ada, mengisi tanggal
+   * terbit & masa berlaku 3 tahun, lalu mengembalikan kartu digital lengkap.
+   */
+  async generateDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    const member = await this.loadMemberForScope(memberId, scope, user);
+    await this.ensureKtaDokumen(member);
+    return this.getDigitalCard(memberId, scope, user);
   }
 
   /**
@@ -455,7 +499,10 @@ export class MembersDigitalCardService {
     // (poppler/pdf-poppler), jadi hasilnya selalu PNG valid — tidak pernah kosong.
     const { card, memberData, verificationUrl, levelVisual, distrikId } =
       await this.prepareDigitalCardData(memberId, scope, user);
-    const qrDataUrl = await this.buildQr(verificationUrl);
+    if (!card) {
+      throw new NotFoundException('KTA belum di-generate. Gunakan Generate KTA terlebih dahulu.');
+    }
+    const qrDataUrl = await this.buildQr(verificationUrl!);
     const template = await this.resolveActiveTemplate(distrikId);
     const watermarkText = `KARTU DIGITAL - ${memberData.namaLengkap} - ${memberData.nomorAnggota}`;
 
@@ -526,7 +573,7 @@ export class MembersDigitalCardService {
 
     // Fallback lama (dipakai bila sharp bermasalah di deployment tertentu)
     const pdfBuffer = await this.renderCardPdf(
-      { card, memberData, verificationUrl, levelVisual, qrDataUrl, template },
+      { card, memberData, verificationUrl: verificationUrl!, levelVisual, qrDataUrl, template },
       { combined: true },
     );
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
@@ -640,12 +687,15 @@ export class MembersDigitalCardService {
   ): Promise<Buffer> {
     const { card, memberData, verificationUrl, levelVisual, distrikId } =
       await this.prepareDigitalCardData(memberId, scope, user);
-    const qrDataUrl = await this.buildQr(verificationUrl);
+    if (!card) {
+      throw new NotFoundException('KTA belum di-generate. Gunakan Generate KTA terlebih dahulu.');
+    }
+    const qrDataUrl = await this.buildQr(verificationUrl!);
     const template = await this.resolveActiveTemplate(distrikId);
     return this.renderCardPdf({
       card,
       memberData,
-      verificationUrl,
+      verificationUrl: verificationUrl!,
       levelVisual,
       qrDataUrl,
       template,
@@ -691,11 +741,34 @@ export class MembersDigitalCardService {
       tingkat: member.tingkat,
       tempatDadar: member.tempatDadar,
       tahunDadar: member.tahunDadar,
+      // Data KTA lengkap (diisi saat generate pertama kali)
+      pekerjaan: member.pekerjaan,
+      tanggalTerbit: member.tanggalTerbit?.toISOString() ?? null,
+      tanggalBerlakuSampai: member.tanggalBerlakuSampai?.toISOString() ?? null,
+      // Pelantikan: fallback ke tahun dadar bila tanggal pelantikan kosong.
+      pelantikanTahun: member.tahunDadar,
       ranting: member.ranting?.nama,
       wilayah: member.ranting?.wilayah?.nama,
       distrik: member.ranting?.wilayah?.distrik?.nama,
       alamatDistrik: member.ranting?.wilayah?.distrik?.alamat,
     };
+  }
+
+  /**
+   * Isi tanggal terbit & masa berlaku KTA saat pertama kali dibuat.
+   * Idempoten: hanya mengisi bila `tanggalTerbit` masih kosong.
+   */
+  private async initKtaDates(memberId: string): Promise<void> {
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setFullYear(expires.getFullYear() + KTA_VALIDITY_YEARS);
+    await this.prisma.anggota.updateMany({
+      where: { id: memberId, tanggalTerbit: null },
+      data: {
+        tanggalTerbit: now,
+        tanggalBerlakuSampai: expires,
+      },
+    });
   }
 
   /** Pastikan dokumen KTA ada (buat bila belum pernah ada, lengkap dgn QR digital). */
@@ -729,6 +802,8 @@ export class MembersDigitalCardService {
     await this.prisma.qRValidation.create({
       data: { dokumenId: doc.id, token, isValid: true, source: 'digital', verificationUrl },
     });
+    // Set tanggal terbit & masa berlaku 3 tahun (idempoten) saat kartu dibuat.
+    await this.initKtaDates(member.id);
     return doc;
   }
 
@@ -958,13 +1033,23 @@ export class MembersDigitalCardService {
     }
   }
 
-  private async prepareDigitalCardData(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+  /**
+   * Siapkan data kartu digital. Default TIDAK membuat dokumen otomatis —
+   * KTA hanya dibuat lewat `generateDigitalCard` (aksi eksplisit di member
+   * area). Admin/penerbitan fisik memakai `createIfMissing: true`.
+   */
+  private async prepareDigitalCardData(
+    memberId: string,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+    createIfMissing = false,
+  ) {
     // Anggota hanya boleh ambil kartu miliknya sendiri (admin dicakup oleh scope)
     const member = await this.loadMemberForScope(memberId, scope, user);
 
-    // Generate or reuse existing card token
+    // Reuse card token bila sudah ada; jangan generate otomatis.
     let existingCard = member.dokumen[0];
-    if (!existingCard) {
+    if (!existingCard && createIfMissing) {
       const token = uuidv4();
       const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'digital' });
       const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${signedToken}`;
@@ -983,6 +1068,9 @@ export class MembersDigitalCardService {
       await this.prisma.qRValidation.create({
         data: { dokumenId: existingCard.id, token, isValid: true },
       });
+
+      // Set tanggal terbit & masa berlaku 3 tahun (idempoten).
+      await this.initKtaDates(member.id);
     }
 
     const memberData = this.buildMemberData(member);
@@ -992,27 +1080,35 @@ export class MembersDigitalCardService {
 
     const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);
     const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
-    const card = {
-      id: existingCard.id,
-      nomorDokumen: existingCard.nomorDokumen,
-      // Normalisasi URL lama (`/api/documents/verify/...`) → `/verify/<token>` agar
-      // QR & tombol "Verifikasi" membuka halaman HTML, bukan JSON mentah dari API.
-      verificationUrl: normalizeVerificationUrl(existingCard.verificationUrl, {
-        typ: 'kta',
-        src: 'digital',
-      }),
-      status: existingCard.status,
-      // Backward-compat: signer pertama tetap di `signerName`/`signerTitle`.
-      signers,
-      signerName: signers[0]?.signerName,
-      signerTitle: signers[0]?.signerTitle,
-      // Gambar ttd/stempel sesuai distrik anggota (dipakai juga renderer PDF)
-      signatureImage,
-      stampImage,
-    };
+    const card = existingCard
+      ? {
+          id: existingCard.id,
+          nomorDokumen: existingCard.nomorDokumen,
+          // Normalisasi URL lama (`/api/documents/verify/...`) → `/verify/<token>` agar
+          // QR & tombol "Verifikasi" membuka halaman HTML, bukan JSON mentah dari API.
+          verificationUrl: normalizeVerificationUrl(existingCard.verificationUrl, {
+            typ: 'kta',
+            src: 'digital',
+          }),
+          status: existingCard.status,
+          // Backward-compat: signer pertama tetap di `signerName`/`signerTitle`.
+          signers,
+          signerName: signers[0]?.signerName,
+          signerTitle: signers[0]?.signerTitle,
+          // Gambar ttd/stempel sesuai distrik anggota (dipakai juga renderer PDF)
+          signatureImage,
+          stampImage,
+        }
+      : null;
 
     const levelVisual = await this.tingkatanService.resolveLevelVisual(member.tingkat);
 
-    return { card, memberData, verificationUrl: card.verificationUrl, levelVisual, distrikId };
+    return {
+      card,
+      memberData,
+      verificationUrl: card?.verificationUrl ?? null,
+      levelVisual,
+      distrikId,
+    };
   }
 }

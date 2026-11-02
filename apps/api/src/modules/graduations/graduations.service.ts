@@ -1323,22 +1323,11 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    // 2. Idempotency: jangan duplikasi dokumen yang sudah ada
-    //    (validateResult auto-generate + generateDocuments batch bisa memproses calon sama)
-    const existingKta = await this.prisma.dokumen.findFirst({
-      where: { anggotaId: anggota.id, tipe: 'kartu_anggota' },
-      select: { id: true },
-    });
-    if (!existingKta) {
-      // 3. Kartu anggota (KTA) otomatis — langkah 12 alur pendadaran
-      try {
-        await this.documentsService.generate({ memberId: anggota.id, type: 'kartu_anggota' });
-      } catch (error) {
-        this.logger.warn(`KTA generation skipped for ${anggota.id}: ${(error as Error).message}`);
-      }
-    }
+    // 2. KTA TIDAK lagi dibuat otomatis saat pendadaran selesai — sesuai
+    //    keputusan: sistem dilarang generate otomatis; anggota membuat KTA
+    //    manual lewat fitur "Generate KTA" di member area.
 
-    // 4. Idempotency: jangan duplikasi sertifikat yang sudah ada
+    // 3. Idempotency: jangan duplikasi sertifikat yang sudah ada
     const existingDoc = await this.prisma.dokumen.findFirst({
       where: { anggotaId: anggota.id, tipe: 'sertifikat_pendadaran' },
       select: { id: true },
@@ -1360,7 +1349,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     }
 
     this.logger.log(
-      `Generated KTA + sertifikat + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`,
+      `Generated sertifikat + anggota for calon ${candidate.id} (pendadaran ${kegiatanId}) — KTA dibuat manual oleh anggota`,
     );
   }
 

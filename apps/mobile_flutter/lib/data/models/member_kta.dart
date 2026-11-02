@@ -23,6 +23,7 @@ class MemberKta {
   final String tanggalBerlakuSampai;
   final String namaKoordinator;
   final String tandaTanganUrl;
+  final String stampImageUrl;
 
   const MemberKta({
     required this.nomorAnggota,
@@ -43,6 +44,7 @@ class MemberKta {
     required this.tanggalBerlakuSampai,
     required this.namaKoordinator,
     required this.tandaTanganUrl,
+    required this.stampImageUrl,
   });
 
   /// Bentuk `MemberKta` dari `Member` + `CardData` yang sudah dimuat.
@@ -52,6 +54,13 @@ class MemberKta {
     final tanggalLahir = member.tanggalLahir.trim().isEmpty
         ? ''
         : Formatters.dateLong(member.tanggalLahir).toUpperCase();
+    // Backend mengisi tanggalTerbit & berlaku saat KTA digenerate (3 tahun).
+    // pelantikanTahun dari backend sudah fallback ke tahunDadar bila kosong.
+    String dateDisplay(String iso) {
+      final t = Formatters.dateLong(iso);
+      return t == '-' ? '' : t.toUpperCase();
+    }
+
     return MemberKta(
       nomorAnggota: member.nomorAnggota,
       namaLengkap: member.namaLengkap,
@@ -62,15 +71,20 @@ class MemberKta {
       tingkat: member.tingkat,
       tempatLahir: member.tempatLahir,
       tanggalLahir: tanggalLahir,
-      pekerjaan: '',
+      pekerjaan: cardData?.pekerjaan ?? '',
       status: member.statusKeanggotaan,
       pelantikanTanggal: '',
-      pelantikanTahun: '',
+      pelantikanTahun: cardData?.pelantikanTahun ?? '',
       alamat: member.alamat,
-      tanggalTerbit: '',
-      tanggalBerlakuSampai: '',
+      tanggalTerbit: cardData != null && cardData.generated
+          ? dateDisplay(cardData.tanggalTerbit)
+          : '',
+      tanggalBerlakuSampai: cardData != null && cardData.generated
+          ? dateDisplay(cardData.tanggalBerlakuSampai)
+          : '',
       namaKoordinator: cardData?.signerName ?? '',
       tandaTanganUrl: cardData?.signatureImage ?? '',
+      stampImageUrl: cardData?.stampImage ?? '',
     );
   }
 }

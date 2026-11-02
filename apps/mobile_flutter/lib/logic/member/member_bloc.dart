@@ -16,6 +16,7 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     on<MemberLoadRequested>(_onMemberLoadRequested);
     on<MemberCardImageRequested>(_onMemberCardImageRequested);
     on<MemberCardDataRequested>(_onMemberCardDataRequested);
+    on<MemberCardGenerateRequested>(_onMemberCardGenerateRequested);
     on<MemberUpdateRequested>(_onMemberUpdateRequested);
     on<MemberPhotoUploadRequested>(_onMemberPhotoUploadRequested);
     on<MemberLogoutRequested>(_onMemberLogoutRequested);
@@ -113,11 +114,36 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     MemberCardDataRequested event,
     Emitter<MemberState> emit,
   ) async {
+    final current = state;
+    if (current is! MemberLoaded) return;
+    await _fetchCardData(current, emit);
+  }
+
+  /// Generate KTA manual (`POST /members/:id/digital-card/generate`) lalu
+  /// muat ulang data kartu. Sistem tidak lagi membuat KTA otomatis.
+  Future<void> _onMemberCardGenerateRequested(
+    MemberCardGenerateRequested event,
+    Emitter<MemberState> emit,
+  ) async {
+    final current = state;
+    if (current is! MemberLoaded) return;
     final token = await _apiClient.getAccessToken();
     if (token == null || token.isEmpty) return;
+    try {
+      await _apiClient.dio.post('/members/${current.member.id}/digital-card/generate');
+    } catch (_) {
+      // Gagal generate — biarkan UI menampilkan ulang tombol generate
+    }
+    await _fetchCardData(current, emit, force: true);
+  }
 
-    final current = state;
-    if (current is! MemberLoaded || current.cardData != null) return;
+  /// Muat data kartu digital dari `GET /members/:id/digital-card`.
+  /// `force=true` selalu ambil ulang; default lewati bila sudah dimuat.
+  Future<void> _fetchCardData(MemberLoaded current, Emitter<MemberState> emit,
+      {bool force = false}) async {
+    final token = await _apiClient.getAccessToken();
+    if (token == null || token.isEmpty) return;
+    if (!force && current.cardData != null) return;
 
     try {
       final response =

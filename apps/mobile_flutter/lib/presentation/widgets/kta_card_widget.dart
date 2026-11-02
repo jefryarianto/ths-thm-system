@@ -379,6 +379,21 @@ class _KtaBack extends StatelessWidget {
               height: mmToPx(5.1),
               child: _KtaImage(url: kta.tandaTanganUrl, fit: BoxFit.contain),
             ),
+          // Stempel/cap distrik — menyertai tanda tangan penandatangan.
+          // Cap diletakkan menimpa area ttd (seperti cap fisik), semi transparan.
+          if (kta.stampImageUrl.isNotEmpty)
+            Positioned(
+              left: mmToPx(53),
+              top: mmToPx(44.5),
+              width: mmToPx(11),
+              height: mmToPx(11),
+              child: Opacity(
+                opacity: 0.85,
+                child: ClipOval(
+                  child: _KtaImage(url: kta.stampImageUrl, fit: BoxFit.contain),
+                ),
+              ),
+            ),
           Positioned.fill(
             child: CustomPaint(
               painter: _BackTextPainter(

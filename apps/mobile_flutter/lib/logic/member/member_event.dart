@@ -78,6 +78,16 @@ class MemberCardDataRequested extends MemberEvent {
   List<Object> get props => [];
 }
 
+/// Generate KTA manual dari member area via `POST /members/:id/digital-card/generate`.
+/// Sistem tidak lagi membuat KTA otomatis — anggota harus menekan tombol
+/// "Generate KTA" untuk membuat dokumen + QR verifikasi pertama kalinya.
+class MemberCardGenerateRequested extends MemberEvent {
+  const MemberCardGenerateRequested();
+
+  @override
+  List<Object> get props => [];
+}
+
 class MemberLogoutRequested extends MemberEvent {
   const MemberLogoutRequested();
 

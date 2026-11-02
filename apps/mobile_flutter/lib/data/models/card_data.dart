@@ -15,6 +15,16 @@ class CardData {
   final String status;
   final String qrCode;
 
+  /// true bila KTA sudah pernah di-generate (server mengirim `generated`).
+  /// Untuk kompatibilitas server lama, default true.
+  final bool generated;
+
+  /// Data anggota lengkap dari respons kartu (field data KTA baru).
+  final String pekerjaan;
+  final String tanggalTerbit;
+  final String tanggalBerlakuSampai;
+  final String pelantikanTahun;
+
   const CardData({
     required this.signers,
     required this.signerName,
@@ -26,6 +36,11 @@ class CardData {
     this.nomorDokumen = '',
     this.status = '',
     this.qrCode = '',
+    this.generated = true,
+    this.pekerjaan = '',
+    this.tanggalTerbit = '',
+    this.tanggalBerlakuSampai = '',
+    this.pelantikanTahun = '',
   });
 
   factory CardData.fromJson(Map<String, dynamic> json) {
@@ -35,6 +50,9 @@ class CardData {
     final lv = json['levelVisual'] is Map<String, dynamic>
         ? json['levelVisual'] as Map<String, dynamic>
         : null;
+    final member = json['member'] is Map<String, dynamic>
+        ? json['member'] as Map<String, dynamic>
+        : <String, dynamic>{};
 
     final rawSigners = card['signers'];
     final signers = rawSigners is List
@@ -55,6 +73,11 @@ class CardData {
       nomorDokumen: _str(card, 'nomorDokumen'),
       status: _str(card, 'status'),
       qrCode: _str(json, 'qrCode'),
+      generated: json['generated'] as bool? ?? true,
+      pekerjaan: _str(member, 'pekerjaan'),
+      tanggalTerbit: _str(member, 'tanggalTerbit'),
+      tanggalBerlakuSampai: _str(member, 'tanggalBerlakuSampai'),
+      pelantikanTahun: _str(member, 'pelantikanTahun'),
     );
   }
 

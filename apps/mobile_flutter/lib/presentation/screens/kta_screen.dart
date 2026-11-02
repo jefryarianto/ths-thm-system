@@ -95,50 +95,59 @@ class _KtaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = member.statusKeanggotaan;
     final validasi = member.statusValidasi;
+    final generated = cardData?.generated ?? false;
 
     return ListView(
       padding: const EdgeInsets.all(AppTheme.space20),
       children: [
-        // Kartu digital — desain Expo
-        KtaFlipCard(member: member, cardData: cardData),
-        const SizedBox(height: AppTheme.space12),
-        FilledButton.tonalIcon(
-          onPressed: () => context.push<void>('/kta/viewer'),
-          icon: const Icon(Icons.zoom_in),
-          label: const Text('Perbesar & Simpan'),
-        ),
-        if (cardData?.verificationUrl.isNotEmpty ?? false) ...[
-          const SizedBox(height: AppTheme.space8),
-          FilledButton.icon(
-            onPressed: () {
-              final token = Formatters.extractQrToken(cardData!.verificationUrl);
-              context.push<void>('/kta/verify/$token');
-            },
-            icon: const Icon(Icons.verified_outlined),
-            label: const Text('Verifikasi Kartu'),
+        // KTA belum dibuat → ajak anggota generate manual (sistem dilarang
+        // membuat otomatis). Setelah generate, kartu tampil normal.
+        if (!generated) ...[
+          _GenerateKtaCard(member: member),
+          const SizedBox(height: AppTheme.space12),
+        ] else ...[
+          // Kartu digital — desain Expo
+          KtaFlipCard(member: member, cardData: cardData),
+          const SizedBox(height: AppTheme.space12),
+          FilledButton.tonalIcon(
+            onPressed: () => context.push<void>('/kta/viewer'),
+            icon: const Icon(Icons.zoom_in),
+            label: const Text('Perbesar & Simpan'),
           ),
-          // Fallback opsional: hasil verifikasi juga dapat dilihat via browser
-          // (berguna untuk dibagikan ke pihak luar yang tidak memakai aplikasi).
-          const SizedBox(height: 4),
-          Center(
-            child: TextButton.icon(
-              onPressed: () => launchUrl(
-                Uri.parse(
-                    ApiClient.resolveAbsolute(cardData!.verificationUrl)),
-                mode: LaunchMode.externalApplication,
-              ),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('Buka di Browser'),
-              style: TextButton.styleFrom(
-                // Target sentuh minimum 44 dp (a11y) — padding alih-alih compact.
-                minimumSize: const Size.fromHeight(
-                    AppTheme.touchTargetCompact),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: AppTheme.touchTargetCompact / 4),
-                textStyle: const TextStyle(fontSize: 12),
+          if (cardData?.verificationUrl.isNotEmpty ?? false) ...[
+            const SizedBox(height: AppTheme.space8),
+            FilledButton.icon(
+              onPressed: () {
+                final token =
+                    Formatters.extractQrToken(cardData!.verificationUrl);
+                context.push<void>('/kta/verify/$token');
+              },
+              icon: const Icon(Icons.verified_outlined),
+              label: const Text('Verifikasi Kartu'),
+            ),
+            // Fallback opsional: hasil verifikasi juga dapat dilihat via browser
+            // (berguna untuk dibagikan ke pihak luar yang tidak memakai aplikasi).
+            const SizedBox(height: 4),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse(
+                      ApiClient.resolveAbsolute(cardData!.verificationUrl)),
+                  mode: LaunchMode.externalApplication,
+                ),
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('Buka di Browser'),
+                style: TextButton.styleFrom(
+                  // Target sentuh minimum 44 dp (a11y) — padding alih-alih compact.
+                  minimumSize: const Size.fromHeight(
+                      AppTheme.touchTargetCompact),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: AppTheme.touchTargetCompact / 4),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
               ),
             ),
-          ),
+          ],
         ],
         const SizedBox(height: AppTheme.space20),
         // Status
@@ -220,6 +229,53 @@ class _Error extends StatelessWidget {
       message: message,
       onRetry: () =>
           context.read<MemberBloc>().add(const MemberLoadRequested()),
+    );
+  }
+}
+
+/// Kartu ajakan "Generate KTA" saat anggota belum pernah membuat kartu.
+/// Sistem dilarang membuat KTA otomatis — anggota harus menekan tombol ini.
+class _GenerateKtaCard extends StatelessWidget {
+  final Member member;
+  const _GenerateKtaCard({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: scheme.primaryContainer.withValues(alpha: 0.4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.space20),
+        child: Column(
+          children: [
+            Icon(Icons.badge_outlined, size: 48, color: scheme.primary),
+            const SizedBox(height: 12),
+            const Text(
+              'KTA Belum Dibuat',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Kartu Tanda Anggota dibuat secara manual oleh Anda. '
+              'Setelah digenerate, kartu berlaku 3 tahun sejak tanggal terbit '
+              'dengan kewajiban re-aktivasi setiap 3 bulan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12, color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context
+                  .read<MemberBloc>()
+                  .add(const MemberCardGenerateRequested()),
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Generate KTA'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
