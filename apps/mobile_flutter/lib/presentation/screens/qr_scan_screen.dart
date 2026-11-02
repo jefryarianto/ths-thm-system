@@ -110,14 +110,18 @@ class _QrScanScreenState extends State<QrScanScreen>
   bool _cameraPermissionGranted = false;
   bool _isCheckingPermission = true;
   String? _cameraErrorMessage;
+  bool _permissionCheckInFlight = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Sejak mobile_scanner 7.x `start()` menolak dipanggil sebelum controller
+    // ter-attach ke widget `MobileScanner` (error `controllerNotAttached`).
+    // Jadi biarkan `autoStart` default (true): widget yang menyalakan kamera
+    // saat mount, layar ini hanya mengurus izin & lifecycle.
     _scanner = MobileScannerController(
       formats: const [BarcodeFormat.qrCode],
-      autoStart: true,
     );
     _checkCameraPermission();
     _loadHistory();
@@ -128,9 +132,7 @@ class _QrScanScreenState extends State<QrScanScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (_cameraPermissionGranted) {
-        try {
-          _scanner.start();
-        } catch (_) {}
+        _startScanner();
       } else {
         _checkCameraPermission();
       }
@@ -142,7 +144,42 @@ class _QrScanScreenState extends State<QrScanScreen>
     }
   }
 
+  /// Nyalakan kamera.
+  ///
+  /// Kegagalan nyata dilaporkan controller lewat `value.error` dan dirender
+  /// oleh `errorBuilder` pada widget `MobileScanner`; exception yang dilempar
+  /// hanya untuk pemakaian yang tidak valid (mis. `start()` sebelum widget
+  /// ter-attach), jadi aman diabaikan di sini.
+  Future<void> _startScanner() async {
+    try {
+      await _scanner.start();
+    } catch (_) {}
+  }
+
+  /// Pesan error kamera yang ramah pengguna; kode plugin berbahasa Inggris.
+  static String _scannerErrorMessage(MobileScannerException error) {
+    switch (error.errorCode) {
+      case MobileScannerErrorCode.permissionDenied:
+        return 'Izin kamera ditolak. Aktifkan lewat pengaturan aplikasi.';
+      case MobileScannerErrorCode.unsupported:
+        return 'Perangkat ini tidak mendukung pemindaian kamera.';
+      case MobileScannerErrorCode.genericError:
+        return error.errorDetails?.message ??
+            'Kamera gagal dibuka. Pastikan tidak sedang dipakai aplikasi lain.';
+      default:
+        return error.errorDetails?.message ?? error.errorCode.message;
+    }
+  }
+
   Future<void> _checkCameraPermission() async {
+    // Cegah dua alur izin berjalan bersamaan: dialog izin memicu lifecycle
+    // `inactive` lalu `resumed`, sehingga `_checkCameraPermission()` bisa
+    // terpanggil dua kali. Dua `start()` yang tumpang tindih memicu error
+    // native CameraX ("Attempt to invoke virtual method ... on a null object
+    // reference") di Android 14.
+    if (_permissionCheckInFlight) return;
+    _permissionCheckInFlight = true;
+
     setState(() {
       _isCheckingPermission = true;
       _cameraErrorMessage = null;
@@ -158,11 +195,8 @@ class _QrScanScreenState extends State<QrScanScreen>
       if (!mounted) return;
 
       if (status.isGranted) {
-        if (!_cameraPermissionGranted) {
-          try {
-            await _scanner.start();
-          } catch (_) {}
-        }
+        // Kamera dinyalakan oleh widget `MobileScanner` (autoStart) begitu
+        // `_cameraPermissionGranted` menjadi true.
         setState(() {
           _cameraPermissionGranted = true;
           _isCheckingPermission = false;
@@ -183,6 +217,8 @@ class _QrScanScreenState extends State<QrScanScreen>
         _isCheckingPermission = false;
         _cameraErrorMessage = 'Gagal mengakses izin kamera: $e';
       });
+    } finally {
+      _permissionCheckInFlight = false;
     }
   }
 
@@ -483,7 +519,13 @@ class _QrScanScreenState extends State<QrScanScreen>
                       ? Colors.yellow
                       : Colors.white,
                 ),
-                onPressed: () => _scanner.toggleTorch(),
+                onPressed: () {
+                  try {
+                    _scanner.toggleTorch();
+                  } catch (_) {
+                    // Kamera belum siap; tombol aktif lagi setelah start.
+                  }
+                },
               );
             },
           ),
@@ -496,7 +538,13 @@ class _QrScanScreenState extends State<QrScanScreen>
                       ? Icons.camera_front
                       : Icons.camera_rear,
                 ),
-                onPressed: () => _scanner.switchCamera(),
+                onPressed: () {
+                  try {
+                    _scanner.switchCamera();
+                  } catch (_) {
+                    // Kamera belum siap; tombol aktif lagi setelah start.
+                  }
+                },
               );
             },
           ),
@@ -702,7 +750,7 @@ class _QrScanScreenState extends State<QrScanScreen>
             MobileScanner(
               controller: _scanner,
               onDetect: _onDetect,
-              errorBuilder: (context, error, child) {
+              errorBuilder: (context, error) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -722,8 +770,7 @@ class _QrScanScreenState extends State<QrScanScreen>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          error.errorDetails?.message ??
-                              'Pastikan izin kamera aktif dan tidak digunakan aplikasi lain.',
+                          _scannerErrorMessage(error),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.7),
@@ -731,13 +778,7 @@ class _QrScanScreenState extends State<QrScanScreen>
                         ),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
-                          onPressed: () {
-                            _checkCameraPermission();
-                            try {
-                              _scanner.stop();
-                              _scanner.start();
-                            } catch (_) {}
-                          },
+                          onPressed: _startScanner,
                           icon: const Icon(Icons.refresh, size: 16),
                           label: const Text('Muat Ulang Kamera'),
                           style: OutlinedButton.styleFrom(

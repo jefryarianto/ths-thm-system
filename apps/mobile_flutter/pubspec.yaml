@@ -17,7 +17,7 @@ dependencies:
   path_provider: ^2.1.4
   firebase_core: ^2.24.0
   firebase_messaging: ^14.7.0
-  mobile_scanner: ^5.0.0
+  mobile_scanner: ^7.5.0
   permission_handler: ^11.3.0
   socket_io_client: ^2.0.3
   flutter_pdfview: ^1.2.0
