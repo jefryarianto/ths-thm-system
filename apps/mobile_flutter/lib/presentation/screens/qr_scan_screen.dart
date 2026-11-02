@@ -3,7 +3,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -11,9 +13,13 @@ import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
 enum ScanMode { verify, checkin, lookup }
+
+/// Sub-mode pencarian anggota: via scan QR atau input manual (nama/nomor).
+enum LookupSearchType { qrCode, manual }
 
 class KegiatanItem {
   final String id;
@@ -100,12 +106,14 @@ class _QrScanScreenState extends State<QrScanScreen>
   final ApiClient _api = ApiClient();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  ScanMode _mode = ScanMode.verify;
+  ScanMode _mode = ScanMode.checkin; // default Check-In
+  LookupSearchType _lookupSearchType = LookupSearchType.qrCode;
+  final TextEditingController _manualSearchController =
+      TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
   String? _scanningKey;
   List<ScanHistoryItem> _history = [];
-  List<KegiatanItem> _kegiatan = [];
   String? _selectedKegiatanId;
-  bool _loadingKegiatan = true;
   ScanResultData? _result;
   bool _cameraPermissionGranted = false;
   bool _isCheckingPermission = true;
@@ -113,6 +121,7 @@ class _QrScanScreenState extends State<QrScanScreen>
   bool _permissionCheckInFlight = false;
   bool _startInFlight = false;
   bool _cameraPermanentlyDenied = false;
+  bool _isAdmin = false;
   Timer? _cameraWatchdog;
 
   @override
@@ -127,9 +136,24 @@ class _QrScanScreenState extends State<QrScanScreen>
       formats: const [BarcodeFormat.qrCode],
     );
     _scanner.addListener(_onScannerStateChanged);
+    _checkAdminRole();
     _checkCameraPermission();
     _loadHistory();
     _fetchKegiatan();
+  }
+
+  /// Cek role user saat ini untuk menentukan akses fitur Cari Anggota.
+  void _checkAdminRole() {
+    final authState = context.read<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.user.role : '';
+    // Role yang diizinkan akses pencarian anggota (sesuai home_screen.dart).
+    const adminRoles = {
+      'admin_ranting',
+      'admin_wilayah',
+      'admin_distrik',
+      'superadmin',
+    };
+    _isAdmin = adminRoles.contains(role);
   }
 
   /// Pantau state controller: jika kamera tidak pernah `isRunning` dalam
@@ -284,6 +308,7 @@ class _QrScanScreenState extends State<QrScanScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraWatchdog?.cancel();
+    _manualSearchController.dispose();
     _scanner.removeListener(_onScannerStateChanged);
     _scanner.dispose();
     super.dispose();
@@ -319,38 +344,22 @@ class _QrScanScreenState extends State<QrScanScreen>
   }
 
   Future<void> _fetchKegiatan() async {
-    setState(() => _loadingKegiatan = true);
-    final items = <KegiatanItem>[];
     try {
-      // Untuk anggota, yang paling relevan adalah daftar undangan pendadaran (Graduations)
-      // karena mereka bisa self check-in di sana.
+      // Untuk anggota, yang paling relevan adalah daftar undangan pendadaran
+      // (Graduations) karena mereka bisa self check-in di sana.
       final response = await _api.dio.get(AppConstants.graduationsMe);
       final List<dynamic> list = response.data['data'] ?? [];
 
       for (final item in list) {
         final grad = item['kegiatan'];
         if (grad != null) {
-          items.add(KegiatanItem(
-            id: grad['id'].toString(),
-            nama: grad['nama'].toString(),
-            lokasi: grad['lokasi']?.toString(),
-            tanggalMulai: grad['tanggalMulai']?.toString() ?? '',
-            type: 'graduation',
-          ));
+          // Simpan id pertama sebagai fallback jika QR bukan JSON.
+          _selectedKegiatanId ??= grad['id'].toString();
+          break;
         }
       }
     } catch (e) {
       debugPrint('Error fetching invitations: $e');
-    }
-
-    if (mounted) {
-      setState(() {
-        _kegiatan = items;
-        _loadingKegiatan = false;
-        if (items.isNotEmpty) {
-          _selectedKegiatanId = items.first.id;
-        }
-      });
     }
   }
 
@@ -490,36 +499,55 @@ class _QrScanScreenState extends State<QrScanScreen>
   }
 
   Future<ScanResultData> _checkIn(String qrData) async {
-    final kegiatanId = _selectedKegiatanId;
-    final kegiatan = _kegiatan.where((k) => k.id == kegiatanId).firstOrNull;
-    if (kegiatan == null) {
+    // QR check-in berformat: {"id":"<graduationId>","type":"graduation"}
+    // — tidak perlu seleksi kegiatan manual.
+    String? graduationId;
+    try {
+      final decoded = jsonDecode(qrData);
+      if (decoded is Map<String, dynamic> &&
+          decoded['type'] == 'graduation' &&
+          decoded['id'] != null) {
+        graduationId = decoded['id'].toString();
+      }
+    } catch (_) {
+      // Bukan JSON — fallback ke kegiatan terpilih (kompatibilitas lama).
+    }
+
+    graduationId ??= _selectedKegiatanId;
+    if (graduationId == null || graduationId.isEmpty) {
       return const ScanResultData(
           success: false,
-          message: 'Pilih kegiatan terlebih dahulu',
-          detail: '');
+          message: 'QR tidak dikenali',
+          detail: 'Scan QR absensi pendadaran yang ditampilkan panitia.');
     }
 
     try {
-      // Hanya Graduation yang didukung untuk self check-in oleh anggota di backend saat ini.
-      if (kegiatan.type == 'graduation') {
-        final res =
-            await _api.dio.post(AppConstants.graduationCheckIn(kegiatan.id));
-        final success = res.data?['success'] == true;
+      final res =
+          await _api.dio.post(AppConstants.graduationCheckIn(graduationId));
+      final success = res.data?['success'] == true;
+      final nama = res.data?['data']?['kegiatan']?['nama']?.toString() ??
+          'Pendadaran';
+      return ScanResultData(
+        success: success,
+        message: success
+            ? 'Check-in Berhasil ✓'
+            : (res.data['message']?.toString() ?? 'Check-in Gagal'),
+        detail: nama,
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final msg = e.response?.data?['message'];
+      final detail = msg is String
+          ? msg
+          : msg is List && msg.isNotEmpty
+              ? msg.first.toString()
+              : _api.messageFromError(e);
+      if (status == 403 || status == 401) {
         return ScanResultData(
-          success: success,
-          message: success
-              ? 'Check-in Berhasil ✓'
-              : (res.data['message']?.toString() ?? 'Check-in Gagal'),
-          detail:
-              '${kegiatan.nama}\nLokasi: ${kegiatan.lokasi ?? '-'}\nTanggal: ${Formatters.dateLong(kegiatan.tanggalMulai)}',
-        );
-      } else {
-        return const ScanResultData(
-          success: false,
-          message: 'Fitur Tidak Tersedia',
-          detail: 'Self check-in saat ini hanya tersedia untuk Pendadaran.',
-        );
+            success: false, message: 'Akses Terbatas', detail: detail);
       }
+      return ScanResultData(
+          success: false, message: 'Check-in Gagal', detail: detail);
     } catch (e) {
       return ScanResultData(
         success: false,
@@ -530,6 +558,13 @@ class _QrScanScreenState extends State<QrScanScreen>
   }
 
   Future<ScanResultData> _lookupMember(String qrData) async {
+    if (!_isAdmin) {
+      return const ScanResultData(
+        success: false,
+        message: 'Akses Terbatas',
+        detail: 'Pencarian anggota hanya tersedia untuk admin.',
+      );
+    }
     try {
       final res = await _api.dio
           .get('/members', queryParameters: {'search': qrData, 'limit': 1});
@@ -558,6 +593,107 @@ class _QrScanScreenState extends State<QrScanScreen>
         message: 'Pencarian Gagal',
         detail: _api.messageFromError(e),
       );
+    }
+  }
+
+  /// Pilih gambar dari galeri lalu decode QR dari file tersebut.
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? file =
+          await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (file == null || !mounted) return;
+
+      setState(() => _scanningKey = 'gallery');
+      final capture = await _scanner.analyzeImage(file.path);
+      if (!mounted) return;
+
+      final raw = capture?.barcodes
+          .where((b) => b.rawValue != null)
+          .firstOrNull
+          ?.rawValue;
+      if (raw == null) {
+        setState(() {
+          _result = const ScanResultData(
+            success: false,
+            message: 'QR Tidak Ditemukan',
+            detail: 'Gambar tidak mengandung QR code yang valid.',
+          );
+          _scanningKey = null;
+        });
+        return;
+      }
+
+      final key = DateTime.now().millisecondsSinceEpoch.toString();
+      setState(() => _scanningKey = key);
+      try {
+        final result = await _handle(raw);
+        if (!mounted) return;
+        setState(() => _result = result);
+        await _saveHistory(ScanHistoryItem(
+          id: key,
+          type: _mode == ScanMode.verify
+              ? 'document_verify'
+              : _mode == ScanMode.checkin
+                  ? 'check_in'
+                  : 'member_lookup',
+          result: result.message,
+          detail: result.detail,
+          timestamp: DateTime.now().toIso8601String(),
+        ));
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _result = ScanResultData(
+              success: false,
+              message: 'Terjadi kesalahan: ${_api.messageFromError(e)}',
+              detail: 'QR: ${raw.length > 30 ? '${raw.substring(0, 30)}...' : raw}',
+            ));
+      } finally {
+        if (mounted && _scanningKey == key) {
+          setState(() => _scanningKey = null);
+        }
+      }
+    } catch (e) {
+      debugPrint('Gagal memproses gambar galeri: $e');
+      if (mounted) {
+        setState(() {
+          _result = const ScanResultData(
+            success: false,
+            message: 'Gagal Memproses Gambar',
+            detail: 'Pilih gambar lain yang lebih jelas.',
+          );
+          _scanningKey = null;
+        });
+      }
+    }
+  }
+
+  /// Lookup manual berdasarkan nama/nomor anggota yang diketik user.
+  Future<void> _lookupManual() async {
+    final query = _manualSearchController.text.trim();
+    if (query.isEmpty) return;
+    if (!_isAdmin) {
+      setState(() => _result = const ScanResultData(
+            success: false,
+            message: 'Akses Terbatas',
+            detail: 'Pencarian anggota hanya tersedia untuk admin.',
+          ));
+      return;
+    }
+
+    setState(() => _scanningKey = 'manual');
+    try {
+      final result = await _lookupMember(query);
+      if (!mounted) return;
+      setState(() => _result = result);
+      await _saveHistory(ScanHistoryItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        type: 'member_lookup',
+        result: result.message,
+        detail: result.detail,
+        timestamp: DateTime.now().toIso8601String(),
+      ));
+    } finally {
+      if (mounted) setState(() => _scanningKey = null);
     }
   }
 
@@ -618,11 +754,141 @@ class _QrScanScreenState extends State<QrScanScreen>
     return Column(
       children: [
         _modeSelector(),
-        if (_mode == ScanMode.checkin) _kegiatanPicker(),
+        if (_mode == ScanMode.lookup) ...[
+          _lookupSearchTypeSelector(),
+          if (!_isAdmin) _nonAdminBanner(),
+          if (_lookupSearchType == LookupSearchType.manual) _manualSearchField(),
+        ],
         _cameraArea(),
         if (_result != null) _resultCard(),
         Expanded(child: _historySection()),
       ],
+    );
+  }
+
+  /// Selector sub-mode Cari Anggota: Scan QR vs Manual (Nama/Nomor).
+  Widget _lookupSearchTypeSelector() {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Row(
+        children: [
+          _lookupTypeChip(LookupSearchType.qrCode, 'Scan QR', Icons.qr_code_2),
+          const SizedBox(width: 6),
+          _lookupTypeChip(LookupSearchType.manual, 'Nama/Nomor',
+              Icons.person_search_outlined),
+        ],
+      ),
+    );
+  }
+
+  Widget _lookupTypeChip(LookupSearchType type, String label, IconData icon) {
+    final active = _lookupSearchType == type;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => setState(() => _lookupSearchType = type),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: active
+                ? AppTheme.primary
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 14,
+                  color: active
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: active
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Banner peringatan bila user non-admin mengakses Cari Anggota.
+  Widget _nonAdminBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.danger.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.danger.withValues(alpha: 0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.lock_outline, color: AppTheme.danger, size: 16),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Pencarian anggota hanya tersedia untuk admin.',
+              style: TextStyle(
+                color: AppTheme.danger,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Input manual untuk pencarian nama/nomor anggota.
+  Widget _manualSearchField() {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _manualSearchController,
+              enabled: _isAdmin,
+              decoration: InputDecoration(
+                hintText: _isAdmin
+                    ? 'Ketik nama atau nomor anggota...'
+                    : 'Tidak tersedia untuk non-admin',
+                hintStyle: const TextStyle(fontSize: 13),
+                prefixIcon: const Icon(Icons.search, size: 18),
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              style: const TextStyle(fontSize: 13),
+              onSubmitted: (_) => _lookupManual(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _isAdmin ? _lookupManual : null,
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            style: IconButton.styleFrom(backgroundColor: AppTheme.primary),
+            tooltip: 'Cari',
+          ),
+        ],
+      ),
     );
   }
 
@@ -682,54 +948,6 @@ class _QrScanScreenState extends State<QrScanScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _kegiatanPicker() {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: _loadingKegiatan
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: AppLoadingSpinner.small(),
-              ),
-            )
-          : _kegiatan.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(AppTheme.space8),
-                  child: Text(
-                    'Tidak ada kegiatan aktif. Scan dibatasi verifikasi.',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                )
-              : DropdownButtonFormField<String>(
-                  initialValue: _selectedKegiatanId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: 'Pilih Kegiatan',
-                    prefixIcon: const Icon(Icons.event, size: 18),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  items: _kegiatan
-                      .map((k) => DropdownMenuItem<String>(
-                            value: k.id,
-                            child: Text(
-                              k.nama,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedKegiatanId = v),
-                ),
     );
   }
 
@@ -889,6 +1107,39 @@ class _QrScanScreenState extends State<QrScanScreen>
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white70, width: 2),
                 borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
+          // Tombol scan dari galeri — di pojok kiri bawah area kamera.
+          Positioned(
+            left: 12,
+            bottom: 12,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: _scanningKey != null ? null : _pickImageFromGallery,
+                child: const Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.photo_library_outlined,
+                          color: Colors.white, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Galeri',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
