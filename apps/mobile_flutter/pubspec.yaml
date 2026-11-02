@@ -53,9 +53,17 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/kta/
+    - assets/fonts/LICENSE-DejaVu.txt
     - assets/images/
     - assets/videos/
   fonts:
+    - family: KtaDejaVu
+      fonts:
+        - asset: assets/fonts/DejaVuSans.ttf
+          weight: 400
+        - asset: assets/fonts/DejaVuSans-Bold.ttf
+          weight: 700
     # Font kartu KTA — nama family mengikuti spec packages/card-design
     - family: OCR A Extended
       fonts:
