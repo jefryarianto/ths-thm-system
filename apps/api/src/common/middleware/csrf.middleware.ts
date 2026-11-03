@@ -36,11 +36,12 @@ export class CsrfMiddleware implements NestMiddleware {
     const headerToken = req.headers['x-csrf-token'] as string | undefined;
 
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-      return res.status(403).json({
+      res.status(403).json({
         statusCode: 403,
         message: 'Invalid CSRF token',
         error: 'Forbidden',
       });
+      return;
     }
 
     // Valid token - ensure cookie is refreshed

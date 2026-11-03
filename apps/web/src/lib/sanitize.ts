@@ -40,11 +40,17 @@ async function loadDOMPurify(): Promise<void> {
   loadPromise = (async () => {
     try {
       // Load DOMPurify from CDN (ESM)
-      const module = await import('https://cdn.jsdelivr.net/npm/dompurify@3.1.0/dist/purify.es.mjs');
-      dompurifyInstance = module.default;
+      // @ts-expect-error -- dimuat dari URL CDN saat runtime; tidak ada deklarasi tipe lokal
+      const mod = await import('https://cdn.jsdelivr.net/npm/dompurify@3.1.0/dist/purify.es.mjs');
+      const purifier = mod.default as unknown as {
+        sanitize: (dirty: string, config?: object) => string;
+        (target: Window): { sanitize: (dirty: string, config?: object) => string };
+      };
       // Configure for server-side rendering fallback
-      if (typeof window !== 'undefined' && !dompurifyInstance.sanitize.toString().includes('window')) {
-        dompurifyInstance = module.default(window);
+      if (typeof window !== 'undefined' && !purifier.sanitize.toString().includes('window')) {
+        dompurifyInstance = purifier(window);
+      } else {
+        dompurifyInstance = purifier;
       }
     } catch (e) {
       console.warn('[sanitize] DOMPurify failed to load, using fallback', e);
@@ -112,27 +118,4 @@ export function sanitizeHtmlSync(html: string): string {
     });
   }
   return fallbackSanitize(html);
-}
-
-/**
- * React hook for sanitized HTML rendering.
- * Handles async loading of DOMPurify automatically.
- */
-import { useState, useEffect, useCallback } from 'react';
-
-export function useSanitizedHtml(rawHtml: string | null | undefined): string {
-  const [sanitized, setSanitized] = useState('');
-
-  useEffect(() => {
-    if (!rawHtml) {
-      setSanitized('');
-      return;
-    }
-    (async () => {
-      const clean = await sanitizeHtml(rawHtml);
-      setSanitized(clean);
-    })();
-  }, [rawHtml]);
-
-  return sanitized;
 }

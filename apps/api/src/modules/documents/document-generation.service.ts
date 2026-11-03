@@ -8,7 +8,14 @@ export class DocumentGenerationService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async generateMemberCard(memberId: string): Promise<any> {
-    const member = await this.prisma.anggota.findUnique({ where: { id: memberId } });
+    const member = await this.prisma.anggota.findUnique({
+      where: { id: memberId },
+      include: {
+        ranting: {
+          include: { wilayah: { include: { distrik: true } } },
+        },
+      },
+    });
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
