@@ -19,6 +19,7 @@ describe('ReportsService', () => {
     iuran: {
       aggregate: jest.fn(),
       findMany: jest.fn(),
+      groupBy: jest.fn(),
     },
     ranting: {
       findMany: jest.fn(),
@@ -26,6 +27,7 @@ describe('ReportsService', () => {
     absensiLatihan: {
       count: jest.fn(),
       findMany: jest.fn(),
+      groupBy: jest.fn(),
     },
     dokumen: {
       count: jest.fn(),
@@ -80,6 +82,9 @@ describe('ReportsService', () => {
 
     service = module.get<ReportsService>(ReportsService);
     jest.clearAllMocks();
+    // Default: groupBy kosong agar path aggregasi tidak melempar TypeError.
+    mockPrisma.iuran.groupBy.mockResolvedValue([]);
+    mockPrisma.absensiLatihan.groupBy.mockResolvedValue([]);
   });
 
   it('should be defined', () => {
@@ -210,15 +215,23 @@ describe('ReportsService', () => {
       mockPrisma.dokumen.count.mockResolvedValue(0);
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([]);
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([
-        { tanggal: '2026-05-15', count: 3n },
-        { tanggal: '2026-05-16', count: 7n },
+
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      mockPrisma.absensiLatihan.groupBy.mockResolvedValue([
+        { createdAt: yesterday, _count: { id: 7 } },
+        { createdAt: today, _count: { id: 3 } },
       ]);
 
       const result = await service.scanStats();
-      expect(result.absensiHarian).toHaveLength(2);
-      expect(result.absensiHarian[0]).toEqual({ tanggal: '2026-05-15', count: 3 });
-      expect(result.absensiHarian[1]).toEqual({ tanggal: '2026-05-16', count: 7 });
+      // Service mengisi seluruh 30 hari terakhir (termasuk hari tanpa absensi).
+      expect(result.absensiHarian).toHaveLength(30);
+      expect(result.absensiHarian.reduce((sum, d) => sum + d.count, 0)).toBe(10);
+      expect(result.absensiHarian.at(-1)).toEqual({
+        tanggal: today.toISOString().split('T')[0],
+        count: 3,
+      });
     });
 
     it('should return empty array when raw query fails', async () => {
@@ -226,7 +239,7 @@ describe('ReportsService', () => {
       mockPrisma.dokumen.count.mockResolvedValue(0);
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([]);
-      mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('Table does not exist'));
+      mockPrisma.absensiLatihan.groupBy.mockRejectedValue(new Error('Table does not exist'));
 
       const result = await service.scanStats();
       expect(result.absensiHarian).toEqual([]);
