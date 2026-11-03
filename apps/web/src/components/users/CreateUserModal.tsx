@@ -41,9 +41,10 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
   const [errors, setErrors] = useState<Record<string, string>>({});
   const scope = useOrgScopeLocks(open);
 
-  // Superadmin tidak butuh ranting (scope nasional); role lain WAJIB punya.
-  const isSuperadmin = form.role === 'superadmin';
-  const showOrg = form.role !== '' && !isSuperadmin;
+  // Superadmin & admin_nasional: scope nasional tanpa hierarki
+  // distrik/wilayah/ranting → form organisasi tidak ditampilkan.
+  const isNationalRole = form.role === 'superadmin' || form.role === 'admin_nasional';
+  const showOrg = form.role !== '' && !isNationalRole;
 
   // Bersihkan form saat modal ditutup agar tidak ada sisa pilihan sebelumnya.
   useEffect(() => {
@@ -109,6 +110,11 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
         payload.distrikId = org.distrikId;
         payload.wilayahId = org.wilayahId;
         payload.rantingId = org.rantingId;
+      } else if (form.role === 'admin_nasional') {
+        // admin_nasional: eksplisit tanpa penempatan organisasi.
+        payload.distrikId = null;
+        payload.wilayahId = null;
+        payload.rantingId = null;
       }
       await apiClient.post('/users', payload);
       toast('success', 'User berhasil dibuat');

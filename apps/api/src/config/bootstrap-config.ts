@@ -19,12 +19,21 @@ export function setupCors(app: NestExpressApplication): void {
     : ['http://localhost:3000'];
 
   app.enableCors({
-    origin: function originFilter(reqOrigin: string | undefined): string | void {
-      if (!reqOrigin) return undefined;
-      for (const allowed of corsOrigins) {
-        if (reqOrigin === allowed) return reqOrigin;
+    // cors@2.8.5 memanggil origin secara ASYNC — wajib memanggil callback.
+    // Fungsi sync yang hanya me-return nilai (tanpa callback) membuat setiap
+    // request menggantung selamanya karena next() tidak pernah dipanggil.
+    origin: function originFilter(
+      reqOrigin: string | undefined,
+      callback: (err: Error | null, origin?: boolean | string | RegExp | (string | RegExp)[]) => void,
+    ): void {
+      // Origin tercantum di allow-list → dipantulkan; selain itu tetap
+      // dilewatkan sebagai array allow-list agar header Vary: Origin ikut
+      // diset (semantik identik dengan `origin: corsOrigins` array).
+      if (reqOrigin && corsOrigins.includes(reqOrigin)) {
+        callback(null, reqOrigin);
+      } else {
+        callback(null, corsOrigins);
       }
-      return reqOrigin;
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],

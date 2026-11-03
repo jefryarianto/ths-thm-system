@@ -60,28 +60,16 @@ export async function mockAuth(
     role?: string;
   },
 ) {
-  // Determine user data based on role
+  // Determine user data based on role. Base on MOCK_USER agar nama/email
+  // default identik dengan sebelum ada opsi `role` (test lama mengandalkan
+  // nama "Super Admin" di header profile).
   const userRole = options?.role || MOCK_USER.role;
-  let userRantingId: string | null = null;
-  if (userRole === 'superadmin' || userRole === 'admin_nasional') {
-    userRantingId = null;
-  } else if (userRole === 'admin_distrik') {
-    userRantingId = 'ranting-1';
-  } else if (userRole === 'admin_wilayah') {
-    userRantingId = 'ranting-1';
-  } else if (userRole === 'admin_ranting') {
-    userRantingId = 'ranting-1';
-  } else {
-    userRantingId = 'ranting-1';
-  }
+  const userRantingId =
+    userRole === 'superadmin' || userRole === 'admin_nasional' ? null : 'ranting-1';
   const userData = {
-    id: 'mock-user-1',
-    email: 'test@ths-thm.org',
-    namaLengkap: 'Test User',
+    ...MOCK_USER,
     role: userRole,
-    isActive: true,
     rantingId: userRantingId,
-    createdAt: '2024-01-01T00:00:00Z',
   };
 
   // ── 1. Set auth cookies + localStorage (runs before any page JS) ──

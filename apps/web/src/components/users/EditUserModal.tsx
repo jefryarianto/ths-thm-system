@@ -59,9 +59,10 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
   const [errors, setErrors] = useState<Record<string, string>>({});
   const scope = useOrgScopeLocks(open);
 
-  // Superadmin tidak butuh ranting (scope nasional); role lain WAJIB punya.
-  const isSuperadmin = form.role === 'superadmin';
-  const showOrg = form.role !== '' && !isSuperadmin;
+  // Superadmin & admin_nasional: scope nasional tanpa hierarki
+  // distrik/wilayah/ranting → form organisasi tidak ditampilkan.
+  const isNationalRole = form.role === 'superadmin' || form.role === 'admin_nasional';
+  const showOrg = form.role !== '' && !isNationalRole;
 
   useEffect(() => {
     if (open && userId) {
@@ -149,6 +150,11 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
         payload.distrikId = org.distrikId;
         payload.wilayahId = org.wilayahId;
         payload.rantingId = org.rantingId;
+      } else if (form.role === 'admin_nasional') {
+        // admin_nasional: eksplisit tanpa penempatan organisasi.
+        payload.distrikId = null;
+        payload.wilayahId = null;
+        payload.rantingId = null;
       }
       await apiClient.patch(`/users/${userId}`, payload);
       toast('success', 'User berhasil diperbarui');

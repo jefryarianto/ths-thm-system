@@ -547,6 +547,7 @@ test('membuat user admin_nasional tanpa distrik/wilayah/ranting', async ({ page 
     // dan submit harus berhasil tanpa field org.
     await page.getByPlaceholder('Masukkan nama lengkap').fill('Admin Nasional Baru');
     await page.getByPlaceholder('contoh@email.com').fill('nasional@ths-thm.or.id');
+    await page.getByTestId('user-role').selectOption('admin_nasional');
     await page.getByRole('button', { name: 'Simpan' }).click();
 
     await expect.poll(() => createBody).not.toBeNull();
