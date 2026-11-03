@@ -10,19 +10,19 @@ nodeLinker: hoisted
 overrides:
   axios: 1.20.0
   form-data: 4.0.6
-  fast-uri: 3.1.8
-  multer: 2.4.0
+  fast-uri: 3.1.9
+  multer: 2.5.0
   uuid: 14.0.1
-  # CVE-2026-12590: DoS saat limit invalid (body-parser < 1.20.6) — express@5 (bull-board) teruji OK dgn 1.20.6
-  body-parser: 1.20.6
+  # GHSA-27r3-jxmh-p828 (HIGH): body-parser DoS trailing bytes after compressed body — fix 1.20.9
+  body-parser: 1.20.9
   # CVE-2026-31808 / CVE-2026-32630: file-type < 21.3.1 (dipakai @nestjs/common via dynamic import)
   file-type: 21.3.4
   # GHSA-5p4m-2wfm-xmqj (HIGH) + CVE-2025-64718 / CVE-2026-59869 / CVE-2026-53550
   js-yaml: 4.3.2
   # CVE-2026-4800 (CVSS 9.1) + CVE-2025-13465 + CVE-2026-2950
   lodash: 4.18.1
-  # CVE-2026-8723 + advisory qs 6.14.2-6.15.3 (fix 6.16.0)
-  qs: 6.16.0
+  # GHSA-6pq8-jhm2-2vcw / CVE-2026-110816 qs stringify comma DoS — fix 6.16.1 (sebelumnya 6.16.0)
+  qs: 6.16.1
 
   # ── Dependabot P0: socket.io stack (parser HIGH, engine.io HIGH, ws HIGH) ──
   socket.io-parser: 4.2.7
@@ -35,8 +35,8 @@ overrides:
   '@grpc/grpc-js': 1.14.5
   protobufjs: 7.6.5
 
-  # ── undici: 21 alert (jalur jsdom/vitest) — fix 7.29.1 ──
-  undici: 7.29.1
+  # ── undici: 21 alert (jalur jsdom/vitest) — fix 7.30.1 (cache-poisoning, TLS bypass, DoS) ──
+  undici: 7.30.1
 
   # ── Dependabot: pin range tak mengizinkan fix ──
   # shell-quote di-pin concurrently exact 1.8.3 (CRITICAL/HIGH)
@@ -56,11 +56,16 @@ overrides:
   brace-expansion@>=1.0.0 <2.0.0: 1.1.21
   # picomatch HIGH+MED (GHSA-c2c7-rcm5-vvqj / GHSA-3v7f-55p6-f55p, ReDoS)
   picomatch: 4.0.7
-  # glob MED (GHSA-5j98-mcp5-4vw2, command injection CLI -c/--cmd, >=10.2.0 <10.5.0).
-  # Di-scope hanya untuk dep jest (jest-config/jest-runtime butuh ^10.4.1). test-exclude
-  # (istanbul) memakai `promisify(require('glob'))` yang butuh glob == function (glob 9 API);
-  # glob 10 export object {glob, globSync, ...} -> override global memutus coverage.
-  glob@>=10.2.0 <10.5.0: 10.5.0
+  # glob MED GHSA-3g3m-2fjr-6pw4 (AbortSignal cancellation bypass) — vulnerable >=9 <=14.0.1,
+  # fix hanya di 14.0.2. glob 7.2.3 (jest 29/test-exclude) di BAWAH range → tetap aman tanpa
+  # di-override; hanya baris >=9 (kini @nestjs/cli glob 13) yang didorong ke 14.0.2.
+  # Override lama glob@>=10.2.0 <10.5.0 dihapus: baris 10.x sudah tak ada di lockfile.
+  'glob@>=9.0.0': 14.0.2
+  # minimatch MED GHSA-g3hv-75wg-m249 (globparts amplification) — TIDAK di-override ke 11.0.1:
+  # fix hanya ada di 11.0.1 (tanpa backport), tapi glob7 (jest29/eslint8) menembak internal
+  # Minimatch v3 (part RegExp + `_glob`) yang sudah tak ada di v11 → eslint gagal ekspansi
+  # pola. Perbaikan menuntut migrasi toolchain (eslint9 flat config + jest30) — alert #168
+  # di-dismiss sebagai fix_incomplete.
   # browserslist HIGH ×2 (GHSA-73wf-gq98-2v4g / GHSA-c83g-rgw3-j3cx, ReDoS)
   browserslist: 4.29.3
   # webpack HIGH+LOW (GHSA-8/×2, ReDoS di chunk-parser)
@@ -86,9 +91,9 @@ overrides:
   # MED GHSA-r825-w8mm-5pxw / GHSA-698v-4r3x-3vcv / GHSA-v6wh-96g9-6wx3, LOW GHSA-9jrq-w75r-8gcw
   vite: 8.1.6
 
-  # follow-redirects HIGH GHSA-q3jh-wrc6-jgq8 (array-form headers bypass credential stripping)
-  # & GHSA-8r9p-f939-6h3c (sensitiveHeaders regex escaping) — fix 1.16.1 (axios ^1.16.0)
-  follow-redirects: 1.16.1
+  # follow-redirects HIGH GHSA-mrwp-f3q8-3g9p (cross-realm sensitiveHeaders + credentials
+  # redirect) — fix 1.16.2 (sebelumnya 1.16.1)
+  follow-redirects: 1.16.2
   # Handlebar advisory patched; published package versions for other advisories are still vulnerable.
   handlebars: 4.7.10
 

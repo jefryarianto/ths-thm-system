@@ -129,7 +129,7 @@ export function validateEnvWithZod(): EnvConfig {
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
-    const errors = result.error.errors.map((err) => {
+    const errors = result.error.issues.map((err) => {
       const path = err.path.join('.');
       return `  - ${path}: ${err.message}`;
     });

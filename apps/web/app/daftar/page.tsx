@@ -184,7 +184,7 @@ export default function DaftarPage() {
 
     const validationResult = registrationSchema.safeParse(form);
     if (!validationResult.success) {
-      setErrorMsg(validationResult.error.errors[0].message);
+      setErrorMsg(validationResult.error.issues[0].message);
       setLoading(false);
       return;
     }
