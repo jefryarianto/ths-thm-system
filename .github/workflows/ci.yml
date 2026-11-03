@@ -137,10 +137,10 @@ jobs:
 
       - name: Check root markdown whitelist
         run: |
+          shopt -s nullglob
           ALLOWED="README.md CHANGELOG.md CONTRIBUTING.md"
           VIOLATIONS=""
           for f in *.md; do
-            [ -e "$f" ] || continue
             ok=0
             for a in $ALLOWED; do
               [ "$f" = "$a" ] && ok=1 && break
