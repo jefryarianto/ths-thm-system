@@ -19,6 +19,9 @@ model Berita {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([isVisible])
+  @@index([createdAt])
+  @@index([tanggal])
   @@map("berita")
 }
 
@@ -57,6 +60,8 @@ model DonasiProgram {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@index([isVisible])
+  @@index([createdAt])
   @@map("donasi_program")
 }
 
@@ -66,6 +71,7 @@ model Sejarah {
   isVisible Boolean  @default(true) @map("is_visible")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([isVisible])
   @@map("sejarah")
 }
 
@@ -79,6 +85,8 @@ model Sambutan {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([isVisible])
+  @@index([createdAt])
   @@map("sambutan")
 }
 
@@ -341,6 +349,9 @@ model CalonAnggota {
   pesertaPendadarans PesertaPendadaran[]
   sesiUjianPesertas  SesiUjianPeserta[]
 
+  @@index([rantingId])
+  @@index([status])
+  @@index([createdAt])
   @@map("calon_anggota")
 }
 
@@ -430,6 +441,10 @@ model Kegiatan {
   ujianPrakteks      UjianPraktek[]
   undangans          UndanganPendadaran[]
 
+  @@index([scopeType, scopeId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([tanggalMulai])
   @@map("kegiatan")
 }
 
@@ -868,6 +883,9 @@ model SuratMasuk {
   updatedAt     DateTime    @updatedAt @map("updated_at")
   disposisis    Disposisi[]
 
+  @@index([status])
+  @@index([createdAt])
+  @@index([tanggalTerima])
   @@map("surat_masuk")
 }
 
@@ -883,6 +901,9 @@ model SuratKeluar {
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
+  @@index([status])
+  @@index([createdAt])
+  @@index([tanggalSurat])
   @@map("surat_keluar")
 }
 

@@ -42,11 +42,10 @@ import * as crypto from 'crypto';
 /**
  * Password awal akun admin kegiatan yang dibuat otomatis dari anggota.
  * Sama pola dengan akun anggota di MembersService: dari env `DEFAULT_PASSWORD`,
- * fallback produksi ke nilai legacy, fallback dev/test ke acak sekali-jalan.
+ * fallback ke acak sekali-jalan (tanpa nilai statis). DEFAULT_PASSWORD WAJIB di produksi.
  */
 const DEFAULT_PASSWORD =
-  process.env.DEFAULT_PASSWORD ||
-  (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
+  process.env.DEFAULT_PASSWORD || crypto.randomBytes(6).toString('hex');
 
 /** Shape expected by DocumentsService.generateCertificate (#aspects). */
 interface AspectScore {

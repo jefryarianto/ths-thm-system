@@ -1,9 +1,21 @@
 {
   "name": "@ths-thm/templates",
   "version": "1.0.0",
-  "description": "Document templates (JSX) for THS-THM System",
+  "description": "Document templates (JSX/TSX) for THS-THM System",
   "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@react-pdf/renderer": "^3.4.0"
+    "@react-pdf/renderer": "^3.4.0",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
   }
 }

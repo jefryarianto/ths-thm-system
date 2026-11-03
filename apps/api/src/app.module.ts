@@ -16,6 +16,7 @@ import { PrismaModule } from './prisma';
 import { HealthController } from './common/health.controller';
 import { ScopeModule } from './common/scope.module';
 import { AuditInterceptor, TransformInterceptor } from './common';
+import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 
 import * as Modules from './modules';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
@@ -58,6 +59,10 @@ import { TenantContextMiddleware } from './common/middleware/tenant-context.midd
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantContextMiddleware).forRoutes('*');
+    // CSRF middleware harus berjalan SETELAH cookie-parser tapi SEBELUM route handlers
+    // Dapatkan cookie-parser dari express (sudah terpasang via NestJS default)
+    consumer
+      .apply(CsrfMiddleware, TenantContextMiddleware)
+      .forRoutes('*');
   }
 }

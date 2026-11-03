@@ -49,6 +49,12 @@ const baseEnvSchema = z.object({
   SMTP_USER: z.string().optional().default(''),
   SMTP_PASS: z.string().optional().default(''),
 
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
+  GOOGLE_CALLBACK_URL: z.string().url().optional().default(''),
+  GOOGLE_OAUTH_ENABLED: z.enum(['true', 'false']).optional().default('true'),
+
   // API Keys
   API_KEYS: z.string().optional().default(''),
 
@@ -89,10 +95,25 @@ const envSchema = baseEnvSchema.superRefine((data, ctx) => {
         path: ['JWT_SECRET'],
       });
     }
+    // Also reject the known weak dev default
+    if (data.JWT_SECRET === 'supersecretforsigningjwt123456789012345') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'JWT_SECRET uses a known weak default — must be replaced with a secure random string in production',
+        path: ['JWT_SECRET'],
+      });
+    }
     if (data.JWT_REFRESH_SECRET === 'change-me-to-random-64-char-string') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'JWT_REFRESH_SECRET must be changed from default in production',
+        path: ['JWT_REFRESH_SECRET'],
+      });
+    }
+    if (data.JWT_REFRESH_SECRET === 'supersecretforsigningrefreshtoken12345') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'JWT_REFRESH_SECRET uses a known weak default — must be replaced with a secure random string in production',
         path: ['JWT_REFRESH_SECRET'],
       });
     }
@@ -101,6 +122,16 @@ const envSchema = baseEnvSchema.superRefine((data, ctx) => {
         code: z.ZodIssueCode.custom,
         message: 'DEFAULT_PASSWORD should be set in production for consistent login experience',
         path: ['DEFAULT_PASSWORD'],
+      });
+    }
+    // Warn if Google OAuth appears enabled but credentials missing
+    // (The GoogleOAuthEnabledGuard will block at runtime, but fail fast here)
+    const googleOAuthEnabled = data.GOOGLE_OAUTH_ENABLED !== 'false';
+    if (googleOAuthEnabled && (!data.GOOGLE_CLIENT_ID || !data.GOOGLE_CLIENT_SECRET)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set when Google OAuth is enabled in production',
+        path: ['GOOGLE_CLIENT_ID'],
       });
     }
   }

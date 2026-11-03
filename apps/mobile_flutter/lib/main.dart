@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'core/services/app_navigator.dart';
 import 'core/services/app_update_service.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/migration_service.dart';
 import 'core/services/realtime_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -17,7 +18,7 @@ import 'logic/auth/auth_bloc.dart';
 import 'logic/document/document_bloc.dart';
 import 'logic/dues/dues_bloc.dart';
 import 'logic/forum/forum_bloc.dart';
-import 'logic/pendadaran/pendadaran_bloc.dart';
+import 'logic/pendadaran/pendadaran_bloc.dart'
 import 'logic/gamification/gamification_bloc.dart';
 import 'logic/home_feed/home_feed_bloc.dart';
 import 'logic/member/member_bloc.dart';
@@ -43,6 +44,7 @@ import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/kta_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/main_shell.dart';
+import 'presentation/widgets/biometric_lock_screen.dart';
 import 'presentation/screens/notifications_screen.dart';
 import 'presentation/screens/profile_edit_screen.dart';
 import 'presentation/screens/profile_screen.dart';
@@ -70,6 +72,9 @@ final ValueNotifier<int> _routerRefresh = ValueNotifier<int>(0);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Run one-time migration from SharedPreferences to encrypted storage
+  await MigrationService.instance.migrate();
 
   // Inisialisasi FCM (token + listener push) dan pengecekan pembaruan aplikasi
   // berjalan paralel tanpa menunda render UI.
@@ -143,6 +148,9 @@ class MyApp extends StatelessWidget {
                 darkTheme: AppTheme.dark(),
                 themeMode: themeController.mode,
                 routerConfig: AppRouter.router,
+                builder: (context, child) {
+                  return BiometricLockScreen(child: child!);
+                },
               );
             },
           ),
@@ -192,6 +200,12 @@ class AppRouter {
             location == '/') {
           return '/home';
         }
+        return null;
+      }
+
+      if (authState is AuthBiometricLock) {
+        // Allow access to any route while biometric lock is shown
+        // The BiometricLockScreen wrapper handles the UI
         return null;
       }
 

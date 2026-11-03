@@ -8,6 +8,7 @@ import { EMAIL_TEMPLATES } from './shared';
 import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 interface CustomTemplate {
   id: string;
@@ -405,7 +406,7 @@ export default function EmailTemplatesTab() {
                         className="p-4 max-h-96 overflow-y-auto"
                         dangerouslySetInnerHTML={{
                           __html:
-                            previewHtml || '<p class="text-gray-400">Preview tidak tersedia</p>',
+                            sanitizeHtmlSync(previewHtml) || '<p class="text-gray-400">Preview tidak tersedia</p>',
                         }}
                       />
                     </div>

@@ -3,6 +3,7 @@ import { PublicLayout } from '@/components';
 import { Calendar, ArrowLeft, ChevronRight, Clock, Share2 } from 'lucide-react';
 import { Metadata } from 'next';
 import { logError } from '@/lib/error-logger';
+import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 interface Berita {
   id: string;
@@ -134,7 +135,7 @@ export default async function BeritaDetailPage({ params }: { params: Promise<{ s
     );
   }
 
-  const cleanedContent = cleanHtmlContent(berita.konten);
+  const cleanedContent = sanitizeHtmlSync(cleanHtmlContent(berita.konten));
 
   return (
     <PublicLayout>

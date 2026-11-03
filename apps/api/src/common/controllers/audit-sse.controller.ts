@@ -18,7 +18,16 @@ function verifyToken(req: Request): { sub: string; role: string } | null {
 
   if (!rawToken) return null;
 
-  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'test-secret' : '');
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    // In test environment, use a test secret; otherwise reject
+    if (process.env.NODE_ENV === 'test') {
+      // Test secret only for test env - never in production
+      return 'test-secret';
+    }
+    return null;
+  }
 
   if (!secret) return null;
 

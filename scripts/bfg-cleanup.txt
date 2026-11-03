@@ -1,0 +1,29 @@
+# BFG Repo-Cleaner Instructions for THS-THM
+# Run these commands to remove old keystore credentials from git history
+
+# 1. Download BFG
+# wget https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar -O bfg.jar
+
+# 2. Create replacement file
+cat > replacements.txt << 'EOF'
+5tr6w1nG#!=REDACTED_KEYSTORE_PASSWORD
+EOF
+
+# 3. Run BFG (replace text in all history)
+# java -jar bfg.jar --replace-text replacements.txt .
+
+# 4. Clean up git refs
+# git reflog expire --expire=now --all
+# git gc --prune=now --aggressive
+
+# 5. Force push
+# git push origin --force --all
+# git push origin --force --tags
+
+# ALTERNATIVE: git-filter-repo (faster, Python-based)
+# pip install git-filter-repo
+# git filter-repo --replace-text replacements.txt --force
+
+# VERIFY: Check that old password is gone
+# git log --all --oneline --grep="5tr6w1nG#!" # Should return nothing
+# git log --all -p -S "5tr6w1nG#!" | head -20 # Should show only REDACTED

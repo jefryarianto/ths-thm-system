@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/security/biometric_auth_service.dart';
 import '../../core/services/api_cache.dart';
 import '../../data/models/user.dart';
 
@@ -14,11 +15,15 @@ part 'auth_state.dart';
 const int _secureStorageTimeoutSeconds = 10;
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final BiometricAuthService _biometricAuth = BiometricAuthService();
+
   AuthBloc() : super(AuthInitial()) {
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
     on<AuthLoadUserRequested>(_onAuthLoadUserRequested);
     on<AuthProfileSynced>(_onAuthProfileSynced);
+    on<AuthBiometricSettingChanged>(_onBiometricSettingChanged);
+    on<AuthBiometricAuthenticated>(_onBiometricAuthenticated);
   }
 
   final ApiClient _apiClient = ApiClient();
@@ -142,5 +147,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
     ).whenComplete(() => timer.cancel());
     return completer.future;
+  }
+
+  Future<void> _onBiometricSettingChanged(
+    AuthBiometricSettingChanged event,
+    Emitter<AuthState> emit,
+  ) async {
+    await _biometricAuth.setBiometricEnabled(event.enabled);
+    if (!event.enabled) {
+      await _biometricAuth.reset();
+    }
+  }
+
+  Future<void> _onBiometricAuthenticated(
+    AuthBiometricAuthenticated event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthBiometricResult(success: event.success));
+    // After a brief delay, return to authenticated state
+    await Future.delayed(const Duration(milliseconds: 500));
+    final current = state;
+    if (current is AuthAuthenticated) {
+      emit(current);
+    }
   }
 }

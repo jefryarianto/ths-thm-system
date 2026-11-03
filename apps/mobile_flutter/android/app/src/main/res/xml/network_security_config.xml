@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Base config: hanya HTTPS, no cleartext -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+
+    <!-- Domain-specific config untuk production API -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Ganti dengan domain production Anda -->
+        <domain includeSubdomains="true">api.ths-thm.org</domain>
+        <domain includeSubdomains="true">ths-thm.org</domain>
+        <!-- Pin sertifikat production (SHA-256 hash dari SPKI) -->
+        <!-- GENERATE: openssl x509 -in cert.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64 -->
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">REPLACE_WITH_PRODUCTION_PIN</pin>
+            <!-- Backup pin untuk rotasi sertifikat -->
+            <pin digest="SHA-256">REPLACE_WITH_BACKUP_PIN</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Domain-specific config untuk staging -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">staging-api.ths-thm.org</domain>
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">REPLACE_WITH_STAGING_PIN</pin>
+            <pin digest="SHA-256">REPLACE_WITH_STAGING_BACKUP_PIN</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Development: izin cleartext untuk localhost (HANYA DEBUG BUILD) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

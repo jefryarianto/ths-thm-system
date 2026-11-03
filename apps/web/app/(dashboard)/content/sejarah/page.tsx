@@ -9,6 +9,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { Save, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
+import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 interface Sejarah {
   id: string;
@@ -133,7 +134,7 @@ export default function SejarahPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
               <div
                 className="prose prose-blue max-w-none p-4 border border-gray-200 rounded-lg bg-gray-50"
-                dangerouslySetInnerHTML={{ __html: konten }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtmlSync(konten) }}
               />
             </div>
           )}

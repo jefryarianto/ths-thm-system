@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Optional } from '@n
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
+import * as crypto from 'crypto';
 import {
   CreateExaminerDto,
   UpdateExaminerDto,
@@ -42,7 +43,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
   // bcrypt password, set role='penguji'
 
   protected async beforeCreate(dto: CreateExaminerDto): Promise<Record<string, unknown>> {
-    const defaultPassword = dto.password || 'password123';
+    const defaultPassword = dto.password || process.env.DEFAULT_PASSWORD || crypto.randomBytes(6).toString('hex');
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
     return {
       email: dto.email,
@@ -192,7 +193,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;
-    const defaultPassword = 'password123';
+    const defaultPassword = process.env.DEFAULT_PASSWORD || crypto.randomBytes(6).toString('hex');
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
     for (const row of data) {
       try {

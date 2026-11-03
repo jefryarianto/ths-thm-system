@@ -14,9 +14,49 @@
 	<string>Galeri foto digunakan untuk mengunggah dan mengganti foto profil anggota.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Galeri foto digunakan untuk menyimpan kartu anggota (KTA) sebagai gambar.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID digunakan untuk autentikasi cepat dan aman saat membuka aplikasi.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
+		<!-- Enforce HTTPS untuk domain production; development/localhost via user-added certs -->
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>ths-thm.org</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSRequiresCertificateTransparency</key>
+				<true/>
+			</dict>
+			<key>api.ths-thm.org</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSRequiresCertificateTransparency</key>
+				<true/>
+			</dict>
+			<key>staging-api.ths-thm.org</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSRequiresCertificateTransparency</key>
+				<true/>
+			</dict>
+		</dict>
+		<!-- Debug override: izinkan localhost tanpa sertifikat (debug build only) -->
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>CFBundleExecutable</key>

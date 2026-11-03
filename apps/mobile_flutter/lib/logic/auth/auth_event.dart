@@ -44,3 +44,23 @@ class AuthProfileSynced extends AuthEvent {
   @override
   List<Object> get props => [namaLengkap];
 }
+
+/// Enable/disable biometric authentication
+class AuthBiometricSettingChanged extends AuthEvent {
+  final bool enabled;
+
+  const AuthBiometricSettingChanged({required this.enabled});
+
+  @override
+  List<Object> get props => [enabled];
+}
+
+/// Biometric authentication completed (success or failure)
+class AuthBiometricAuthenticated extends AuthEvent {
+  final bool success;
+
+  const AuthBiometricAuthenticated({required this.success});
+
+  @override
+  List<Object> get props => [success];
+}

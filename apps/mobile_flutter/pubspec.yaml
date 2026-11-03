@@ -41,6 +41,7 @@ dependencies:
   package_info_plus: ^9.0.1
   open_filex: ^4.7.0
   flutter_local_notifications: ^22.3.1
+  local_auth: ^2.1.7
   # Keamanan KTA: blokir screenshot & rekaman layar lewat platform channel
   # aman `ths_thm/secure_window` (native Android FLAG_SECURE) — lihat
   # lib/core/security/secure_window_channel.dart.
@@ -49,6 +50,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  bloc_test: ^9.1.5
+  mocktail: ^1.0.4
 
 flutter:
   uses-material-design: true

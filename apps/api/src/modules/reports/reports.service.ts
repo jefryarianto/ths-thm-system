@@ -229,59 +229,28 @@ export class ReportsService {
     const sixMonthsAgo = new Date(now);
     sixMonthsAgo.setMonth(now.getMonth() - 5);
 
-    // Build scope-aware JOIN and WHERE conditions
-    let joinClause = '';
-    let scopeWhere = '';
-    const params: unknown[] = [];
-    let paramIdx = 1;
+    // Build scope-aware where clause for Prisma
+    const where: Record<string, unknown> = {
+      tanggalBayar: { not: null },
+    };
 
     if (scope?.rantingId) {
-      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id"';
-      scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
-      params.push(scope.rantingId);
+      where.anggota = { rantingId: scope.rantingId };
     } else if (scope?.wilayahId) {
-      joinClause =
-        'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
-      scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
-      params.push(scope.wilayahId);
+      where.anggota = { ranting: { wilayahId: scope.wilayahId } };
     } else if (scope?.distrikId) {
-      joinClause =
-        'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
-      scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
-      params.push(scope.distrikId);
+      where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
     }
 
-    // Parameterized query to prevent SQL injection
-    // Note: Use EXTRACT directly in WHERE/GROUP BY/ORDER BY because column aliases
-    // ("tahun", "bulan") from SELECT cannot be referenced in those clauses.
-    const sql = `
-      SELECT
-        EXTRACT(MONTH FROM i."tanggal_bayar")::int as "bulan",
-        EXTRACT(YEAR FROM i."tanggal_bayar")::int as "tahun",
-        CAST(COALESCE(SUM(i."jumlah"), 0) AS TEXT) as "jumlah",
-        CAST(COUNT(*) AS BIGINT) as "count"
-      FROM "iuran" i
-      ${joinClause}
-      WHERE i."tanggal_bayar" IS NOT NULL
-        ${scopeWhere}
-        AND ((EXTRACT(YEAR FROM i."tanggal_bayar") = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int >= $${paramIdx++})
-          OR (EXTRACT(YEAR FROM i."tanggal_bayar") = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int <= $${paramIdx++})
-          OR (EXTRACT(YEAR FROM i."tanggal_bayar") > $${paramIdx++} AND EXTRACT(YEAR FROM i."tanggal_bayar") < $${paramIdx++}))
-      GROUP BY EXTRACT(YEAR FROM i."tanggal_bayar"), EXTRACT(MONTH FROM i."tanggal_bayar")
-      ORDER BY EXTRACT(YEAR FROM i."tanggal_bayar") ASC, EXTRACT(MONTH FROM i."tanggal_bayar") ASC
-    `;
-    params.push(
-      sixMonthsAgo.getFullYear(),
-      sixMonthsAgo.getMonth() + 1,
-      currentYear,
-      currentMonth,
-      sixMonthsAgo.getFullYear(),
-      currentYear,
-    );
+    // Use Prisma groupBy with typed aggregation (safer than raw SQL)
+    const rows = await this.prisma.iuran.groupBy({
+      by: ['tanggalBayar'],
+      where,
+      _sum: { jumlah: true },
+      _count: { id: true },
+    });
 
-    const rows: Array<{ bulan: number; tahun: number; jumlah: string; count: bigint }> =
-      await this.prisma.$queryRawUnsafe(sql, ...params);
-
+    // Filter to last 6 months and aggregate by month/year
     const monthMap: Record<string, { jumlah: number; count: number }> = {};
     for (let i = 5; i >= 0; i--) {
       const d = new Date(currentYear, currentMonth - 1 - i, 1);
@@ -290,10 +259,19 @@ export class ReportsService {
     }
 
     for (const row of rows) {
-      const key = `${row.tahun}-${row.bulan}`;
-      if (monthMap[key]) {
-        monthMap[key] = { jumlah: Number(row.jumlah), count: Number(row.count) };
-      }
+      if (!row.tanggalBayar) continue;
+      const date = new Date(row.tanggalBayar);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const key = `${year}-${month}`;
+
+      // Only include last 6 months
+      if (monthMap[key] === undefined) continue;
+
+      monthMap[key] = {
+        jumlah: Number(row._sum.jumlah ?? 0),
+        count: row._count.id,
+      };
     }
 
     const bulanNames = [
@@ -376,47 +354,44 @@ export class ReportsService {
       const thirtyDaysAgo = new Date(now);
       thirtyDaysAgo.setDate(now.getDate() - 30);
 
-      // Build scope-aware JOIN and WHERE conditions
-      let joinClause = '';
-      let scopeWhere = '';
-      const params: unknown[] = [];
-      let paramIdx = 1;
+      // Build scope-aware where clause
+      const where: Record<string, unknown> = {
+        createdAt: { gte: thirtyDaysAgo },
+      };
 
       if (scope?.rantingId) {
-        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id"';
-        scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
-        params.push(scope.rantingId);
+        where.anggota = { rantingId: scope.rantingId };
       } else if (scope?.wilayahId) {
-        joinClause =
-          'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
-        scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
-        params.push(scope.wilayahId);
+        where.anggota = { ranting: { wilayahId: scope.wilayahId } };
       } else if (scope?.distrikId) {
-        joinClause =
-          'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
-        scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
-        params.push(scope.distrikId);
+        where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
       }
 
-      const sql = `
-        SELECT
-          TO_CHAR(al."created_at"::date, 'YYYY-MM-DD') as "tanggal",
-          CAST(COUNT(*) AS BIGINT) as "count"
-        FROM "absensi_latihan" al
-        ${joinClause}
-        WHERE al."created_at" >= $${paramIdx++}
-          ${scopeWhere}
-        GROUP BY al."created_at"::date
-        ORDER BY al."created_at"::date ASC
-      `;
-      params.push(thirtyDaysAgo);
+      // Use Prisma groupBy for daily absensi counts
+      const rows = await this.prisma.absensiLatihan.groupBy({
+        by: ['createdAt'],
+        where,
+        _count: { id: true },
+        orderBy: { createdAt: 'asc' },
+      });
 
-      const rows: Array<{ tanggal: string; count: bigint }> = await this.prisma.$queryRawUnsafe(
-        sql,
-        ...params,
-      );
+      // Aggregate by date (groupBy groups by exact timestamp, so we need to group by date)
+      const dateMap: Record<string, number> = {};
+      for (const row of rows) {
+        const dateStr = row.createdAt.toISOString().split('T')[0]; // YYYY-MM-DD
+        dateMap[dateStr] = (dateMap[dateStr] ?? 0) + row._count.id;
+      }
 
-      return rows.map((r) => ({ tanggal: r.tanggal, count: Number(r.count) }));
+      // Fill missing dates with 0
+      const result: Array<{ tanggal: string; count: number }> = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        result.push({ tanggal: dateStr, count: dateMap[dateStr] ?? 0 });
+      }
+
+      return result;
     } catch {
       return [];
     }

@@ -38,12 +38,11 @@ import bcrypt from 'bcryptjs';
 /**
  * Password awal akun anggota yang dibuat/di-reset sistem.
  * Diambil dari env `DEFAULT_PASSWORD`; jika kosong:
- * - produksi → fallback nilai legacy (env.validation.ts sudah memberi warning agar diset)
- * - dev/test → acak sekali-jalan (lebih aman daripada konstanta publik yang ditebak)
+ * - fallback ke acak sekali-jalan (TIDAK PERNAH menggunakan nilai statis yang dapat ditebak)
+ * - DEFAULT_PASSWORD WAJIB di-set di lingkungan produksi (lihat env-schema.ts)
  */
 const DEFAULT_PASSWORD =
-  process.env.DEFAULT_PASSWORD ||
-  (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
+  process.env.DEFAULT_PASSWORD || crypto.randomBytes(6).toString('hex');
 
 @Injectable()
 export class MembersService

@@ -1,4 +1,5 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { NextFunction, Request, Response } from 'express';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -37,6 +38,8 @@ export function setupCors(app: NestExpressApplication): void {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
+    exposedHeaders: ['X-CSRF-Token'],
   });
 }
 
@@ -44,6 +47,24 @@ export function setupHelmet(app: NestExpressApplication): void {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     }),
   );
 }
@@ -85,6 +106,24 @@ export function setupGlobalPrefix(app: NestExpressApplication): void {
   });
 }
 
+/**
+ * Middleware autentikasi untuk rute statis.
+ * Rute upload (POST/PUT/PATCH) dilewati karena FileInterceptor/Controller
+ * yang menangani otorisasi. Hanya GET ke file statis (bukti, foto, dokumen)
+ * yang memerlukan token — mencegah akses anonim ke data pribadi anggota.
+ */
+function staticAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+  if (req.method !== 'GET') {
+    return next();
+  }
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+  next();
+}
+
 export function setupStaticUploads(app: NestExpressApplication): void {
   const { existsSync, mkdirSync } = require('fs');
   const pathMod = require('path');
@@ -92,11 +131,11 @@ export function setupStaticUploads(app: NestExpressApplication): void {
   if (!existsSync(uploadDir)) {
     mkdirSync(uploadDir, { recursive: true });
   }
-  app.use('/api/uploads', require('express').static(uploadDir));
+  app.use('/api/uploads', staticAuthMiddleware, require('express').static(uploadDir));
 
   const appDir = pathMod.join(uploadDir, 'app');
   if (!existsSync(appDir)) {
     mkdirSync(appDir, { recursive: true });
   }
-  app.use('/api/app', require('express').static(appDir));
+  app.use('/api/app', staticAuthMiddleware, require('express').static(appDir));
 }

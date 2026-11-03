@@ -17,6 +17,7 @@ import {
   resolveCardSpec,
   patternRows,
 } from '@/lib/card-design';
+import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -1534,10 +1535,10 @@ export default function MemberDetailPage() {
                       <div
                         className="absolute inset-0 pointer-events-none"
                         dangerouslySetInnerHTML={{
-                          __html: decorFrontSvg().replace(
+                          __html: sanitizeHtmlSync(decorFrontSvg().replace(
                             '<svg ',
                             '<svg style="width:100%;height:100%" ',
-                          ),
+                          )),
                         }}
                       />
                       {/* Lingkaran dekorasi (sinkron dgn mobile & API SVG) */}
@@ -1570,10 +1571,10 @@ export default function MemberDetailPage() {
                     <div
                       className="absolute inset-0 pointer-events-none"
                       dangerouslySetInnerHTML={{
-                        __html: guillocheSvg('front', cardSpec.guilloche.strokeFront).replace(
+                        __html: sanitizeHtmlSync(guillocheSvg('front', cardSpec.guilloche.strokeFront).replace(
                           '<svg ',
                           '<svg style="width:100%;height:100%" ',
-                        ),
+                        )),
                       }}
                     />
                   )}
@@ -2041,10 +2042,10 @@ export default function MemberDetailPage() {
                     <div
                       className="absolute inset-0 pointer-events-none"
                       dangerouslySetInnerHTML={{
-                        __html: decorBackSvg().replace(
+                        __html: sanitizeHtmlSync(decorBackSvg().replace(
                           '<svg ',
                           '<svg style="width:100%;height:100%" ',
-                        ),
+                        )),
                       }}
                     />
                   )}
@@ -2053,10 +2054,10 @@ export default function MemberDetailPage() {
                     <div
                       className="absolute inset-0 pointer-events-none"
                       dangerouslySetInnerHTML={{
-                        __html: guillocheSvg('back', cardSpec.guilloche.strokeBack).replace(
+                        __html: sanitizeHtmlSync(guillocheSvg('back', cardSpec.guilloche.strokeBack).replace(
                           '<svg ',
                           '<svg style="width:100%;height:100%" ',
-                        ),
+                        )),
                       }}
                     />
                   )}

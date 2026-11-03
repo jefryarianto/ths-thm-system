@@ -26,6 +26,7 @@ import {
 import { logError } from '@/lib/error-logger';
 import { TIMELINE_EVENTS } from './sejarah-data';
 import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 type ActiveTab = 'timeline' | 'story' | 'symbols' | 'pillars' | 'cms';
 
@@ -883,7 +884,7 @@ export default function SejarahPage() {
                                 className="naskah-lengkap prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
                                   prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
                                   prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
-                                dangerouslySetInnerHTML={{ __html: processedContent }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtmlSync(processedContent) }}
                               />
                             </div>
                           ) : (
@@ -898,7 +899,7 @@ export default function SejarahPage() {
                                 className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
                                   prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
                                   prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
-                                dangerouslySetInnerHTML={{ __html: data.konten }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtmlSync(data.konten) }}
                               />
                             </div>
                           )}

@@ -15,17 +15,25 @@ export class DocumentGenerationService {
     let pdfStream: any;
     try {
       const { renderToStream } = require('@react-pdf/renderer');
-      const { MemberCard } = require('@ths-thm/templates/cards/memberCard');
+      // Import from the consolidated templates package
+      const { buildMemberCardPdf } = require('@ths-thm/templates/cards/memberCard');
       pdfStream = await renderToStream(
-        MemberCard({
+        buildMemberCardPdf({
           name: member.namaLengkap,
           memberNumber: member.nomorAnggota,
           gender: member.jenisKelamin,
           address: member.alamat,
           phone: member.noHp,
+          email: member.email,
+          organizationName: 'THS-THM',
+          districtName: member.ranting?.wilayah?.distrik?.nama || 'Distrik',
+          issueDate: member.tanggalTerbit?.toISOString(),
+          expiryDate: member.tanggalBerlakuSampai?.toISOString(),
+          photoUrl: member.fotoPath ? `/api/uploads/${member.fotoPath}` : undefined,
         }),
       );
-    } catch {
+    } catch (e) {
+      console.error('PDF generation failed:', e);
       const { Readable } = require('stream');
       pdfStream = Readable.from([JSON.stringify(member)]);
     }

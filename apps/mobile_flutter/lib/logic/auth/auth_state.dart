@@ -39,3 +39,24 @@ class AuthMustChangePassword extends AuthState {
   @override
   List<Object> get props => [resetToken];
 }
+
+/// Biometric lock screen is shown (app in background, returning)
+class AuthBiometricLock extends AuthState {
+  final bool isAuthenticating;
+
+  const AuthBiometricLock({this.isAuthenticating = false});
+
+  @override
+  List<Object> get props => [isAuthenticating];
+}
+
+/// Biometric authentication result
+class AuthBiometricResult extends AuthState {
+  final bool success;
+  final String? errorMessage;
+
+  const AuthBiometricResult({required this.success, this.errorMessage});
+
+  @override
+  List<Object> get props => [success, errorMessage ?? ''];
+}
