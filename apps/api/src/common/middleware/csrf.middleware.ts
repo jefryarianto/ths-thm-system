@@ -13,26 +13,77 @@ import * as crypto from 'crypto';
  *
  * GET, HEAD, OPTIONS requests are exempt from validation.
  *
- * Auth endpoints (/auth/*) are exempt to avoid login deadlocks.
+ * Auth endpoints (/auth/*) are exempt to avoid login deadlocks. The exemption
+ * is prefix-aware because routes are served under the global prefix (default
+ * `/api`), so the actual request path is `/api/auth/login`.
+ *
+ * Requests authenticated with a Bearer token are also exempt: the token lives
+ * in `Authorization`, which a cross-site attacker cannot forge or read, so the
+ * request is not vulnerable to CSRF. This keeps browser (Bearer + cookies) and
+ * mobile clients working without requiring a CSRF header on every call.
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const EXEMPT_PATHS = ['/auth/'];
 
+function getApiPrefix(): string {
+  const raw = (process.env.API_PREFIX || 'api').trim();
+  const normalized = raw.replace(/^\/+|\/+$/g, '');
+  return normalized ? `/${normalized}` : '';
+}
+
+function stripApiPrefix(pathname: string): string {
+  const prefix = getApiPrefix();
+  if (!prefix) return pathname;
+  if (pathname === prefix) return '/';
+  return pathname.startsWith(`${prefix}/`) ? pathname.slice(prefix.length) : pathname;
+}
+
 function isExempt(req: Request): boolean {
-  return EXEMPT_PATHS.some(path => req.path.startsWith(path));
+  const pathname = stripApiPrefix(req.path);
+  return EXEMPT_PATHS.some(path => pathname.startsWith(path));
+}
+
+function hasBearerToken(req: Request): boolean {
+  const auth = req.headers.authorization;
+  return typeof auth === 'string' && /^Bearer\s+\S+/i.test(auth);
+}
+
+/**
+ * Baca cookie tanpa ketergantungan cookie-parser (middleware ini berjalan
+ * sebelum body/cookie parser Nest dan aplikasi tidak memasang cookie-parser).
+ */
+function parseCookieHeader(header: string | undefined, name: string): string | undefined {
+  if (!header) return undefined;
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() !== name) continue;
+    const value = part.slice(idx + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function readCookie(req: Request, name: string): string | undefined {
+  const parsed = (req.cookies as Record<string, string> | undefined)?.[name];
+  return parsed ?? parseCookieHeader(req.headers.cookie, name);
 }
 
 @Injectable()
 export class CsrfMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
-    // Skip CSRF check for safe methods and exempt paths
-    if (SAFE_METHODS.has(req.method) || isExempt(req)) {
+    // Skip CSRF check for safe methods, auth endpoints, and Bearer auth.
+    if (SAFE_METHODS.has(req.method) || isExempt(req) || hasBearerToken(req)) {
       this.ensureCsrfToken(req, res);
       return next();
     }
 
     // Validate CSRF token on state-changing requests
-    const cookieToken = req.cookies?.csrf_token;
+    const cookieToken = readCookie(req, 'csrf_token');
     const headerToken = req.headers['x-csrf-token'] as string | undefined;
 
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
@@ -51,7 +102,7 @@ export class CsrfMiddleware implements NestMiddleware {
 
   private ensureCsrfToken(req: Request, res: Response): void {
     // Only set cookie if not already present
-    if (!req.cookies?.csrf_token) {
+    if (!readCookie(req, 'csrf_token')) {
       const token = crypto.randomBytes(32).toString('hex');
       res.cookie('csrf_token', token, {
         httpOnly: false, // Must be readable by JS to send in header
