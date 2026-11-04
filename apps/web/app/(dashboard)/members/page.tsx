@@ -750,10 +750,10 @@ export default function MembersPage() {
               onUploadPhoto={isAdmin ? handleUploadPhoto : undefined}
             />
           )}
-          renderCard={(m: Member) => (
+          renderMobileCard={(m: Member) => (
             <Link
               href={`/members/${m.id}`}
-              className="block hover:opacity-80 transition-opacity"
+              className="block p-4 border-b border-border last:border-0 active:bg-surface-variant"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">

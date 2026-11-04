@@ -52,8 +52,6 @@ interface DataTableProps<T> {
   skeletonRows?: number;
   /** Render function for mobile card view (shown on screens < md) */
   renderMobileCard?: (item: T, index: number) => ReactNode;
-  /** Render function for card view (shown on all screen sizes when provided) */
-  renderCard?: (item: T, index: number) => ReactNode;
   /** Current sort state */
   sort?: SortConfig | null;
   /** Callback when sort changes */
@@ -77,7 +75,6 @@ export default function DataTable<T>({
   colSpan,
   skeletonRows = 5,
   renderMobileCard,
-  renderCard,
   sort,
   onSort,
   dataComplete,
@@ -165,32 +162,16 @@ export default function DataTable<T>({
             <div className="p-6 text-center text-muted text-sm">{empty.message}</div>
           ) : (
             data.map((item, idx) => (
-              <div key={(item as Record<string, unknown>).id as string || idx} className="p-4">
+              <div key={((item as Record<string, unknown>).id as string) || idx} className="p-4">
                 {renderMobileCard(item, idx)}
               </div>
             ))
           )}
         </div>
       )}
-      {renderCard && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-          {loading ? (
-            <div className="p-6 text-center text-muted text-sm">Memuat data...</div>
-          ) : data.length === 0 ? (
-            <div className="p-6 text-center text-muted text-sm">{empty.message}</div>
-          ) : (
-            data.map((item, idx) => (
-              <div key={(item as Record<string, unknown>).id as string || idx} className="bg-white dark:bg-gray-800 rounded-xl border border-border p-4">
-                {renderCard(item, idx)}
-              </div>
-            ))
-          )}
-        </div>
-      )}
       {/* Desktop Table View */}
-      {!renderCard && (
-        <div className="hidden md:block overflow-x-auto overflow-y-visible">
-          <table className="w-full text-sm">
+      <div className="hidden md:block overflow-x-auto overflow-y-visible">
+        <table className="w-full text-sm">
           <thead className="sticky top-0 z-10 bg-surface-variant">
             <tr className="border-b border-border">
               {columns.map((col, i) => (
@@ -301,8 +282,7 @@ export default function DataTable<T>({
             )}
           </tbody>
         </table>
-        </div>
-      )}
+      </div>
 
       <Pagination page={page} totalPages={totalPages} total={total} onPageChange={onPageChange} />
     </div>
