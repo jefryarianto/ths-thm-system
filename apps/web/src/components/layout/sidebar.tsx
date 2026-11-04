@@ -346,17 +346,19 @@ function SidebarBody({
                     collapsed ? undefined : { maxHeight: isClosed ? 0 : groupHeights[group.label] }
                   }
                 >
-                  {group.items.map((item) => (
-                    <SidebarItem
-                      key={item.href}
-                      item={item}
-                      collapsed={collapsed}
-                      active={pathname?.startsWith(item.href) || false}
-                      unreadCount={unreadCount}
-                      queueStats={queueStats}
-                      onNavigate={onNavigate}
-                    />
-                  ))}
+                  {group.items
+                    .filter((item) => !item.sidebarHidden)
+                    .map((item) => (
+                      <SidebarItem
+                        key={item.href}
+                        item={item}
+                        collapsed={collapsed}
+                        active={pathname?.startsWith(item.href) || false}
+                        unreadCount={unreadCount}
+                        queueStats={queueStats}
+                        onNavigate={onNavigate}
+                      />
+                    ))}
                 </div>
               </div>
             );
