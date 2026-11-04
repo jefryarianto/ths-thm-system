@@ -64,6 +64,10 @@ export interface MenuItem {
   external?: boolean;
   /** Minimum role level required to see this menu item (role-based filtering) */
   minRole?: Role;
+  /** If true, hidden in production environment */
+  devOnly?: boolean;
+  /** If true, hidden from the sidebar but retained for getPageTitle & permissions */
+  sidebarHidden?: boolean;
 }
 
 export interface MenuGroup {
@@ -80,48 +84,16 @@ export interface AssignedKegiatan {
 
 /** Grup yang terbuka secara default saat login pertama (belum ada preferensi tersimpan) */
 export const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
-  superadmin: [
-    'Utama',
-    'Keanggotaan',
-    'Pelatihan',
-    'Organisasi',
-    'Keuangan',
-    'Pengguna',
-    'Sistem & Monitoring',
-    'Pengaturan',
-    'Gamifikasi',
-    'Lainnya',
-  ],
-  admin_nasional: [
-    'Utama',
-    'Keanggotaan',
-    'Pelatihan',
-    'Organisasi',
-    'Keuangan',
-    'Pengguna',
-    'Pengaturan',
-    'Gamifikasi',
-    'Lainnya',
-  ],
-  admin_distrik: [
-    'Utama',
-    'Keanggotaan',
-    'Pelatihan',
-    'Organisasi',
-    'Keuangan',
-    'Pengguna',
-    'Sistem & Monitoring',
-    'Pengaturan',
-    'Gamifikasi',
-    'Lainnya',
-  ],
-  admin_wilayah: ['Utama', 'Keanggotaan', 'Organisasi', 'Keuangan'],
-  admin_ranting: ['Utama', 'Keanggotaan', 'Keuangan'],
+  superadmin: ['Utama', 'Keanggotaan', 'Pelatihan', 'Organisasi'],
+  admin_nasional: ['Utama', 'Keanggotaan', 'Pelatihan', 'Organisasi'],
+  admin_distrik: ['Utama', 'Keanggotaan', 'Pelatihan', 'Organisasi'],
+  admin_wilayah: ['Utama', 'Keanggotaan', 'Organisasi'],
+  admin_ranting: ['Utama', 'Keanggotaan'],
   // Kegiatan organisasi → Pelatihan & Keuangan.
-  admin_kegiatan: ['Utama', 'Pelatihan', 'Keuangan'],
+  admin_kegiatan: ['Utama', 'Pelatihan'],
   // Penguji bekerja di halaman Pelatihan & Penilaian.
   penguji: ['Utama', 'Pelatihan'],
-  anggota: ['Utama', 'Keuangan'],
+  anggota: ['Utama'],
 };
 
 export const menuGroups: MenuGroup[] = [
@@ -143,6 +115,8 @@ export const menuGroups: MenuGroup[] = [
       { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
       { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
       { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
+      { href: '/payments', label: 'Pembayaran', icon: Wallet, minRole: 'admin_ranting' },
+      { href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' },
       { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
       { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
     ],
@@ -167,9 +141,7 @@ export const menuGroups: MenuGroup[] = [
     label: 'Pelatihan',
     items: [
       { href: '/trainings', label: 'Latihan', icon: Dumbbell, minRole: 'admin_ranting' },
-      // admin_kegiatan mengelola pendadaran (alur langkah 3)
       { href: '/graduations', label: 'Pendadaran', icon: GraduationCap, minRole: 'admin_kegiatan' },
-      // admin_kegiatan mengajukan penguji ke admin distrik (alur langkah 6)
       { href: '/examiners', label: 'Penguji', icon: ShieldCheck, minRole: 'admin_kegiatan' },
       { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck, minRole: 'penguji' },
       { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck, minRole: 'admin_ranting' },
@@ -180,8 +152,6 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/org-documents', label: 'Dokumen Organisasi', icon: Archive, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: IdCard, minRole: 'admin_distrik' },
-      // Semua aksi periode (GET daftar untuk pemilih + CRUD) hanya superadmin
-      // di halaman ini; admin_nasional memakai /settings/periods.
       { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'superadmin' },
       {
         href: '/settings/kepengurusan',
@@ -198,14 +168,6 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: 'Keuangan',
-    items: [{ href: '/payments', label: 'Pembayaran', icon: Wallet, minRole: 'admin_ranting' }],
-  },
-  {
-    label: 'Pengguna',
-    items: [{ href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' }],
-  },
-  {
     label: 'Sistem & Monitoring',
     items: [
       { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'superadmin' },
@@ -216,8 +178,10 @@ export const menuGroups: MenuGroup[] = [
         minRole: 'superadmin',
       },
       { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'superadmin' },
-      { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
-      { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
+      { href: '/ws-monitor', label: 'WebSocket', icon: Radio, devOnly: true },
+      { href: '/admin/queues', label: 'Antrean', icon: ListChecks, devOnly: true },
+      { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
+      { href: '/audit-logs', label: 'Log Audit', icon: History, minRole: 'superadmin' },
     ],
   },
   {
@@ -269,27 +233,24 @@ export const menuGroups: MenuGroup[] = [
     label: 'Gamifikasi',
     items: [
       { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
-      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_ranting' },
+      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_nasional' },
       {
         href: '/gamification/scoreboard',
         label: 'Scoreboard',
         icon: TrendingUp,
-        // Halaman memakai /gamification/stats & /gamification/admin/* yang
-        // hanya untuk admin_ranting ke atas.
         minRole: 'admin_ranting',
       },
       {
         href: '/gamification/report',
         label: 'Laporan Gamifikasi',
         icon: ChartNoAxesColumn,
-        minRole: 'admin_ranting',
+        minRole: 'admin_nasional',
       },
     ],
   },
   {
     label: 'Lainnya',
     items: [
-      { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'admin_nasional' },
       {
         href: '/content/organisasi',
@@ -365,6 +326,8 @@ export function filterVisibleGroups(
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
+        // Dev-only items: only shown in non-production environments
+        if (item.devOnly && process.env.NODE_ENV === 'production') return false;
         // Admin-only items (queues, WebSocket) → admin-level roles
         if (item.adminOnly && !isAdmin) return false;
         // Role-based filtering: hide if below the item's minimum role

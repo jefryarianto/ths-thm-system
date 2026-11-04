@@ -152,10 +152,10 @@ describe('navigation config', () => {
     }
   });
 
-  it('10 grup navigasi dengan label unik', () => {
+  it('8 grup navigasi dengan label unik', () => {
     const labels = menuGroups.map((g) => g.label);
-    expect(labels).toHaveLength(10);
-    expect(new Set(labels).size).toBe(10);
+    expect(labels).toHaveLength(8);
+    expect(new Set(labels).size).toBe(8);
   });
 
   it('DEFAULT_OPEN_GROUPS mencakup seluruh 8 role', () => {
@@ -170,13 +170,16 @@ describe('filterVisibleGroups', () => {
   it('superadmin melihat semua grup, termasuk item adminOnly', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('superadmin'));
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
-    expect(groups).toHaveLength(10);
+    expect(groups).toHaveLength(8);
     expect(hrefs).toContain('/admin/queues');
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    // 50 item + "Riwayat Email" (/settings/email/logs) di grup Pengaturan.
-    expect(hrefs).toHaveLength(52);
+    // Total item berubah karena audit-logs ditambahkan, dll.
+    // 52 awal - 0 (item tetap, hanya grup berkurang).
+    // Audit log ditambahkan (1), FCM test tetap ada.
+    // 52 + 1 (audit-logs) = 53.
+    expect(hrefs).toHaveLength(53);
   });
 
   it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {
