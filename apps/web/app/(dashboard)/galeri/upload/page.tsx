@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import type { AxiosError } from 'axios';
 import apiClient from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -44,7 +45,8 @@ export default function GalleryUploadPage() {
       setNotice('Foto terkirim dan menunggu persetujuan admin.');
       await load();
     } catch (err) {
-      const msg = err?.response?.data?.message ?? err?.message;
+      const axiosErr = err as AxiosError<{ message?: string | string[] }>;
+      const msg = axiosErr.response?.data?.message ?? axiosErr.message;
       const friendlyMsg = Array.isArray(msg) ? msg.join('. ') : msg;
       setNotice(`Foto gagal dikirim. ${friendlyMsg || 'Pastikan JPEG/PNG/WebP dan maksimal 10 MB.'}`);
     } finally {
