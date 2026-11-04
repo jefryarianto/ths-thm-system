@@ -11,6 +11,7 @@ import { getHomePathForRole, getAdminDashboardRedirect } from '@/lib/role-redire
 import { extractScopeUnits, findScopeUnitName, resolveScopeBadgeTarget } from '@/lib/scope-badge';
 import Sidebar from '@/components/layout/sidebar';
 import DashboardHeader from '@/components/layout/dashboard-header';
+import { CommandPalette } from '@/components/layout/command-palette';
 import {
   menuGroups,
   filterVisibleGroups,
@@ -46,8 +47,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Drawer mobile/tablet (<1024px)
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const { user, isAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } =
     useAuth();
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
 
   // Gate `/dashboard` (admin landing) untuk role non-admin.
   //
@@ -350,6 +363,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-background text-text">
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} groups={visibleGroups} />
       <AdminKegiatanWelcome />
       <PengujiWelcome />
 
@@ -390,6 +404,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           onLogout={handleLogout}
           loggingOut={loggingOut}
           onOpenMobileNav={() => setMobileOpen(true)}
+          onOpenSearch={() => setPaletteOpen(true)}
         />
 
         <main id="main-content" className="flex-1 overflow-y-auto p-4 sm:p-6">

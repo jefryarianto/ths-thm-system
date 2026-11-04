@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Bell,
+  Search,
   ChevronDown,
   Lock,
   LogOut,
@@ -39,6 +40,7 @@ interface DashboardHeaderProps {
   onLogout: () => void;
   loggingOut?: boolean;
   onOpenMobileNav: () => void;
+  onOpenSearch: () => void;
 }
 
 const ICON_BUTTON =
@@ -51,6 +53,7 @@ export default function DashboardHeader({
   onLogout,
   loggingOut,
   onOpenMobileNav,
+  onOpenSearch,
 }: DashboardHeaderProps) {
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -98,6 +101,17 @@ export default function DashboardHeader({
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <ThemeToggle />
+
+        {/* Search */}
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className={ICON_BUTTON}
+          title="Cari halaman (⌘K)"
+          aria-label="Cari halaman"
+        >
+          <Search size={20} aria-hidden="true" />
+        </button>
 
         {/* Notifikasi */}
         <Link
