@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  CheckCircle2,
   ArrowRight,
   ArrowLeft,
   Users,
@@ -24,7 +23,8 @@ import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { sessionManager } from '@/lib/session-manager';
-import { LogoSpinner, SmallLogoSpinner } from '@/components/ui/logo-spinner';
+import { LogoSpinner } from '@/components/ui/logo-spinner';
+import { LoginSteps, SuccessCheck } from '@/components/login/login-progress';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
@@ -117,8 +117,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
 
@@ -219,7 +219,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setSessionExpiredNotice(false);
-    setSuccessMessage('');
+    setSuccess(false);
     setLoading(true);
 
     try {
@@ -240,6 +240,8 @@ export default function LoginPage() {
           localStorage.removeItem('rememberedIdentifier');
         }
 
+        setSuccess(true);
+
         if (data.data.user.mustChangePassword && data.data.resetToken) {
           // AUTH-003: carry the reset token via sessionStorage instead of the URL
           // so it never lands in browser history, server logs, or referrers.
@@ -248,17 +250,15 @@ export default function LoginPage() {
           return;
         }
 
-        setSuccessMessage('Login berhasil! Mengalihkan...');
-
         // AUTH-010: return to the origin the user was sent from, when present
         // and safe. Falls back to the existing role-based home path otherwise.
         const next = safeNextParam(new URLSearchParams(window.location.search).get('next'));
         const targetPath = next ?? getHomePathForRole(data.data.user.role);
 
-        // Langsung navigasi ke target dashboard/home tanpa delay berlebih
+        // Beri waktu singkat agar animasi centang sukses terbaca.
         setTimeout(() => {
           router.replace(targetPath);
-        }, 300);
+        }, 600);
       }
     } catch (err: unknown) {
       const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -448,14 +448,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-success-300 bg-success-50 p-3.5 text-xs font-semibold shadow-sm animate-fade-in-up sm:text-sm">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span className="flex-1 font-medium text-success-900">{successMessage}</span>
-            </div>
-          )}
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {/* Email / No. HP Input */}
@@ -567,18 +559,28 @@ export default function LoginPage() {
               <button
                 type="submit"
                 data-testid="login-submit"
-                disabled={loading}
-                className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-white shadow-md transition-all duration-200 hover:bg-[var(--primary-hover)] active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                disabled={loading || success}
+                aria-busy={loading}
+                className={`flex h-[54px] w-full items-center justify-center gap-2 rounded-xl text-base font-bold text-white shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer ${
+                  success
+                    ? 'bg-success'
+                    : 'bg-primary hover:bg-[var(--primary-hover)] active:bg-primary-800'
+                } ${loading ? 'btn-shimmer' : ''}`}
               >
-                {loading ? (
+                {success ? (
                   <>
-                    <SmallLogoSpinner size={18} color="#fff" accentColor="#D4AF37" />
-                    <span>Memverifikasi...</span>
+                    <SuccessCheck className="h-5 w-5" />
+                    <span>Berhasil, mengalihkan...</span>
                   </>
+                ) : loading ? (
+                  <span>Memverifikasi...</span>
                 ) : (
                   'Masuk'
                 )}
               </button>
+              {(loading || success) && (
+                <LoginSteps doneCount={success ? 2 : 0} activeIndex={success ? 2 : 0} />
+              )}
             </div>
           </form>
 
@@ -698,12 +700,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Full-screen loading overlay */}
-      {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
-          <LogoSpinner size={96} message="Memverifikasi kredensial..." />
-        </div>
-      )}
     </div>
   );
 }
