@@ -122,6 +122,7 @@ export const MENU_REGISTRY = [
   { menuKey: 'wsMonitor', label: 'WebSocket', href: '/ws-monitor', minRole: 'superadmin' },
   { menuKey: 'adminQueues', label: 'Antrean', href: '/admin/queues', minRole: 'superadmin' },
   { menuKey: 'settings', label: 'Pengaturan', href: '/settings', minRole: 'admin_ranting' },
+  { menuKey: 'settingsGeneral', label: 'Pengaturan Umum', href: '/settings/general', minRole: 'admin_ranting' },
   {
     menuKey: 'settingsMenuPermissions',
     label: 'Hak Akses Menu',
@@ -186,7 +187,7 @@ export const MENU_REGISTRY = [
     menuKey: 'gamificationAdmin',
     label: 'Admin',
     href: '/gamification/admin',
-    minRole: 'admin_ranting',
+    minRole: 'admin_nasional',
   },
   {
     menuKey: 'gamificationScoreboard',
@@ -198,9 +199,10 @@ export const MENU_REGISTRY = [
     menuKey: 'gamificationReport',
     label: 'Laporan Gamifikasi',
     href: '/gamification/report',
-    minRole: 'admin_ranting',
+    minRole: 'admin_nasional',
   },
   { menuKey: 'scanStats', label: 'Statistik Scan', href: '/scan-stats', minRole: 'admin_ranting' },
+  { menuKey: 'auditLogs', label: 'Log Audit', href: '/audit-logs', minRole: 'superadmin' },
   {
     menuKey: 'contentSejarah',
     label: 'Sejarah',
