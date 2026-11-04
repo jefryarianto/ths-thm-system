@@ -63,6 +63,45 @@ test.describe('Login loading animation', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
   });
 
+  test('cabang mustChangePassword menampilkan sukses sebelum pindah', async ({ page }) => {
+    await page.clock.install();
+    await mockLoginSuccess(page);
+    await page.route(/\/api\/auth\/login/, (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'set-cookie': 'refreshToken=e2e-refresh; Path=/; SameSite=Lax',
+        },
+        body: JSON.stringify({
+          success: true,
+          data: {
+            accessToken: 'e2e-access',
+            refreshToken: 'e2e-refresh',
+            user: {
+              id: 'u1',
+              email: 'superadmin@ths.thm.org',
+              role: 'superadmin',
+              mustChangePassword: true,
+            },
+            resetToken: 'reset-e2e',
+          },
+        }),
+      });
+    });
+    await mockDashboard(page);
+    await submitValidLogin(page);
+
+    const submit = page.getByTestId('login-submit');
+    await page.clock.runFor(1450);
+    await expect(submit).toContainText('Berhasil, mengalihkan');
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.clock.runFor(950);
+    await expect(page).toHaveURL(/\/force-change-password/, { timeout: 15000 });
+  });
+
   test('menghormati prefers-reduced-motion pada langkah dan centang', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.clock.install();
