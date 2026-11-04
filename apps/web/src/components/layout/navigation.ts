@@ -240,7 +240,8 @@ export const menuGroups: MenuGroup[] = [
     label: 'Gamifikasi',
     items: [
       { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
-      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_nasional' },
+        { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_nasional' },
+        { href: '/gamification/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_nasional' },
       {
         href: '/gamification/scoreboard',
         label: 'Scoreboard',
