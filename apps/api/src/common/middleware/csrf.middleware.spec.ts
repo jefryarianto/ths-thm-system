@@ -6,7 +6,8 @@ type MockResponse = Response & { status: jest.Mock; json: jest.Mock; cookie: jes
 function makeReq(overrides: Partial<Request> = {}): Request {
   return {
     method: 'POST',
-    path: '/api/anggota',
+    path: '/',
+    originalUrl: '/api/anggota',
     headers: {},
     cookies: undefined,
     ...overrides,
@@ -33,7 +34,8 @@ describe('CsrfMiddleware', () => {
 
   it('meloloskan POST /api/auth/login tanpa token (exempt, prefix-aware)', () => {
     const res = makeRes();
-    middleware.use(makeReq({ path: '/api/auth/login' }), res, next);
+    // Nest memasang middleware per-route: req.path === '/' dan path asli ada di originalUrl.
+    middleware.use(makeReq({ originalUrl: '/api/auth/login' }), res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalledWith(403);
   });
@@ -77,7 +79,7 @@ describe('CsrfMiddleware', () => {
 
   it('menyetel cookie CSRF pada request aman bila belum ada', () => {
     const res = makeRes();
-    middleware.use(makeReq({ method: 'GET', path: '/api/health' }), res, next);
+    middleware.use(makeReq({ method: 'GET', originalUrl: '/api/health' }), res, next);
     expect(next).toHaveBeenCalled();
     expect(res.cookie).toHaveBeenCalledWith(
       'csrf_token',

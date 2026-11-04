@@ -31,6 +31,16 @@ function getApiPrefix(): string {
   return normalized ? `/${normalized}` : '';
 }
 
+/**
+ * Ambil path lengkap dari request. Nest memasang middleware `forRoutes('*')`
+ * per-route sehingga `req.path` bernilai '/' (baseUrl berisi path lengkap);
+ * `req.originalUrl` selalu memuat path asli beserta query.
+ */
+function getRequestPath(req: Request): string {
+  const raw = req.originalUrl || req.url || req.path || '/';
+  return raw.split('?')[0].split('#')[0] || '/';
+}
+
 function stripApiPrefix(pathname: string): string {
   const prefix = getApiPrefix();
   if (!prefix) return pathname;
@@ -39,7 +49,7 @@ function stripApiPrefix(pathname: string): string {
 }
 
 function isExempt(req: Request): boolean {
-  const pathname = stripApiPrefix(req.path);
+  const pathname = stripApiPrefix(getRequestPath(req));
   return EXEMPT_PATHS.some(path => pathname.startsWith(path));
 }
 
