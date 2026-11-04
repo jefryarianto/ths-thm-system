@@ -418,6 +418,7 @@
   .btn-shimmer::after { animation: none; opacity: 0; }
   .success-check path { animation: none; stroke-dashoffset: 0; }
   .login-step-active { animation: none; }
+  .animate-fade-in-up { animation: none; }
 }
 
 /* ── Prose content (berita, sejarah, etc.) ── */

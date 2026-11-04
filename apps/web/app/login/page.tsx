@@ -241,6 +241,7 @@ export default function LoginPage() {
         }
 
         setSuccess(true);
+        setLoading(false);
 
         if (data.data.user.mustChangePassword && data.data.resetToken) {
           // AUTH-003: carry the reset token via sessionStorage instead of the URL
@@ -563,9 +564,9 @@ export default function LoginPage() {
                 aria-busy={loading}
                 className={`flex h-[54px] w-full items-center justify-center gap-2 rounded-xl text-base font-bold text-white shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer ${
                   success
-                    ? 'bg-success'
+                    ? 'bg-success-500'
                     : 'bg-primary hover:bg-[var(--primary-hover)] active:bg-primary-800'
-                } ${loading ? 'btn-shimmer' : ''}`}
+                } ${loading && !success ? 'btn-shimmer' : ''}`}
               >
                 {success ? (
                   <>
