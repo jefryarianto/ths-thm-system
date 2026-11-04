@@ -29,6 +29,13 @@ import { LoginSteps, SuccessCheck } from '@/components/login/login-progress';
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
 
+// Ritme animasi login: langkah progres bertahap, durasi loading minimum, dan
+// dwell sukses sebelum navigasi agar tiap tahap sempat terbaca.
+const STEP_2_AT_MS = 600;
+const STEP_3_AT_MS = 1100;
+const MIN_LOADING_MS = 1400;
+const SUCCESS_DWELL_MS = 900;
+
 /**
  * AUTH-010: validate the `next` return-to param before navigating.
  *
@@ -119,12 +126,29 @@ export default function LoginPage() {
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
 
   // AUTH-011: focus target for the global error banner so keyboard/screen-reader
   // users get immediate feedback after a failed submit.
   const errorRef = useRef<HTMLDivElement>(null);
+
+  // Timer langkah/sukses aktif — dibersihkan agar tidak ada setState setelah
+  // unmount atau submit ulang.
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const clearTimers = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  };
+
+  useEffect(() => {
+    const timers = timersRef;
+    return () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    };
+  }, []);
 
   const { user, isAuthenticated } = useAuth();
 
@@ -220,7 +244,13 @@ export default function LoginPage() {
     setError('');
     setSessionExpiredNotice(false);
     setSuccess(false);
+    setStep(0);
+    clearTimers();
     setLoading(true);
+
+    const startedAt = Date.now();
+    timersRef.current.push(setTimeout(() => setStep(1), STEP_2_AT_MS));
+    timersRef.current.push(setTimeout(() => setStep(2), STEP_3_AT_MS));
 
     try {
       const { data } = await apiClient.post('/auth/login', {
@@ -240,14 +270,24 @@ export default function LoginPage() {
           localStorage.removeItem('rememberedIdentifier');
         }
 
-        setSuccess(true);
-        setLoading(false);
+        // Tampilkan sukses setelah durasi loading minimum, lalu beri dwell
+        // sebelum navigasi agar centang sukses sempat terbaca.
+        const finishSuccess = (navigate: () => void) => {
+          const wait = Math.max(0, MIN_LOADING_MS - (Date.now() - startedAt));
+          timersRef.current.push(
+            setTimeout(() => {
+              setSuccess(true);
+              setLoading(false);
+              timersRef.current.push(setTimeout(navigate, SUCCESS_DWELL_MS));
+            }, wait),
+          );
+        };
 
         if (data.data.user.mustChangePassword && data.data.resetToken) {
           // AUTH-003: carry the reset token via sessionStorage instead of the URL
           // so it never lands in browser history, server logs, or referrers.
           sessionStorage.setItem(FORCE_CHANGE_TOKEN_KEY, data.data.resetToken);
-          router.push('/force-change-password');
+          finishSuccess(() => router.push('/force-change-password'));
           return;
         }
 
@@ -256,14 +296,13 @@ export default function LoginPage() {
         const next = safeNextParam(new URLSearchParams(window.location.search).get('next'));
         const targetPath = next ?? getHomePathForRole(data.data.user.role);
 
-        // Beri waktu singkat agar animasi centang sukses terbaca.
-        setTimeout(() => {
-          router.replace(targetPath);
-        }, 600);
+        finishSuccess(() => router.replace(targetPath));
       }
     } catch (err: unknown) {
       const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
         ?.message;
+      clearTimers();
+      setStep(0);
       setError(apiError || 'Login gagal, periksa email dan password');
       setLoading(false);
     }
@@ -580,7 +619,7 @@ export default function LoginPage() {
                 )}
               </button>
               {(loading || success) && (
-                <LoginSteps doneCount={success ? 2 : 0} activeIndex={success ? 2 : 0} />
+                <LoginSteps doneCount={success ? 2 : step} activeIndex={success ? 2 : step} />
               )}
             </div>
           </form>
