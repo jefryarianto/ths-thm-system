@@ -112,12 +112,35 @@ export function setupGlobalPrefix(app: NestExpressApplication): void {
  * yang menangani otorisasi. Hanya GET ke file statis (bukti, foto, dokumen)
  * yang memerlukan token — mencegah akses anonim ke data pribadi anggota.
  */
+/**
+ * Prefixes of uploaded files that are publicly accessible (no auth required).
+ * These assets are displayed in public-facing previews (card templates, signatures,
+ * stamps, document backgrounds) where browser `<img>` tags cannot send auth headers.
+ *
+ * Private assets (member-photo-*, proof-*, forum-*, etc.) remain protected.
+ */
+const PUBLIC_UPLOAD_PREFIXES = [
+  'card-template-front-',
+  'card-template-back-',
+  'signature-',
+  'stamp-',
+  'doc-template-',
+] as const;
+
+function isPublicUpload(filename: string): boolean {
+  return PUBLIC_UPLOAD_PREFIXES.some((prefix) => filename.startsWith(prefix));
+}
+
 function staticAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
   if (req.method !== 'GET') {
     return next();
   }
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
+    const urlPath = decodeURIComponent(req.path || '').replace(/^\/+/, '');
+    if (isPublicUpload(urlPath)) {
+      return next();
+    }
     res.status(401).json({ message: 'Unauthorized' });
     return;
   }
