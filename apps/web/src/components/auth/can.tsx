@@ -152,9 +152,10 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   auditLogs: { view: 'superadmin', admin: 'superadmin' },
   gamification: {
     view: 'anggota',
-    create: 'admin_kegiatan',
-    edit: 'admin_kegiatan',
-    delete: 'admin_ranting',
+    create: 'superadmin',
+    edit: 'superadmin',
+    delete: 'superadmin',
+    admin: 'admin_nasional',
   },
   wsMonitor: { view: 'superadmin', admin: 'superadmin' },
   queues: { view: 'superadmin', admin: 'superadmin' },

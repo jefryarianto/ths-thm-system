@@ -253,7 +253,7 @@ export class GamificationController {
    * Get gamification stats.
    */
   @Get('stats')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get gamification statistics' })
   async getStats() {
@@ -264,7 +264,7 @@ export class GamificationController {
    * Get points distribution — how many members at each level.
    */
   @Get('admin/points-distribution')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get points distribution by level' })
   async getPointsDistribution() {
@@ -275,7 +275,7 @@ export class GamificationController {
    * Get top reward redemptions.
    */
   @Get('admin/top-redemptions')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get top reward redemptions' })
   async getTopRedemptions(@Query('limit') limit?: string) {
@@ -286,7 +286,7 @@ export class GamificationController {
    * Get points report for a period (weekly/monthly).
    */
   @Get('admin/points-report')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get points report for a period' })
   async getPointsReport(@Query('period') period?: string, @Query('limit') limit?: string) {
@@ -310,7 +310,7 @@ export class GamificationController {
    * Get gamification configuration settings.
    */
   @Get('admin/config')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get gamification configuration' })
   async getConfig() {
@@ -321,7 +321,7 @@ export class GamificationController {
    * Update gamification configuration settings.
    */
   @Put('admin/config')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Update gamification configuration' })
   async updateConfig(@Body() body: Record<string, unknown>) {
@@ -352,7 +352,7 @@ export class GamificationController {
    * Send weekly summary notification to a member.
    */
   @Post('profile/:anggotaId/weekly-summary/send')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @ApiOperation({ summary: 'Send weekly gamification summary as FCM notification to member' })
   async sendWeeklySummaryNotification(@Param('anggotaId') anggotaId: string) {
     const result = await this.gamificationService.sendWeeklySummaryNotification(anggotaId);
@@ -396,7 +396,7 @@ export class GamificationController {
    * Record a dues payment for a member.
    */
   @Post('profile/:anggotaId/dues')
-  @Roles('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @Roles('superadmin', 'admin_nasional')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Record dues payment and award points' })
   async recordDuesPayment(
