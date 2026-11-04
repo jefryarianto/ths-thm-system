@@ -40,6 +40,14 @@ export class GaleriService {
         buffer.toString('ascii', 0, 4) === 'RIFF' &&
         buffer.toString('ascii', 8, 12) === 'WEBP'
       );
+    if (mime === 'image/heic' || mime === 'image/heif')
+      return (
+        buffer.length >= 12 &&
+        buffer.toString('ascii', 4, 8) === 'ftyp' &&
+        ['heic', 'hev1', 'mif1', 'heix'].some((brand) =>
+          buffer.toString('ascii', 8, 12).startsWith(brand),
+        )
+      );
     return false;
   }
 
@@ -49,15 +57,15 @@ export class GaleriService {
     if (!file?.buffer) throw new BadRequestException('File foto wajib diunggah');
     const mime = file.mimetype;
     if (
-      !['image/jpeg', 'image/png', 'image/webp'].includes(mime) ||
+      !['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(mime) ||
       !this.hasValidImageSignature(file.buffer, mime)
     ) {
-      throw new BadRequestException('Format foto harus JPEG, PNG, atau WebP');
+      throw new BadRequestException('Format foto harus JPEG, PNG, WebP, atau HEIC');
     }
     if (file.buffer.length > 10 * 1024 * 1024)
       throw new BadRequestException('Ukuran maksimal foto 10 MB');
     if (file.size > 10 * 1024 * 1024) throw new BadRequestException('Ukuran maksimal foto 10 MB');
-    const key = `${randomUUID()}.${mime === 'image/jpeg' ? 'jpg' : mime === 'image/png' ? 'png' : 'webp'}`;
+    const key = `${randomUUID()}.${mime === 'image/jpeg' ? 'jpg' : mime === 'image/png' ? 'png' : mime === 'image/heic' || mime === 'image/heif' ? 'heic' : 'webp'}`;
     await fs.mkdir(STORAGE_DIR, { recursive: true });
     try {
       await fs.writeFile(join(STORAGE_DIR, key), file.buffer, { flag: 'wx', mode: 0o600 });

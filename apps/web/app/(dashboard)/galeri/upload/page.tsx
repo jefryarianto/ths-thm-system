@@ -43,8 +43,10 @@ export default function GalleryUploadPage() {
       setFile(null);
       setNotice('Foto terkirim dan menunggu persetujuan admin.');
       await load();
-    } catch {
-      setNotice('Foto gagal dikirim. Pastikan JPEG/PNG/WebP dan maksimal 10 MB.');
+    } catch (err) {
+      const msg = err?.response?.data?.message ?? err?.message;
+      const friendlyMsg = Array.isArray(msg) ? msg.join('. ') : msg;
+      setNotice(`Foto gagal dikirim. ${friendlyMsg || 'Pastikan JPEG/PNG/WebP dan maksimal 10 MB.'}`);
     } finally {
       setBusy(false);
     }

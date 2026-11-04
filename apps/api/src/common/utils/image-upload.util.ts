@@ -12,6 +12,7 @@ const IMAGE_MAGIC_BYTES: Array<{ bytes: number[]; name: string }> = [
   { bytes: [0x89, 0x50, 0x4e, 0x47], name: 'png' },
   { bytes: [0x52, 0x49, 0x46, 0x46], name: 'webp' },
   { bytes: [0x47, 0x49, 0x46, 0x38], name: 'gif' },
+  { bytes: [0x00, 0x00, 0x00], name: 'heic' }, // ftyp at offset 4, checked separately in validateImageBuffer
 ];
 
 /** MIME type gambar yang diizinkan untuk upload. */
