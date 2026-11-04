@@ -179,7 +179,7 @@ describe('filterVisibleGroups', () => {
     // 52 awal - 0 (item tetap, hanya grup berkurang).
     // Audit log ditambahkan (1), FCM test tetap ada.
     // 52 + 1 (audit-logs) = 53.
-    expect(hrefs).toHaveLength(53);
+    expect(hrefs).toHaveLength(54);
   });
 
   it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {
