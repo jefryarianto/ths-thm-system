@@ -4,8 +4,6 @@ import 'package:local_auth/local_auth.dart';
 
 import '../../core/security/biometric_auth_service.dart';
 import '../../logic/auth/auth_bloc.dart';
-import '../../logic/auth/auth_event.dart';
-import '../../logic/auth/auth_state.dart';
 
 /// Wrapper widget that shows biometric lock screen when app resumes
 /// and biometric authentication is enabled.

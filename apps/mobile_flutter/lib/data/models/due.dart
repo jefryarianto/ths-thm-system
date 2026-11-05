@@ -31,6 +31,18 @@ class Due {
     return ApiClient.resolveAbsolute(path);
   }
 
+  bool get isPaid => 
+      status.toLowerCase().contains('lunas') || 
+      status.toLowerCase() == 'paid';
+
+  String get statusLabel {
+    final s = status.toLowerCase();
+    if (s.contains('lunas') || s == 'paid') return 'Lunas';
+    if (s.contains('menunggu') || s.contains('pending')) return 'Menunggu';
+    if (s.contains('belum')) return 'Belum Bayar';
+    return status;
+  }
+
   factory Due.fromJson(Map<String, dynamic> json) {
     return Due(
       id: _str(json['id']),

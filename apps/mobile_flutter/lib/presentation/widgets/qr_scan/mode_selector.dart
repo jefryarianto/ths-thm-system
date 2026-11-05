@@ -32,7 +32,7 @@ class ModeSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        children: modes.map((mode) {
+        children: modes.map<Widget>((_ModeInfo mode) {
           final isSelected = selectedMode == mode.mode;
           return Expanded(
             child: GestureDetector(

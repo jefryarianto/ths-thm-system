@@ -135,6 +135,19 @@ export const menuGroups: MenuGroup[] = [
       },
       { href: '/claims', label: 'Klaim', icon: BadgeCheck, minRole: 'admin_ranting' },
       { href: '/letters', label: 'Surat', icon: Mail, minRole: 'admin_ranting' },
+      { href: '/kta/queue', label: 'Antrian KTA', icon: CreditCard, minRole: 'admin_ranting' },
+      {
+        href: '/kta/distrik-process',
+        label: 'Proses KTA',
+        icon: ClipboardCheck,
+        minRole: 'admin_distrik',
+      },
+      {
+        href: '/kta/analytics',
+        label: 'Analytics KTA',
+        icon: TrendingUp,
+        minRole: 'admin_nasional',
+      },
     ],
   },
   {

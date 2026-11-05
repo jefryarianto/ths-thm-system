@@ -626,3 +626,199 @@ export function levelUpEmail(nama: string, oldLevel: string, newLevel: string, p
     `),
   };
 }
+
+// ─── KTA / Kartu Anggota ───
+
+export function ktaSubmittedEmail(nama: string, applicationId: string) {
+  return {
+    subject: 'Pengajuan KTA Diterima — THS-THM',
+    html: wrap(`
+      <h2 style="color: #1a56db;">📋 Pengajuan KTA Diterima</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pengajuan KTA Digital Anda telah berhasil dikirim dan sedang menunggu review dari level Ranting.</p>
+      <p>ID Aplikasi: <strong>${escapeHtml(applicationId)}</strong></p>
+      <p>Anda dapat memantau status pengajuan melalui aplikasi mobile di menu KTA.</p>
+    `),
+  };
+}
+
+export function ktaLevelApprovedEmail(nama: string, level: string, nextLevel: string) {
+  const levelLabels: Record<string, string> = {
+    RANTING: 'Ranting',
+    WILAYAH: 'Wilayah',
+    DISTRIK: 'Distrik',
+    NASIONAL: 'Nasional',
+  };
+  const currentLabel = levelLabels[level] || level;
+  const nextLabel = levelLabels[nextLevel] || nextLevel;
+
+  return {
+    subject: `KTA Disetujui ${currentLabel} — THS-THM`,
+    html: wrap(`
+      <h2 style="color: #16a34a;">✅ KTA Disetujui ${currentLabel}</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pengajuan KTA Anda telah disetujui oleh level <strong>${escapeHtml(currentLabel)}</strong>.</p>
+      <p>Selanjutnya pengajuan akan diteruskan ke level <strong>${escapeHtml(nextLabel)}</strong> untuk review.</p>
+      <p>Anda akan mendapat notifikasi saat status berubah.</p>
+    `),
+  };
+}
+
+export function ktaApprovedEmail(nama: string, nomorAnggota: string) {
+  return {
+    subject: '🎉 KTA Disetujui Nasional — Nomor Anggota Diterbitkan',
+    html: wrap(`
+      <h2 style="color: #16a34a;">🎉 Selamat! KTA Disetujui Nasional</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pengajuan KTA Anda telah <strong>disetujui oleh level Nasional</strong>.</p>
+      <p>Nomor Anggota Anda: <strong style="font-size: 18px; color: #1a56db;">${escapeHtml(nomorAnggota)}</strong></p>
+      <p>Admin Distrik akan segera menghubungi Anda untuk mengatur biaya penerbitan dan rekening tujuan pembayaran.</p>
+      <p>Anda akan menerima notifikasi detail biaya dan rekening tujuan melalui aplikasi dan email ini.</p>
+    `),
+  };
+}
+
+export function ktaFeeNotificationEmail(nama: string, biaya: number, rekeningTujuan: string, catatan?: string) {
+  return {
+    subject: '💳 Biaya Penerbitan KTA — THS-THM',
+    html: wrap(`
+      <h2 style="color: #1a56db;">💳 Biaya Penerbitan KTA</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Silakan melakukan pembayaran biaya penerbitan KTA:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 120px;">Biaya</td><td style="padding: 8px;">Rp ${Number(biaya).toLocaleString('id-ID')}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Rekening Tujuan</td><td style="padding: 8px;">${escapeHtml(rekeningTujuan)}</td></tr>
+      </table>
+      ${catatan ? `<p><em>Catatan: ${escapeHtml(catatan)}</em></p>` : ''}
+      <p>Setelah pembayaran, silakan upload bukti transfer melalui aplikasi untuk diverifikasi oleh Admin Distrik.</p>
+    `),
+  };
+}
+
+export function ktaPaymentVerifiedEmail(nama: string) {
+  return {
+    subject: '✅ Pembayaran KTA Diverifikasi — THS-THM',
+    html: wrap(`
+      <h2 style="color: #16a34a;">✅ Pembayaran KTA Diverifikasi</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pembayaran biaya KTA Anda telah <strong>diverifikasi</strong> oleh Admin Distrik.</p>
+      <p>KTA Anda akan segera digenerate. Anda akan menerima notifikasi saat KTA digital siap diunduh.</p>
+    `),
+  };
+}
+
+export function ktaGeneratedEmail(nama: string) {
+  return {
+    subject: '🎉 KTA Digital Siap Diunduh — THS-THM',
+    html: wrap(`
+      <h2 style="color: #a855f7;">🎉 KTA Digital Siap!</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Kartu Tanda Anggota (KTA) Digital Anda telah berhasil digenerate oleh Admin Distrik.</p>
+      <p>Silakan buka aplikasi mobile THS-THM dan buka menu <strong>KTA Digital</strong> untuk melihat dan mengunduh KTA Anda.</p>
+      <p>KTA Digital dilengkapi QR Code untuk verifikasi keaslian.</p>
+    `),
+  };
+}
+
+export function ktaRejectedEmail(nama: string, level: string, reason: string) {
+  const levelLabels: Record<string, string> = {
+    RANTING: 'Ranting',
+    WILAYAH: 'Wilayah',
+    DISTRIK: 'Distrik',
+    NASIONAL: 'Nasional',
+  };
+  const levelLabel = levelLabels[level] || level;
+
+  return {
+    subject: `❌ Pengajuan KTA Ditolak — ${levelLabel}`,
+    html: wrap(`
+      <h2 style="color: #dc2626;">❌ Pengajuan KTA Ditolak</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pengajuan KTA Anda ditolak oleh level <strong>${levelLabel}</strong>.</p>
+      <p>Alasan: <em>${escapeHtml(reason)}</em></p>
+      <p>Anda dapat mengajukan ulang setelah memperbaiki data yang diperlukan.</p>
+    `),
+  };
+}
+
+export function ktaCancelledEmail(nama: string) {
+  return {
+    subject: 'Pengajuan KTA Dibatalkan — THS-THM',
+    html: wrap(`
+      <h2 style="color: #ca8a04;">Pengajuan KTA Dibatalkan</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pengajuan KTA Anda telah dibatalkan sesuai permintaan Anda.</p>
+      <p>Anda dapat mengajukan ulang kapan saja melalui aplikasi mobile.</p>
+    `),
+  };
+}
+
+export function ktaEscalationEmail(nama: string, applicationId: string, level: string, hoursStuck: number) {
+  const levelLabels: Record<string, string> = {
+    RANTING_REVIEW: 'Review Ranting',
+    WILAYAH_REVIEW: 'Review Wilayah',
+    DISTRIK_REVIEW: 'Review Distrik',
+    NASIONAL_REVIEW: 'Review Nasional',
+    PAYMENT_SETUP: 'Setup Biaya',
+    PAYMENT_PENDING: 'Menunggu Pembayaran',
+  };
+  const levelLabel = levelLabels[level] || level;
+
+  return {
+    subject: `⚠️ ESCALATION: KTA Melewati SLA — ${levelLabel}`,
+    html: wrap(`
+      <h2 style="color: #dc2626;">⚠️ ESCALATION: KTA Melewati SLA</h2>
+      <p>Pengajuan KTA untuk <strong>${escapeHtml(nama)}</strong> (ID: ${escapeHtml(applicationId)}) telah melewati SLA pada level <strong>${levelLabel}</strong>.</p>
+      <p>Sudah melewati <strong>${hoursStuck} jam</strong> tanpa diproses.</p>
+      <p>Mohon segera diproses atau di-escalate ke level atas.</p>
+    `),
+  };
+}
+
+export function ktaBulkSubmittedEmail(nama: string, batchName: string, totalSubmitted: number) {
+  return {
+    subject: `📋 Bulk Pengajuan KTA Dikirim — ${batchName}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📋 Bulk Pengajuan KTA Dikirim</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Batch pengajuan KTA <strong>${escapeHtml(batchName)}</strong> telah dikirim dengan <strong>${totalSubmitted} anggota</strong>.</p>
+      <p>Setiap aplikasi akan diproses melalui alur: Ranting → Wilayah → Distrik → Nasional → Distrik (Proses).</p>
+      <p>Anda dapat memantau progress melalui aplikasi mobile.</p>
+    `),
+  };
+}
+
+export function ktaBatchProgressEmail(nama: string, batchName: string, progress: {
+  total: number;
+  approved: number;
+  rejected: number;
+  generated: number;
+}) {
+  return {
+    subject: `📊 Update Progress Batch KTA — ${batchName}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📊 Update Progress Batch KTA</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Batch <strong>${escapeHtml(batchName)}</strong> memiliki progress terbaru:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold;">Total</td><td>${progress.total}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; color: #16a34a;">Disetujui</td><td style="color: #16a34a;">${progress.approved}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; color: #dc2626;">Ditolak</td><td style="color: #dc2626;">${progress.rejected}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; color: #a855f7;">Digenerate</td><td style="color: #a855f7;">${progress.generated}</td></tr>
+      </table>
+    `),
+  };
+}
+
+export function ktaPaymentReminderEmail(nama: string, applicationId: string, daysLeft: number) {
+  return {
+    subject: `⏰ Reminder: Pembayaran KTA dalam ${daysLeft} Hari`,
+    html: wrap(`
+      <h2 style="color: #ca8a04;">⏰ Reminder Pembayaran KTA</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Pembayaran KTA Anda (ID: ${escapeHtml(applicationId)}) belum dikonfirmasi.</p>
+      <p>Sisa waktu: <strong>${daysLeft} hari</strong> sebelum aplikasi dianggap kedaluwarsa.</p>
+      <p>Silakan segera melakukan pembayaran dan upload bukti transfer melalui aplikasi.</p>
+    `),
+  };
+}

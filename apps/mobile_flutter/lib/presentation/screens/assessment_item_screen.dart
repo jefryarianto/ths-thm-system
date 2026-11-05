@@ -267,7 +267,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
             child: const Text('Batal'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
             onPressed: () {
               context.read<AssessmentBloc>().add(
                     AssessmentItemDeleteRequested(

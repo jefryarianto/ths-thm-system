@@ -165,7 +165,7 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.danger,
+              backgroundColor: AppTheme.error,
             ),
             onPressed: () {
               context

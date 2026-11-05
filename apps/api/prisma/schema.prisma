@@ -321,6 +321,7 @@ model Anggota {
   qrCodes                   QrCode[]
   transferRequests          TransferRequest[]
   undanganPendadarans       UndanganPendadaran[]
+  ktaApplications        KtaApplication[]
 
   @@index([statusData])
   @@index([noHpNormalized])
@@ -1919,6 +1920,7 @@ enum TipeUnitLatihan {
 
 enum Role {
   superadmin
+  admin_nasional
   admin_distrik
   admin_wilayah
   admin_ranting
@@ -2150,4 +2152,123 @@ enum AlertMetric {
 enum AlertChannel {
   telegram
   email
+}
+
+enum KtaAppStatus {
+  SUBMITTED
+  RANTING_REVIEW
+  WILAYAH_REVIEW
+  DISTRIK_REVIEW
+  NASIONAL_REVIEW
+  APPROVED
+  PAYMENT_SETUP
+  PAYMENT_PENDING
+  PAYMENT_VERIFIED
+  CARD_GENERATING
+  CARD_GENERATED
+  REJECTED
+  CANCELLED
+}
+
+enum KtaAppLevel {
+  RANTING
+  WILAYAH
+  DISTRIK
+  NASIONAL
+  MEMBER
+}
+
+enum KtaAppAction {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  FORWARDED
+  SKIPPED
+  PAYMENT_SETUP
+  PAYMENT_VERIFIED
+  CARD_GENERATED
+  CANCELLED
+  SUPERADMIN_BYPASS
+}
+
+enum PaymentStatus {
+  BELUM_BAYAR
+  MENUNGGU_VERIFIKASI
+  LUNAS
+  DITOLAK
+}
+
+enum KtaBatchStatus {
+  IN_PROGRESS
+  COMPLETED
+  PARTIAL
+}
+
+model KtaApplication {
+  id               String       @id @default(uuid())
+  anggotaId        String       @map("anggota_id")
+  nomorAnggota     String?      @map("nomor_anggota")
+  status           KtaAppStatus @default(SUBMITTED)
+  biaya            Decimal?     @db.Decimal(10, 2)
+  rekeningTujuan   String?      @map("rekening_tujuan")
+  buktiBayarPath   String?      @map("bukti_bayar_path")
+  statusPembayaran PaymentStatus @default(BELUM_BAYAR) @map("status_pembayaran")
+  diterbitkanOleh  String?      @map("diterbitkan_oleh")
+  diterbitkanAt    DateTime?    @map("diterbitkan_at")
+  submittedById    String       @map("submitted_by_id")
+  submittedByRole  String       @map("submitted_by_role")
+  batchId          String?      @map("batch_id")
+  catatanAdmin     String?      @map("catatan_admin")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  anggota          Anggota      @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  histories        KtaAppHistory[]
+  batch            KtaBatch?      @relation(fields: [batchId], references: [id])
+
+  @@index([anggotaId])
+  @@index([status])
+  @@index([submittedByRole])
+  @@index([batchId])
+  @@map("kta_applications")
+}
+
+model KtaAppHistory {
+  id               String         @id @default(uuid())
+  ktaApplicationId String         @map("kta_application_id")
+  level            KtaAppLevel
+  action           KtaAppAction
+  actorId          String         @map("actor_id")
+  actorRole        String         @map("actor_role")
+  catatan          String?
+  isSkipped        Boolean        @default(false) @map("is_skipped")
+  skippedReason    String?        @map("skipped_reason")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  ktaApplication   KtaApplication @relation(fields: [ktaApplicationId], references: [id], onDelete: Cascade)
+
+  @@index([ktaApplicationId])
+  @@map("kta_app_histories")
+}
+
+model KtaBatch {
+  id              String       @id @default(uuid())
+  name            String?
+  submittedById   String       @map("submitted_by_id")
+  submittedByRole String       @map("submitted_by_role")
+  scopeLevel      String       @map("scope_level")
+  scopeId         String       @map("scope_id")
+  totalSubmitted  Int          @default(0) @map("total_submitted")
+  totalApproved   Int          @default(0) @map("total_approved")
+  totalRejected   Int          @default(0) @map("total_rejected")
+  totalGenerated  Int          @default(0) @map("total_generated")
+  status          KtaBatchStatus  @default(IN_PROGRESS)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  applications    KtaApplication[]
+
+  @@index([submittedById])
+  @@index([scopeLevel, scopeId])
+  @@map("kta_batches")
 }

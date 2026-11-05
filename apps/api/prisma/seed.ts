@@ -23,18 +23,20 @@ async function main() {
   console.log(`Admin user created: ${admin.email}`);
 
   // Create approval levels (reference data untuk workflow approvals — tidak ada UI CRUD)
+  // KTA workflow: Ranting → Wilayah → Distrik → Nasional
   const levels = [
-    { name: 'Admin Ranting', roleName: 'admin_ranting', order: 1 },
-    { name: 'Admin Wilayah', roleName: 'admin_wilayah', order: 2 },
-    { name: 'Admin Distrik', roleName: 'admin_distrik', order: 3 },
+    { id: 'kta-ranting', name: 'Review Ranting', roleName: 'admin_ranting', order: 1 },
+    { id: 'kta-wilayah', name: 'Review Wilayah', roleName: 'admin_wilayah', order: 2 },
+    { id: 'kta-distrik-review', name: 'Review Distrik (Pre-Nasional)', roleName: 'admin_distrik', order: 3 },
+    { id: 'kta-nasional', name: 'Final Approve Nasional', roleName: 'admin_nasional', order: 4 },
   ];
 
   for (const level of levels) {
     await prisma.approvalLevel.upsert({
-      where: { id: level.name },
+      where: { id: level.id },
       update: {},
       create: {
-        id: level.name,
+        id: level.id,
         name: level.name,
         roleName: level.roleName,
         order: level.order,
@@ -42,7 +44,7 @@ async function main() {
       },
     });
   }
-  console.log('Approval levels created');
+  console.log('Approval levels created (including KTA workflow)');
 
   // Create default forum categories
   const forumCategories = [

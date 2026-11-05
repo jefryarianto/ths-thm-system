@@ -342,7 +342,7 @@ class _QrScanScreenState extends State<QrScanScreen>
           preferredSize: const Size.fromHeight(60),
           child: ModeSelector(
             selectedMode: _currentMode,
-            onModeChanged: (mode) {
+            onModeChanged: (ScanMode mode) {
               setState(() {
                 _currentMode = mode;
                 if (mode == ScanMode.checkin && _selectedKegiatanId == null) {
@@ -456,7 +456,7 @@ class _QrScanScreenState extends State<QrScanScreen>
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.surfaceContainerHighest,
               child: Icon(
-                Icons.graduation_cap,
+                Icons.school,
                 color: isSelected
                     ? Theme.of(context).colorScheme.onPrimary
                     : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -469,7 +469,7 @@ class _QrScanScreenState extends State<QrScanScreen>
               ),
             ),
             subtitle: Text(
-              '${kegiatan.lokasi ?? 'Lokasi TBD'} • ${formatDateIndo(kegiatan.tanggalMulai)}',
+              '${kegiatan.lokasi ?? 'Lokasi TBD'} • ${Formatters.dateIndo(kegiatan.tanggalMulai)}',
             ),
             trailing: isSelected
                 ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
@@ -562,7 +562,7 @@ class _QrScanScreenState extends State<QrScanScreen>
             ),
             title: Text(item.detail),
             subtitle: Text(
-              '${item.type.replaceAll('_', ' ').toUpperCase()} • ${formatDateTimeIndo(item.timestamp)}',
+              '${item.type.replaceAll('_', ' ').toUpperCase()} • ${Formatters.dateTimeIndo(item.timestamp)}',
             ),
             trailing: Text(
               item.result,

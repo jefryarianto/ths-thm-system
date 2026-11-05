@@ -259,7 +259,7 @@ class _VerificationResultScreenState extends State<VerificationResultScreen> {
           icon: Icons.shield,
           title: 'Dokumen Tidak Valid',
           badge: '✗ TIDAK VALID',
-          color: AppTheme.danger,
+          color: AppTheme.error,
         ),
         const SizedBox(height: AppTheme.space16),
         Container(

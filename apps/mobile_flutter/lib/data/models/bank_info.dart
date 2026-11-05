@@ -33,5 +33,8 @@ class BankInfo {
   /// Keterangan tambahan (opsional): atas nama.
   String get subtitleText => accountName.isNotEmpty ? 'Ats. $accountName' : '';
 
+  /// Apakah rekening aktif.
+  bool get isActive => true;
+
   static String _str(dynamic value) => value?.toString() ?? '';
 }

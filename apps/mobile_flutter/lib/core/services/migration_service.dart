@@ -5,8 +5,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_cache.dart';
 import 'api_cache_encrypted.dart';
-import 'assessment_outbox_service.dart';
-import 'assessment_outbox_encrypted.dart';
+import 'assessment_outbox_service.dart' as outbox_service;
+import 'assessment_outbox_encrypted.dart' as outbox_encrypted;
 
 /// One-time migration service to move data from SharedPreferences to encrypted storage.
 ///
@@ -20,10 +20,9 @@ class MigrationService {
   static const int _currentMigrationVersion = 1;
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  final SharedPreferences? _prefsOverride;
+  SharedPreferences? _prefsOverride;
 
-  MigrationService({SharedPreferences? prefsOverride})
-      : _prefsOverride = prefsOverride;
+  MigrationService({SharedPreferences? prefsOverride}) : _prefsOverride = prefsOverride;
 
   /// Check if migration has been completed for current version.
   Future<bool> isMigrationCompleted() async {
@@ -46,7 +45,7 @@ class MigrationService {
     try {
       final prefs = _prefsOverride ?? await SharedPreferences.getInstance();
       final apiCacheEncrypted = ApiCacheEncrypted.instance;
-      final outboxEncrypted = AssessmentOutboxEncrypted();
+      final outboxEncrypted = outbox_encrypted.AssessmentOutboxEncrypted();
 
       // 1. Migrate API Cache
       await _migrateApiCache(prefs, apiCacheEncrypted);
@@ -103,7 +102,7 @@ class MigrationService {
   /// Migrate assessment outbox from SharedPreferences to encrypted storage.
   Future<void> _migrateAssessmentOutbox(
     SharedPreferences prefs,
-    AssessmentOutboxEncrypted encryptedOutbox,
+    outbox_encrypted.AssessmentOutboxEncrypted encryptedOutbox,
   ) async {
     const outboxKey = 'ths_thm_assessment_outbox_queue_v1';
 
@@ -116,7 +115,7 @@ class MigrationService {
         if (itemJson is! Map<String, dynamic>) continue;
 
         try {
-          final item = AssessmentOutboxItem.fromJson(itemJson);
+          final item = outbox_encrypted.AssessmentOutboxItem.fromJson(itemJson);
           await encryptedOutbox.enqueue(item);
         } catch (_) {
           // Skip corrupt items

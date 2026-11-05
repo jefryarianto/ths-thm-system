@@ -1,9 +1,7 @@
 // Bank Info Card Widget
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../data/models/bank_info.dart';
-import '../../logic/dues/dues_bloc.dart';
+import '../../../data/models/bank_info.dart';
 
 class BankInfoCard extends StatefulWidget {
   const BankInfoCard({super.key});
@@ -28,9 +26,6 @@ class _BankInfoCardState extends State<BankInfoCard> {
   Future<void> _fetchBankInfo() async {
     if (_loaded) return;
     try {
-      // Using the DuesBloc's API client or creating a temporary one
-      // For now, we'll use the bloc's built-in fetch if available
-      // This is a simplified version - actual implementation may vary
       setState(() => _loaded = true);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -105,11 +100,12 @@ class _BankInfoCardState extends State<BankInfoCard> {
             ),
         ],
       );
+    }
   }
 
   Widget _buildBankTile(ThemeData theme, BankInfo bank) {
     final displayNumber = _obscureAccountNumbers
-        ? '${bank.accountNumber.substring(0, 4)}${'*' * (bank.accountNumber.length - 8)}${bank.accountNumber.substring(bank.accountNumber.length - 4)}'
+        ? ('${bank.accountNumber.substring(0, 4)}${'*' * (bank.accountNumber.length - 8)}${bank.accountNumber.substring(bank.accountNumber.length - 4)}')
         : bank.accountNumber;
 
     return Container(
@@ -167,7 +163,7 @@ class _BankInfoCardState extends State<BankInfoCard> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.account_number, size: 16, color: theme.colorScheme.onSurfaceVariant),
+              Icon(Icons.account_balance, size: 16, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Expanded(
                 child: SelectableText(

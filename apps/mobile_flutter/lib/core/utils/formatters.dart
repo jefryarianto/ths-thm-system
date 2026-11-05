@@ -44,17 +44,20 @@ class Formatters {
     return '${two(d.day)}/${two(d.month)}/${d.year}';
   }
 
-  /// Format relatif ala "5 menit lalu", "3 jam lalu", "2 hari lalu".
-  static String relative(String iso) {
-    final d = DateTime.tryParse(iso);
-    if (d == null) return '';
-    final diff = DateTime.now().difference(d);
-    if (diff.inMinutes < 1) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
-    return dateLong(iso);
+  /// Format tanggal ISO ke "12 Maret 2026 14:30".
+  static String dateTimeIndo(String? iso) {
+    final d = DateTime.tryParse(iso ?? '');
+    if (d == null) return '-';
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${d.day} ${months[d.month - 1]} ${d.year} ${two(d.hour)}:${two(d.minute)}';
   }
+
+/// Format tanggal ISO ke "12 Maret 2026" (alias untuk dateLong).
+  static String dateIndo(String? iso) => dateLong(iso);
 
   /// Ekstrak token verifikasi dari QR (URL penuh `.../documents/verify/<token>`)
   /// atau token mentah. Mengembalikan string kosong bila tidak ditemukan.
@@ -73,5 +76,17 @@ class Formatters {
     // Gunakan ApiClient.resolveAbsolute yang sudah benar memetakan
     // base URL (termasuk produksi ths-thm.cloud) ke origin.
     return ApiClient.resolveAbsolute(url);
+  }
+
+  /// Format waktu relatif (mis. "5 menit lalu", "3 jam lalu", "2 hari lalu").
+  static String relative(String iso) {
+    final d = DateTime.tryParse(iso);
+    if (d == null) return '';
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    return dateLong(iso);
   }
 }

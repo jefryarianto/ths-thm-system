@@ -33,8 +33,8 @@ class AppUpdateBanner extends StatelessWidget {
         final accent = force
             ? Theme.of(context).colorScheme.error
             : Theme.of(context).colorScheme.primary;
-        final accentSolid = force ? AppTheme.danger : AppTheme.primaryDark;
-        final background = (force ? AppTheme.danger : AppTheme.primary)
+        final accentSolid = force ? AppTheme.error : AppTheme.primaryDark;
+        final background = (force ? AppTheme.error : AppTheme.primary)
             .withValues(alpha: 0.08);
         final icon = force
             ? Icons.error_outline

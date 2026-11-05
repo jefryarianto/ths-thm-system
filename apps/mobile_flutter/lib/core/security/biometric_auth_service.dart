@@ -1,5 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Biometric authentication service for app-lock feature.
 /// Supports Face ID (iOS), Touch ID (iOS), Fingerprint (Android), Face (Android).
@@ -106,19 +107,6 @@ class BiometricAuthService {
           stickyAuth: stickyAuth,
           sensitiveTransaction: false,
         ),
-        authMessages: const [
-          AndroidAuthMessages(
-            signInTitle: 'Verifikasi Identitas',
-            cancelButton: 'Batal',
-            fingerprintHint: 'Letakkan jari pada sensor',
-            faceHint: 'Arahkan wajah ke kamera',
-          ),
-          IOSAuthMessages(
-            cancelButton: 'Batal',
-            goToSettingsButton: 'Pengaturan',
-            lockOut: 'Terlalu banyak percobaan gagal. Coba lagi nanti.',
-          ),
-        ],
       );
 
       return didAuthenticate;

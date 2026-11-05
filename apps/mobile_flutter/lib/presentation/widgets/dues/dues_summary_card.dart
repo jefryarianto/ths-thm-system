@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../logic/dues/dues_bloc.dart';
-import '../widgets/skeleton_loader.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../logic/dues/dues_bloc.dart';
+import '../../skeleton_loader.dart';
 
 class DuesSummaryCard extends StatelessWidget {
   final bool expanded;
@@ -31,7 +32,11 @@ class DuesSummaryCard extends StatelessWidget {
         }
         if (state is! DuesLoaded) return const SizedBox.shrink();
 
-        final summary = state.summary;
+        final dues = state.dues;
+        final totalTagihan = dues.fold<double>(0, (s, d) => s + d.jumlah);
+        final totalDibayar = dues.where((d) => d.isPaid).fold<double>(0, (s, d) => s + d.jumlah);
+        final totalBelumBayar = totalTagihan - totalDibayar;
+        final totalTerkumpul = totalDibayar; // Verified = dibayar
 
         return Card(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -63,26 +68,26 @@ class DuesSummaryCard extends StatelessWidget {
                   children: [
                     _buildStatRow(
                       'Total Tagihan',
-                      formatRupiah(summary.totalTagihan),
+                      Formatters.rupiah(totalTagihan),
                       Icons.receipt_long,
                       theme.colorScheme.primary,
                     ),
                     _buildStatRow(
                       'Sudah Dibayar',
-                      formatRupiah(summary.totalDibayar),
+                      Formatters.rupiah(totalDibayar),
                       Icons.check_circle,
                       Colors.green,
                     ),
                     _buildStatRow(
                       'Belum Dibayar',
-                      formatRupiah(summary.totalBelumDibayar),
+                      Formatters.rupiah(totalTagihan - totalDibayar),
                       Icons.pending,
                       Colors.orange,
                     ),
-                    if (summary.totalTerkumpul > 0)
+                    if (totalDibayar > 0)
                       _buildStatRow(
                         'Terkumpul (Verified)',
-                        formatRupiah(summary.totalTerkumpul),
+                        Formatters.rupiah(totalDibayar),
                         Icons.verified,
                         Colors.blue,
                       ),
@@ -129,7 +134,7 @@ class DuesSummaryCard extends StatelessWidget {
   Widget _buildSkeleton() {
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: const SkeletonLoader(height: 160),
+      child: const SkeletonBox(height: 160),
     );
   }
 

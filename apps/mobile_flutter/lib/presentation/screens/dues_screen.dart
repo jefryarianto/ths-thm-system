@@ -118,7 +118,7 @@ class _DuesScreenState extends State<DuesScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _DueDetailSheet(due: due, bankInfos: state.bankInfos),
+      builder: (context) => _DueDetailSheet(due: due, bankInfos: const []),
     );
   }
 }
@@ -185,7 +185,7 @@ class _OverdueBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Total: ${formatRupiah(unpaidSum)} — ketuk untuk bayar',
+                    'Total: ${Formatters.rupiah(unpaidSum)} — ketuk untuk bayar',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 12,
@@ -257,7 +257,7 @@ class _DueDetailSheet extends StatelessWidget {
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        formatRupiah(due.jumlah),
+                        Formatters.rupiah(due.jumlah),
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w600,
@@ -284,12 +284,10 @@ class _DueDetailSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            _buildDetailRow('Nomor Iuran', due.nomorIuran ?? '-', theme),
-            _buildDetailRow('Tanggal Jatuh Tempo', formatDateIndo(due.tanggalJatuhTempo), theme),
+            _buildDetailRow('Nomor Iuran', due.id, theme),
+            _buildDetailRow('Tanggal Jatuh Tempo', Formatters.dateLong(due.tanggalJatuhTempo), theme),
             if (due.tanggalBayar != null)
-              _buildDetailRow('Tanggal Bayar', formatDateIndo(due.tanggalBayar!), theme),
-            if (due.metodeBayar != null)
-              _buildDetailRow('Metode Bayar', due.metodeBayar!, theme),
+              _buildDetailRow('Tanggal Bayar', Formatters.dateLong(due.tanggalBayar), theme),
             const SizedBox(height: 24),
             if (bankInfos?.isNotEmpty ?? false) ...[
               Text('Rekening Tujuan', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),

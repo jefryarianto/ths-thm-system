@@ -18,7 +18,7 @@ import 'logic/auth/auth_bloc.dart';
 import 'logic/document/document_bloc.dart';
 import 'logic/dues/dues_bloc.dart';
 import 'logic/forum/forum_bloc.dart';
-import 'logic/pendadaran/pendadaran_bloc.dart'
+import 'logic/pendadaran/pendadaran_bloc.dart';
 import 'logic/gamification/gamification_bloc.dart';
 import 'logic/home_feed/home_feed_bloc.dart';
 import 'logic/member/member_bloc.dart';
@@ -61,9 +61,17 @@ import 'presentation/screens/berita/berita_status_screen.dart';
 import 'presentation/screens/berita/berita_overview_screen.dart';
 import 'presentation/screens/kegiatan_detail_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
+import 'presentation/screens/kta_application_screen.dart';
+import 'presentation/screens/kta_status_screen.dart';
+import 'presentation/screens/kta_bulk_select_screen.dart';
+import 'presentation/screens/kta_admin_queue_screen.dart';
+import 'presentation/screens/kta_distrik_process_screen.dart';
+import 'presentation/screens/kta_batch_detail_screen.dart';
+import 'presentation/screens/kta_analytics_screen.dart';
 import 'presentation/screens/verification_result_screen.dart';
 import 'logic/registration/registration_bloc.dart';
 import 'logic/claim/claim_bloc.dart';
+import 'logic/kta_application/kta_application_bloc.dart';
 
 /// Sinyal untuk melaporkan perubahan status autentikasi ke router agar
 /// redirect di-evaluasi ulang (go_router `refreshListenable`).
@@ -118,6 +126,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => ForumBloc()),
         BlocProvider(create: (_) => RegistrationBloc()),
         BlocProvider(create: (_) => ClaimBloc()),
+        BlocProvider(create: (_) => KtaApplicationBloc()),
       ],
       child: ChangeNotifierProvider.value(
         value: themeController,
@@ -234,6 +243,36 @@ class AppRouter {
       GoRoute(
         path: '/kta/viewer',
         builder: (context, state) => const KtaViewerScreen(),
+      ),
+      GoRoute(
+        path: '/kta/apply',
+        builder: (context, state) => const KtaApplicationScreen(),
+      ),
+      GoRoute(
+        path: '/kta/status',
+        builder: (context, state) => const KtaStatusScreen(),
+      ),
+      GoRoute(
+        path: '/admin/kta/bulk',
+        builder: (context, state) => const KtaBulkSelectScreen(),
+      ),
+      GoRoute(
+        path: '/admin/kta/queue',
+        builder: (context, state) => const KtaAdminQueueScreen(),
+      ),
+      GoRoute(
+        path: '/admin/kta/distrik-process',
+        builder: (context, state) => const KtaDistrikProcessScreen(),
+      ),
+      GoRoute(
+        path: '/admin/kta/batches/:batchId',
+        builder: (context, state) => KtaBatchDetailScreen(
+          batchId: state.pathParameters['batchId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/kta/analytics',
+        builder: (context, state) => const KtaAnalyticsScreen(),
       ),
       GoRoute(
         path: '/kta/verify/:token',
