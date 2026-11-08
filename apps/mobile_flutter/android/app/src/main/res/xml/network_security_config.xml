@@ -12,13 +12,6 @@
         <!-- Ganti dengan domain production Anda -->
         <domain includeSubdomains="true">api.ths-thm.org</domain>
         <domain includeSubdomains="true">ths-thm.org</domain>
-        <!-- Pin sertifikat production (SHA-256 hash dari SPKI) -->
-        <!-- GENERATE: openssl x509 -in cert.pem -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64 -->
-        <pin-set expiration="2027-12-31">
-            <pin digest="SHA-256">REPLACE_WITH_PRODUCTION_PIN</pin>
-            <!-- Backup pin untuk rotasi sertifikat -->
-            <pin digest="SHA-256">REPLACE_WITH_BACKUP_PIN</pin>
-        </pin-set>
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
@@ -27,10 +20,6 @@
     <!-- Domain-specific config untuk staging -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">staging-api.ths-thm.org</domain>
-        <pin-set expiration="2027-12-31">
-            <pin digest="SHA-256">REPLACE_WITH_STAGING_PIN</pin>
-            <pin digest="SHA-256">REPLACE_WITH_STAGING_BACKUP_PIN</pin>
-        </pin-set>
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
