@@ -114,7 +114,7 @@ test.describe('Dashboard Page Integration', () => {
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
     // Halaman settings kini berupa hub kartu (restrukturisasi navigasi)
-    await expect(page.locator('h1').first()).toContainText('Settings Hub');
+    await expect(page.locator('h1').first()).toContainText('Pengaturan');
   });
 
   test('examiners page renders penguji data', async ({ page }) => {
