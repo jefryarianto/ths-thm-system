@@ -4,18 +4,18 @@ import { mockAuth } from './helpers';
 /**
  * Spec halaman /settings (Settings Hub — hasil restrukturisasi navigasi).
  * Halaman kini berupa hub kartu ber-section (Organisasi, Sistem, keamanan)
- * dengan heading "Settings Hub" — bukan lagi "Pengaturan Sistem" dengan
+ * dengan heading "Pengaturan" — bukan lagi "Pengaturan Sistem" dengan
  * kartu periode/tanda tangan (data itu pindah ke halaman sub-settings).
  */
-test.describe('Settings — /settings (Settings Hub)', () => {
+test.describe('Settings — /settings (Pengaturan)', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/settings');
-    await expect(page.locator('h1').first()).toContainText('Settings Hub', { timeout: 10000 });
+    await expect(page.locator('h1').first()).toContainText('Pengaturan', { timeout: 10000 });
   });
 
   test('renders page title and refresh button', async ({ page }) => {
-    await expect(page.locator('h1').first()).toContainText('Settings Hub');
+    await expect(page.locator('h1').first()).toContainText('Pengaturan');
     await expect(page.locator('button:has-text("Refresh")')).toBeVisible();
   });
 
