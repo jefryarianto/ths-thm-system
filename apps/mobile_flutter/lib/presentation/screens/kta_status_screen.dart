@@ -121,7 +121,7 @@ class _StatusView extends StatelessWidget {
 
     String? actor(KtaAppLevel level) {
       final h = histFor(level);
-      return h == null ? null : h.actorRole.replaceAll('_', ' ').toUpperCase();
+      return h?.actorRole.replaceAll('_', ' ').toUpperCase();
     }
 
     DateTime? ts(KtaAppLevel level) => histFor(level)?.createdAt;

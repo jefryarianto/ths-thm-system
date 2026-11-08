@@ -54,10 +54,12 @@ class _KtaBatchDetailScreenState extends State<KtaBatchDetailScreen> {
     try {
       await _api.dio.get('/kta-applications/batches/${widget.batchId}/export',
           queryParameters: {'format': format});
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Export $format dipicu dari server')),
       );
     } on DioException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_api.messageFromError(e))));
     }
   }

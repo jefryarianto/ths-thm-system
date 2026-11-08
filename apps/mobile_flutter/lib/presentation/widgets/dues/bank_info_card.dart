@@ -98,10 +98,10 @@ class _BankInfoCardState extends State<BankInfoCard> {
                 ),
               ),
             ),
-        ],
+          ],
+       )
       );
     }
-  }
 
   Widget _buildBankTile(ThemeData theme, BankInfo bank) {
     final displayNumber = _obscureAccountNumbers

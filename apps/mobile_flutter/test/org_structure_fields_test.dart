@@ -71,6 +71,9 @@ Future<void> _pump(
   ));
 }
 
+/// Field read-only yang membuka picker (bukan label teks di dalamnya).
+Finder _field() => find.byType(TextFormField);
+
 /// Search TextField in bottom sheet (by hint text).
 Finder _sf() => find.byWidgetPredicate(
     (w) => w is TextField && w.decoration?.hintText?.contains('Cari') == true);
@@ -125,7 +128,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open bottom sheet.
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
     expect(find.text('Pilih Distrik'), findsOneWidget);
     expect(find.text('Distrik A'), findsOneWidget);
@@ -155,7 +158,7 @@ void main() {
     await _pump(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
 
     // Filter distrik: only B visible.
@@ -200,7 +203,7 @@ void main() {
     await _pump(tester, fetch: fetch);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
 
     expect(find.text('Gagal memuat data'), findsOneWidget);
@@ -242,7 +245,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Select through full flow.
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Distrik A'));
     await tester.pumpAndSettle();
@@ -264,14 +267,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open sheet -> back on step 0 -> closes.
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
     expect(find.text('Pilih Distrik'), findsNothing);
 
     // Reopen -> select distrik -> back -> returns to distrik list.
-    await tester.tap(find.text('Ranting Asal *'));
+    await tester.tap(_field());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Distrik A'));
     await tester.pumpAndSettle();

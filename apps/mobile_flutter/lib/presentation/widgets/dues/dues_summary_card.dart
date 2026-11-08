@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dues/dues_bloc.dart';
-import '../../skeleton_loader.dart';
+import '../skeleton_loader.dart';
 
 class DuesSummaryCard extends StatelessWidget {
   final bool expanded;
@@ -35,8 +35,6 @@ class DuesSummaryCard extends StatelessWidget {
         final dues = state.dues;
         final totalTagihan = dues.fold<double>(0, (s, d) => s + d.jumlah);
         final totalDibayar = dues.where((d) => d.isPaid).fold<double>(0, (s, d) => s + d.jumlah);
-        final totalBelumBayar = totalTagihan - totalDibayar;
-        final totalTerkumpul = totalDibayar; // Verified = dibayar
 
         return Card(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -95,9 +93,11 @@ class DuesSummaryCard extends StatelessWidget {
                 ),
               ),
             ],
-          );
-      },
-    );
+             )
+            );
+
+             }
+           );
   }
 
   Widget _buildStatRow(String label, String value, IconData icon, Color color) {
@@ -132,9 +132,9 @@ class DuesSummaryCard extends StatelessWidget {
   }
 
   Widget _buildSkeleton() {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: const SkeletonBox(height: 160),
+    return const Card(
+      margin: EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: SkeletonBox(height: 160),
     );
   }
 

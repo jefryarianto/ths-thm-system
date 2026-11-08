@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:mobile_flutter/core/security/biometric_auth_service.dart';
 
 class MockLocalAuthentication extends Mock implements LocalAuthentication {}
 
@@ -11,17 +10,8 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
   group('BiometricAuthService', () {
-    late BiometricAuthService service;
-    late MockLocalAuthentication mockLocalAuth;
-    late MockFlutterSecureStorage mockStorage;
-
-    setUp(() {
-      mockLocalAuth = MockLocalAuthentication();
-      mockStorage = MockFlutterSecureStorage();
-
-      // Can't easily mock static LocalAuthentication, so we test via integration
-      // These are unit-style tests for logic only
-    });
+    // Can't easily mock static LocalAuthentication, so we test via integration
+    // These are unit-style tests for logic only
 
     test('getBiometricName returns correct names', () {
       // Test via reflection or just verify the mapping logic
@@ -33,7 +23,7 @@ void main() {
     });
 
     test('BiometricType values are exhaustive', () {
-      final values = BiometricType.values;
+      const values = BiometricType.values;
       expect(values.length, 5);
     });
   });

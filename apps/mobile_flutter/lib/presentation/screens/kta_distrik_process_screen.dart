@@ -85,6 +85,7 @@ class _KtaDistrikProcessScreenState extends State<KtaDistrikProcessScreen> {
       ),
     );
     if (result != true) return;
+    if (!mounted) return;
     final biaya = double.tryParse(biayaCtrl.text);
     if (biaya == null || biaya <= 0 || rekeningCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -98,9 +99,11 @@ class _KtaDistrikProcessScreenState extends State<KtaDistrikProcessScreen> {
         'rekeningTujuan': rekeningCtrl.text.trim(),
         'catatan': catatanCtrl.text.trim(),
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biaya & rekening disimpan')));
       _load();
     } on DioException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_api.messageFromError(e))));
     }
   }
@@ -118,11 +121,14 @@ class _KtaDistrikProcessScreenState extends State<KtaDistrikProcessScreen> {
       ),
     );
     if (ok != true) return;
+    if (!mounted) return;
     try {
       await _api.dio.post('/kta-applications/${app.id}/verify-payment', data: {'buktiPath': ''});
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran diverifikasi')));
       _load();
     } on DioException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_api.messageFromError(e))));
     }
   }
@@ -140,11 +146,14 @@ class _KtaDistrikProcessScreenState extends State<KtaDistrikProcessScreen> {
       ),
     );
     if (ok != true) return;
+    if (!mounted) return;
     try {
       await _api.dio.post('/kta-applications/${app.id}/generate-card', data: {'reason': 'baru'});
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('KTA berhasil digenerate')));
       _load();
     } on DioException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_api.messageFromError(e))));
     }
   }

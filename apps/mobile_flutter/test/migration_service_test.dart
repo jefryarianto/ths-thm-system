@@ -5,8 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:mobile_flutter/core/services/migration_service.dart';
 import 'package:mobile_flutter/core/services/api_cache.dart';
-import 'package:mobile_flutter/core/services/api_cache_encrypted.dart';
-import 'package:mobile_flutter/core/services/assessment_outbox_service.dart';
+import 'package:mobile_flutter/core/services/api_cache_encrypted.dart' as encrypted;
 import 'package:mobile_flutter/core/services/assessment_outbox_encrypted.dart';
 
 class MockSharedPreferences extends Mock implements SharedPreferences {}
@@ -15,18 +14,11 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
   group('MigrationService', () {
-    late MigrationService service;
-    late MockSharedPreferences mockPrefs;
-    late MockFlutterSecureStorage mockSecureStorage;
+    // Note: FlutterSecureStorage is a final class with platform channels,
+    // so we can't easily mock it in unit tests without integration test setup.
+    // These tests verify the migration logic structure.
 
     setUp(() {
-      mockPrefs = MockSharedPreferences();
-      mockSecureStorage = MockFlutterSecureStorage();
-
-      // Note: FlutterSecureStorage is a final class with platform channels,
-      // so we can't easily mock it in unit tests without integration test setup.
-      // These tests verify the migration logic structure.
-
       SharedPreferences.setMockInitialValues({});
     });
 
@@ -37,7 +29,7 @@ void main() {
     });
 
     test('Migration version constant', () {
-      expect(MigrationService._currentMigrationVersion, 1);
+      expect(MigrationService.currentMigrationVersion, 1);
     });
 
     test('ApiCache keys match expected', () {
@@ -56,8 +48,8 @@ void main() {
 
   group('ApiCacheEncrypted', () {
     test('CacheKeys constants', () {
-      expect(CacheKeys.notifications, 'notifications');
-      expect(CacheKeys.dues, 'dues');
+      expect(encrypted.CacheKeys.notifications, 'notifications');
+      expect(encrypted.CacheKeys.dues, 'dues');
       // etc.
     });
   });
@@ -66,7 +58,7 @@ void main() {
     test('Queue key constant', () {
       expect(
         'ths_thm_assessment_outbox_queue_v1_enc',
-        AssessmentOutboxEncrypted._queueKey,
+        AssessmentOutboxEncrypted.queueKey,
       );
     });
   });

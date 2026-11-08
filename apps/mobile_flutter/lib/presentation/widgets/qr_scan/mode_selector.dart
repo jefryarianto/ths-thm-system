@@ -1,9 +1,7 @@
 // Mode Selector Widget - Switch between verify, checkin, lookup modes
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../logic/auth/auth_bloc.dart';
-import '../widgets/qr_scan/qr_scan_models.dart';
+import 'qr_scan_models.dart';
 
 class ModeSelector extends StatelessWidget {
   final ScanMode selectedMode;

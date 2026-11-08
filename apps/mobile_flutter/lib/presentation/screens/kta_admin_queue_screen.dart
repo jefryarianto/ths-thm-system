@@ -55,7 +55,7 @@ class _KtaAdminQueueScreenState extends State<KtaAdminQueueScreen> {
           Padding(
             padding: const EdgeInsets.all(AppTheme.space16),
             child: DropdownButtonFormField<KtaAppStatus?>(
-              value: _statusFilter,
+              initialValue: _statusFilter,
               decoration: InputDecoration(
                 labelText: 'Filter Status',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -84,7 +84,7 @@ class _KtaAdminQueueScreenState extends State<KtaAdminQueueScreen> {
                 }
                 if (state is KtaApplicationListLoaded) {
                   if (state.applications.isEmpty) {
-                    return EmptyStateView(
+                    return const EmptyStateView(
                       icon: Icons.inbox_outlined,
                       title: 'Tidak Ada Aplikasi',
                       message: 'Belum ada pengajuan KTA pada filter ini.',

@@ -1,6 +1,5 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Biometric authentication service for app-lock feature.
 /// Supports Face ID (iOS), Touch ID (iOS), Fingerprint (Android), Face (Android).
@@ -48,8 +47,6 @@ class BiometricAuthService {
         return 'Weak Biometric';
       case BiometricType.iris:
         return 'Iris Scan';
-      default:
-        return 'Biometric';
     }
   }
 
@@ -110,7 +107,7 @@ class BiometricAuthService {
       );
 
       return didAuthenticate;
-    } on Exception catch (e) {
+    } on Exception {
       // Handle platform-specific errors gracefully
       return false;
     }

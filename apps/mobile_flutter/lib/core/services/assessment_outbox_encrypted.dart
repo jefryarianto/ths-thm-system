@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../constants/app_constants.dart';
 
@@ -112,17 +111,11 @@ class OutboxSyncResult {
 /// Uses flutter_secure_storage instead of SharedPreferences.
 class AssessmentOutboxEncrypted {
   static const String _queueKey = 'ths_thm_assessment_outbox_queue_v1_enc';
+  /// Get the queue key constant.
+  static String get queueKey => _queueKey;
   static const String _scoreCardCachePrefix = 'ths_thm_scorecard_cache_enc_';
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  final SharedPreferences? _prefOverride; // For testing
-
-  AssessmentOutboxEncrypted({SharedPreferences? prefOverride})
-      : _prefOverride = prefOverride;
-
-  Future<SharedPreferences> _getPrefs() async {
-    return _prefOverride ?? await SharedPreferences.getInstance();
-  }
 
   /// Add item to outbox queue (upsert per kegiatanId + calonAnggotaId).
   Future<void> enqueue(AssessmentOutboxItem item) async {

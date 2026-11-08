@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'api_cache.dart';
 import 'api_cache_encrypted.dart';
-import 'assessment_outbox_service.dart' as outbox_service;
 import 'assessment_outbox_encrypted.dart' as outbox_encrypted;
 
 /// One-time migration service to move data from SharedPreferences to encrypted storage.
@@ -19,6 +17,8 @@ class MigrationService {
   static const String _migrationVersionKey = 'migration_completed_version';
   static const int _currentMigrationVersion = 1;
 
+  /// Get the current migration version.
+  static int get currentMigrationVersion => _currentMigrationVersion;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   SharedPreferences? _prefsOverride;
 

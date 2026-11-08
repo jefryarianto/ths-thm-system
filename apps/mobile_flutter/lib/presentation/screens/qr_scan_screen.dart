@@ -11,7 +11,6 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -54,25 +53,6 @@ class _QrScanScreenState extends State<QrScanScreen>
     _tabController.dispose();
     _manualSearchController.dispose();
     super.dispose();
-  }
-
-  List<ScanMode> get _availableModes {
-    final authState = context.read<AuthBloc>().state;
-    final isActivityAdmin = authState is AuthAuthenticated &&
-        (authState.user.role == 'admin_kegiatan' ||
-            authState.user.role == 'admin_ranting' ||
-            authState.user.role == 'admin_wilayah' ||
-            authState.user.role == 'admin_distrik' ||
-            authState.user.role == 'superadmin');
-    final isExaminer = authState is AuthAuthenticated &&
-        authState.user.role == 'penguji';
-
-    final List<ScanMode> modes = [ScanMode.verify];
-    if (isActivityAdmin || isExaminer) {
-      modes.add(ScanMode.checkin);
-    }
-    modes.add(ScanMode.lookup);
-    return modes;
   }
 
   Future<void> _loadKegiatan() async {
@@ -135,8 +115,6 @@ class _QrScanScreenState extends State<QrScanScreen>
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated) return;
 
-    setState(() => _isProcessing = true);
-
     try {
       ScanResultData result;
       String type;
@@ -173,8 +151,6 @@ class _QrScanScreenState extends State<QrScanScreen>
         message: 'Terjadi kesalahan',
         detail: e.toString(),
       ));
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -205,7 +181,7 @@ class _QrScanScreenState extends State<QrScanScreen>
 
   Future<ScanResultData> _checkIn(String qrPayload) async {
     if (_selectedKegiatanId == null) {
-      return ScanResultData(
+      return const ScanResultData(
         success: false,
         message: 'Pilih Kegiatan',
         detail: 'Silakan pilih kegiatan sebelum check-in',
@@ -306,18 +282,15 @@ class _QrScanScreenState extends State<QrScanScreen>
 
     // TODO: Process image for QR code using ML Kit or similar
     // For now, show not implemented
-    _showResultDialog(ScanResultData(
+    _showResultDialog(const ScanResultData(
       success: false,
       message: 'Belum Tersedia',
       detail: 'Scan dari galeri akan segera hadir',
     ));
   }
 
-  bool _isProcessing = false;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final authState = context.watch<AuthBloc>().state;
     final isActivityAdmin = authState is AuthAuthenticated &&
         (authState.user.role == 'admin_kegiatan' ||
@@ -521,8 +494,8 @@ class _QrScanScreenState extends State<QrScanScreen>
             ),
           ),
         ],
-      );
-    );
+    ),
+  );
   }
 
   Future<void> _onManualSearch() async {

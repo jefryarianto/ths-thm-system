@@ -1,16 +1,8 @@
 // Dues Screen - Refactored main screen using extracted components
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../core/theme/app_theme.dart';
-import '../../core/utils/formatters.dart';
-import '../../core/utils/snack_bar_helper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';import '../../core/utils/formatters.dart';
 import '../../data/models/due.dart';
-import '../../logic/dues/dues_bloc.dart';
-import '../widgets/app_bar_icon_title.dart';
-import '../widgets/dues/bank_info_card.dart';
-import '../widgets/dues/due_list_widget.dart';
-import '../widgets/dues/dues_summary_card.dart';
+import '../../logic/dues/dues_bloc.dart';import '../widgets/app_bar_icon_title.dart';import '../widgets/dues/bank_info_card.dart';import '../widgets/dues/due_list_widget.dart';import '../widgets/dues/dues_summary_card.dart';
 
 class DuesScreen extends StatefulWidget {
   const DuesScreen({super.key});
@@ -93,12 +85,12 @@ class _DuesScreenState extends State<DuesScreen> {
                 ),
 
                 // Bank info card
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: BankInfoCard(),
                 ),
 
                 // Due list with search & filters
-                SliverFillRemaining(
+                const SliverFillRemaining(
                   child: DueListWidget(),
                 ),
               ],
@@ -292,7 +284,7 @@ class _DueDetailSheet extends StatelessWidget {
             if (bankInfos?.isNotEmpty ?? false) ...[
               Text('Rekening Tujuan', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
-              ...bankInfos!.map((bank) => _buildBankTile(bank, theme)).toList(),
+              ...bankInfos!.map((bank) => _buildBankTile(bank, theme)),
             ],
           ],
         ),

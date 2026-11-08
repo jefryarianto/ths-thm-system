@@ -27,64 +27,51 @@ class QrScannerWidget extends StatefulWidget {
 
 class _QrScannerWidgetState extends State<QrScannerWidget> {
   MobileScannerController? _controller;
-  bool _hasPermission = false;
-  bool _isScanning = false;
-  Timer? _scanDebounce;
+  bool _isPermissionGranted = false;
+  bool _isCameraError = false;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    _requestPermission();
   }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    _scanDebounce?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _initCamera() async {
-    try {
-      final status = await Permission.camera.request();
-      if (!mounted) return;
-
-      if (status.isGranted) {
-        _controller = MobileScannerController(
-          detectionSpeed: DetectionSpeed.noDuplicates,
-          facing: CameraFacing.back,
-          torchEnabled: false,
-        );
-        setState(() => _hasPermission = true);
-      } else {
-        setState(() => _hasPermission = false);
-        widget.onPermissionDenied?.call();
-      }
-    } catch (e) {
-      setState(() => _hasPermission = false);
-      widget.onCameraError?.call();
+  Future<void> _requestPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      setState(() => _isPermissionGranted = true);
+      _controller = MobileScannerController();
+    } else {
+      setState(() => _isPermissionGranted = false);
+      widget.onPermissionDenied?.call();
     }
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (_isScanning) return;
+    final barcode = capture.barcodes.first;
+    final code = barcode.rawValue;
+    if (code != null) {
+      widget.onScan(code);
+    }
+  }
 
-    final barcode = capture.barcodes.firstOrNull;
-    if (barcode?.rawValue == null) return;
-
-    _isScanning = true;
-    _scanDebounce?.cancel();
-    _scanDebounce = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) _isScanning = false;
-    });
-
-    widget.onScan(barcode!.rawValue!);
+  void _initCamera() {
+    setState(() => _isCameraError = false);
+    _requestPermission();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasPermission || _controller == null) {
+    if (_isCameraError) {
+      return _buildCameraError();
+    }
+
+    if (!_isPermissionGranted) {
       return _buildPermissionDenied();
+    }
+
+    if (_controller == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     return ClipRRect(
@@ -96,7 +83,6 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
             onDetect: _onDetect,
             fit: BoxFit.cover,
           ),
-          // Scan overlay
           _buildScanOverlay(),
         ],
       ),
@@ -138,8 +124,42 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
             ),
           ],
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildCameraError() {
+    return Container(
+      color: Colors.grey[100],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.camera_alt_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Kamera Tidak Dapat Diakses',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _initCamera(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildScanOverlay() {
     return CustomPaint(
