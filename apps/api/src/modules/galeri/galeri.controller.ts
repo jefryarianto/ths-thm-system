@@ -71,6 +71,7 @@ export class GaleriController {
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'admin_berita',
   )
   async adminImage(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const image = await this.service.getStoredImage(id);
@@ -91,6 +92,7 @@ export class GaleriController {
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'admin_berita',
   )
   adminList() {
     return this.service.listAdmin();
@@ -105,6 +107,7 @@ export class GaleriController {
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'admin_berita',
   )
   review(
     @Param('id', ParseUUIDPipe) id: string,

@@ -13,6 +13,7 @@ import OrgCascadeSelect, {
 import { ROLE_OPTIONS } from '@/components/users/constants';
 import { useToast } from '@/components/ui/toast';
 import { useOrgScopeLocks } from '@/hooks/use-org-scope';
+import { useAuth } from '@/hooks/use-auth';
 
 /** Level organisasi minimum per role (sesuai backend ROLE_ORG_LEVEL). */
 const ROLE_ORG_LEVEL: Record<string, 'distrik' | 'wilayah' | 'ranting'> = {
@@ -40,11 +41,17 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
   const [org, setOrg] = useState<OrgSelection>(EMPTY_ORG_SELECTION);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const scope = useOrgScopeLocks(open);
+  const { role: actorRole } = useAuth();
 
-  // Superadmin & admin_nasional: scope nasional tanpa hierarki
+  // Superadmin, admin_nasional & admin_berita: scope nasional tanpa hierarki
   // distrik/wilayah/ranting → form organisasi tidak ditampilkan.
-  const isNationalRole = form.role === 'superadmin' || form.role === 'admin_nasional';
+  const isNationalRole =
+    form.role === 'superadmin' || form.role === 'admin_nasional' || form.role === 'admin_berita';
   const showOrg = form.role !== '' && !isNationalRole;
+  // admin_berita hanya boleh ditetapkan superadmin (backend juga menegakkan).
+  const roleOptions = ROLE_OPTIONS.filter(
+    (o) => o.value !== '' && (o.value !== 'admin_berita' || actorRole === 'superadmin'),
+  );
 
   // Bersihkan form saat modal ditutup agar tidak ada sisa pilihan sebelumnya.
   useEffect(() => {
@@ -110,8 +117,8 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
         payload.distrikId = org.distrikId;
         payload.wilayahId = org.wilayahId;
         payload.rantingId = org.rantingId;
-      } else if (form.role === 'admin_nasional') {
-        // admin_nasional: eksplisit tanpa penempatan organisasi.
+      } else if (isNationalRole) {
+        // Role nasional: eksplisit tanpa penempatan organisasi.
         payload.distrikId = null;
         payload.wilayahId = null;
         payload.rantingId = null;
@@ -158,7 +165,7 @@ export default function CreateUserModal({ open, onClose, onSuccess }: CreateUser
             data-testid="user-role"
             value={form.role}
             onChange={(e) => handleRoleChange(e.target.value)}
-            options={ROLE_OPTIONS.filter((o) => o.value !== '')}
+            options={roleOptions}
             placeholder="Pilih Role"
             error={errors.role}
           />

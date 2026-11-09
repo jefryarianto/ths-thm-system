@@ -10,6 +10,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   [ROLE.ADMIN_WILAYAH]: 'Admin Wilayah',
   [ROLE.ADMIN_RANTING]: 'Admin Ranting',
   [ROLE.ADMIN_KEGIATAN]: 'Admin Kegiatan',
+  [ROLE.ADMIN_BERITA]: 'Admin Berita',
   [ROLE.PENGUJI]: 'Penguji',
   [ROLE.ANGGOTA]: 'Anggota',
 };
@@ -24,6 +25,7 @@ export const ROLE_HIERARCHY: Role[] = [
   ROLE.PENGUJI, // branch
   ROLE.ADMIN_RANTING, // branch
   ROLE.ADMIN_KEGIATAN, // branch
+  ROLE.ADMIN_BERITA, // national (functional, no org scope)
   ROLE.ADMIN_WILAYAH, // region
   ROLE.ADMIN_DISTRIK, // district
   ROLE.ADMIN_NASIONAL, // national
@@ -46,13 +48,14 @@ export const ROLE_SCOPE: Record<Role, 'national' | 'district' | 'region' | 'bran
   [ROLE.ADMIN_WILAYAH]: 'region',
   [ROLE.ADMIN_RANTING]: 'branch',
   [ROLE.ADMIN_KEGIATAN]: 'branch',
+  [ROLE.ADMIN_BERITA]: 'national',
   [ROLE.PENGUJI]: 'self',
   [ROLE.ANGGOTA]: 'self',
 };
 
 /**
  * Level organisasi minimum yang harus dipilih saat membuat/mengubah user.
- * - superadmin & admin_nasional → tanpa organisasi (scope nasional).
+ * - superadmin, admin_nasional & admin_berita → tanpa organisasi (scope nasional).
  * - admin_distrik → cukup distrik.
  * - admin_wilayah → distrik + wilayah.
  * - admin_ranting → distrik + wilayah + ranting.
@@ -68,6 +71,7 @@ export const ROLE_ORG_LEVEL: Record<Role, OrgLevel | null> = {
   [ROLE.ADMIN_WILAYAH]: 'wilayah',
   [ROLE.ADMIN_RANTING]: 'ranting',
   [ROLE.ADMIN_KEGIATAN]: 'ranting',
+  [ROLE.ADMIN_BERITA]: null,
   [ROLE.PENGUJI]: 'ranting',
   [ROLE.ANGGOTA]: 'ranting',
 };

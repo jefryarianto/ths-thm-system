@@ -17,6 +17,7 @@ export const ROLE_SCOPE: Record<string, ScopeLevel> = {
   admin_wilayah: 'region',
   admin_ranting: 'branch',
   admin_kegiatan: 'branch',
+  admin_berita: 'national',
   penguji: 'self',
   anggota: 'self',
 };
@@ -103,6 +104,10 @@ export class ScopeGuard implements CanActivate {
       request.scope = { role };
     } else if (user.role === 'admin_nasional') {
       // Admin nasional: tanpa organisasi, akses tingkat nasional.
+      request.scope = { role };
+    } else if (user.role === 'admin_berita') {
+      // Admin berita: role fungsional, tanpa organisasi. Akses endpoint tetap
+      // dibatasi @Roles (berita & moderasi galeri).
       request.scope = { role };
     } else if (user.role === 'admin_distrik' && user.distrikId) {
       request.scope = { role, distrikId: user.distrikId };

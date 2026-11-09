@@ -25,7 +25,11 @@ export interface ModulePermission {
   export?: Role;
   approve?: Role;
   admin?: Role;
+  /** Role fungsional yang tetap mendapat akses walau di bawah role minimum. */
+  allowedRoles?: Role[];
 }
+
+export type ModuleAction = 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'admin';
 
 /**
  * Default permissions - most modules require at least admin_ranting
@@ -53,6 +57,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
     edit: 'admin_ranting',
     delete: 'admin_ranting',
     approve: 'admin_ranting',
+    allowedRoles: ['admin_berita'],
   },
   members: { ...DEFAULT_MODULE },
   // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
@@ -109,6 +114,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
     create: 'admin_wilayah',
     edit: 'admin_wilayah',
     delete: 'admin_wilayah',
+    allowedRoles: ['admin_berita'],
   },
   // Pengajuan berita oleh anggota (butuh approval sebelum visible)
   beritaSubmit: { view: 'anggota', create: 'anggota' },
@@ -177,7 +183,7 @@ interface CanProps {
   /** Module name key - looks up permissions from MODULE_PERMISSIONS */
   module?: string;
   /** Action to check: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'admin' */
-  action?: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'admin';
+  action?: ModuleAction;
   /** Alternatively, pass explicit minimum role */
   minRole?: Role;
   /** Alternatively, pass exact role(s) allowed */
@@ -258,11 +264,10 @@ export function Can({
     // Lookup from module permissions
     const perms = MODULE_PERMISSIONS[module];
     const requiredRole = perms?.[action];
-    if (requiredRole) {
-      allowed = hasMinRole(requiredRole);
-    } else {
-      // No explicit permission defined - deny by default
-      allowed = false;
+    allowed = requiredRole ? hasMinRole(requiredRole) : false;
+    // Role fungsional allowlist (mis. admin_berita untuk modul berita).
+    if (!allowed && perms?.allowedRoles && hasRole(perms.allowedRoles)) {
+      allowed = true;
     }
   } else {
     // No conditions - allow

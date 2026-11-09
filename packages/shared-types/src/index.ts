@@ -10,6 +10,7 @@ export const ROLE = {
   ADMIN_WILAYAH: 'admin_wilayah',
   ADMIN_RANTING: 'admin_ranting',
   ADMIN_KEGIATAN: 'admin_kegiatan',
+  ADMIN_BERITA: 'admin_berita',
   PENGUJI: 'penguji',
   ANGGOTA: 'anggota',
 } as const;
@@ -34,9 +35,38 @@ export const ROLE_LEVEL: Record<Role, number> = {
   admin_wilayah: 5,
   admin_ranting: 4,
   admin_kegiatan: 3,
+  admin_berita: 0,
   penguji: 2,
   anggota: 1,
 };
+
+/**
+ * Role fungsional yang TIDAK mengikuti hierarki linier. Menu/komponen untuk
+ * role ini hanya boleh muncul jika `allowedRoles` eksplisit memuatnya.
+ */
+export const RESTRICTED_MENU_ROLES: Role[] = [ROLE.ADMIN_BERITA];
+
+export function isRestrictedMenuRole(role: Role | string): boolean {
+  return (RESTRICTED_MENU_ROLES as string[]).includes(role);
+}
+
+/** Bentuk minimal menu yang dibutuhkan untuk menghitung default enabled. */
+export interface MenuAccessDef {
+  minRole: Role;
+  allowedRoles?: Role[];
+}
+
+/**
+ * Hitung status default sebuah menu untuk role tertentu (sebelum override DB).
+ * - Role restricted: hanya lolos bila `allowedRoles` memuat role tersebut.
+ * - Role lain: mengikuti hierarki `ROLE_LEVEL` seperti sebelumnya.
+ */
+export function defaultMenuEnabled(role: Role, menu: MenuAccessDef): boolean {
+  if (isRestrictedMenuRole(role)) {
+    return menu.allowedRoles?.includes(role) ?? false;
+  }
+  return ROLE_LEVEL[role] >= ROLE_LEVEL[menu.minRole];
+}
 
 /** Level terendah yang dianggap "admin" (setara `ADMIN_ROLES` di web). */
 export const ADMIN_ROLE_LEVEL = ROLE_LEVEL.admin_ranting;

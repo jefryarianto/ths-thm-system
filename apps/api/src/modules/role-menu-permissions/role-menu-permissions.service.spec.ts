@@ -1,6 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { MENU_REGISTRY, MENU_KEYS, ROLE_LEVEL, ROLE_VALUES } from '@ths-thm/shared-types';
+import {
+  MENU_REGISTRY,
+  MENU_KEYS,
+  ROLE_LEVEL,
+  ROLE_VALUES,
+  defaultMenuEnabled,
+} from '@ths-thm/shared-types';
 import { RoleMenuPermissionsService } from './role-menu-permissions.service';
 import { RoleMenuPermissionsController } from './role-menu-permissions.controller';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -56,7 +62,7 @@ describe('RoleMenuPermissionsService', () => {
       expect(new Set(pairs).size).toBe(pairs.length);
     });
 
-    it('isEnabled = role >= minRole, mengikuti ROLE_LEVEL (semantik sidebar)', async () => {
+    it('isEnabled = defaultMenuEnabled (hierarki + allowlist fungsional)', async () => {
       await service.seedFromMenuRegistry();
 
       const { data, skipDuplicates } = mockPrisma.roleMenuPermission.createMany.mock.calls[0][0];
@@ -74,7 +80,7 @@ describe('RoleMenuPermissionsService', () => {
       const mismatches: string[] = [];
       for (const menu of MENU_REGISTRY) {
         for (const role of ROLE_VALUES) {
-          const expected = ROLE_LEVEL[role] >= ROLE_LEVEL[menu.minRole];
+          const expected = defaultMenuEnabled(role, menu);
           const actual = byPair.get(`${role}:${menu.menuKey}`);
           if (actual !== expected) {
             mismatches.push(`${role}/${menu.menuKey}: dapat ${actual}, expected ${expected}`);
@@ -109,6 +115,18 @@ describe('RoleMenuPermissionsService', () => {
         const menu = MENU_REGISTRY.find((m) => m.menuKey === row.menuKey)!;
         expect(ROLE_LEVEL.anggota >= ROLE_LEVEL[menu.minRole]).toBe(true);
       }
+    });
+
+    it('admin_berita hanya mendapat menu Berita & Moderasi Galeri', async () => {
+      await service.seedFromMenuRegistry();
+
+      const { data } = mockPrisma.roleMenuPermission.createMany.mock.calls[0][0];
+      const enabledKeys = data
+        .filter((r: { role: string; isEnabled: boolean }) => r.role === 'admin_berita' && r.isEnabled)
+        .map((r: { menuKey: string }) => r.menuKey)
+        .sort();
+
+      expect(enabledKeys).toEqual(['contentBerita', 'galeriManage']);
     });
   });
 

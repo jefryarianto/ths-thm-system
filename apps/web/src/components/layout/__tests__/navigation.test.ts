@@ -93,6 +93,7 @@ const LEVELS: Record<Role, number> = {
   admin_wilayah: 5,
   admin_ranting: 4,
   admin_kegiatan: 3,
+  admin_berita: 0,
   penguji: 2,
   anggota: 1,
 };
@@ -109,6 +110,8 @@ function optionsFor(role: Role) {
   return {
     isAdmin: ADMIN_ROLES.includes(role),
     hasMinRole: (min: Role) => LEVELS[role] >= LEVELS[min],
+    role,
+    hasRole: (roles: Role[]) => roles.includes(role),
   };
 }
 
@@ -119,6 +122,7 @@ const ALL_ROLES: Role[] = [
   'admin_wilayah',
   'admin_ranting',
   'admin_kegiatan',
+  'admin_berita',
   'penguji',
   'anggota',
 ];
@@ -175,11 +179,8 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');
     expect(hrefs).toContain('/settings');
-    // Total item berubah karena audit-logs ditambahkan, dll.
-    // 52 awal - 0 (item tetap, hanya grup berkurang).
-    // Audit log ditambahkan (1), FCM test tetap ada.
-    // 52 + 1 (audit-logs) = 53.
-    expect(hrefs).toHaveLength(54);
+    // Total item saat ini: 58 (termasuk menu KTA & pengaturan gamifikasi).
+    expect(hrefs).toHaveLength(58);
   });
 
   it('admin_nasional melihat template KTA dan dokumen tetapi tidak melihat monitoring/sessions', () => {
@@ -240,6 +241,28 @@ describe('filterVisibleGroups', () => {
     expect(hrefs).not.toContain('/members');
     // Halaman scoreboard memakai endpoint gamifikasi khusus admin.
     expect(hrefs).not.toContain('/gamification/scoreboard');
+  });
+
+  it('admin_berita hanya melihat Berita & Moderasi Galeri', () => {
+    const groups = filterVisibleGroups(menuGroups, optionsFor('admin_berita'));
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).toContain('/content/berita');
+    expect(hrefs).toContain('/galeri/manage');
+    expect(hrefs).not.toContain('/dashboard');
+    expect(hrefs).not.toContain('/galeri/upload');
+    expect(hrefs).not.toContain('/forum');
+    expect(hrefs).not.toContain('/users');
+    expect(groups).toHaveLength(1);
+  });
+
+  it('override false tetap bisa menyembunyikan menu admin_berita', () => {
+    const groups = filterVisibleGroups(menuGroups, {
+      ...optionsFor('admin_berita'),
+      menuOverrides: { galeriManage: false },
+    });
+    const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(hrefs).toContain('/content/berita');
+    expect(hrefs).not.toContain('/galeri/manage');
   });
 });
 

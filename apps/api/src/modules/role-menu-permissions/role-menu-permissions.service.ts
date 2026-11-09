@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { MENU_REGISTRY, ROLE_LEVEL, ROLE_VALUES, type Role } from '@ths-thm/shared-types';
+import {
+  MENU_REGISTRY,
+  ROLE_VALUES,
+  defaultMenuEnabled,
+  type Role,
+} from '@ths-thm/shared-types';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { UpdatePermissionDto } from './dto/role-menu-permissions.dto';
 
@@ -45,8 +50,8 @@ export class RoleMenuPermissionsService implements OnApplicationBootstrap {
 
   /**
    * Seed satu baris per (role, menuKey) dengan nilai default sesuai
-   * hierarki role: `isEnabled = role >= minRole` — identik dengan
-   * visibilitas sidebar sebelum ada tabel ini.
+   * hierarki role / allowlist fungsional: `defaultMenuEnabled(role, menu)` —
+   * identik dengan visibilitas sidebar sebelum ada tabel ini.
    *
    * @returns jumlah baris yang benar-benar dibuat (0 bila sudah lengkap)
    */
@@ -55,7 +60,7 @@ export class RoleMenuPermissionsService implements OnApplicationBootstrap {
       ROLE_VALUES.map((role) => ({
         role,
         menuKey: menu.menuKey,
-        isEnabled: ROLE_LEVEL[role] >= ROLE_LEVEL[menu.minRole],
+        isEnabled: defaultMenuEnabled(role, menu),
       })),
     );
 

@@ -454,6 +454,7 @@ export const ROLE_LABELS: Record<string, string> = {
   anggota: 'Anggota',
   penguji: 'Penguji',
   admin_kegiatan: 'Admin Kegiatan',
+  admin_berita: 'Admin Berita',
   admin_ranting: 'Admin Ranting',
   admin_distrik: 'Admin Distrik',
   admin_wilayah: 'Admin Wilayah',

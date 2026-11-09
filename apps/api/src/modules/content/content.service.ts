@@ -132,7 +132,8 @@ export class ContentService {
       user.role === 'admin_distrik' ||
       user.role === 'admin_wilayah' ||
       user.role === 'admin_ranting' ||
-      user.role === 'admin_kegiatan'
+      user.role === 'admin_kegiatan' ||
+      user.role === 'admin_berita'
     );
   }
 

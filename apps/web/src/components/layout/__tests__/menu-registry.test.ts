@@ -6,6 +6,7 @@ import {
   menuKeyForHref,
   getMenuLabel,
   ROLE_LEVEL,
+  defaultMenuEnabled,
 } from '@ths-thm/shared-types';
 import { menuGroups, filterVisibleGroups, getModuleKey } from '../navigation';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
@@ -28,6 +29,7 @@ const LEVELS: Record<Role, number> = {
   admin_wilayah: 5,
   admin_ranting: 4,
   admin_kegiatan: 3,
+  admin_berita: 0,
   penguji: 2,
   anggota: 1,
 };
@@ -47,6 +49,7 @@ const ALL_ROLES: Role[] = [
   'admin_wilayah',
   'admin_ranting',
   'admin_kegiatan',
+  'admin_berita',
   'penguji',
   'anggota',
 ];
@@ -109,16 +112,18 @@ describe('minRole registry = visibilitas sidebar hari ini', () => {
     const groups = filterVisibleGroups(menuGroups, {
       isAdmin: ADMIN_ROLES.includes(role),
       hasMinRole: (min: Role) => LEVELS[role] >= LEVELS[min],
+      role,
+      hasRole: (roles: Role[]) => roles.includes(role),
     });
     return groups.some((g) => g.items.some((i) => i.href === href));
   }
 
-  it('seed default (role >= minRole) identik dengan sidebar untuk semua role x menu', () => {
+  it('seed default (defaultMenuEnabled) identik dengan sidebar untuk semua role x menu', () => {
     const mismatches: string[] = [];
 
     for (const entry of MENU_REGISTRY) {
       for (const role of ALL_ROLES) {
-        const seeded = ROLE_LEVEL[role] >= ROLE_LEVEL[entry.minRole];
+        const seeded = defaultMenuEnabled(role, entry);
         const actual = sidebarSees(role, entry.href);
         if (seeded !== actual) {
           mismatches.push(

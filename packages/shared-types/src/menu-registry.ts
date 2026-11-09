@@ -22,8 +22,10 @@ import type { Role } from './index';
  *                 sebagai AND. Memakai hierarki ROLE_LEVEL (bukan array
  *                 ROLE_HIERARCHY API — urutannya berbeda, lihat ROLE_LEVEL).
  *
- * Seed `isEnabled = ROLE_LEVEL[role] >= ROLE_LEVEL[minRole]` sehingga baris
- * awal tabel identik dengan visibilitas sidebar saat ini.
+ * Seed `isEnabled = defaultMenuEnabled(role, menu)` sehingga baris awal tabel
+ * identik dengan visibilitas sidebar saat ini. Role restricted (mis.
+ * `admin_berita`) hanya enabled untuk menu yang mencantumkannya di
+ * `allowedRoles`.
  */
 
 /** Satu baris registry menu. */
@@ -32,6 +34,11 @@ export interface MenuItemDef {
   label: string;
   href: string;
   minRole: Role;
+  /**
+   * Role fungsional (mis. `admin_berita`) yang tetap mendapat akses walau
+   * tidak memenuhi `minRole`. Lihat `defaultMenuEnabled`.
+   */
+  allowedRoles?: Role[];
 }
 
 /** Seluruh menu sidebar, dalam urutan navigasi. */
@@ -47,6 +54,7 @@ export const MENU_REGISTRY = [
     label: 'Moderasi Galeri',
     href: '/galeri/manage',
     minRole: 'admin_ranting',
+    allowedRoles: ['admin_berita'],
   },
   { menuKey: 'dashboard', label: 'Dashboard', href: '/dashboard', minRole: 'penguji' },
   { menuKey: 'activities', label: 'Kegiatan', href: '/activities', minRole: 'anggota' },
@@ -56,7 +64,13 @@ export const MENU_REGISTRY = [
   { menuKey: 'orgChart', label: 'Peta Organisasi', href: '/org-chart', minRole: 'anggota' },
   { menuKey: 'documents', label: 'Dokumen', href: '/documents', minRole: 'anggota' },
   { menuKey: 'dues', label: 'Iuran', href: '/dues', minRole: 'anggota' },
-  { menuKey: 'contentBerita', label: 'Berita', href: '/content/berita', minRole: 'admin_wilayah' },
+  {
+    menuKey: 'contentBerita',
+    label: 'Berita',
+    href: '/content/berita',
+    minRole: 'admin_wilayah',
+    allowedRoles: ['admin_berita'],
+  },
   { menuKey: 'reports', label: 'Laporan Umum', href: '/reports', minRole: 'admin_ranting' },
   { menuKey: 'members', label: 'Anggota', href: '/members', minRole: 'admin_ranting' },
   { menuKey: 'membersMutasi', label: 'Mutasi', href: '/members/mutasi', minRole: 'admin_ranting' },
@@ -69,6 +83,19 @@ export const MENU_REGISTRY = [
   },
   { menuKey: 'claims', label: 'Klaim', href: '/claims', minRole: 'admin_ranting' },
   { menuKey: 'letters', label: 'Surat', href: '/letters', minRole: 'admin_ranting' },
+  { menuKey: 'ktaQueue', label: 'Antrian KTA', href: '/kta/queue', minRole: 'admin_ranting' },
+  {
+    menuKey: 'ktaDistrikProcess',
+    label: 'Proses KTA',
+    href: '/kta/distrik-process',
+    minRole: 'admin_distrik',
+  },
+  {
+    menuKey: 'ktaAnalytics',
+    label: 'Analytics KTA',
+    href: '/kta/analytics',
+    minRole: 'admin_nasional',
+  },
   { menuKey: 'trainings', label: 'Latihan', href: '/trainings', minRole: 'admin_ranting' },
   { menuKey: 'graduations', label: 'Pendadaran', href: '/graduations', minRole: 'admin_kegiatan' },
   { menuKey: 'examiners', label: 'Penguji', href: '/examiners', minRole: 'admin_kegiatan' },
@@ -187,6 +214,12 @@ export const MENU_REGISTRY = [
     menuKey: 'gamificationAdmin',
     label: 'Admin',
     href: '/gamification/admin',
+    minRole: 'admin_nasional',
+  },
+  {
+    menuKey: 'gamificationSettings',
+    label: 'Pengaturan',
+    href: '/gamification/settings',
     minRole: 'admin_nasional',
   },
   {

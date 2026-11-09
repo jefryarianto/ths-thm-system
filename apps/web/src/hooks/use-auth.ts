@@ -16,6 +16,7 @@ const ROLE_HIERARCHY: Record<Role, number> = {
   admin_wilayah: 5,
   admin_ranting: 4,
   admin_kegiatan: 3,
+  admin_berita: 0,
   penguji: 2,
   anggota: 1,
 };

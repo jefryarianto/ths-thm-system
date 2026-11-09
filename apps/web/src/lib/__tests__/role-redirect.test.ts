@@ -19,6 +19,10 @@ describe('getHomePathForRole', () => {
     expect(getHomePathForRole('anggota')).toBe('/forum');
   });
 
+  it('mengarahkan admin_berita ke /content/berita', () => {
+    expect(getHomePathForRole('admin_berita')).toBe('/content/berita');
+  });
+
   it('fallback ke /forum saat role tidak ada', () => {
     expect(getHomePathForRole(null)).toBe('/forum');
     expect(getHomePathForRole(undefined)).toBe('/forum');
@@ -66,6 +70,14 @@ describe('getAdminDashboardRedirect', () => {
       for (const role of DASHBOARD_ROLES) {
         expect(getAdminDashboardRedirect('/dashboard', role)).toBeNull();
       }
+    });
+
+    it('admin_berita di /dashboard dialihkan ke /content/berita', () => {
+      expect(getAdminDashboardRedirect('/dashboard', 'admin_berita')).toBe('/content/berita');
+    });
+
+    it('admin_berita di /content/berita tidak dialihkan (tidak loop)', () => {
+      expect(getAdminDashboardRedirect('/content/berita', 'admin_berita')).toBeNull();
     });
   });
 

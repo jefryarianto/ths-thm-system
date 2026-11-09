@@ -102,6 +102,17 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   }
 
   /**
+   * `admin_berita` adalah role fungsional lintas organisasi yang hanya boleh
+   * ditetapkan superadmin. Tidak bisa memakai `ASSIGNABLE_BY_LEVEL` karena
+   * admin_nasional juga dinormalisasi menjadi scope kosong.
+   */
+  private assertMayAssignRole(role: string | undefined, actorRole?: string): void {
+    if (role === 'admin_berita' && actorRole !== 'superadmin') {
+      throw new ForbiddenException('Hanya superadmin yang dapat menetapkan role tersebut');
+    }
+  }
+
+  /**
    * Validasi & normalisasi scope organisasi sesuai role target.
    *
    * Aturan (hierarki Distrik → Wilayah → Ranting):
@@ -404,6 +415,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   }
 
   async create(dto: CreateUserDto, scope?: UserScope, userId?: string, actorRole?: string) {
+    this.assertMayAssignRole(dto.role, actorRole);
     return this.baseCreate(
       dto,
       this.normalizeScope(scope, actorRole),
@@ -417,6 +429,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     const effectiveScope = this.normalizeScope(scope, actorRole);
     // Tenant guard — baseUpdate tidak meneruskan scope ke beforeUpdate,
     // jadi role & scope organisasi dari client divalidasi di sini.
+    this.assertMayAssignRole(dto.role, actorRole);
     this.resolveAssignableRole(dto.role, effectiveScope);
 
     const existing = await this.prisma.user.findUnique({

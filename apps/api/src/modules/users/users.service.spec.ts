@@ -319,6 +319,49 @@ describe('UsersService', () => {
       expect(result.data.role).toBe('admin_distrik');
     });
 
+    it('should allow superadmin (scope {} from ScopeGuard) to assign admin_berita role', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        role: 'anggota',
+        distrikId: 'd1',
+        wilayahId: 'w1',
+        rantingId: 'r1',
+      });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'admin_berita' });
+      const result = await service.update('u1', { role: 'admin_berita' }, {}, 'superadmin');
+      expect(result.data.role).toBe('admin_berita');
+    });
+
+    it('should allow superadmin to create admin_berita (no org placement)', async () => {
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_berita' });
+      const result = await service.create(
+        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_berita' },
+        {},
+        'actor-1',
+        'superadmin',
+      );
+      expect(result.data.role).toBe('admin_berita');
+    });
+
+    it('should reject assigning admin_berita from admin_nasional (superadmin-only)', async () => {
+      await expect(
+        service.create(
+          { email: 'x@y.com', namaLengkap: 'X', role: 'admin_berita' },
+          {},
+          'actor-2',
+          'admin_nasional',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject updating a user to admin_berita from non-superadmin', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      await expect(
+        service.update('u1', { role: 'admin_berita' }, { rantingId: 'r1' }, 'admin_ranting'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
     it('should reject admin_distrik role from non-superadmin with empty scope (tenant safety)', async () => {
       // Admin tanpa rantingId juga menerima scope {} dari ScopeGuard — objek
       // kosong TIDAK boleh diperlakukan sebagai superadmin.

@@ -7,12 +7,12 @@ import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { MODULE_PERMISSIONS } from './can';
-import type { ModulePermission } from './can';
+import type { ModuleAction } from './can';
 import type { Role } from '@/types';
 
 interface PermissionGuardProps {
   module: string;
-  action?: keyof ModulePermission;
+  action?: ModuleAction;
   /** Gerbang tambahan: role minimum yang wajib dipenuhi (AND dengan module). */
   minRole?: Role;
   children: ReactNode;
@@ -32,7 +32,7 @@ export function PermissionGuard({
   negate = false,
   fallback,
 }: PermissionGuardProps) {
-  const { hasMinRole, role, isAuthenticated } = useAuth();
+  const { hasMinRole, hasRole, role, isAuthenticated } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -64,6 +64,11 @@ export function PermissionGuard({
 
   if (requiredRole) {
     allowed = hasMinRole(requiredRole);
+  }
+
+  // Role fungsional allowlist (mis. admin_berita untuk modul berita).
+  if (!allowed && perms?.allowedRoles && hasRole(perms.allowedRoles)) {
+    allowed = true;
   }
 
   // Gerbang tambahan (mis. halaman import yang butuh role lebih tinggi dari

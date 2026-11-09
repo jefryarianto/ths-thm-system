@@ -19,6 +19,7 @@ export const ACTIVITY_SCOPED_ROLES: Role[] = ['admin_kegiatan', 'penguji'];
  * Resolve the correct landing page after login based on the user's role.
  *
  * - Admin-level roles (admin_ranting+) → admin dashboard (`/dashboard`)
+ * - admin_berita → halaman Berita (`/content/berita`)
  * - Activity-scoped roles → their activity list
  *   - admin_kegiatan → `/my-activities` (daftar kegiatan yang ditugaskan)
  *   - penguji → `/my-assessments` (daftar penilaian yang ditugaskan)
@@ -26,6 +27,9 @@ export const ACTIVITY_SCOPED_ROLES: Role[] = ['admin_kegiatan', 'penguji'];
  */
 export function getHomePathForRole(role: Role | string | null | undefined): string {
   if (!role) return '/forum';
+
+  // Role fungsional: landing ke halaman yang memang boleh diakses.
+  if (role === 'admin_berita') return '/content/berita';
 
   // Activity-scoped roles go to dashboard (which shows their assigned kegiatan)
   if (DASHBOARD_ROLES.includes(role as Role)) {

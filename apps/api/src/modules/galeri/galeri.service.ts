@@ -20,6 +20,7 @@ const ADMIN_ROLES: Role[] = [
   'admin_wilayah',
   'admin_ranting',
   'admin_kegiatan',
+  'admin_berita',
 ];
 
 @Injectable()

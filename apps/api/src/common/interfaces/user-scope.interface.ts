@@ -26,6 +26,7 @@ export interface UserScope {
     | 'admin_wilayah'
     | 'admin_ranting'
     | 'admin_kegiatan'
+    | 'admin_berita'
     | 'anggota'
     | 'penguji';
   /**

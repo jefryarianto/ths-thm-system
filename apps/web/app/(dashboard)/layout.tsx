@@ -48,8 +48,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const { user, isAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } =
-    useAuth();
+  const {
+    user,
+    role,
+    isAdmin,
+    hasRole,
+    hasMinRole,
+    isActivityScoped,
+    isActivityAdmin,
+    isActivityPenguji,
+  } = useAuth();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -97,8 +105,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
    * Hanya dihitung setelah mount → hydration guard.
    */
   const visibleGroups = useMemo(
-    () => (mounted ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole, menuOverrides }) : []),
-    [mounted, isAdmin, hasMinRole, menuOverrides],
+    () =>
+      mounted
+        ? filterVisibleGroups(menuGroups, { isAdmin, hasMinRole, role, hasRole, menuOverrides })
+        : [],
+    [mounted, isAdmin, hasMinRole, role, hasRole, menuOverrides],
   );
 
   const homeHref = user ? getHomePathForRole(user.role) : '/dashboard';

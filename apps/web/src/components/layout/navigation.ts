@@ -45,7 +45,7 @@ import {
   MonitorCog,
 } from 'lucide-react';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
-import { menuKeyForHref } from '@ths-thm/shared-types';
+import { isRestrictedMenuRole, menuKeyForHref } from '@ths-thm/shared-types';
 import type { Role } from '@/types';
 
 /**
@@ -64,6 +64,11 @@ export interface MenuItem {
   external?: boolean;
   /** Minimum role level required to see this menu item (role-based filtering) */
   minRole?: Role;
+  /**
+   * Role fungsional yang tetap mendapat akses walau di bawah `minRole`.
+   * Hanya dipakai untuk role restricted (lihat `isRestrictedMenuRole`).
+   */
+  allowedRoles?: Role[];
   /** If true, hidden in production environment */
   devOnly?: boolean;
   /** If true, hidden from the sidebar but retained for getPageTitle & permissions */
@@ -91,6 +96,8 @@ export const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
   admin_ranting: ['Utama', 'Keanggotaan'],
   // Kegiatan organisasi → Pelatihan & Keuangan.
   admin_kegiatan: ['Utama', 'Pelatihan'],
+  // Admin berita: role fungsional, hanya menu Berita & Moderasi Galeri.
+  admin_berita: ['Utama'],
   // Penguji bekerja di halaman Pelatihan & Penilaian.
   penguji: ['Utama', 'Pelatihan'],
   anggota: ['Utama'],
@@ -107,6 +114,7 @@ export const menuGroups: MenuGroup[] = [
         label: 'Moderasi Galeri',
         icon: ClipboardCheck,
         minRole: 'admin_ranting',
+        allowedRoles: ['admin_berita'],
       },
       { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
       { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
@@ -117,7 +125,13 @@ export const menuGroups: MenuGroup[] = [
       { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
       { href: '/payments', label: 'Pembayaran', icon: Wallet, minRole: 'admin_ranting' },
       { href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' },
-      { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
+      {
+        href: '/content/berita',
+        label: 'Berita',
+        icon: Newspaper,
+        minRole: 'admin_wilayah',
+        allowedRoles: ['admin_berita'],
+      },
       { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
     ],
   },
@@ -320,6 +334,10 @@ export function getModuleKey(href: string): string | null {
 interface FilterOptions {
   isAdmin: boolean;
   hasMinRole: (role: Role) => boolean;
+  /** Role pengguna saat ini — dipakai untuk allowlist role fungsional. */
+  role?: Role | null;
+  /** Cek apakah role saat ini ada di daftar tertentu (untuk `allowedRoles`). */
+  hasRole?: (roles: Role[]) => boolean;
   /**
    * Izin dari tabel RoleMenuPermission (GET /role-menu-permissions/my-menus).
    * - `null`/absen = belum termuat atau gagal memuat → hanya gerbang kode
@@ -332,23 +350,37 @@ interface FilterOptions {
 }
 
 /**
- * Filter grup menu berdasarkan role & permission — LOGIKA TIDAK BERUBAH:
- * 1. adminOnly → admin-level role
- * 2. minRole → role hierarchy check
- * 3. MODULE_PERMISSIONS[module].view → fallback role minimum
- * 4. menuOverrides (opsional) → hasil matriks superadmin, hanya bisa membatasi
+ * Filter grup menu berdasarkan role & permission — LOGIKA:
+ * 1. devOnly → sembunyikan di production
+ * 2. Role restricted (mis. admin_berita) → hanya lolos bila `allowedRoles`
+ *    menu memuat role tersebut (mengabaikan minRole/module gate).
+ * 3. adminOnly → admin-level role
+ * 4. minRole → role hierarchy check
+ * 5. MODULE_PERMISSIONS[module].view → fallback role minimum
+ * 6. menuOverrides (opsional) → hasil matriks superadmin, hanya bisa membatasi
  * Grup yang tidak punya item terlihat akan dibuang.
  */
 export function filterVisibleGroups(
   groups: MenuGroup[],
-  { isAdmin, hasMinRole, menuOverrides }: FilterOptions,
+  { isAdmin, hasMinRole, role, hasRole, menuOverrides }: FilterOptions,
 ): MenuGroup[] {
+  const restricted = role ? isRestrictedMenuRole(role) : false;
+
   return groups
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
         // Dev-only items: only shown in non-production environments
         if (item.devOnly && process.env.NODE_ENV === 'production') return false;
+        // Role fungsional restricted: allowlist eksplisit menggantikan hierarki.
+        if (restricted) {
+          const roleAllowed = hasRole
+            ? hasRole(item.allowedRoles ?? [])
+            : !!role && (item.allowedRoles ?? []).includes(role);
+          if (!roleAllowed) return false;
+          if (menuOverrides && menuOverrides[menuKeyForHref(item.href)] === false) return false;
+          return true;
+        }
         // Admin-only items (queues, WebSocket) → admin-level roles
         if (item.adminOnly && !isAdmin) return false;
         // Role-based filtering: hide if below the item's minimum role
