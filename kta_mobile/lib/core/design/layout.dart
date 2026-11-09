@@ -14,7 +14,16 @@ class KTALayout {
   static const double photoHeight = 300.0;
   static const double photoRadius = 14.0;
 
-  // Rank badges
+  static const double logoX = 700.0;
+  static const double logoY = 30.8;
+  static const double logoSize = 112.0;
+
+  static const double badgeContainerX = 44.0;
+  static const double badgeContainerY = 453.8;
+  static const double badgeContainerWidth = 240.0;
+  static const double badgeContainerHeight = 48.0;
+  static const double badgeContainerRadius = 3.0;
+
   static const double badgeX = 47.5;
   static const double badgeWidth = 233.0;
   static const double badgeHeight = 15.0;

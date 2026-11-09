@@ -92,6 +92,20 @@ void main() {
       expect(KTALayout.badgeRadius, equals(1.5));
     });
 
+    test('logo constants match DESIGN.md', () {
+      expect(KTALayout.logoX, equals(700.0));
+      expect(KTALayout.logoY, equals(30.8));
+      expect(KTALayout.logoSize, equals(112.0));
+    });
+
+    test('badge container constants match DESIGN.md', () {
+      expect(KTALayout.badgeContainerX, equals(44.0));
+      expect(KTALayout.badgeContainerY, equals(453.8));
+      expect(KTALayout.badgeContainerWidth, equals(240.0));
+      expect(KTALayout.badgeContainerHeight, equals(48.0));
+      expect(KTALayout.badgeContainerRadius, equals(3.0));
+    });
+
     test('QR code constants match DESIGN.md', () {
       expect(KTALayout.qrX, equals(641.0));
       expect(KTALayout.qrY, equals(22.0));
