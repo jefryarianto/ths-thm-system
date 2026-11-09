@@ -125,9 +125,10 @@ const PUBLIC_UPLOAD_PREFIXES = [
   'signature-',
   'stamp-',
   'doc-template-',
+  'berita-',
 ] as const;
 
-function isPublicUpload(filename: string): boolean {
+export function isPublicUpload(filename: string): boolean {
   return PUBLIC_UPLOAD_PREFIXES.some((prefix) => filename.startsWith(prefix));
 }
 
