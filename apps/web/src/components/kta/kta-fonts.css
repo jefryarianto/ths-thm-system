@@ -1,0 +1,4 @@
+/* Import once from your Next.js app/layout.tsx or root React entry. */
+@font-face{font-family:KTADejaVu;src:url('/kta/fonts/DejaVuSans.ttf') format('truetype');font-style:normal;font-weight:400;font-display:block}
+@font-face{font-family:KTADejaVu;src:url('/kta/fonts/DejaVuSans-Bold.ttf') format('truetype');font-style:normal;font-weight:700;font-display:block}
+.kta-svg{display:block;width:100%;height:auto}

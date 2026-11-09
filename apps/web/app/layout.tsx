@@ -5,6 +5,7 @@ import { ToastProvider } from '@/components/ui/toast';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { I18nProvider } from '@/i18n/context';
 import './globals.css';
+import '@/components/kta/kta-fonts.css';
 
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
