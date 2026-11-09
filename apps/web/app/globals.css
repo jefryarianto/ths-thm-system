@@ -500,3 +500,49 @@
   @apply block w-24 h-0.5 bg-gradient-to-r from-gold-400 to-transparent rounded-full my-4;
 }
 
+/* ── KTA Card Print Styles (CR80 Standard) ── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .kta-admin-preview,
+  .kta-admin-preview * {
+    visibility: visible;
+  }
+  .kta-admin-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .kta-admin-preview .actions,
+  .kta-admin-preview .warnings,
+  .kta-admin-preview .error,
+  .kta-admin-preview h3 {
+    display: none !important;
+  }
+  .card-preview {
+    page-break-after: always;
+    break-after: page;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .card-preview:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  @page {
+    size: 85.6mm 53.98mm;
+    margin: 0;
+  }
+  @page :first {
+    margin: 2mm;
+  }
+}
+
+
