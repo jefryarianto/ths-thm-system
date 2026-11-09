@@ -254,8 +254,8 @@ class _KtaCardState extends State<KtaCard> with SingleTickerProviderStateMixin {
       pdf.addPage(
         pw.Page(
           pageFormat: const PdfPageFormat(
-            85.6 * PdfPageFormat.mm,
-            53.98 * PdfPageFormat.mm,
+            89.6 * PdfPageFormat.mm,
+            57.98 * PdfPageFormat.mm,
           ),
           margin: const pw.EdgeInsets.all(2 * PdfPageFormat.mm),
           build: (ctx) => pw.Image(pw.MemoryImage(frontImg)),
@@ -264,8 +264,8 @@ class _KtaCardState extends State<KtaCard> with SingleTickerProviderStateMixin {
       pdf.addPage(
         pw.Page(
           pageFormat: const PdfPageFormat(
-            85.6 * PdfPageFormat.mm,
-            53.98 * PdfPageFormat.mm,
+            89.6 * PdfPageFormat.mm,
+            57.98 * PdfPageFormat.mm,
           ),
           margin: const pw.EdgeInsets.all(2 * PdfPageFormat.mm),
           build: (ctx) => pw.Image(pw.MemoryImage(backImg)),
