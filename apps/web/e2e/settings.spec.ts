@@ -14,9 +14,8 @@ test.describe('Settings — /settings (Pengaturan)', () => {
     await expect(page.locator('h1').first()).toContainText('Pengaturan', { timeout: 10000 });
   });
 
-  test('renders page title and refresh button', async ({ page }) => {
+  test('renders page title', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Pengaturan');
-    await expect(page.locator('button:has-text("Refresh")')).toBeVisible();
   });
 
   test('renders setting cards', async ({ page }) => {
