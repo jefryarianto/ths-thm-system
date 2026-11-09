@@ -40,4 +40,13 @@ class KTALayout {
   static const double headerX = 683.0;
   static const double expiryX = 733.5;
   static const double dividerX = 625.0;
+
+  // Back card layout
+  static const double backLabelX = 44.0;
+  static const double backColonX = 271.0;
+  static const double backValueX = 292.0;
+  static const double coordinatorX = 481.0;
+  static const double signatureY = 421.0;
+  static const double signatureWidth = 254.0;
+  static const double signatureHeight = 50.0;
 }

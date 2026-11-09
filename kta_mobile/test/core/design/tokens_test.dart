@@ -119,5 +119,15 @@ void main() {
       expect(KTALayout.expiryX, equals(733.5));
       expect(KTALayout.dividerX, equals(625.0));
     });
+
+    test('back card layout constants match DESIGN.md', () {
+      expect(KTALayout.backLabelX, equals(44.0));
+      expect(KTALayout.backColonX, equals(271.0));
+      expect(KTALayout.backValueX, equals(292.0));
+      expect(KTALayout.coordinatorX, equals(481.0));
+      expect(KTALayout.signatureY, equals(421.0));
+      expect(KTALayout.signatureWidth, equals(254.0));
+      expect(KTALayout.signatureHeight, equals(50.0));
+    });
   });
 }
