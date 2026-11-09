@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchAnggota } from '@/lib/kta/api';
 import { KtaAdminPreview } from '@/components/kta/KtaAdminPreview';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 
 export const metadata: Metadata = {
   title: 'KTA Admin Preview',
@@ -24,5 +25,9 @@ export default async function Page({
     notFound();
   }
 
-  return <KtaAdminPreview anggota={anggota} />;
+  return (
+    <PermissionGuard module="members" minRole="admin_ranting">
+      <KtaAdminPreview anggota={anggota} />
+    </PermissionGuard>
+  );
 }
