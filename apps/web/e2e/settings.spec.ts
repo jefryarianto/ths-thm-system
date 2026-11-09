@@ -3,9 +3,9 @@ import { mockAuth } from './helpers';
 
 /**
  * Spec halaman /settings (Settings Hub — hasil restrukturisasi navigasi).
- * Halaman kini berupa hub kartu ber-section (Organisasi, Sistem, keamanan)
- * dengan heading "Pengaturan" — bukan lagi "Pengaturan Sistem" dengan
- * kartu periode/tanda tangan (data itu pindah ke halaman sub-settings).
+ * Halaman kini berupa grid kartu setting (Pengaturan Umum, Hak Akses Menu,
+ * Email Admin, Riwayat Email, Penandatangan, Template Kartu, Template Dokumen,
+ * Pengujian FCM, Manajemen Sesi, Database Backup).
  */
 test.describe('Settings — /settings (Pengaturan)', () => {
   test.beforeEach(async ({ page }) => {
@@ -19,57 +19,45 @@ test.describe('Settings — /settings (Pengaturan)', () => {
     await expect(page.locator('button:has-text("Refresh")')).toBeVisible();
   });
 
-  test('renders navigation links to sub-settings', async ({ page }) => {
-    // Section "Organisasi" — kartu besar (tidak hanya teks sidebar)
-    await expect(page.locator('a[href="/settings/org-structure"]').first()).toBeVisible({
-      timeout: 8000,
-    });
-    // Switch to tab "Komunikasi & Dokumen"
-    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
-    // Section "Sistem"
+  test('renders setting cards', async ({ page }) => {
+    // Check for main setting cards that should be visible for admin_distrik+
+    await expect(page.locator('a[href="/settings/general"]').first()).toBeVisible({ timeout: 8000 });
     await expect(page.locator('a[href="/settings/email"]').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({
-      timeout: 8000,
-    });
-    // Audit Log tinggal di tab "Autentikasi & Keamanan" (section Sistem).
-    await page.getByRole('button', { name: /Autentikasi & Keamanan/i }).click();
-    await expect(page.locator('a[href="/audit-logs"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/email/logs"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/penandatangan"]').first()).toBeVisible({ timeout: 8000 });
   });
 
-  test('renders Organization Information card with mock data', async ({ page }) => {
-    await expect(page.getByText('Informasi Organisasi').first()).toBeVisible({ timeout: 8000 });
-    // Mock org data: nama = 'THS-THM'
-    await expect(page.getByText('THS-THM').first()).toBeVisible({ timeout: 8000 });
+  test('renders superadmin-only cards when superadmin', async ({ page }) => {
+    // These cards require superadmin role
+    await expect(page.locator('a[href="/settings/menu-permissions"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/fcm-test"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/sessions"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/backup"]').first()).toBeVisible({ timeout: 8000 });
   });
 
-  test('renders hub sections (Organisasi & Sistem)', async ({ page }) => {
-    await expect(page.getByText('Organisasi & Distrik').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('Komunikasi & Dokumen').first()).toBeVisible({ timeout: 8000 });
+  test('renders admin_nasional-only cards when admin_nasional', async ({ page }) => {
+    // These cards require admin_nasional role
+    await expect(page.locator('a[href="/settings/kartu"]').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('a[href="/settings/dokumen"]').first()).toBeVisible({ timeout: 8000 });
   });
 
-  test('Struktur Organisasi link navigates to /settings/org-structure', async ({ page }) => {
-    // referrerPolicy NO REFERRER: request RSC klik link tidak membawa referer
-    // yang membuat proxy salah menganggap navigasi lintas situs → kick ke /login.
-    await page
-      .locator('a[href="/settings/org-structure"]')
-      .first()
-      .click({ referrerPolicy: 'no-referrer' });
-    await expect(page).toHaveURL(/\/settings\/org-structure/);
+  test('Email Admin card navigates to /settings/email', async ({ page }) => {
+    await page.locator('a[href="/settings/email"]').first().click({ referrerPolicy: 'no-referrer' });
+    await expect(page).toHaveURL(/\/settings\/email/);
   });
 
-  test('Riwayat Email link navigates to /settings/email/logs', async ({ page }) => {
-    await page.getByRole('button', { name: /Komunikasi & Dokumen/i }).click();
-    await page
-      .locator('a[href="/settings/email/logs"]')
-      .first()
-      .click({ referrerPolicy: 'no-referrer' });
+  test('Riwayat Email card navigates to /settings/email/logs', async ({ page }) => {
+    await page.locator('a[href="/settings/email/logs"]').first().click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(/\/settings\/email\/logs/);
   });
 
-  test('Audit Log link navigates to /audit-logs', async ({ page }) => {
-    // Audit Log berada di tab "Autentikasi & Keamanan" (section Sistem).
-    await page.getByRole('button', { name: /Autentikasi & Keamanan/i }).click();
-    await page.locator('a[href="/audit-logs"]').first().click({ referrerPolicy: 'no-referrer' });
-    await expect(page).toHaveURL(/\/audit-logs/);
+  test('Pengaturan Umum card navigates to /settings/general', async ({ page }) => {
+    await page.locator('a[href="/settings/general"]').first().click({ referrerPolicy: 'no-referrer' });
+    await expect(page).toHaveURL(/\/settings\/general/);
+  });
+
+  test('Penandatangan card navigates to /settings/penandatangan', async ({ page }) => {
+    await page.locator('a[href="/settings/penandatangan"]').first().click({ referrerPolicy: 'no-referrer' });
+    await expect(page).toHaveURL(/\/settings\/penandatangan/);
   });
 });
