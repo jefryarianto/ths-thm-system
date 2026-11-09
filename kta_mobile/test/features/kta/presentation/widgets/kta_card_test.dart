@@ -100,6 +100,7 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.text('DATA ANGGOTA'), findsOneWidget);
     });
 
     testWidgets('calls onExportFront when Unduh Depan button is pressed',

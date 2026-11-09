@@ -362,6 +362,22 @@ class _KtaCardState extends State<KtaCard> with SingleTickerProviderStateMixin {
                             size: KTALayout.qrSize,
                           ),
                   ),
+                if (!isFront)
+                  Positioned(
+                    left: KTALayout.backLabelX,
+                    top: KTALayout.y(48.65),
+                    child: Opacity(
+                      opacity: 0.0,
+                      child: Text(
+                        'DATA ANGGOTA',
+                        style: TextStyle(
+                          fontSize: KTATypography.pt(7.0),
+                          fontFamily: KTATypography.fontFamily,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
