@@ -59,7 +59,7 @@ class KtaRank {
   /// Fallback ke MUDA sama seperti `rank[m.tingkat] || rank.MUDA`.
   static KtaRank forLevel(String? tingkat) =>
       _byName[(tingkat ?? '').trim().toUpperCase()] ??
-      const KtaRank(1, Color(0xFFE7B600));
+      const KtaRank(1, Color(0xFFE4B500));
 }
 
 /// Kalkulator layout — port setia `single`, `wrap`, `calculate` dari TSX.

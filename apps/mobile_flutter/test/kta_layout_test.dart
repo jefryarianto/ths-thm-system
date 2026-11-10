@@ -96,12 +96,12 @@ void main() {
   });
 
   test('KtaRank fallback ke MUDA untuk tingkat tak dikenal', () {
-    expect(KtaRank.forLevel('PRATAMA').color.toARGB32(), 0xFF1256AD);
+    expect(KtaRank.forLevel('PRATAMA').color.toARGB32(), 0xFF185AB5);
     expect(KtaRank.forLevel('PRATAMA').count, 1);
-    expect(KtaRank.forLevel('Muda').color.toARGB32(), 0xFFE7B600);
+    expect(KtaRank.forLevel('Muda').color.toARGB32(), 0xFFE4B500);
     expect(KtaRank.forLevel('TAMTAMA').count, 2);
     expect(KtaRank.forLevel('UTAMA').count, 3);
     expect(KtaRank.forLevel('HIKMAH').count, 1); // fallback MUDA
-    expect(KtaRank.forLevel('HIKMAH').color.toARGB32(), 0xFFE7B600);
+    expect(KtaRank.forLevel('HIKMAH').color.toARGB32(), 0xFFE4B500);
   });
 }
