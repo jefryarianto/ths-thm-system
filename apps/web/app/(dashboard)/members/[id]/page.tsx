@@ -1,6 +1,8 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { KtaCard } from '@/components/kta/KtaCard';
+import type { Anggota, Tingkatan } from '@/components/kta/types';
 import {
   CARD,
   COLORS,
