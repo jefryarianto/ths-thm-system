@@ -697,7 +697,7 @@ class _KtaQr extends StatelessWidget {
       return QrImageView(
         data: verificationUrl,
         version: QrVersions.auto,
-        size: KtaPositions.qrSizeMm * KtaSpec.pxPerMm,
+        size: KtaPositions.qrSize,
       );
     }
     return const SizedBox.shrink();
