@@ -6,13 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/utils/kta_layout.dart';
+import '../../core/utils/kta_design.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
 import '../../data/models/member_kta.dart';
 
-/// Kartu KTA flip (depan/belakang) yang merender ulang tata letak presisi mm
-/// dari referensi NextJS `KtaPreview`. Memakai font `KtaDejaVu` (DejaVu Sans)
-/// dan artwork PNG hasil ekspor `depan.svg` / `belakang.svg`.
 class KtaFlipCard extends StatefulWidget {
   final Member member;
   final CardData? cardData;
@@ -93,8 +91,7 @@ class _KtaFlipCardState extends State<KtaFlipCard>
                                   alignment: Alignment.center,
                                   transform: Matrix4.identity()
                                     ..rotateY(math.pi),
-                                  child:
-                                      _KtaBack(kta: kta, layout: layout),
+                                  child: _KtaBack(kta: kta, layout: layout),
                                 )
                               : _KtaFront(kta: kta, layout: layout),
                         );
@@ -111,8 +108,6 @@ class _KtaFlipCardState extends State<KtaFlipCard>
   }
 }
 
-/// Kartu berukuran penuh sesuai kanvas CR80 856×540 — dipakai untuk
-/// preview/zoom dan ekspor gambar agar hasil persis ukuran kartu.
 class KtaCardFullSize extends StatelessWidget {
   final Member member;
   final CardData? cardData;
@@ -140,8 +135,6 @@ class KtaCardFullSize extends StatelessWidget {
   }
 }
 
-/// Menyiapkan `MemberKta` + `KtaLayout` (memuat font DejaVu) sekali, lalu
-/// menyerahkan sisi kartu yang aktif ke `builder`.
 class KtaLayoutHost extends StatefulWidget {
   final Member member;
   final CardData? cardData;
@@ -210,7 +203,7 @@ class _KtaLayoutHostState extends State<KtaLayoutHost> {
   }
 }
 
-// ─────────────────────────── SISI DEPAN ───────────────────────────
+double mmToPx(double mm) => mm * KtaSpec.pxPerMm;
 
 class _KtaFront extends StatelessWidget {
   final MemberKta kta;
@@ -221,15 +214,15 @@ class _KtaFront extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = layout.fields;
     final rank = KtaRank.forLevel(kta.tingkat);
+    
     return ClipRRect(
       borderRadius: BorderRadius.circular(KtaSpec.radiusPx),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Artwork dasar + bleed 2 mm (89,6 × 57,98 mm) di offset (-2,-2).
           Positioned(
-            left: -KtaSpec.bleedMm * KtaSpec.pxPerMm,
-            top: -KtaSpec.bleedMm * KtaSpec.pxPerMm,
+            left: -mmToPx(KtaSpec.bleedMm),
+            top: -mmToPx(KtaSpec.bleedMm),
             child: Image.asset(
               'assets/images/kta/depan.png',
               width: KtaSpec.bgW,
@@ -237,83 +230,218 @@ class _KtaFront extends StatelessWidget {
               fit: BoxFit.fill,
             ),
           ),
-          // Foto 20 × 30 mm (trim: 4,4 / 12,48 mm), radius 1,4 mm.
           Positioned(
-            left: mmToPx(4.4),
-            top: mmToPx(12.48),
-            width: mmToPx(20),
-            height: mmToPx(30),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(mmToPx(1.4)),
-              child: _KtaImage(url: kta.fotoUrl, fit: BoxFit.cover),
+            left: mmToPx(KtaPositions.logoX),
+            top: mmToPx(KtaPositions.logoY),
+            child: Image.asset(
+              'assets/images/kta/logo.png',
+              width: mmToPx(KtaPositions.logoW),
+              height: mmToPx(KtaPositions.logoH),
+              fit: BoxFit.contain,
             ),
           ),
-          // Strip tingkat (posisi dari CSS: left 65,223 artwork, top 23,48-2i).
-          for (var i = 0; i < rank.count; i++)
-            Positioned(
-              left: mmToPx(63.223),
-              top: mmToPx(21.48 - 2 * i),
-              width: mmToPx(18.254),
-              height: mmToPx(1.5),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: rank.color,
-                  borderRadius: BorderRadius.circular(mmToPx(0.25)),
-                ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: _HeaderShadow(text: "ORGANISASI PENCAK SILAT PENDIDIKAN", yMm: 49.45, fontSizePt: 5.2, yellow: false),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: _HeaderShadow(text: "TUNGGAL HATI SEMINARI – TUNGGAL HATI MARIA", yMm: 46.4, fontSizePt: 6.4, yellow: false),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: _HeaderShadow(text: "DISTRIK KEUSKUPAN LARANTUKA", yMm: 43.1, fontSizePt: 5.6, yellow: false),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: _HeaderShadow(text: "KARTU TANDA ANGGOTA", yMm: 37.1, fontSizePt: 6.4, yellow: true),
+          ),
+          Positioned(
+            left: mmToPx(KtaPositions.photoX),
+            top: mmToPx(KtaPositions.photoY),
+            width: mmToPx(KtaPositions.photoW),
+            height: mmToPx(KtaPositions.photoH),
+            child: Container(
+              decoration: BoxDecoration(
+                color: KtaColors.photoPlaceholder,
+                borderRadius: BorderRadius.circular(mmToPx(KtaPositions.photoRadius)),
+                border: Border.all(color: KtaColors.borderBlue, width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(mmToPx(KtaPositions.photoRadius)),
+                child: _KtaImage(url: kta.fotoUrl, fit: BoxFit.cover),
               ),
             ),
-          // QR 20,5 × 20,5 mm (trim: 62,1 / 25,88 mm), latar putih.
+          ),
+          ..._buildRankBadges(rank),
           Positioned(
-            left: mmToPx(62.1),
-            top: mmToPx(25.88),
-            width: mmToPx(20.5),
-            height: mmToPx(20.5),
+            left: mmToPx(KtaPositions.qrXmm),
+            top: mmToPx(KtaPositions.qrYmm),
+            width: mmToPx(KtaPositions.qrSizeMm),
+            height: mmToPx(KtaPositions.qrSizeMm),
             child: ColoredBox(
-              color: Colors.white,
+              color: KtaColors.white,
               child: _KtaQr(dataUrl: kta.qrImageUrl, verificationUrl: ''),
             ),
           ),
-          // Teks presisi.
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _FrontTextPainter(kta: kta, layout: layout, fields: f),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: SizedBox.expand(
+              child: CustomPaint(
+                painter: _FrontTextPainter(kta: kta, layout: layout, fields: f),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: SizedBox.expand(
+              child: CustomPaint(
+                painter: _BackMicrotext(isFront: true),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  List<Widget> _buildRankBadges(KtaRank rank) {
+    final widgets = <Widget>[];
+    final yPositions = _getBadgeYPositions(rank.count);
+    
+    for (var i = 0; i < rank.count; i++) {
+      widgets.add(Positioned(
+        left: mmToPx(KtaPositions.badgeX),
+        top: mmToPx(yPositions[i]),
+        width: mmToPx(KtaPositions.badgeW),
+        height: mmToPx(KtaPositions.badgeH),
+        child: Container(
+          decoration: BoxDecoration(
+            color: rank.color,
+            borderRadius: BorderRadius.circular(mmToPx(KtaPositions.badgeRadius)),
+          ),
+        ),
+      ));
+    }
+    return widgets;
+  }
+
+  List<double> _getBadgeYPositions(int count) {
+    if (count == 1) return [KtaPositions.badgeY1];
+    if (count == 2) return [KtaPositions.badgeY2a, KtaPositions.badgeY2b];
+    return [KtaPositions.badgeY3a, KtaPositions.badgeY3b, KtaPositions.badgeY3c];
+  }
+}
+
+class _HeaderShadow extends StatelessWidget {
+  final String text;
+  final double yMm;
+  final double fontSizePt;
+  final bool yellow;
+  
+  const _HeaderShadow({required this.text, required this.yMm, required this.fontSizePt, required this.yellow});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: KtaSpec.w,
+      height: KtaSpec.h,
+      child: CustomPaint(
+        painter: _HeaderShadowPainter(text: text, yMm: yMm, fontSizePt: fontSizePt, yellow: yellow),
+      ),
+    );
+  }
+}
+
+class _HeaderShadowPainter extends CustomPainter {
+  final String text;
+  final double yMm;
+  final double fontSizePt;
+  final bool yellow;
+  
+  _HeaderShadowPainter({required this.text, required this.yMm, required this.fontSizePt, required this.yellow});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final highlightColor = yellow ? KtaColors.highlightGold : KtaColors.white;
+    final shadowColor = yellow ? KtaColors.shadowNavy : Color(0xFF17394F);
+    final textColor = yellow ? Color(0xFFF8DB38) : KtaColors.offWhite;
+    
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm)),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 350);
+    
+    final textWidth = painter.width;
+    final x = 683 * KtaSpec.pxPerMm - textWidth;
+    
+    final baseline = painter.computeLineMetrics().first.baseline;
+    final y = (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm;
+    
+    painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: shadowColor));
+    painter.layout(maxWidth: 350);
+    painter.paint(canvas, Offset(x + 1.4, y + 1.4 - baseline));
+    
+    painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: highlightColor));
+    painter.layout(maxWidth: 350);
+    painter.paint(canvas, Offset(x - 0.9, y - 0.9 - baseline));
+    
+    painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: textColor));
+    painter.layout(maxWidth: 350);
+    painter.paint(canvas, Offset(x, y - baseline));
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeaderShadowPainter oldDelegate) =>
+      oldDelegate.text != text || oldDelegate.yMm != yMm || oldDelegate.fontSizePt != fontSizePt || oldDelegate.yellow != yellow;
 }
 
 class _FrontTextPainter extends CustomPainter {
   final MemberKta kta;
   final KtaLayout layout;
   final Map<String, Fit> fields;
+  
   _FrontTextPainter({required this.kta, required this.layout, required this.fields});
 
   @override
   void paint(Canvas canvas, Size size) {
-    _paintLines(canvas, fields['nomor']!, 28.1, 32.6, 2.5, bold: true);
-    _paintText(canvas, kta.jenisKelamin, 52, 32.6, 5.2, bold: true);
-    _paintLines(canvas, fields['depanNama']!, 28.1, 26, 2.5, bold: true);
-    _paintLines(canvas, fields['ranting']!, 28.1, 19.1, 2.5, bold: true);
-    _paintLines(canvas, fields['berlaku']!, 4.4, 5.1, 2.5);
-    // "Pindai QR untuk validasi keabsahan anggota" — rata kanan x=81,477.
-    const pindai = 'Pindai QR untuk validasi keabsahan anggota';
-    _paintText(canvas, pindai, 81.477, 5.1, 4, bold: false, rightAlign: true);
+    final cardX = mmToPx(KtaPositions.cardX);
+    
+    _paintSingle(canvas, fields['nomor']!, cardX, KtaSpec.mmH - 32.6, 2.5, bold: true);
+    
+    final nameWidth = fields['depanNama']!.widthMm;
+    
+    if (kta.jenisKelamin.isNotEmpty) {
+      _paintText(canvas, kta.jenisKelamin, cardX + mmToPx(nameWidth + 4), KtaSpec.mmH - 30.7, 5.2, bold: true);
+    }
+
+    _paintSingle(canvas, fields['depanNama']!, cardX, KtaSpec.mmH - 26, 2.5, bold: true);
+    _paintSingle(canvas, fields['ranting']!, cardX, KtaSpec.mmH - 19.1, 2.5, bold: true);
+    _paintSingle(canvas, fields['berlaku']!, 4.4, KtaSpec.mmH - 5.1, 1, rightAlign: true);
+    
+    _paintText(canvas, 'Pindai QR untuk validasi keabsahan anggota', 81.477, 5.1, 4, rightAlign: true);
   }
 
-  void _paintLines(Canvas canvas, Fit fit, double x, double y, double leading,
-      {bool bold = false}) {
+  void _paintSingle(Canvas canvas, Fit fit, double xMm, double yMm, double leading,
+      {bool bold = false, bool rightAlign = false}) {
+    final x = mmToPx(xMm);
     for (var i = 0; i < fit.lines.length; i++) {
-      final baseline = (KtaSpec.mmH - (y - leading * i)) * KtaSpec.pxPerMm;
-      _paintAtBaseline(canvas, fit.lines[i], fit.pt, x, baseline, bold: bold);
+      final baseline = (KtaSpec.mmH - (yMm - leading * i)) * KtaSpec.pxPerMm;
+      _paintAtBaseline(canvas, fit.lines[i], fit.pt, x, baseline,
+          bold: bold, rightAlign: rightAlign);
     }
   }
 
-  void _paintText(Canvas canvas, String text, double x, double y, double pt,
+  void _paintText(Canvas canvas, String text, double xMm, double yMm, double pt,
       {bool bold = false, bool rightAlign = false}) {
-    final baseline = (KtaSpec.mmH - y) * KtaSpec.pxPerMm;
+    final x = mmToPx(xMm);
+    final baseline = (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm;
     _paintAtBaseline(canvas, text, pt, x, baseline,
         bold: bold, rightAlign: rightAlign);
   }
@@ -325,10 +453,10 @@ class _FrontTextPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: KtaSpec.fontFamily,
+          fontFamily: 'KtaDejaVu',
           fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
           fontSize: pt * 25.4 / 72 * KtaSpec.pxPerMm,
-          color: const Color(0xFF111111),
+          color: KtaColors.darkText,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -344,7 +472,41 @@ class _FrontTextPainter extends CustomPainter {
       oldDelegate.kta != kta || oldDelegate.layout != layout;
 }
 
-// ─────────────────────────── SISI BELAKANG ───────────────────────────
+class _BackMicrotext extends CustomPainter {
+  final bool isFront;
+  
+  _BackMicrotext({required this.isFront});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final text = isFront ? 'PRO PATRIA ET ECCLESIA' : 'Fortiter in Re, Suaviter in Modo';
+    final yMm = 0.75;
+    final xStart = -20.0;
+    final repeatCount = 18;
+    
+    final microtext = '$text • ';
+    
+    final textSpan = TextSpan(
+      text: microtext * repeatCount,
+      style: TextStyle(
+        fontFamily: 'KtaDejaVu',
+        fontWeight: FontWeight.w400,
+        fontSize: KtaText.ptMicrotext * 25.4 / 72 * KtaSpec.pxPerMm,
+        color: KtaColors.microtextNavy,
+      ),
+    );
+    
+    final painter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    
+    painter.paint(canvas, Offset(mmToPx(xStart), (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm - painter.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _BackMicrotext oldDelegate) => oldDelegate.isFront != isFront;
+}
 
 class _KtaBack extends StatelessWidget {
   final MemberKta kta;
@@ -355,14 +517,15 @@ class _KtaBack extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = layout.fields;
     final koorWidth = f['koordinator']?.widthMm ?? 0;
+    
     return ClipRRect(
       borderRadius: BorderRadius.circular(KtaSpec.radiusPx),
       child: Stack(
         fit: StackFit.expand,
         children: [
           Positioned(
-            left: -KtaSpec.bleedMm * KtaSpec.pxPerMm,
-            top: -KtaSpec.bleedMm * KtaSpec.pxPerMm,
+            left: -mmToPx(KtaSpec.bleedMm),
+            top: -mmToPx(KtaSpec.bleedMm),
             child: Image.asset(
               'assets/images/kta/belakang.png',
               width: KtaSpec.bgW,
@@ -370,7 +533,6 @@ class _KtaBack extends StatelessWidget {
               fit: BoxFit.fill,
             ),
           ),
-          // Tanda tangan (opsional) — trim 48,1 / 42,58 mm, 19,5 × 5,1 mm.
           if (kta.tandaTanganUrl.isNotEmpty)
             Positioned(
               left: mmToPx(48.1),
@@ -379,8 +541,6 @@ class _KtaBack extends StatelessWidget {
               height: mmToPx(5.1),
               child: _KtaImage(url: kta.tandaTanganUrl, fit: BoxFit.contain),
             ),
-          // Stempel/cap distrik — menyertai tanda tangan penandatangan.
-          // Cap diletakkan menimpa area ttd (seperti cap fisik), semi transparan.
           if (kta.stampImageUrl.isNotEmpty)
             Positioned(
               left: mmToPx(53),
@@ -394,10 +554,22 @@ class _KtaBack extends StatelessWidget {
                 ),
               ),
             ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _BackTextPainter(
-                  kta: kta, layout: layout, fields: f, koorWidthMm: koorWidth),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: SizedBox.expand(
+              child: CustomPaint(
+                painter: _BackTextPainter(kta: kta, layout: layout, fields: f, koorWidthMm: koorWidth),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            child: SizedBox.expand(
+              child: CustomPaint(
+                painter: _BackMicrotext(isFront: false),
+              ),
             ),
           ),
         ],
@@ -411,6 +583,7 @@ class _BackTextPainter extends CustomPainter {
   final KtaLayout layout;
   final Map<String, Fit> fields;
   final double koorWidthMm;
+  
   _BackTextPainter({
     required this.kta,
     required this.layout,
@@ -421,28 +594,25 @@ class _BackTextPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final belakangNama = fields['belakangNama']!;
-    _paintLines(canvas, belakangNama, 29.2, 41.4, 2.4);
-    // Jenis kelamin mengikuti lebar nama (x = 29,2 + lebarNama + 9).
-    _paintText(
-      canvas,
-      kta.jenisKelamin,
-      29.2 + belakangNama.widthMm + 9,
-      41.4,
-      5.3,
-    );
-    _paintLines(canvas, fields['lahir']!, 29.2, 37.4, 2.4);
-    _paintLines(canvas, fields['pekerjaan']!, 29.2, 33.4, 2.4);
-    _paintLines(canvas, fields['status']!, 29.2, 29.4, 2.4);
-    _paintLines(canvas, fields['pelantikan']!, 29.2, 25.4, 2.4);
-    _paintLines(canvas, fields['alamat']!, 29.2, 21.4, 2.4);
-    _paintLines(canvas, fields['terbit']!, 4.4, 3.5, 2.4);
-    _paintLines(canvas, fields['koordinator']!, 48.1, 3.5, 2.4);
+    _paintSingle(canvas, belakangNama, 29.2, 41.4, 2.4, bold: false);
+    
+    if (kta.jenisKelamin.isNotEmpty) {
+      _paintText(canvas, kta.jenisKelamin, 29.2 + belakangNama.widthMm + 9, 41.4, 5.3, bold: false);
+    }
+    
+    _paintSingle(canvas, fields['lahir']!, 29.2, 37.4, 2.4, bold: false);
+    _paintSingle(canvas, fields['pekerjaan']!, 29.2, 33.4, 2.4, bold: false);
+    _paintSingle(canvas, fields['status']!, 29.2, 29.4, 2.4, bold: false);
+    _paintSingle(canvas, fields['pelantikan']!, 29.2, 25.4, 2.4, bold: false);
+    _paintSingle(canvas, fields['alamat']!, 29.2, 21.4, 2.4, bold: false);
+    _paintSingle(canvas, fields['terbit']!, 4.4, 3.5, 2.4, bold: false);
+    _paintSingle(canvas, fields['koordinator']!, 48.1, 3.5, 2.4, bold: false);
 
-    // Garis tanda tangan — trim 48,1 / 48,28 mm, lebar mengikuti koordinator.
     final linePaint = Paint()
-      ..color = const Color(0xFF0B377B)
-      ..strokeWidth = mmToPx(0.45 / 72 * 25.4) // 0,45pt
+      ..color = KtaColors.signatureLine
+      ..strokeWidth = 0.45 / 72 * 25.4 * KtaSpec.pxPerMm
       ..strokeCap = StrokeCap.square;
+    
     canvas.drawLine(
       Offset(mmToPx(48.1), mmToPx(48.28)),
       Offset(mmToPx(48.1) + koorWidthMm * KtaSpec.pxPerMm, mmToPx(48.28)),
@@ -450,7 +620,7 @@ class _BackTextPainter extends CustomPainter {
     );
   }
 
-  void _paintLines(Canvas canvas, Fit fit, double x, double y, double leading,
+  void _paintSingle(Canvas canvas, Fit fit, double x, double y, double leading,
       {bool bold = false}) {
     for (var i = 0; i < fit.lines.length; i++) {
       final baseline = (KtaSpec.mmH - (y - leading * i)) * KtaSpec.pxPerMm;
@@ -459,30 +629,28 @@ class _BackTextPainter extends CustomPainter {
   }
 
   void _paintText(Canvas canvas, String text, double x, double y, double pt,
-      {bool bold = false, bool rightAlign = false}) {
+      {bool bold = false}) {
     final baseline = (KtaSpec.mmH - y) * KtaSpec.pxPerMm;
-    _paintAtBaseline(canvas, text, pt, x, baseline,
-        bold: bold, rightAlign: rightAlign);
+    _paintAtBaseline(canvas, text, pt, x, baseline, bold: bold);
   }
 
   void _paintAtBaseline(Canvas canvas, String text, double pt, double xMm,
       double baselinePx,
-      {bool bold = false, bool rightAlign = false}) {
+      {bool bold = false}) {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: KtaSpec.fontFamily,
+          fontFamily: 'KtaDejaVu',
           fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
           fontSize: pt * 25.4 / 72 * KtaSpec.pxPerMm,
-          color: const Color(0xFF111111),
+          color: KtaColors.darkText,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
     final baseline = painter.computeLineMetrics().first.baseline;
     var dx = mmToPx(xMm);
-    if (rightAlign) dx -= painter.width;
     painter.paint(canvas, Offset(dx, baselinePx - baseline));
   }
 
@@ -491,9 +659,6 @@ class _BackTextPainter extends CustomPainter {
       oldDelegate.kta != kta || oldDelegate.layout != layout;
 }
 
-// ─────────────────────────── PENDUKUNG ───────────────────────────
-
-/// Gambar dari URL http(s) atau data:base64; kosong → area transparan.
 class _KtaImage extends StatelessWidget {
   final String url;
   final BoxFit fit;
@@ -516,7 +681,6 @@ class _KtaImage extends StatelessWidget {
   }
 }
 
-/// QR dari data URL, atau generator lokal bila URL kosong / gagal decode.
 class _KtaQr extends StatelessWidget {
   final String dataUrl;
   final String verificationUrl;
@@ -534,7 +698,7 @@ class _KtaQr extends StatelessWidget {
       return QrImageView(
         data: verificationUrl,
         version: QrVersions.auto,
-        size: mmToPx(20.5),
+        size: KtaPositions.qrSizeMm * KtaSpec.pxPerMm,
       );
     }
     return const SizedBox.shrink();

@@ -49,11 +49,11 @@ class KtaRank {
   const KtaRank(this.count, this.color);
 
   static const Map<String, KtaRank> _byName = {
-    'PRATAMA': KtaRank(1, Color(0xFF1256AD)),
-    'TAMTAMA': KtaRank(2, Color(0xFF1256AD)),
-    'MUDA': KtaRank(1, Color(0xFFE7B600)),
-    'MADYA': KtaRank(2, Color(0xFFE7B600)),
-    'UTAMA': KtaRank(3, Color(0xFFE7B600)),
+    'PRATAMA': KtaRank(1, Color(0xFF185AB5)),
+    'TAMTAMA': KtaRank(2, Color(0xFF185AB5)),
+    'MUDA': KtaRank(1, Color(0xFFE4B500)),
+    'MADYA': KtaRank(2, Color(0xFFE4B500)),
+    'UTAMA': KtaRank(3, Color(0xFFE4B500)),
   };
 
   /// Fallback ke MUDA sama seperti `rank[m.tingkat] || rank.MUDA`.
