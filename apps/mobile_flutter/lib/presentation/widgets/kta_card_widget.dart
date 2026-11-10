@@ -231,12 +231,12 @@ class _KtaFront extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: mmToPx(KtaPositions.logoX),
-            top: mmToPx(KtaPositions.logoY),
+            left: KtaPositions.logoX,
+            top: KtaPositions.logoY,
             child: Image.asset(
               'assets/images/kta/logo.png',
-              width: mmToPx(KtaPositions.logoW),
-              height: mmToPx(KtaPositions.logoH),
+              width: KtaPositions.logoW,
+              height: KtaPositions.logoH,
               fit: BoxFit.contain,
             ),
           ),
@@ -261,28 +261,28 @@ class _KtaFront extends StatelessWidget {
             child: _HeaderShadow(text: "KARTU TANDA ANGGOTA", yMm: 37.1, fontSizePt: 6.4, yellow: true),
           ),
           Positioned(
-            left: mmToPx(KtaPositions.photoX),
-            top: mmToPx(KtaPositions.photoY),
-            width: mmToPx(KtaPositions.photoW),
-            height: mmToPx(KtaPositions.photoH),
+            left: KtaPositions.photoX,
+            top: KtaPositions.photoY,
+            width: KtaPositions.photoW,
+            height: KtaPositions.photoH,
             child: Container(
               decoration: BoxDecoration(
                 color: KtaColors.photoPlaceholder,
-                borderRadius: BorderRadius.circular(mmToPx(KtaPositions.photoRadius)),
+                borderRadius: BorderRadius.circular(KtaPositions.photoRadius),
                 border: Border.all(color: KtaColors.borderBlue, width: 1),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(mmToPx(KtaPositions.photoRadius)),
+                borderRadius: BorderRadius.circular(KtaPositions.photoRadius),
                 child: _KtaImage(url: kta.fotoUrl, fit: BoxFit.cover),
               ),
             ),
           ),
           ..._buildRankBadges(rank),
           Positioned(
-            left: mmToPx(KtaPositions.qrXmm),
-            top: mmToPx(KtaPositions.qrYmm),
-            width: mmToPx(KtaPositions.qrSizeMm),
-            height: mmToPx(KtaPositions.qrSizeMm),
+            left: KtaPositions.qrX,
+            top: KtaPositions.qrY,
+            width: KtaPositions.qrSize,
+            height: KtaPositions.qrSize,
             child: ColoredBox(
               color: KtaColors.white,
               child: _KtaQr(dataUrl: kta.qrImageUrl, verificationUrl: ''),
@@ -376,24 +376,24 @@ class _HeaderShadowPainter extends CustomPainter {
     final painter = TextPainter(
       text: TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm)),
       textDirection: TextDirection.ltr,
-    )..layout(maxWidth: 350);
+    )..layout(maxWidth: 600);
     
     final textWidth = painter.width;
-    final x = 683 * KtaSpec.pxPerMm - textWidth;
+    final x = KtaPositions.headerRightX - textWidth;
     
     final baseline = painter.computeLineMetrics().first.baseline;
     final y = (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm;
     
     painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: shadowColor));
-    painter.layout(maxWidth: 350);
+    painter.layout(maxWidth: 600);
     painter.paint(canvas, Offset(x + 1.4, y + 1.4 - baseline));
     
     painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: highlightColor));
-    painter.layout(maxWidth: 350);
+    painter.layout(maxWidth: 600);
     painter.paint(canvas, Offset(x - 0.9, y - 0.9 - baseline));
     
     painter.text = TextSpan(text: text, style: TextStyle(fontFamily: 'KtaDejaVu', fontWeight: FontWeight.w700, fontSize: fontSizePt * 25.4 / 72 * KtaSpec.pxPerMm, color: textColor));
-    painter.layout(maxWidth: 350);
+    painter.layout(maxWidth: 600);
     painter.paint(canvas, Offset(x, y - baseline));
   }
 
@@ -411,43 +411,42 @@ class _FrontTextPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cardX = mmToPx(KtaPositions.cardX);
+    final cardX = KtaPositions.cardX;
     
-    _paintSingle(canvas, fields['nomor']!, cardX, KtaSpec.mmH - 32.6, 2.5, bold: true);
+    // Labels (static)
+    _paintAtBaseline(canvas, 'NO. ANGGOTA', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 7.7) * KtaSpec.pxPerMm, bold: true);
+    _paintSingle(canvas, fields['nomor']!, cardX, KtaSpec.mmH - 4.9, 2.5, bold: true);
     
-    final nameWidth = fields['depanNama']!.widthMm;
+    _paintAtBaseline(canvas, 'NAMA LENGKAP', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 33.5) * KtaSpec.pxPerMm, bold: true);
+    _paintSingle(canvas, fields['depanNama']!, cardX, KtaSpec.mmH - 30.7, 2.5, bold: true);
     
     if (kta.jenisKelamin.isNotEmpty) {
-      _paintText(canvas, kta.jenisKelamin, cardX + mmToPx(nameWidth + 4), KtaSpec.mmH - 30.7, 5.2, bold: true);
+      final nameWidth = fields['depanNama']!.widthMm * KtaSpec.pxPerMm;
+      _paintAtBaseline(canvas, kta.jenisKelamin, KtaText.ptNamePrimaryBase, cardX + nameWidth + 40, (KtaSpec.mmH - 30.7) * KtaSpec.pxPerMm, bold: true);
     }
 
-    _paintSingle(canvas, fields['depanNama']!, cardX, KtaSpec.mmH - 26, 2.5, bold: true);
-    _paintSingle(canvas, fields['ranting']!, cardX, KtaSpec.mmH - 19.1, 2.5, bold: true);
-    _paintSingle(canvas, fields['berlaku']!, 4.4, KtaSpec.mmH - 5.1, 1, rightAlign: true);
-    
-    _paintText(canvas, 'Pindai QR untuk validasi keabsahan anggota', 81.477, 5.1, 4, rightAlign: true);
+    _paintAtBaseline(canvas, 'TEMPAT / TAHUN DADAR', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 26.6) * KtaSpec.pxPerMm, bold: true);
+    _paintSingle(canvas, fields['dadar'] ?? const Fit(lines: [''], pt: 3.8, widthMm: 0, ok: true), cardX, KtaSpec.mmH - 23.8, 2.5, bold: true);
+
+    _paintAtBaseline(canvas, 'RANTING', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 19.7) * KtaSpec.pxPerMm, bold: true);
+    _paintLines(canvas, fields['ranting']!, cardX, KtaSpec.mmH - 16.9, 2.5, bold: true);
   }
 
-  void _paintSingle(Canvas canvas, Fit fit, double xMm, double yMm, double leading,
+  void _paintSingle(Canvas canvas, Fit fit, double x, double yBaseline, double leading,
       {bool bold = false, bool rightAlign = false}) {
-    final x = mmToPx(xMm);
     for (var i = 0; i < fit.lines.length; i++) {
-      final baseline = (KtaSpec.mmH - (yMm - leading * i)) * KtaSpec.pxPerMm;
-      _paintAtBaseline(canvas, fit.lines[i], fit.pt, x, baseline,
+      _paintAtBaseline(canvas, fit.lines[i], fit.pt, x, yBaseline + (i * leading * KtaSpec.pxPerMm),
           bold: bold, rightAlign: rightAlign);
     }
   }
 
-  void _paintText(Canvas canvas, String text, double xMm, double yMm, double pt,
+  void _paintLines(Canvas canvas, Fit fit, double x, double yBaseline, double leading,
       {bool bold = false, bool rightAlign = false}) {
-    final x = mmToPx(xMm);
-    final baseline = (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm;
-    _paintAtBaseline(canvas, text, pt, x, baseline,
-        bold: bold, rightAlign: rightAlign);
+    _paintSingle(canvas, fit, x, yBaseline, leading, bold: bold, rightAlign: rightAlign);
   }
 
-  void _paintAtBaseline(Canvas canvas, String text, double pt, double xMm,
-      double baselinePx,
+  void _paintAtBaseline(Canvas canvas, String text, double pt, double x,
+      double yBaselinePx,
       {bool bold = false, bool rightAlign = false}) {
     final painter = TextPainter(
       text: TextSpan(
@@ -461,10 +460,10 @@ class _FrontTextPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    final baseline = painter.computeLineMetrics().first.baseline;
-    var dx = mmToPx(xMm);
+    
+    var dx = x;
     if (rightAlign) dx -= painter.width;
-    painter.paint(canvas, Offset(dx, baselinePx - baseline));
+    painter.paint(canvas, Offset(dx, yBaselinePx - painter.computeLineMetrics().first.baseline));
   }
 
   @override
