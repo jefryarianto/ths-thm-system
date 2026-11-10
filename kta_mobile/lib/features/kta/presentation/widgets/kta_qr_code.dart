@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -88,7 +89,8 @@ class KtaQrPainter extends CustomPainter {
 
     // Center logo
     if (logoImage != null) {
-      final logoWidth = (n * 0.08).ceil() * moduleSize;
+      final logoModules = math.max(3, (n * 0.08).round());
+      final logoWidth = logoModules * moduleSize;
       final cx = effectiveSize / 2;
       final cy = effectiveSize / 2;
       final r = logoWidth * 0.7;

@@ -57,17 +57,17 @@ class KtaBackPainter extends CustomPainter {
       maxNameWidth,
       KTATypography.pt(5.3),
       KTATypography.pt(3.6),
-      true,
+      false,
     );
     final backGenderX = KTALayout.backValueX +
-        _measureText(nameFitted.text, nameFitted.size, true) +
+        _measureText(nameFitted.text, nameFitted.size, false) +
         90.0;
 
     final birthFitted = fitSingle(
       _resolveValue(anggota.tempatTanggalLahir),
       520.0,
       KTATypography.pt(5.3),
-      KTATypography.pt(3.6),
+      KTATypography.pt(4.0),
       false,
     );
 
@@ -75,7 +75,7 @@ class KtaBackPainter extends CustomPainter {
       _resolveValue(anggota.pekerjaan),
       520.0,
       KTATypography.pt(5.3),
-      KTATypography.pt(3.6),
+      KTATypography.pt(4.0),
       false,
     );
 
@@ -83,7 +83,7 @@ class KtaBackPainter extends CustomPainter {
       _resolveValue(anggota.status),
       520.0,
       KTATypography.pt(5.3),
-      KTATypography.pt(3.6),
+      KTATypography.pt(4.0),
       false,
     );
 
@@ -91,7 +91,7 @@ class KtaBackPainter extends CustomPainter {
       _resolvePelantikan(anggota.tanggalPelantikan, anggota.tahunPelantikan),
       520.0,
       KTATypography.pt(5.3),
-      KTATypography.pt(3.6),
+      KTATypography.pt(4.0),
       false,
     );
 
@@ -100,36 +100,36 @@ class KtaBackPainter extends CustomPainter {
         label: 'NAMA LENGKAP',
         yMm: 41.4,
         fitted: nameFitted,
-        bold: true,
-        color: KTAColors.white,
+        bold: false,
+        color: KTAColors.mediumText,
       ),
       (
         label: 'TEMPAT / TANGGAL LAHIR',
         yMm: 37.4,
         fitted: birthFitted,
         bold: false,
-        color: KTAColors.offWhite,
+        color: KTAColors.mediumText,
       ),
       (
         label: 'PEKERJAAN',
         yMm: 33.4,
         fitted: jobFitted,
         bold: false,
-        color: KTAColors.offWhite,
+        color: KTAColors.mediumText,
       ),
       (
         label: 'STATUS',
         yMm: 29.4,
         fitted: statusFitted,
         bold: false,
-        color: KTAColors.offWhite,
+        color: KTAColors.mediumText,
       ),
       (
         label: 'PELANTIKAN',
         yMm: 25.4,
         fitted: pelantikanFitted,
         bold: false,
-        color: KTAColors.offWhite,
+        color: KTAColors.mediumText,
       ),
     ];
 
@@ -143,7 +143,7 @@ class KtaBackPainter extends CustomPainter {
         y,
         labelSize,
         true,
-        KTAColors.offWhite,
+        KTAColors.mediumText,
       );
       _drawText(
         canvas,
@@ -152,7 +152,7 @@ class KtaBackPainter extends CustomPainter {
         y,
         labelSize,
         true,
-        KTAColors.offWhite,
+        KTAColors.mediumText,
       );
       _drawText(
         canvas,
@@ -172,8 +172,8 @@ class KtaBackPainter extends CustomPainter {
         backGenderX,
         KTALayout.y(41.4),
         KTATypography.pt(5.3),
-        true,
-        KTAColors.white,
+        false,
+        KTAColors.mediumText,
       );
     }
 
@@ -185,7 +185,7 @@ class KtaBackPainter extends CustomPainter {
       addressY,
       labelSize,
       true,
-      KTAColors.offWhite,
+      KTAColors.mediumText,
     );
     _drawText(
       canvas,
@@ -194,7 +194,7 @@ class KtaBackPainter extends CustomPainter {
       addressY,
       labelSize,
       true,
-      KTAColors.offWhite,
+      KTAColors.mediumText,
     );
 
     final addressWrapped = wrap(
@@ -216,7 +216,7 @@ class KtaBackPainter extends CustomPainter {
         addressY + 24.0 * i,
         addressWrapped.size,
         false,
-        KTAColors.offWhite,
+        KTAColors.mediumText,
       );
     }
 
@@ -237,7 +237,7 @@ class KtaBackPainter extends CustomPainter {
       KTALayout.y(3.5),
       issueFitted.size,
       false,
-      KTAColors.offWhite,
+      KTAColors.mediumText,
     );
 
     _drawText(
@@ -247,7 +247,7 @@ class KtaBackPainter extends CustomPainter {
       KTALayout.y(12.2),
       labelSize,
       true,
-      KTAColors.offWhite,
+      KTAColors.mediumText,
     );
 
     if (tandaTanganImage != null) {
@@ -314,7 +314,7 @@ class KtaBackPainter extends CustomPainter {
       KTALayout.y(3.5),
       coordFitted.size,
       false,
-      KTAColors.offWhite,
+      KTAColors.mediumText,
     );
 
     final microtext = List.generate(

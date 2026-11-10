@@ -229,7 +229,7 @@ class KtaFrontPainter extends CustomPainter {
         sex,
         genderX,
         KTALayout.y(30.7),
-        KTATypography.pt(7.0),
+        nameFitted.size,
         true,
         KTAColors.mediumText,
       );
@@ -261,7 +261,7 @@ class KtaFrontPainter extends CustomPainter {
       KTALayout.y(23.8),
       dadarFitted.size,
       true,
-      KTAColors.darkText,
+      KTAColors.mediumText,
     );
 
     final branchRaw = anggota.ranting.trim();
@@ -289,7 +289,7 @@ class KtaFrontPainter extends CustomPainter {
         KTALayout.y(16.9) + i * 25.0,
         branchWrapped.size,
         true,
-        KTAColors.darkText,
+        KTAColors.mediumText,
       );
     }
 
@@ -316,7 +316,7 @@ class KtaFrontPainter extends CustomPainter {
       KTALayout.y(4.9),
       numberFitted.size,
       true,
-      KTAColors.darkText,
+      KTAColors.mediumText,
     );
 
     final expiryText = _formatExpiry(anggota.berlakuSampai);
