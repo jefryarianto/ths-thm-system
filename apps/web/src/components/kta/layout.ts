@@ -1,6 +1,6 @@
 export const W=856, H=539.8;
 export const pt=(value:number)=>value*25.4/72*10;
-export const y=(bottomMm:number)=>(53.98-bottomMm)*10;
+export const y=(bottomMm:number)=>53.98*10-bottomMm*10;
 export const u=(s:string)=>s.trim().toLocaleUpperCase('id-ID');
 export type Measure=(text:string,size:number,bold:boolean)=>number;
 /** If no fit is possible, return an error rather than silently truncating. */
@@ -20,11 +20,16 @@ export function wrap(s:string,max:number,linesMax:number,base:number,min:number,
         if(chunk && measure(chunk+char,size,bold)>max){chunks.push(chunk);chunk=char;} else chunk+=char;
       }
       if(chunk) chunks.push(chunk);
-      for(const part of chunks){const candidate=line?line+' '+part:part; if(line && measure(candidate,size,bold)>max){lines.push(line);line=part;} else line=candidate;}
+      for(const part of chunks){const candidate=line?line+' '+part:part; if(line && measure(candidate,size,bold)>max){lines.push(line);line=part;} else line=candidate;
+      }
     }
     if(line)lines.push(line);
     if(lines.length<=linesMax && lines.every(l=>measure(l,size,bold)<=max)) return {lines,size,overflow:false};
   }
   return {lines:[],size:min,overflow:true};
 }
-export const expiry=(s?:string)=>{if(!s)return 'MM/YY';const m=/^(\d{4})-(0[1-9]|1[0-2])$/.exec(s);return m?`${m[2]}/${m[1].slice(2)}`:'FORMAT?';};
+export const expiry=(s?:string)=>{if(!s)return 'MM/YY'// Toleransi ISO penuh dari API (Date.toISOString())
+  const raw = (s ?? '').trim()// Ekstrak YYYY-MM dari string (bisa berupa ISO penuh atau format sederhana)
+  const match = raw.match(/^(\d{4})-(\d{2})/);
+  if (match) return `${match[2]}/${match[1].slice(2)}`
+  return 'FORMAT?';};\n
