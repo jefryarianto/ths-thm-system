@@ -92,11 +92,11 @@ class _KtaFlipCardState extends State<KtaFlipCard>
                                   transform: Matrix4.identity()
                                     ..rotateY(math.pi),
                                   child: _KtaBack(kta: kta, layout: layout),
-                                )
-                              : _KtaFront(kta: kta, layout: layout),
+                                ):_KtaFront(kta: kta, layout: layout),
                         );
                       },
                     ),
+
                   );
                 },
               ),
@@ -198,7 +198,11 @@ class _KtaLayoutHostState extends State<KtaLayoutHost> {
     final layout = _layout;
     if (kta == null || layout == null) {
       return const SizedBox(width: KtaSpec.w, height: KtaSpec.h);
-    }
+    }// Passing fallbackInitials (first 3 uppercase letters of name) so _KtaImage can show initials when fotoUrl is empty.
+    final fallbackInitials = kta.namaLengkap.isNotEmpty
+        ? '${kta.namaLengkap.substring(0, 3).toUpperCase()}'
+        : null;
+    
     return widget.builder(context, kta, layout);
   }
 }
@@ -208,12 +212,14 @@ double mmToPx(double mm) => mm * KtaSpec.pxPerMm;
 class _KtaFront extends StatelessWidget {
   final MemberKta kta;
   final KtaLayout layout;
-  const _KtaFront({required this.kta, required this.layout});
+  final String? fallbackInitials;
+  const _KtaFront({required this.kta, required this.layout}): fallbackInitials = null;
 
   @override
   Widget build(BuildContext context) {
     final f = layout.fields;
     final rank = KtaRank.forLevel(kta.tingkat);
+    final displayInitials = fallbackInitials ?? (kta.namaLengkap.isNotEmpty ? '${kta.namaLengkap.substring(0, 3).toUpperCase()}' : null);
     
     return ClipRRect(
       borderRadius: BorderRadius.circular(KtaSpec.radiusPx),
@@ -452,7 +458,12 @@ class _FrontTextPainter extends CustomPainter {
     final toUnits = (double mm) => mm * KtaSpec.pxPerMm;
 
     // Label statis — posisi x memakai px kanvas apa adanya.
-    _paintAtBaseline(canvas, 'NO. ANGGOTA', KtaText.ptSectionLabel, KtaPositions.cardX, toUnits(KtaSpec.mmH - 7.7), bold: true);
+    // Di _KtaFront.build(): ambil fallbackInitials dari member.namaLengkap.
+    final fallbackInitials = kta.namaLengkap.isNotEmpty
+        ? '${kta.namaLengkap.substring(0, 3).toUpperCase()}'
+        : null;
+
+    // Posisi foto + initials fallback (handled by _KtaFront widget above)
     _paintSingle(canvas, fields['nomor']!, KtaPositions.cardX, toUnits(KtaSpec.mmH - 4.9), 2.5, bold: true);
     
     _paintAtBaseline(canvas, 'NAMA LENGKAP', KtaText.ptSectionLabel, KtaPositions.cardX, toUnits(KtaSpec.mmH - 33.5), bold: true);
@@ -740,21 +751,49 @@ class _BackTextPainter extends CustomPainter {
 class _KtaImage extends StatelessWidget {
   final String url;
   final BoxFit fit;
-  const _KtaImage({required this.url, required this.fit});
+  final String? fallbackInitials;
+  const _KtaImage({required this.url, required this.fit, this.fallbackInitials});
 
   @override
   Widget build(BuildContext context) {
-    if (url.isEmpty) return const SizedBox.shrink();
+    if (url.isEmpty) {
+      // Fallback: tampilkan inisial 3 huruf dari nama jika foto tidak ada.
+      if (fallbackInitials != null) {
+        return Container(
+          alignment: Alignment.center,
+          child: Text(
+            fallbackInitials!,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: KtaColors.darkText,
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+    // Handle data: URIs (base64-encoded images).
     if (url.startsWith('data:')) {
       final bytes = _tryDecodeDataUrl(url);
       if (bytes == null) return const SizedBox.shrink();
       return Image.memory(bytes, fit: fit, gaplessPlayback: true);
     }
-    if (url.startsWith('http')) {
+    // Handle full https?:// URLs via Image.network.
+    if (url.startsWith('http://') || url.startsWith('https://')) {
       return Image.network(url, fit: fit, errorBuilder: (_, __, ___) {
         return const SizedBox.shrink();
       });
     }
+    // Handle any other string as an absolute path under /api/uploads/ (same convention
+    // used by Member.fotoUrl getter: prepend /api/uploads/ if not already absolute).
+    final absUrl = _toAbsolutePhotoUrl(url);
+    if (absUrl.isNotEmpty) {
+      return Image.network(absUrl, fit: fit, errorBuilder: (_, __, ___) {
+        return const SizedBox.shrink();
+      });
+    }
+    // Fallback: empty placeholder.
     return const SizedBox.shrink();
   }
 }
@@ -781,9 +820,7 @@ class _KtaQr extends StatelessWidget {
     }
     return const SizedBox.shrink();
   }
-}
-
-Uint8List? _tryDecodeDataUrl(String dataUrl) {
+}Uint8List? _tryDecodeDataUrl(String dataUrl) {
   final comma = dataUrl.indexOf(',');
   if (comma <= 0) return null;
   try {
@@ -791,4 +828,22 @@ Uint8List? _tryDecodeDataUrl(String dataUrl) {
   } catch (_) {
     return null;
   }
+}
+
+String _toAbsolutePhotoUrl(String photoPath) {
+  // Jika sudah URL absolut (http/https), kembalikan seperti ada.
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+    return photoPath;
+  }
+  // Jika data URL (data:image/...), kembalikan seperti ada.
+  if (photoPath.startsWith('data:')) {
+    return photoPath;
+  }
+  // Jika path relativ (mis. 'foto.jpg' atau '/api/uploads/foto.jpg'),
+  // pastikan diawali '/api/uploads/'.
+  final p = photoPath.trim();
+  if (p.isEmpty) return '';
+  if (p.startsWith('/api/uploads/')) return p;
+  if (p.startsWith('/')) return '/api/uploads' + p;
+  return '/api/uploads/$p';
 }
