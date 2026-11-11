@@ -144,11 +144,6 @@ jobs:
   test-mobile:
     name: 🧪 Test Flutter (mobile)
     runs-on: windows-latest
-    env:
-      # Runner Windows GH: workspace di D:\, pub cache default di C:\.
-      # Kotlin incremental compiler melempar "different roots" saat kedua path
-      # beda drive (flutter/flutter#173456) — samakan drive pub cache.
-      PUB_CACHE: D:\a\pub-cache
     defaults:
       run:
         working-directory: apps/mobile_flutter
@@ -160,7 +155,6 @@ jobs:
         with:
           channel: stable
           cache: true
-          cache-path: D:\a\pub-cache
 
       - name: Install dependencies
         run: flutter pub get
