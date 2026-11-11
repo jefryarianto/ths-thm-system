@@ -28,8 +28,10 @@ export function wrap(s:string,max:number,linesMax:number,base:number,min:number,
   }
   return {lines:[],size:min,overflow:true};
 }
-export const expiry=(s?:string)=>{if(!s)return 'MM/YY'// Toleransi ISO penuh dari API (Date.toISOString())
-  const raw = (s ?? '').trim()// Ekstrak YYYY-MM dari string (bisa berupa ISO penuh atau format sederhana)
-  const match = raw.match(/^(\d{4})-(\d{2})/);
-  if (match) return `${match[2]}/${match[1].slice(2)}`
-  return 'FORMAT?';};\n
+export const expiry=(s?:string)=>{
+  if(!s)return 'MM/YY';
+  const raw=(s??'').trim();
+  const match=raw.match(/^(\d{4})-(\d{2})/);
+  if(match)return `${match[2]}/${match[1].slice(2)}`;
+  return 'FORMAT?';
+};
