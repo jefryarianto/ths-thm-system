@@ -102,7 +102,7 @@ test.describe('Kartu Anggota — geometri pratinjau (spec kanonik)', () => {
 
     await page.goto('/members/member-1?tab=card');
     await expect(page.locator('h4:has-text("Sisi Depan")')).toBeVisible();
-    await expect(page.getByText('No. Anggota', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('NO. ANGGOTA', { exact: true }).first()).toBeVisible();
   });
 
   test('blok info & kolom JK sesuai koordinat spec', async ({ page }) => {
@@ -114,7 +114,9 @@ test.describe('Kartu Anggota — geometri pratinjau (spec kanonik)', () => {
       const svg = document.querySelector('svg[data-side="depan"]') as SVGSVGElement | null;
       if (!svg) return { error: 'svg depan tidak ditemukan' };
       const box = svg.viewBox.baseVal;
-      if (box.width !== 856 || box.height !== 539.8) {
+      // viewBox.baseVal disimpan sebagai float 32-bit (539.8 → 539.7999877929688),
+      // jadi bandingkan dengan toleransi, bukan kesamaan eksak.
+      if (box.width !== 856 || Math.abs(box.height - 539.8) > 0.01) {
         return { error: `viewBox salah: ${box.width}x${box.height}` };
       }
 

@@ -6,6 +6,7 @@ import * as exportPngModule from '@/components/kta/exportPng';
 
 vi.mock('@/components/kta/exportPng', () => ({
   downloadCardPng: vi.fn(),
+  cardPngDataUrl: vi.fn(),
 }));
 
 describe('KtaAdminPreview', () => {
@@ -103,15 +104,23 @@ describe('KtaAdminPreview', () => {
     });
   });
 
-  it('triggers window.print when print button is clicked', () => {
-    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+  it('opens a print window with the generated PNG when print button is clicked', async () => {
+    vi.mocked(exportPngModule.cardPngDataUrl).mockResolvedValue('data:image/png;base64,abc123');
+
+    const printSpy = vi.fn();
+    const fakeWindow = {
+      document: { write: vi.fn(), close: vi.fn(), getElementById: () => null },
+      focus: vi.fn(),
+      print: printSpy,
+    };
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakeWindow as unknown as Window);
 
     render(<KtaAdminPreview anggota={completeAnggota} />);
 
-    const printBtn = screen.getByRole('button', { name: /cetak/i });
-    fireEvent.click(printBtn);
+    fireEvent.click(screen.getByRole('button', { name: /cetak/i }));
 
-    expect(printSpy).toHaveBeenCalled();
-    printSpy.mockRestore();
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1));
+    expect(fakeWindow.document.write).toHaveBeenCalledWith(expect.stringContaining('data:image/png;base64,abc123'));
+    openSpy.mockRestore();
   });
 });

@@ -164,9 +164,20 @@ jobs:
 
       - name: Build release APK
         if: always()
+        shell: bash
         run: |
-          flutter build apk --release --flavor main --target-platform android-arm64
-          mv build/app/outputs/flutter-apk/app-release.apk apps/mobile_flutter/build/app/release/ths-thm-mobile-release-$(date +%Y%m%d%H%M).apk
+          flutter build apk --release --target-platform android-arm64
+          mkdir -p build/app/release
+          mv build/app/outputs/flutter-apk/app-release.apk "build/app/release/ths-thm-mobile-release-$(date +%Y%m%d%H%M).apk"
+
+      - name: Upload release APK artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ths-thm-mobile-release
+          path: apps/mobile_flutter/build/app/release/*.apk
+          retention-days: 14
+          if-no-files-found: warn
 
       - name: Unggah artefak golden yang gagal
         if: failure()

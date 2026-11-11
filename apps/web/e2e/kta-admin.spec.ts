@@ -123,25 +123,30 @@ test.describe('Admin KTA Flow', () => {
     expect(download.suggestedFilename()).toMatch(/KTA-belakang\.png/);
   });
 
-  test('triggers print dialog when print button is clicked', async ({ page }) => {
+  test('prints generated PNG in new window when print button is clicked', async ({ page }) => {
     await mockAuth(page, { role: 'admin_ranting' });
 
     await page.goto('/admin/kta/test-member-1');
     await expect(page.locator('text=Depan').first()).toBeVisible({ timeout: 10000 });
 
-    // Mock window.print to verify trigger without opening browser print UI
+    // Stub window.open agar deterministik: fake window merekam print() tanpa
+    // membuka tab sungguhan (cetak kini merasterisasi PNG lalu print dari popup).
     await page.evaluate(() => {
-      (window as unknown as { __printed: boolean }).__printed = false;
-      window.print = () => {
-        (window as unknown as { __printed: boolean }).__printed = true;
+      const w = window as unknown as { __printed: boolean };
+      w.__printed = false;
+      const fakeWindow = {
+        document: { write: () => {}, close: () => {}, getElementById: () => null },
+        focus: () => {},
+        print: () => { w.__printed = true; },
       };
+      window.open = (() => fakeWindow) as unknown as typeof window.open;
     });
 
-    const cetakBtn = page.getByRole('button', { name: /cetak/i });
-    await cetakBtn.click();
+    await page.getByRole('button', { name: /cetak/i }).click();
 
-    const wasPrinted = await page.evaluate(() => (window as unknown as { __printed: boolean }).__printed);
-    expect(wasPrinted).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __printed: boolean }).__printed))
+      .toBe(true);
   });
 
   test('redirects unauthenticated users to login', async ({ page }) => {

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import { KtaCard } from './KtaCard';
-import { downloadCardPng } from './exportPng';
+import { downloadCardPng, cardPngDataUrl } from './exportPng';
 import type { Anggota } from './types';
 
 export interface KtaAdminPreviewProps {
@@ -37,94 +37,30 @@ export function KtaAdminPreview({ anggota }: KtaAdminPreviewProps) {
   const cetak = async () => {
     try {
       // Generate PNG at correct DPI (10 px/mm = ~254 DPI) for accurate printing
-      const svg = document.querySelector('svg.kta-svg');
+      const svg = depanRef.current ?? (document.querySelector('svg.kta-svg') as SVGSVGElement | null);
       if (!svg) return;
+      setExportError('');
+      const dataUrl = await cardPngDataUrl(svg);
 
-      await document.fonts.ready;
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-
-      const node = svg.cloneNode(true) as SVGSVGElement;
-      const images = Array.from(node.querySelectorAll('image'));
-
-      // Embed remote images (CORS)
-      const embed = async (href: string): Promise<string> => {
-        if (href.startsWith('data:')) return href;
-        let response: Response;
-        try { response = await fetch(href, { mode: 'cors' }); }
-        catch { return href; }
-        if (!response.ok) return href;
-        const blob = await response.blob();
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result));
-          reader.onerror = () => reject(new Error('Gagal'));
-          reader.readAsDataURL(blob);
-        });
-      };
-
-      await Promise.all(images.map(async img => {
-        const href = img.getAttribute('href');
-        if (href) { await embed(href); }
-      }));
-
-      // Embed fonts
-      const [regular, bold] = await Promise.all([
-        embed('/kta/fonts/DejaVuSans.ttf'),
-        embed('/kta/fonts/DejaVuSans-Bold.ttf')
-      ]);
-
-      const defs = node.querySelector('defs') || node.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'defs'), node.firstChild);
-      const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-      style.textContent = `
-        @font-face{font-family:KTADejaVu;src:url('${regular}') format('truetype');font-weight:400}
-        @font-face{font-family:KTADejaVu;src:url('${bold}') format('truetype');font-weight:700}
-      `;
-      defs.appendChild(style);
-
-      // Render at 2022×1275 px = 856×539.8 mm at 10 px/mm
-      node.setAttribute('width', '2022');
-      node.setAttribute('height', '1275');
-      node.style.width = '2022px';
-      node.style.height = '1275px';
-
-      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(node)], { type: 'image/svg+xml;charset=utf-8' }));
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Gagal render SVG'));
-        img.src = url;
-      });
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 2022;
-      canvas.height = 1275;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas tidak tersedia');
-
-      // White background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 2022, 1275);
-      ctx.drawImage(img, 0, 0, 2022, 1275);
-
-      // Open new tab with PNG for printing
-      const printUrl = canvas.toDataURL('image/png');
+      // Open new tab with PNG, wait for the image to decode, then print.
       const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`<img src="${printUrl}" style="width:100%;height:auto;">`);
-        printWindow.document.close();
-        // Wait for image to load, then print
-        await new Promise<void>((resolve) => {
-          img.onload = () => {
-            // Print the canvas content
-            printWindow.print();
-            resolve();
-          };
+      if (!printWindow) throw new Error('Jendela cetak diblokir — izinkan popup untuk situs ini.');
+      printWindow.document.write(
+        `<title>Cetak KTA</title><body style="margin:0"><img id="kta-print" src="${dataUrl}" style="width:100%;height:auto;"></body>`
+      );
+      printWindow.document.close();
+      const popupImg = printWindow.document.getElementById('kta-print') as HTMLImageElement | null;
+      if (popupImg && !popupImg.complete) {
+        await new Promise<void>(resolve => {
+          popupImg.addEventListener('load', () => resolve(), { once: true });
+          popupImg.addEventListener('error', () => resolve(), { once: true });
         });
       }
-      URL.revokeObjectURL(url);
+      printWindow.focus();
+      printWindow.print();
     } catch (e) {
       console.error('Gagal cetak KTA:', e);
-      alert('Gagal mencetak: ' + (e instanceof Error ? e.message : 'Unknown error'));
+      setExportError(e instanceof Error ? e.message : 'Cetak gagal');
     }
   };
 

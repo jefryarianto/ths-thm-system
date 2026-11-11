@@ -8,7 +8,7 @@ async function embed(href:string){
   if(!response.ok)throw new Error(`Aset tidak ditemukan (${response.status}): ${href}`);
   return dataURL(await response.blob());
 }
-export async function downloadCardPng(svg:SVGSVGElement,side:'depan'|'belakang',assetBase='/kta'){
+async function rasterizeCardPng(svg:SVGSVGElement,assetBase='/kta'):Promise<Blob>{
   await document.fonts.ready;
   await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
   const node=svg.cloneNode(true) as SVGSVGElement;
@@ -24,7 +24,13 @@ export async function downloadCardPng(svg:SVGSVGElement,side:'depan'|'belakang',
   try{
     const img=new Image();await new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>reject(new Error('SVG tidak dapat dirender menjadi gambar.'));img.src=url;});
     const c=document.createElement('canvas');c.width=2022;c.height=1275;const ctx=c.getContext('2d');if(!ctx)throw new Error('Canvas tidak tersedia.');ctx.drawImage(img,0,0,c.width,c.height);
-    const blob=await new Promise<Blob>((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Gagal membuat PNG.')),'image/png'));
-    const out=URL.createObjectURL(blob);const link=document.createElement('a');link.href=out;link.download=`KTA-${side}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(out),3000);
+    return await new Promise<Blob>((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Gagal membuat PNG.')),'image/png'));
   }finally{URL.revokeObjectURL(url);}
+}
+export async function downloadCardPng(svg:SVGSVGElement,side:'depan'|'belakang',assetBase='/kta'){
+  const out=URL.createObjectURL(await rasterizeCardPng(svg,assetBase));
+  const link=document.createElement('a');link.href=out;link.download=`KTA-${side}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(out),3000);
+}
+export async function cardPngDataUrl(svg:SVGSVGElement,assetBase='/kta'){
+  return dataURL(await rasterizeCardPng(svg,assetBase));
 }
