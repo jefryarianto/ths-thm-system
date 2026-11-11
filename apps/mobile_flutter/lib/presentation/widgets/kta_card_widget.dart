@@ -411,25 +411,26 @@ class _FrontTextPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cardX = KtaPositions.cardX;
+    // Convert mm to SVG units (0-856)
+    final toUnits = (double mm) => mm * KtaSpec.pxPerMm;
     
-    // Labels (static)
-    _paintAtBaseline(canvas, 'NO. ANGGOTA', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 7.7) * KtaSpec.pxPerMm, bold: true);
-    _paintSingle(canvas, fields['nomor']!, cardX, KtaSpec.mmH - 4.9, 2.5, bold: true);
+    // Labels (static) - use SVG units directly
+    _paintAtBaseline(canvas, 'NO. ANGGOTA', KtaText.ptSectionLabel, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 7.7), bold: true);
+    _paintSingle(canvas, fields['nomor']!, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 4.9), 2.5, bold: true);
     
-    _paintAtBaseline(canvas, 'NAMA LENGKAP', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 33.5) * KtaSpec.pxPerMm, bold: true);
-    _paintSingle(canvas, fields['depanNama']!, cardX, KtaSpec.mmH - 30.7, 2.5, bold: true);
+    _paintAtBaseline(canvas, 'NAMA LENGKAP', KtaText.ptSectionLabel, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 33.5), bold: true);
+    _paintSingle(canvas, fields['depanNama']!, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 30.7), 2.5, bold: true);
     
     if (kta.jenisKelamin.isNotEmpty) {
       final nameWidth = fields['depanNama']!.widthMm * KtaSpec.pxPerMm;
-      _paintAtBaseline(canvas, kta.jenisKelamin, KtaText.ptNamePrimaryBase, cardX + nameWidth + 40, (KtaSpec.mmH - 30.7) * KtaSpec.pxPerMm, bold: true);
+      _paintAtBaseline(canvas, kta.jenisKelamin, KtaText.ptNamePrimaryBase, toUnits(KtaPositions.cardX + nameWidth + 40), toUnits(KtaSpec.mmH - 30.7), bold: true);
     }
 
-    _paintAtBaseline(canvas, 'TEMPAT / TAHUN DADAR', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 26.6) * KtaSpec.pxPerMm, bold: true);
-    _paintSingle(canvas, fields['dadar'] ?? const Fit(lines: [''], pt: 3.8, widthMm: 0, ok: true), cardX, KtaSpec.mmH - 23.8, 2.5, bold: true);
+    _paintAtBaseline(canvas, 'TEMPAT / TAHUN DADAR', KtaText.ptSectionLabel, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 26.6), bold: true);
+    _paintSingle(canvas, fields['dadar'] ?? const Fit(lines: [''], pt: 3.8, widthMm: 0, ok: true), toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 23.8), 2.5, bold: true);
 
-    _paintAtBaseline(canvas, 'RANTING', KtaText.ptSectionLabel, cardX, (KtaSpec.mmH - 19.7) * KtaSpec.pxPerMm, bold: true);
-    _paintLines(canvas, fields['ranting']!, cardX, KtaSpec.mmH - 16.9, 2.5, bold: true);
+    _paintAtBaseline(canvas, 'RANTING', KtaText.ptSectionLabel, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 19.7), bold: true);
+    _paintLines(canvas, fields['ranting']!, toUnits(KtaPositions.cardX), toUnits(KtaSpec.mmH - 16.9), 2.5, bold: true);
   }
 
   void _paintSingle(Canvas canvas, Fit fit, double x, double yBaseline, double leading,
@@ -633,9 +634,9 @@ class _BackTextPainter extends CustomPainter {
     _paintAtBaseline(canvas, text, pt, x, baseline, bold: bold);
   }
 
-  void _paintAtBaseline(Canvas canvas, String text, double pt, double xMm,
-      double baselinePx,
-      {bool bold = false}) {
+  void _paintAtBaseline(Canvas canvas, String text, double pt, double xSvg,
+      double ySvg,
+      {bool bold = false, bool rightAlign = false}) {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
@@ -649,8 +650,9 @@ class _BackTextPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     final baseline = painter.computeLineMetrics().first.baseline;
-    var dx = mmToPx(xMm);
-    painter.paint(canvas, Offset(dx, baselinePx - baseline));
+    var dx = xSvg;
+    if (rightAlign) dx -= painter.width;
+    painter.paint(canvas, Offset(dx, ySvg - baseline));
   }
 
   @override
