@@ -162,6 +162,12 @@ jobs:
       - name: Test widget & golden
         run: flutter test --reporter compact
 
+      - name: Build release APK
+        if: always()
+        run: |
+          flutter build apk --release --flavor main --target-platform android-arm64
+          mv build/app/outputs/flutter-apk/app-release.apk apps/mobile_flutter/build/app/release/ths-thm-mobile-release-$(date +%Y%m%d%H%M).apk
+
       - name: Unggah artefak golden yang gagal
         if: failure()
         uses: actions/upload-artifact@v4
