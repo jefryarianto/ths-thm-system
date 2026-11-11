@@ -168,9 +168,20 @@ class KtaLayoutCalculator {
     final terbit = 'TANGGAL TERBIT : '
         '${upTerbit.isNotEmpty ? upTerbit : '...............'}';
 
+    // "TEMPAT / TAHUN DADAR" — gabungan tempat & tahun dadar, sama dengan
+    // `[tempatDadar, tahunDadar].filter(Boolean).join(', ')` di referensi web.
+    final dadar = [up(m.tempatDadar), up(m.tahunDadar)]
+        .where((v) => v.isNotEmpty)
+        .join(', ');
+
     final fields = <String, Fit>{
       'nomor': single(up(m.nomorAnggota), 22.7, 5.1, 3.8, true),
+      // "EXP: MM/YY" di atas QR — referensi: `fitSingle`-nya di SVG, teks
+      // `EXP: {expiry(a.berlakuSampai)}` x=733.5 (tengah), pt 5.
+      'exp': single('EXP: ${expiryShort(m.berlakuSampai)}', 24, 5, 4, true),
       'depanNama': single(up(m.namaLengkap), 30.7, 5.1, 3.8, true),
+      'dadar': single(dadar.isEmpty ? '[BELUM DIISI]' : dadar, 27.5, 5.1, 3.8,
+          true),
       'ranting': wrap(up(m.ranting), 30.7, 3, 5.1, 3.8, true),
       'belakangNama': single(up(m.namaLengkap), 39, 5.3, 4, false),
       'lahir': single('${up(m.tempatLahir)}, ${up(m.tanggalLahir)}', 52, 5.3, 4, false),
@@ -242,6 +253,21 @@ String normalise(String v) => v.trim().replaceAll(RegExp(r'\s+'), ' ');
 String noData(String? v) {
   final u = up(v);
   return u.isEmpty ? '[BELUM DIISI]' : u;
+}
+
+/// `expiry()` pada `layout.ts` referensi: `YYYY-MM` → `MM/YY`, kosong →
+/// `MM/YY`, format lain → `FORMAT?`.
+///
+/// Tambahan: menerima timestamp ISO penuh (`YYYY-MM-DD…`) karena API
+/// mengirim `tanggalBerlakuSampai` sebagai `Date.toISOString()`.
+String expiryShort(String? value) {
+  final raw = (value ?? '').trim();
+  if (raw.isEmpty) return 'MM/YY';
+  final m = RegExp(r'^(\d{4})-(\d{2})').firstMatch(raw);
+  if (m == null) return 'FORMAT?';
+  final bulan = int.tryParse(m.group(2)!);
+  if (bulan == null || bulan < 1 || bulan > 12) return 'FORMAT?';
+  return '${m.group(2)}/${m.group(1)!.substring(2)}';
 }
 
 /// Konversi mm → px kanvas (10 px/mm).

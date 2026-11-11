@@ -128,17 +128,19 @@ class _HomeScreenState extends State<HomeScreen> {
               // layar. Baris chip shortcut dipindah jadi FAB menu di kanan-bawah.
               SliverPadding(
                 padding: AppTheme.screenPaddingH,
-                sliver: SliverToBoxAdapter(child: _GamificationTip()),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space16)),
-              SliverPadding(
-                padding: AppTheme.screenPaddingH,
                 sliver: SliverToBoxAdapter(child: _KtaSection()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space16)),
               const SliverToBoxAdapter(child: AgendaSection()),
               const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space20)),
               const SliverToBoxAdapter(child: BeritaFeedSection()),
+              // Gamifikasi diletakkan paling bawah (setelah Berita) dan ikut alur
+              // scroll biasa — bukan overlay — agar tidak menumpuk kartu KTA.
+              const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space20)),
+              SliverPadding(
+                padding: AppTheme.screenPaddingH,
+                sliver: SliverToBoxAdapter(child: _GamificationTip()),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: AppTheme.space24)),
             ],
           ),
@@ -356,78 +358,93 @@ class _GamificationTip extends StatelessWidget {
         final p = state.profile!;
         // Medali diambil dari data level (icon bisa emoji pangkat, mis. 🥉/🥈/🥇)
         final medal = p.level.icon.isEmpty ? '🎖️' : p.level.icon;
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () => context.push<void>('/gamification'),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppTheme.space16),
-              decoration: BoxDecoration(
-                color: AppTheme.levelBg(Theme.of(context).brightness),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: _bronze.withValues(alpha: 0.28), width: 1.2),
-              ),
-              child: Row(children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [_bronzeLight, _bronze],
-                    ),
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                          color: _bronze.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3)),
-                    ],
-                  ),
-                  child: Text(medal,
-                      style: const TextStyle(
-                          fontSize: 26, color: AppTheme.navy)),
+        // Judul section disamakan dengan heading "Agenda"/"Berita".
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text('Gamifikasi',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color:
+                          Theme.of(context).textTheme.headlineSmall?.color)),
+            ),
+              Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => context.push<void>('/gamification'),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppTheme.space16),
+                decoration: BoxDecoration(
+                  color: AppTheme.levelBg(Theme.of(context).brightness),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: _bronze.withValues(alpha: 0.28), width: 1.2),
                 ),
-                const SizedBox(width: AppTheme.space12),
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Text('Level: ${p.level.name}',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.onSurface)),
-                      const SizedBox(height: 2),
-                      Text('${p.points} poin • ${p.level.name} member',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color:
-                                  Theme.of(context).colorScheme.onSurfaceVariant)),
-                      const SizedBox(height: AppTheme.space8),
-                      // Progress sederhana menuju level berikutnya (bronze→silver)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: p.points >= 500
-                              ? 1
-                              : (p.points / 500).clamp(0.0, 1.0),
-                          minHeight: 6,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.surfaceContainerHighest,
-                          valueColor: const AlwaysStoppedAnimation(_bronze),
-                        ),
+                child: Row(children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [_bronzeLight, _bronze],
                       ),
-                    ])),
-              ]),
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                            color: _bronze.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3)),
+                      ],
+                    ),
+                    child: Text(medal,
+                        style: const TextStyle(
+                            fontSize: 26, color: AppTheme.navy)),
+                  ),
+                  const SizedBox(width: AppTheme.space12),
+                  Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                        Text('Level: ${p.level.name}',
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.onSurface)),
+                        const SizedBox(height: 2),
+                        Text('${p.points} poin • ${p.level.name} member',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color:
+                                    Theme.of(context).colorScheme.onSurfaceVariant)),
+                        const SizedBox(height: AppTheme.space8),
+                        // Progress sederhana menuju level berikutnya (bronze→silver)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: p.points >= 500
+                                ? 1
+                                : (p.points / 500).clamp(0.0, 1.0),
+                            minHeight: 6,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.surfaceContainerHighest,
+                            valueColor: const AlwaysStoppedAnimation(_bronze),
+                          ),
+                        ),
+                      ])),
+                ]),
+              ),
             ),
           ),
+          ],
         );
       },
     );

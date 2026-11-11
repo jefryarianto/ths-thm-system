@@ -2,9 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_flutter/core/utils/kta_layout.dart';
 import 'package:mobile_flutter/data/models/member_kta.dart';
 
-MemberKta sample() {
-  return const MemberKta(
+MemberKta sample({String berlakuSampai = ''}) {
+  return MemberKta(
     nomorAnggota: 'LRT-0103-001-1994',
+    berlakuSampai: berlakuSampai,
     namaLengkap: 'JEFRY ARIANTO BABA',
     jenisKelamin: 'L',
     ranting: 'SAN JUAN LEBAO',
@@ -93,6 +94,40 @@ void main() {
         anyElement(contains('Data nomorAnggota belum diisi.')));
     expect(layout.warnings, anyElement(contains('Jenis kelamin harus L atau P.')));
     expect(layout.warnings, anyElement(contains('Tingkat tidak valid.')));
+  });
+
+  group('expiryShort (label "EXP: MM/YY" di atas QR)', () {
+    test('kosong → MM/YY', () {
+      expect(expiryShort(''), 'MM/YY');
+      expect(expiryShort(null), 'MM/YY');
+      expect(expiryShort('   '), 'MM/YY');
+    });
+
+    test('YYYY-MM dan timestamp ISO penuh → MM/YY', () {
+      expect(expiryShort('2031-10'), '10/31');
+      expect(expiryShort('2027-03'), '03/27');
+      expect(expiryShort('2027-03-01T00:00:00.000Z'), '03/27');
+    });
+
+    test('format salah → FORMAT?', () {
+      expect(expiryShort('2027-3'), 'FORMAT?');
+      expect(expiryShort('2031-13'), 'FORMAT?');
+      expect(expiryShort('invalid'), 'FORMAT?');
+    });
+
+    test('field layout exp memakai teks EXP: MM/YY', () async {
+      await KtaLayoutCalculator.ensureFonts();
+      final calc = KtaLayoutCalculator();
+      expect(calc.calculate(sample()).fields['exp']!.lines.single, 'EXP: MM/YY');
+      expect(
+        calc
+            .calculate(sample(berlakuSampai: '2027-03-01T00:00:00.000Z'))
+            .fields['exp']!
+            .lines
+            .single,
+        'EXP: 03/27',
+      );
+    });
   });
 
   test('KtaRank fallback ke MUDA untuk tingkat tak dikenal', () {

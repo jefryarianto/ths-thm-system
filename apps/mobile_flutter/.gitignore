@@ -9,6 +9,8 @@ build/
 
 # Artefak uji/dev (jangan ikut commit)
 *.png
+# Golden test kartu KTA: gambar acuan WAJIB ikut repo (pengecualian *.png)
+!test/goldens/*.png
 run_out.txt
 emulator_out.txt
 screenshot_*.png

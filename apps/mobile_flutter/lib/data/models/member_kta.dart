@@ -14,6 +14,8 @@ class MemberKta {
   final String tingkat;
   final String tempatLahir;
   final String tanggalLahir;
+  final String tempatDadar;
+  final String tahunDadar;
   final String pekerjaan;
   final String status;
   final String pelantikanTanggal;
@@ -21,6 +23,8 @@ class MemberKta {
   final String alamat;
   final String tanggalTerbit;
   final String tanggalBerlakuSampai;
+  /// Nilai mentah `tanggalBerlakuSampai` (ISO) untuk label "EXP: MM/YY".
+  final String berlakuSampai;
   final String namaKoordinator;
   final String tandaTanganUrl;
   final String stampImageUrl;
@@ -35,6 +39,8 @@ class MemberKta {
     required this.tingkat,
     required this.tempatLahir,
     required this.tanggalLahir,
+    this.tempatDadar = '',
+    this.tahunDadar = '',
     required this.pekerjaan,
     required this.status,
     required this.pelantikanTanggal,
@@ -42,6 +48,7 @@ class MemberKta {
     required this.alamat,
     required this.tanggalTerbit,
     required this.tanggalBerlakuSampai,
+    this.berlakuSampai = '',
     required this.namaKoordinator,
     required this.tandaTanganUrl,
     required this.stampImageUrl,
@@ -71,6 +78,8 @@ class MemberKta {
       tingkat: member.tingkat,
       tempatLahir: member.tempatLahir,
       tanggalLahir: tanggalLahir,
+      tempatDadar: member.tempatDadar,
+      tahunDadar: member.tahunDadar,
       pekerjaan: cardData?.pekerjaan ?? '',
       status: member.statusKeanggotaan,
       pelantikanTanggal: '',
@@ -82,6 +91,7 @@ class MemberKta {
       tanggalBerlakuSampai: cardData != null && cardData.generated
           ? dateDisplay(cardData.tanggalBerlakuSampai)
           : '',
+      berlakuSampai: cardData?.tanggalBerlakuSampai ?? '',
       namaKoordinator: cardData?.signerName ?? '',
       tandaTanganUrl: cardData?.signatureImage ?? '',
       stampImageUrl: cardData?.stampImage ?? '',

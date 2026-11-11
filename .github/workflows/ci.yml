@@ -125,6 +125,51 @@ jobs:
       - run: pnpm install
       - run: pnpm --filter @ths-thm/web build
 
+  # ─── Test Flutter (mobile) ────────────────────────────────────────
+  # Menjalankan SELURUH `flutter test` di apps/mobile_flutter, termasuk
+  # golden test kartu KTA (test/kta_card_golden_test.dart →
+  # test/goldens/kta_front.png & kta_back.png). Perubahan tata letak teks
+  # kartu/beranda yang tidak disengaja akan langsung gagal di PR.
+  #
+  # Golden memakai font yang dibundel aplikasi (KtaDejaVu) dan latar dari
+  # aset repo, tanpa jaringan, sehingga hasil render stabil.
+  # Runner sengaja Windows: gambar acuan (`test/goldens/*.png`) dibuat di
+  # Windows, dan perbandingan golden bersifat piksel-per-piksel — beda OS
+  # bisa menghasilkan diff rasterisasi palsu. Bila suatu saat acuan dibuat
+  # ulang di Linux/macOS, samakan `runs-on` dengan OS tersebut.
+  # Jika golden gagal, artefak `test/failures/` (gambar aktual, acuan, dan
+  # diff) diunggah agar bisa diperiksa tanpa menjalankan ulang secara lokal.
+  # Bila desain kartu memang berubah: `flutter test --update-goldens` lalu
+  # commit ulang gambar acuannya.
+  test-mobile:
+    name: 🧪 Test Flutter (mobile)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/mobile_flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Test widget & golden
+        run: flutter test --reporter compact
+
+      - name: Unggah artefak golden yang gagal
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-golden-failures
+          path: apps/mobile_flutter/test/failures/
+          if-no-files-found: ignore
+
   # ─── Repo Hygiene: whitelist dokumen root ─────────────────────────
   # Root hanya untuk README.md / CHANGELOG.md / CONTRIBUTING.md.
   # Panduan & dokumentasi lain wajib hidup di docs/ (aktif) atau

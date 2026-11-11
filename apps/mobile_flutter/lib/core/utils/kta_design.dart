@@ -41,10 +41,13 @@ class KtaPositions {
   static const double badgeX = 47.5;
   static const double badgeW = 233.0;
   static const double badgeH = 15.0;
-  static const double badgeRadius = 15.0;
+  // `rx="1.5"` pada referensi SVG (KtaCard.tsx) — strip hampir persegi,
+  // bukan pil.
+  static const double badgeRadius = 1.5;
   static const double badgeY1 = 470.3;
-  static const double badgeY2a = 463.85;
-  static const double badgeY2b = 479.35;
+  // Dua strip: `y(6.45)-15` dan `y(4.45)-15` (H = 539.8).
+  static const double badgeY2a = 460.3;
+  static const double badgeY2b = 480.3;
   static const double badgeY3a = 454.8;
   static const double badgeY3b = 470.8;
   static const double badgeY3c = 486.8;
