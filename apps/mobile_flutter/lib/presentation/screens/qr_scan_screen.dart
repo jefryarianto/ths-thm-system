@@ -4,6 +4,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -302,6 +304,9 @@ class _QrScanScreenState extends State<QrScanScreen>
         authState.user.role == 'penguji';
 
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkBackground
+          : AppTheme.lightBackground,
       appBar: AppBar(
         title: const Text('Scan QR'),
         actions: [

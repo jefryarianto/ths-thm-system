@@ -12,6 +12,7 @@ import 'core/services/fcm_service.dart';
 import 'core/services/migration_service.dart';
 import 'core/services/realtime_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_background_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'firebase_options.dart';
 import 'logic/auth/auth_bloc.dart';
@@ -25,6 +26,7 @@ import 'logic/member/member_bloc.dart';
 import 'logic/assessments/assessment_bloc.dart';
 import 'logic/notification/notification_bloc.dart';
 import 'presentation/screens/document_detail_screen.dart';
+import 'presentation/widgets/app_background_shell.dart';
 import 'presentation/screens/assessment_aspect_screen.dart';
 import 'presentation/screens/assessment_item_screen.dart';
 import 'presentation/screens/assessment_score_screen.dart';
@@ -128,8 +130,11 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => ClaimBloc()),
         BlocProvider(create: (_) => KtaApplicationBloc()),
       ],
-      child: ChangeNotifierProvider.value(
-        value: themeController,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: themeController),
+          ChangeNotifierProvider(create: (_) => AppBackgroundController()),
+        ],
         child: BlocListener<AuthBloc, AuthState>(
           listenWhen: (previous, current) =>
               previous.runtimeType != current.runtimeType,
@@ -139,6 +144,11 @@ class MyApp extends StatelessWidget {
             // sesi dipulihkan / login sukses.
             if (state is AuthAuthenticated) {
               appRefreshNotifications?.call();
+              context
+                  .read<AppBackgroundController>()
+                  .loadForUser(state.user.id);
+            } else if (state is AuthUnauthenticated) {
+              context.read<AppBackgroundController>().reset();
             }
             // Pastikan koneksi realtime aktif setiap kali sesi tersedia.
             if (state is AuthAuthenticated) {
@@ -158,7 +168,16 @@ class MyApp extends StatelessWidget {
                 themeMode: themeController.mode,
                 routerConfig: AppRouter.router,
                 builder: (context, child) {
-                  return BiometricLockScreen(child: child!);
+                  final authState = context.watch<AuthBloc>().state;
+                  final background = context.watch<AppBackgroundController>();
+                  return AppBackgroundShell(
+                    imagePath: authState is AuthAuthenticated
+                        ? background.imagePath
+                        : null,
+                    isDark:
+                        Theme.of(context).brightness == Brightness.dark,
+                    child: BiometricLockScreen(child: child!),
+                  );
                 },
               );
             },

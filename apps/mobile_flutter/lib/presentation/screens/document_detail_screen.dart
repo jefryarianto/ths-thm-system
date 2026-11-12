@@ -129,6 +129,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.darkBackground
+          : AppTheme.lightBackground,
       appBar: AppBar(title: const Text('Detail Dokumen')),
       body: _buildBody(),
     );

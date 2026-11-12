@@ -36,8 +36,6 @@ class _ForumScreenState extends State<ForumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -46,8 +44,7 @@ class _ForumScreenState extends State<ForumScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor:
-            isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const AppBarIconTitle(
             icon: Icons.forum_outlined,
