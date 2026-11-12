@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/services/app_update_service.dart';
+import '../../core/theme/app_background_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/utils/snack_bar_helper.dart';
@@ -19,6 +24,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final background = context.watch<AppBackgroundController>();
     return Scaffold(
       appBar: AppBar(
         title: const AppBarIconTitle(
@@ -83,6 +89,14 @@ class SettingsScreen extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: _ThemeSelector(),
           ),
+          ListTile(
+            leading: Icon(Icons.wallpaper_outlined, color: colorScheme.primary),
+            title: const Text('Latar Halaman'),
+            subtitle: Text(
+                background.imagePath == null ? 'Tanpa latar' : 'Latar kustom aktif'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openBackgroundPicker(context),
+          ),
           const Divider(),
           ListTile(
             leading: Icon(Icons.info_outline, color: colorScheme.primary),
@@ -109,6 +123,67 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _openBackgroundPicker(BuildContext context) {
+    final controller = context.read<AppBackgroundController>();
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final path = controller.imagePath;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (path != null)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.file(
+                      File(path),
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Pilih dari Galeri'),
+                onTap: () async {
+                  try {
+                    final picked = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 2000,
+                      maxHeight: 2000,
+                      imageQuality: 85,
+                    );
+                    if (picked == null) return;
+                    await controller.setImage(picked.path);
+                    if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                  } catch (e) {
+                    if (context.mounted) {
+                      showCenteredSnackBar(
+                          context, 'Gagal memasang latar: $e');
+                    }
+                  }
+                },
+              ),
+              if (path != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('Hapus Latar'),
+                  onTap: () async {
+                    await controller.clear();
+                    if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
