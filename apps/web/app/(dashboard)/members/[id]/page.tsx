@@ -1528,15 +1528,14 @@ export default function MemberDetailPage() {
             )}
 
             {/* Card Previews - KtaCard (Paket E-Card Spec) */}
-            <div className={"space-y-6 " + (cardLoading ? 'hidden' : '')}>
+            <div className={"grid grid-cols-1 lg:grid-cols-2 gap-6 items-start " + (cardLoading ? 'hidden' : '')}>
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Sisi Depan
                 </h4>
-                <div className="w-full max-w-sm bg-white rounded-xl shadow-md overflow-hidden p-2">
-                  <KtaCard
-                    side="depan"
-                    anggota={{
+                <KtaCard
+                  side="depan"
+                  anggota={{
                       nama: member.namaLengkap,
                       jenisKelamin: member.jenisKelamin as 'L' | 'P',
                       nomor: member.nomorAnggota,
@@ -1556,18 +1555,16 @@ export default function MemberDetailPage() {
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'E. HENDRIKUS MASAN BEDA',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
-                    }}
-                  />
-                </div>
+                  }}
+                />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Sisi Belakang
                 </h4>
-                <div className="w-full max-w-sm bg-white rounded-xl shadow-md overflow-hidden p-2">
-                  <KtaCard
-                    side="belakang"
-                    anggota={{
+                <KtaCard
+                  side="belakang"
+                  anggota={{
                       nama: member.namaLengkap,
                       jenisKelamin: member.jenisKelamin as 'L' | 'P',
                       nomor: member.nomorAnggota,
@@ -1587,9 +1584,8 @@ export default function MemberDetailPage() {
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'E. HENDRIKUS MASAN BEDA',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
-                    }}
-                  />
-                </div>
+                  }}
+                />
               </div>
             </div>
             {/* Download Actions */}
