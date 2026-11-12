@@ -7,6 +7,8 @@ export interface Anggota {
   jenisKelamin?: JenisKelamin;
   nomor: string;
   ranting: string;
+  /** Nama distrik mentah dari API; dinormalisasi saat render. */
+  distrik?: string;
   tempatDadar: string;
   tahunDadar: string;
   /** YYYY-MM, contoh 2031-10. Kosong: placeholder. */

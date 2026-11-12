@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import type {Anggota} from './types';
 import {W,H,pt,y,u,fitSingle,wrap,expiry,type Measure} from './layout';
 import {getInitials} from '@/lib/initials';
+import {normalizeDistrict} from '@/lib/kta/district';
 
 type Props={side:'depan'|'belakang'; anggota:Anggota; assetBase?:string; svgRef?:{current:SVGSVGElement|null}; onWarnings?:(messages:string[])=>void};
 const rank:Record<Anggota['tingkatan'],{count:number;color:string}>={pratama:{count:1,color:'#185AB5'},tamtama:{count:2,color:'#185AB5'},muda:{count:1,color:'#E4B500'},madya:{count:2,color:'#E4B500'},utama:{count:3,color:'#E4B500'}};
@@ -92,7 +93,7 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      <image href={`${base}/logo.png`} x="700" y="30.8" width="112" height="112"/>
      <HeaderText x={683} baseline={y(49.45)} size={pt(5.2)} text="ORGANISASI PENCAK SILAT PENDIDIKAN"/>
      <HeaderText x={683} baseline={y(46.4)} size={pt(6.4)} text="TUNGGAL HATI SEMINARI – TUNGGAL HATI MARIA"/>
-     <HeaderText x={683} baseline={y(43.1)} size={pt(5.6)} text="DISTRIK KEUSKUPAN LARANTUKA"/>
+     <HeaderText x={683} baseline={y(43.1)} size={pt(5.6)} text={`DISTRIK KEUSKUPAN ${normalizeDistrict(a.distrik)}`}/>
      <HeaderText x={683} baseline={y(37.1)} size={pt(6.4)} text="KARTU TANDA ANGGOTA" yellow/>
      <rect x="44" y="145.8" width="240" height="300" rx="14" fill="#DDE6EA"/>
      {a.fotoUrl
@@ -132,8 +133,8 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
     {/* Mikroteks adalah lapisan SVG; file gambar latar tetap tanpa tulisan.
         Diletakkan tepat di tengah pita guilloche bawah (inset 16) dan
         dipusatkan horizontal agar polanya simetris. */}
-    <Text x={W/2} y={y(1.6)} textAnchor="middle" dominantBaseline="middle" fontSize={pt(2.6)} fill="#0B377B" aria-label={side==='depan'?'PRO PATRIA ET ECCLESIA':'Fortiter in Re, Suaviter in Modo'}>
-      {Array(18).fill(side==='depan'?'PRO PATRIA ET ECCLESIA •':'Fortiter in Re, Suaviter in Modo •').join(' ')}
+    <Text x={W/2} y={y(1.6)} textAnchor="middle" dominantBaseline="middle" fontSize={pt(2.6)} fill="#0B377B" aria-label={side==='depan'?'PRO PATRIA ET ECCLESIA':'FORTITER IN RE, SUAVITER IN MODO'}>
+      {Array(18).fill(side==='depan'?'PRO PATRIA ET ECCLESIA •':'FORTITER IN RE, SUAVITER IN MODO •').join(' ')}
     </Text>
    </g>
   </svg>;

@@ -47,7 +47,10 @@ interface ApiMember {
   tanggalTerbit?: string | null;
   tanggalBerlakuSampai?: string | null;
   fotoPath?: string | null;
-  ranting?: { nama?: string | null } | null;
+  ranting?: {
+    nama?: string | null;
+    wilayah?: { distrik?: { nama?: string | null } | null } | null;
+  } | null;
 }
 
 interface ApiDigitalCard {
@@ -81,6 +84,7 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
     jenisKelamin: member.jenisKelamin ?? undefined,
     nomor: member.nomorAnggota,
     ranting: member.ranting?.nama ?? '',
+    distrik: member.ranting?.wilayah?.distrik?.nama ?? undefined,
     tempatDadar: member.tempatDadar ?? '',
     tahunDadar: member.tahunDadar ?? '',
     tingkatan: toTingkatan(member.tingkat),

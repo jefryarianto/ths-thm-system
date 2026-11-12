@@ -40,7 +40,10 @@ const memberRow = {
   statusKeanggotaan: 'aktif',
   fotoPath: 'member-photo-1.jpg',
   tanggalBerlakuSampai: '2031-10-01T00:00:00.000Z',
-  ranting: { nama: 'Ranting Sukun' },
+  ranting: {
+    nama: 'Ranting Sukun',
+    wilayah: { distrik: { nama: 'Keuskupan Larantuka' } },
+  },
 };
 
 const cardData = {
@@ -94,6 +97,7 @@ describe('Anggota API Service', () => {
       expect(member.qrImageUrl).toBe('data:image/png;base64,QR');
       expect(member.verifyUrl).toBe('https://ths-thm.cloud/verify/abc');
       expect(member.tempatTanggalLahir).toBe('Malang, 01 Januari 1990');
+      expect(member.distrik).toBe('Keuskupan Larantuka');
     });
 
     it('uses the real /members endpoint and attaches the bearer token', async () => {
