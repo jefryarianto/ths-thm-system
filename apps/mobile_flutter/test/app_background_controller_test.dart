@@ -61,6 +61,26 @@ void main() {
     expect(c.imagePath, path);
   });
 
+  test('loadForUser langsung mengosongkan latar user sebelumnya', () async {
+    final c = build();
+    await c.loadForUser('user-a');
+    await c.setImage(source.path);
+    final pending = c.loadForUser('user-b');
+    expect(c.imagePath, isNull);
+    await pending;
+    expect(c.imagePath, isNull);
+  });
+
+  test('reset saat load berjalan tidak memulihkan latar user lama', () async {
+    final c = build();
+    await c.loadForUser('user-a');
+    await c.setImage(source.path);
+    final pending = c.loadForUser('user-a');
+    c.reset();
+    await pending;
+    expect(c.imagePath, isNull);
+  });
+
   test('clear menghapus file dan preferensi user aktif', () async {
     final c = build();
     await c.loadForUser('user-a');

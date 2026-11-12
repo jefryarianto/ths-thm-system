@@ -49,6 +49,20 @@ void main() {
     );
   });
 
+  testWidgets('file latar hilang saat runtime kembali ke child tanpa gambar',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: AppBackgroundShell(
+        imagePath: 'latar-tidak-ada/bg.png',
+        isDark: false,
+        child: Scaffold(body: Text('konten')),
+      ),
+    ));
+
+    expect(find.text('konten'), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
+  });
+
   testWidgets('scrim lebih gelap pada tema gelap', (tester) async {
     await tester.pumpWidget(_app(imagePath: 'unused', isDark: true));
 

@@ -136,8 +136,12 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => AppBackgroundController()),
         ],
         child: BlocListener<AuthBloc, AuthState>(
-          listenWhen: (previous, current) =>
-              previous.runtimeType != current.runtimeType,
+          listenWhen: (previous, current) {
+            if (previous is AuthAuthenticated && current is AuthAuthenticated) {
+              return previous.user.id != current.user.id;
+            }
+            return previous.runtimeType != current.runtimeType;
+          },
           listener: (context, state) {
             _routerRefresh.value++;
             // Segarkan jumlah notifikasi belum dibaca (badge Beranda) setelah

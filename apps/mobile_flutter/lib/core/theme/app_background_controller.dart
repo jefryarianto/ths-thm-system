@@ -20,8 +20,13 @@ class AppBackgroundController extends ChangeNotifier {
 
   Future<void> loadForUser(String userId) async {
     _userId = userId;
+    // Jangan pernah menampilkan latar akun sebelumnya selama muat berjalan.
+    _imagePath = null;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
+    if (_userId != userId) return;
     final stored = prefs.getString(_prefKey(userId));
+    if (_userId != userId) return;
     _imagePath = stored != null && File(stored).existsSync() ? stored : null;
     notifyListeners();
   }

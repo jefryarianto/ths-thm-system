@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Membungkus konten aplikasi dengan latar halaman pilihan pengguna.
 /// Saat tidak ada latar, konten ditampilkan apa adanya (perilaku lama).
-class AppBackgroundShell extends StatelessWidget {
+class AppBackgroundShell extends StatefulWidget {
   final String? imagePath;
   final bool isDark;
   final Widget child;
@@ -17,19 +17,42 @@ class AppBackgroundShell extends StatelessWidget {
   });
 
   @override
+  State<AppBackgroundShell> createState() => _AppBackgroundShellState();
+}
+
+class _AppBackgroundShellState extends State<AppBackgroundShell> {
+  bool _failed = false;
+
+  @override
+  void didUpdateWidget(covariant AppBackgroundShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imagePath != widget.imagePath) _failed = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final path = imagePath;
-    if (path == null) return child;
+    final path = widget.imagePath;
+    // File bisa dihapus OS/pembersih saat aplikasi berjalan: kembali ke
+    // perilaku normal tanpa latar, bukan menampilkan scrim di atas halaman.
+    if (path == null || _failed || !File(path).existsSync()) {
+      return widget.child;
+    }
 
     return AppBackgroundLayer(
-      isDark: isDark,
+      isDark: widget.isDark,
       background: Image.file(
         File(path),
         key: ValueKey(path),
         fit: BoxFit.cover,
         gaplessPlayback: true,
+        errorBuilder: (_, __, ___) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_failed) setState(() => _failed = true);
+          });
+          return const SizedBox.shrink();
+        },
       ),
-      child: child,
+      child: widget.child,
     );
   }
 }
