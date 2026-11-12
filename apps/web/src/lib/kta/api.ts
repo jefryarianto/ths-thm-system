@@ -1,4 +1,4 @@
-import type { Anggota } from '@/components/kta/types';
+import type { Anggota, Tingkatan } from '@/components/kta/types';
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL || '/api';
 const API_BASE = rawBase === '/api' || rawBase.endsWith('/api')
@@ -30,74 +30,115 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-export async function fetchAnggota(id: string): Promise<Anggota> {
-  try {
-    const res = await fetch(`${API_BASE}/anggota/${id}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) {
-      throw new Error('Anggota tidak ditemukan');
-    }
-    return await res.json();
-  } catch (err) {
-    if (err instanceof Error && err.message === 'Anggota tidak ditemukan') {
-      throw err;
-    }
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_API_URL?.includes('59999')
-    ) {
-      return {
-        nama: id.startsWith('test') ? 'Test Member' : `Anggota ${id}`,
-        nomor: id,
-        ranting: 'Ranting Sukun',
-        tempatDadar: 'Malang',
-        tahunDadar: '2015',
-        tingkatan: 'pratama',
-        tempatTanggalLahir: 'Malang, 01-01-1990',
-        pekerjaan: 'Wiraswasta',
-        status: 'Aktif',
-        alamat: 'Jl. Melati No. 12',
-        berlakuSampai: '2031-10',
-      };
-    }
-    throw err;
-  }
+interface ApiMember {
+  id: string;
+  nomorAnggota: string;
+  namaLengkap: string;
+  jenisKelamin?: 'L' | 'P' | null;
+  tempatLahir?: string | null;
+  tanggalLahir?: string | null;
+  tempatDadar?: string | null;
+  tahunDadar?: string | null;
+  alamat?: string | null;
+  pekerjaan?: string | null;
+  statusKeanggotaan?: string | null;
+  tingkat?: string | null;
+  tanggalTerbit?: string | null;
+  tanggalBerlakuSampai?: string | null;
+  fotoPath?: string | null;
+  ranting?: { nama?: string | null } | null;
 }
 
-export async function searchAnggota(query: string): Promise<Anggota[]> {
-  try {
-    const res = await fetch(`${API_BASE}/anggota/search?q=${encodeURIComponent(query)}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) {
-      throw new Error('Pencarian gagal');
-    }
-    return await res.json();
-  } catch (err) {
-    if (err instanceof Error && err.message === 'Pencarian gagal') {
-      throw err;
-    }
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_API_URL?.includes('59999')
-    ) {
-      return [
-        {
-          nama: query.toLowerCase().includes('test') ? 'Test Member' : `Anggota ${query}`,
-          nomor: 'test-member-1',
-          ranting: 'Ranting Sukun',
-          tempatDadar: 'Malang',
-          tahunDadar: '2015',
-          tingkatan: 'pratama',
-          tempatTanggalLahir: 'Malang, 01-01-1990',
-          pekerjaan: 'Wiraswasta',
-          status: 'Aktif',
-          alamat: 'Jl. Melati No. 12',
-          berlakuSampai: '2031-10',
-        },
-      ];
-    }
-    throw err;
+interface ApiDigitalCard {
+  fotoDataUrl?: string | null;
+  qrCode?: string | null;
+  signatureImage?: string | null;
+  card?: { verificationUrl?: string | null; signerName?: string | null } | null;
+  member?: { pekerjaan?: string | null; tanggalBerlakuSampai?: string | null } | null;
+}
+
+const TINGKATAN: Tingkatan[] = ['pratama', 'tamtama', 'muda', 'madya', 'utama'];
+
+function toTingkatan(value?: string | null): Tingkatan {
+  const normalized = (value || '').toLowerCase();
+  return (TINGKATAN as string[]).includes(normalized) ? (normalized as Tingkatan) : 'pratama';
+}
+
+/** ISO (`YYYY-MM-DD…`) atau `YYYY-MM` → `YYYY-MM` (format EXP di KtaCard). */
+function toYearMonth(value?: string | null): string | undefined {
+  const match = value?.match(/^(\d{4})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}` : undefined;
+}
+
+function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
+  const fotoDataUrl = card?.fotoDataUrl?.trim();
+  const tandaTangan = card?.signatureImage?.trim();
+
+  return {
+    id: member.id,
+    nama: member.namaLengkap,
+    jenisKelamin: member.jenisKelamin ?? undefined,
+    nomor: member.nomorAnggota,
+    ranting: member.ranting?.nama ?? '',
+    tempatDadar: member.tempatDadar ?? '',
+    tahunDadar: member.tahunDadar ?? '',
+    tingkatan: toTingkatan(member.tingkat),
+    berlakuSampai: toYearMonth(
+      member.tanggalBerlakuSampai ?? card?.member?.tanggalBerlakuSampai,
+    ),
+    fotoUrl: fotoDataUrl || undefined,
+    qrImageUrl: card?.qrCode ?? undefined,
+    verifyUrl: card?.card?.verificationUrl ?? undefined,
+    tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),
+    pekerjaan: card?.member?.pekerjaan ?? member.pekerjaan ?? '',
+    status: member.statusKeanggotaan || 'AKTIF',
+    alamat: member.alamat ?? '',
+    koordinator: card?.card?.signerName ?? undefined,
+    tandaTanganUrl: tandaTangan
+      ? `/api/uploads/${encodeURIComponent(tandaTangan)}`
+      : undefined,
+  };
+}
+
+/** Ambil detail anggota + data kartu digital (foto, QR, penandatangan). */
+export async function fetchAnggota(id: string): Promise<Anggota> {
+  const memberRes = await fetch(`${API_BASE}/members/${encodeURIComponent(id)}`, {
+    headers: getHeaders(),
+    cache: 'no-store',
+  });
+  if (!memberRes.ok) {
+    throw new Error('Anggota tidak ditemukan');
   }
+  const memberBody = await memberRes.json();
+  const member: ApiMember = memberBody?.data ?? memberBody;
+
+  let card: ApiDigitalCard | null = null;
+  try {
+    const cardRes = await fetch(
+      `${API_BASE}/members/${encodeURIComponent(id)}/digital-card`,
+      { headers: getHeaders(), cache: 'no-store' },
+    );
+    if (cardRes.ok) {
+      const cardBody = await cardRes.json();
+      card = cardBody?.data ?? null;
+    }
+  } catch {
+    // Data kartu opsional — foto/EXP tetap dirender dari data anggota.
+  }
+
+  return toAnggota(member, card);
+}
+
+/** Cari anggota via endpoint /members (search nama/nomor/email/telepon). */
+export async function searchAnggota(query: string): Promise<Anggota[]> {
+  const res = await fetch(
+    `${API_BASE}/members?search=${encodeURIComponent(query)}&limit=20`,
+    { headers: getHeaders(), cache: 'no-store' },
+  );
+  if (!res.ok) {
+    throw new Error('Pencarian gagal');
+  }
+  const body = await res.json();
+  const rows: ApiMember[] = Array.isArray(body) ? body : (body?.data ?? []);
+  return rows.map((member) => toAnggota(member));
 }

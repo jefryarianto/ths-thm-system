@@ -73,7 +73,9 @@ class MemberKta {
       namaLengkap: member.namaLengkap,
       jenisKelamin: member.jenisKelamin,
       ranting: member.namaRanting,
-      fotoUrl: member.fotoUrl,
+      fotoUrl: (cardData?.fotoDataUrl.isNotEmpty ?? false)
+          ? cardData!.fotoDataUrl
+          : member.fotoUrl,
       qrImageUrl: cardData?.qrCode ?? '',
       tingkat: member.tingkat,
       tempatLahir: member.tempatLahir,

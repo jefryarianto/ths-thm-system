@@ -43,9 +43,9 @@ export function AnggotaSearch() {
 
       <ul className="results divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
         {results.map((a) => (
-          <li key={a.nomor} className="hover:bg-gray-50 transition-colors">
+          <li key={a.id ?? a.nomor} className="hover:bg-gray-50 transition-colors">
             <Link
-              href={`/admin/kta/${a.nomor}`}
+              href={`/admin/kta/${a.id ?? a.nomor}`}
               className="block p-4 text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               <strong>{a.nama}</strong> — {a.nomor} ({a.ranting})

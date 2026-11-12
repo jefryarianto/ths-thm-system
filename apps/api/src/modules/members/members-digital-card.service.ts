@@ -427,6 +427,10 @@ export class MembersDigitalCardService {
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { card, memberData, verificationUrl, levelVisual, distrikId } =
       await this.prepareDigitalCardData(memberId, scope, user);
+    // Foto disematkan sebagai data URL: aset `member-photo-*` di /api/uploads
+    // bersifat privat (butuh Bearer), sehingga `<img>`/Image.network tidak bisa
+    // memuatnya. Data URL aman dikirim lewat JSON terautentikasi ini.
+    const fotoDataUrl = await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700);
     if (!card) {
       return {
         success: true,
@@ -434,6 +438,7 @@ export class MembersDigitalCardService {
           generated: false,
           card: null,
           member: memberData,
+          fotoDataUrl,
           qrCode: null,
           levelVisual,
           signatureImage: null,
@@ -452,6 +457,7 @@ export class MembersDigitalCardService {
         generated: true,
         card,
         member: memberData,
+        fotoDataUrl,
         qrCode: qrDataUrl,
         levelVisual,
         signatureImage,
@@ -757,8 +763,12 @@ export class MembersDigitalCardService {
   /**
    * Isi tanggal terbit & masa berlaku KTA saat pertama kali dibuat.
    * Idempoten: hanya mengisi bila `tanggalTerbit` masih kosong.
+   * Mengembalikan tanggal efektif agar pemanggil dapat memperbarui objek
+   * `member` di memori tanpa query ulang.
    */
-  private async initKtaDates(memberId: string): Promise<void> {
+  private async initKtaDates(
+    memberId: string,
+  ): Promise<{ tanggalTerbit: Date; tanggalBerlakuSampai: Date }> {
     const now = new Date();
     const expires = new Date(now);
     expires.setFullYear(expires.getFullYear() + KTA_VALIDITY_YEARS);
@@ -769,6 +779,7 @@ export class MembersDigitalCardService {
         tanggalBerlakuSampai: expires,
       },
     });
+    return { tanggalTerbit: now, tanggalBerlakuSampai: expires };
   }
 
   /** Pastikan dokumen KTA ada (buat bila belum pernah ada, lengkap dgn QR digital). */
@@ -1068,9 +1079,16 @@ export class MembersDigitalCardService {
       await this.prisma.qRValidation.create({
         data: { dokumenId: existingCard.id, token, isValid: true },
       });
+    }
 
-      // Set tanggal terbit & masa berlaku 3 tahun (idempoten).
-      await this.initKtaDates(member.id);
+    // Set/backfill tanggal terbit & masa berlaku 3 tahun (idempoten). Dokumen
+    // KTA lama bisa belum punya tanggal — tanpa backfill, kartu selalu
+    // menampilkan `EXP: MM/YY`. Objek `member` ikut diperbarui agar respons
+    // ini langsung berisi tanggal tanpa query ulang.
+    if (existingCard && !member.tanggalTerbit) {
+      const dates = await this.initKtaDates(member.id);
+      member.tanggalTerbit = dates.tanggalTerbit;
+      member.tanggalBerlakuSampai = dates.tanggalBerlakuSampai;
     }
 
     const memberData = this.buildMemberData(member);

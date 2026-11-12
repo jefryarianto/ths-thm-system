@@ -7,6 +7,7 @@ void main() {
       'generated': false,
       'card': null,
       'qrCode': null,
+      'fotoDataUrl': 'data:image/png;base64,PHOTO',
       'member': {
         'nomorAnggota': 'LRT-0103-001-1994',
         'pekerjaan': 'Pegawai',
@@ -18,6 +19,7 @@ void main() {
     final cd = CardData.fromJson(json);
     expect(cd.generated, isFalse);
     expect(cd.qrCode, isEmpty);
+    expect(cd.fotoDataUrl, 'data:image/png;base64,PHOTO');
     expect(cd.pekerjaan, 'Pegawai');
     expect(cd.tanggalTerbit, '2026-11-02T00:00:00.000Z');
     expect(cd.tanggalBerlakuSampai, '2029-11-02T00:00:00.000Z');

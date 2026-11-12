@@ -182,6 +182,49 @@ describe('MembersDigitalCardService', () => {
       });
     });
 
+    it('should include fotoDataUrl (data URL) agar foto privat bisa dirender <img>/Image.network', async () => {
+      const existing = {
+        id: 'doc-foto',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'https://ths-thm.cloud/verify/abc123',
+        status: 'generated',
+      };
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
+      jest
+        .spyOn(service as unknown as { resolvePhotoDataUrl: () => Promise<string | null> }, 'resolvePhotoDataUrl')
+        .mockResolvedValue('data:image/png;base64,PHOTO');
+
+      const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(result.data.fotoDataUrl).toBe('data:image/png;base64,PHOTO');
+    });
+
+    it('should backfill tanggal terbit/berlaku untuk dokumen KTA lama yang kosong', async () => {
+      const existing = {
+        id: 'doc-old',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'https://ths-thm.cloud/verify/abc123',
+        status: 'generated',
+      };
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        ...mockMember,
+        tanggalTerbit: null,
+        tanggalBerlakuSampai: null,
+        dokumen: [existing],
+      });
+      mockPrisma.anggota.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(mockPrisma.anggota.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'm-lrt-1', tanggalTerbit: null }),
+        }),
+      );
+      expect(result.data.member.tanggalTerbit).toBeTruthy();
+      expect(result.data.member.tanggalBerlakuSampai).toBeTruthy();
+    });
+
     it('should NOT auto-generate dokumen saat GET digital-card tanpa kartu', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] });
 

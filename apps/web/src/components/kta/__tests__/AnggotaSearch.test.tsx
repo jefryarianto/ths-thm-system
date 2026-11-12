@@ -11,6 +11,7 @@ vi.mock('@/lib/kta/api', () => ({
 describe('AnggotaSearch', () => {
   const mockResults: Anggota[] = [
     {
+      id: 'member-budi',
       nama: 'Budi Santoso',
       nomor: '1234567890',
       ranting: 'Ranting Sukun',
@@ -23,6 +24,7 @@ describe('AnggotaSearch', () => {
       alamat: 'Jl. Melati No. 12',
     },
     {
+      id: 'member-siti',
       nama: 'Siti Aminah',
       nomor: '0987654321',
       ranting: 'Ranting Klojen',
@@ -73,10 +75,10 @@ describe('AnggotaSearch', () => {
     });
 
     const budiLink = screen.getByRole('link', { name: /Budi Santoso/i });
-    expect(budiLink).toHaveAttribute('href', '/admin/kta/1234567890');
+    expect(budiLink).toHaveAttribute('href', '/admin/kta/member-budi');
 
     const sitiLink = screen.getByRole('link', { name: /Siti Aminah/i });
-    expect(sitiLink).toHaveAttribute('href', '/admin/kta/0987654321');
+    expect(sitiLink).toHaveAttribute('href', '/admin/kta/member-siti');
   });
 
   it('handles search API failure gracefully by setting empty results', async () => {

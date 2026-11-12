@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { fetchAnggota } from '@/lib/kta/api';
-import { KtaAdminPreview } from '@/components/kta/KtaAdminPreview';
+import { KtaAdminLoader } from './KtaAdminLoader';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
 export const metadata: Metadata = {
@@ -14,20 +12,10 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  let anggota;
-  try {
-    anggota = await fetchAnggota(id);
-  } catch {
-    notFound();
-  }
-
-  if (!anggota) {
-    notFound();
-  }
 
   return (
     <PermissionGuard module="members" minRole="admin_ranting">
-      <KtaAdminPreview anggota={anggota} />
+      <KtaAdminLoader id={id} />
     </PermissionGuard>
   );
 }

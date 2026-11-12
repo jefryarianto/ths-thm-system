@@ -15,6 +15,11 @@ class CardData {
   final String status;
   final String qrCode;
 
+  /// Foto anggota sebagai data URL base64 dari server. Aset `member-photo-*`
+  /// di /api/uploads bersifat privat (butuh Bearer), sehingga `Image.network`
+  /// tidak bisa memuatnya; data URL aman dibawa lewat JSON terautentikasi ini.
+  final String fotoDataUrl;
+
   /// true bila KTA sudah pernah di-generate (server mengirim `generated`).
   /// Untuk kompatibilitas server lama, default true.
   final bool generated;
@@ -36,6 +41,7 @@ class CardData {
     this.nomorDokumen = '',
     this.status = '',
     this.qrCode = '',
+    this.fotoDataUrl = '',
     this.generated = true,
     this.pekerjaan = '',
     this.tanggalTerbit = '',
@@ -73,6 +79,7 @@ class CardData {
       nomorDokumen: _str(card, 'nomorDokumen'),
       status: _str(card, 'status'),
       qrCode: _str(json, 'qrCode'),
+      fotoDataUrl: _str(json, 'fotoDataUrl'),
       generated: json['generated'] as bool? ?? true,
       pekerjaan: _str(member, 'pekerjaan'),
       tanggalTerbit: _str(member, 'tanggalTerbit'),

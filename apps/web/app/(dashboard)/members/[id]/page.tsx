@@ -80,6 +80,12 @@ import { MemberAvatar } from '@/components/ui/member-avatar';
 
 // ─── Types ───
 
+/** ISO (`YYYY-MM-DD…`) atau `YYYY-MM` → `YYYY-MM` (format EXP di KtaCard). */
+function toYearMonth(value?: string | null): string | undefined {
+  const match = value?.match(/^(\d{4})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}` : undefined;
+}
+
 interface MemberDetail {
   id: string;
   nomorAnggota: string;
@@ -93,6 +99,7 @@ interface MemberDetail {
   noHp: string | null;
   email: string | null;
   fotoPath: string | null;
+  tanggalBerlakuSampai: string | null;
   statusKeanggotaan: string;
   tingkat: string | null;
   statusData: string;
@@ -486,6 +493,8 @@ export default function MemberDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardData, setCardData] = useState<{
     qrCode: string;
+    fotoDataUrl?: string | null;
+    tanggalBerlakuSampai?: string | null;
     verificationUrl?: string | null;
     signerName?: string;
     signerTitle?: string;
@@ -564,6 +573,8 @@ export default function MemberDetailPage() {
       if (response.ok && data.success) {
         setCardData({
           qrCode: data.data.qrCode,
+          fotoDataUrl: data.data.fotoDataUrl || null,
+          tanggalBerlakuSampai: data.data.member?.tanggalBerlakuSampai || null,
           verificationUrl: data.data.card?.verificationUrl || null,
           signerName: data.data.card?.signerName,
           signerTitle: data.data.card?.signerTitle,
@@ -1533,7 +1544,10 @@ export default function MemberDetailPage() {
                       tempatDadar: member.tempatDadar || '',
                       tahunDadar: member.tahunDadar || '',
                       tingkatan: (member.tingkat?.toLowerCase() || 'pratama') as Tingkatan,
-                      fotoUrl: member.fotoPath ? "/api/uploads/" + encodeURIComponent(member.fotoPath) : undefined,
+                      berlakuSampai: toYearMonth(
+                        cardData?.tanggalBerlakuSampai ?? member.tanggalBerlakuSampai,
+                      ),
+                      fotoUrl: cardData?.fotoDataUrl || undefined,
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
                       tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),
@@ -1561,7 +1575,10 @@ export default function MemberDetailPage() {
                       tempatDadar: member.tempatDadar || '',
                       tahunDadar: member.tahunDadar || '',
                       tingkatan: (member.tingkat?.toLowerCase() || 'pratama') as Tingkatan,
-                      fotoUrl: member.fotoPath ? "/api/uploads/" + encodeURIComponent(member.fotoPath) : undefined,
+                      berlakuSampai: toYearMonth(
+                        cardData?.tanggalBerlakuSampai ?? member.tanggalBerlakuSampai,
+                      ),
+                      fotoUrl: cardData?.fotoDataUrl || undefined,
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
                       tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),

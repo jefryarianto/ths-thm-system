@@ -1,6 +1,8 @@
 export type Tingkatan = 'pratama' | 'tamtama' | 'muda' | 'madya' | 'utama';
 export type JenisKelamin = 'L' | 'P';
 export interface Anggota {
+  /** ID anggota (dipakai untuk pratinjau/unduh KTA). */
+  id?: string;
   nama: string;
   jenisKelamin?: JenisKelamin;
   nomor: string;
