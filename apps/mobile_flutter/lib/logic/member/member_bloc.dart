@@ -35,6 +35,11 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
       return;
     }
 
+    // Pertahankan data kartu yang sudah dimuat: reload `/members/me` tidak
+    // boleh membuat UI mengira KTA belum dibuat (state baru tanpa `cardData`
+    // membuat `generated` jatuh ke false).
+    final previous = state is MemberLoaded ? state as MemberLoaded : null;
+
     emit(MemberLoading());
     try {
       final response = await _apiClient.dio.get('/members/me');
@@ -44,7 +49,18 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
         return;
       }
       final member = Member.fromJson(data);
-      emit(MemberLoaded(member: member));
+      final loaded = MemberLoaded(
+        member: member,
+        cardData: previous?.cardData,
+        cardImage: previous?.cardImage,
+        cardImageFailed: previous?.cardImageFailed ?? false,
+      );
+      emit(loaded);
+      // Segarkan data kartu di latar belakang bila sudah pernah dimuat; bila
+      // belum, layar terkait akan memintanya lewat MemberCardDataRequested.
+      if (previous?.cardData != null) {
+        await _fetchCardData(loaded, emit, force: true);
+      }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(MemberInitial());
@@ -188,7 +204,13 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
         emit(const MemberError(message: 'Data anggota tidak ditemukan'));
         return;
       }
-      emit(MemberUpdateSuccess(member: Member.fromJson(meData)));
+      final previous = state is MemberLoaded ? state as MemberLoaded : null;
+      emit(MemberUpdateSuccess(
+        member: Member.fromJson(meData),
+        cardData: previous?.cardData,
+        cardImage: previous?.cardImage,
+        cardImageFailed: previous?.cardImageFailed ?? false,
+      ));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(MemberInitial());
@@ -216,7 +238,12 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
 
     final current = state;
     if (current is MemberLoaded) {
-      emit(MemberPhotoUploading(member: current.member));
+      emit(MemberPhotoUploading(
+        member: current.member,
+        cardData: current.cardData,
+        cardImage: current.cardImage,
+        cardImageFailed: current.cardImageFailed,
+      ));
     }
 
     try {
@@ -240,7 +267,13 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
         emit(const MemberError(message: 'Data anggota tidak ditemukan'));
         return;
       }
-      emit(MemberPhotoUploadSuccess(member: Member.fromJson(meData)));
+      final previous = state is MemberLoaded ? state as MemberLoaded : null;
+      emit(MemberPhotoUploadSuccess(
+        member: Member.fromJson(meData),
+        cardData: previous?.cardData,
+        cardImage: previous?.cardImage,
+        cardImageFailed: previous?.cardImageFailed ?? false,
+      ));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(MemberInitial());

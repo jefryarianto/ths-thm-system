@@ -16,7 +16,13 @@ class MemberUpdating extends MemberState {}
 
 /// Sedang upload foto profil (tombol foto disabled + overlay spinner).
 class MemberPhotoUploading extends MemberLoaded {
-  const MemberPhotoUploading({required super.member});
+  const MemberPhotoUploading({
+    required super.member,
+    super.cardData,
+    super.cardImage,
+    super.cardImageFailed,
+    super.cardImageFetching,
+  });
 
   @override
   List<Object?> get props => [member];
@@ -81,6 +87,10 @@ class MemberUpdateSuccess extends MemberLoaded {
   const MemberUpdateSuccess({
     required super.member,
     this.message = 'Profil berhasil diperbarui',
+    super.cardData,
+    super.cardImage,
+    super.cardImageFailed,
+    super.cardImageFetching,
   });
 
   @override
@@ -95,6 +105,10 @@ class MemberPhotoUploadSuccess extends MemberLoaded {
   const MemberPhotoUploadSuccess({
     required super.member,
     this.message = 'Foto profil berhasil diperbarui',
+    super.cardData,
+    super.cardImage,
+    super.cardImageFailed,
+    super.cardImageFetching,
   });
 
   @override
