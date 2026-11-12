@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatPeriode, formatRupiah } from '../format';
+import { formatDate, formatPeriode, formatRupiah, formatTempatTanggalLahir } from '../format';
 
 describe('formatRupiah', () => {
   it('formats number with grouping', () => {
@@ -46,5 +46,23 @@ describe('formatPeriode', () => {
 describe('formatDate', () => {
   it('produces 2-digit day + long month name', () => {
     expect(formatDate('2026-09-01')).toBe('01 September 2026');
+  });
+});
+
+describe('formatTempatTanggalLahir', () => {
+  it('joins place and long date for KTA', () => {
+    expect(formatTempatTanggalLahir('Malang', '1990-01-01T00:00:00.000Z')).toBe(
+      'Malang, 01 Januari 1990',
+    );
+  });
+
+  it('omits missing place or date', () => {
+    expect(formatTempatTanggalLahir('', '')).toBe('');
+    expect(formatTempatTanggalLahir('Malang', null)).toBe('Malang');
+    expect(formatTempatTanggalLahir(null, '1990-01-01')).toBe('01 Januari 1990');
+  });
+
+  it('falls back to raw date when unparseable', () => {
+    expect(formatTempatTanggalLahir('Malang', 'tidak-valid')).toBe('Malang, tidak-valid');
   });
 });

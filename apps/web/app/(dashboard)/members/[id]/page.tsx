@@ -25,7 +25,7 @@ import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { formatPeriode } from '@/lib/format';
+import { formatPeriode, formatTempatTanggalLahir } from '@/lib/format';
 import ProfileHeader from '@/components/ui/profile-header';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
@@ -1549,7 +1549,7 @@ export default function MemberDetailPage() {
                       fotoUrl: cardData?.fotoDataUrl || undefined,
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
-                      tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),
+                      tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
                       pekerjaan: '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
@@ -1578,7 +1578,7 @@ export default function MemberDetailPage() {
                       fotoUrl: cardData?.fotoDataUrl || undefined,
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
-                      tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),
+                      tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
                       pekerjaan: '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',

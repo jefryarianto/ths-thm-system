@@ -93,6 +93,7 @@ describe('Anggota API Service', () => {
       expect(member.berlakuSampai).toBe('2031-10');
       expect(member.qrImageUrl).toBe('data:image/png;base64,QR');
       expect(member.verifyUrl).toBe('https://ths-thm.cloud/verify/abc');
+      expect(member.tempatTanggalLahir).toBe('Malang, 01 Januari 1990');
     });
 
     it('uses the real /members endpoint and attaches the bearer token', async () => {

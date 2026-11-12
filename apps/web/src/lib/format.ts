@@ -58,6 +58,22 @@ export function formatDateTime(value: string | number | Date): string {
 }
 
 /**
+ * Gabungkan tempat lahir dan tanggal lahir untuk baris KTA:
+ * "Malang, 01 Januari 1990". Tanggal mengikuti aturan `formatDate`
+ * (hari 2 digit + bulan lengkap), sama dengan renderer kartu di API.
+ */
+export function formatTempatTanggalLahir(
+  tempatLahir?: string | null,
+  tanggalLahir?: string | null,
+): string {
+  const tempat = (tempatLahir ?? '').trim();
+  if (!tanggalLahir) return tempat;
+  const date = new Date(tanggalLahir);
+  const tanggal = Number.isNaN(date.getTime()) ? tanggalLahir : formatDate(date);
+  return [tempat, tanggal].filter(Boolean).join(', ');
+}
+
+/**
  * Format periode "YYYY-MM" (atau "YYYY-MM-DD") menjadi "Januari 2026".
  * Jika input tidak cocok, nilai asli dikembalikan apa adanya.
  */

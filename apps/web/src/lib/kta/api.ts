@@ -1,4 +1,5 @@
 import type { Anggota, Tingkatan } from '@/components/kta/types';
+import { formatTempatTanggalLahir } from '@/lib/format';
 
 const rawBase = process.env.NEXT_PUBLIC_API_URL || '/api';
 const API_BASE = rawBase === '/api' || rawBase.endsWith('/api')
@@ -89,7 +90,7 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
     fotoUrl: fotoDataUrl || undefined,
     qrImageUrl: card?.qrCode ?? undefined,
     verifyUrl: card?.card?.verificationUrl ?? undefined,
-    tempatTanggalLahir: [member.tempatLahir, member.tanggalLahir].filter(Boolean).join(', '),
+    tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
     pekerjaan: card?.member?.pekerjaan ?? member.pekerjaan ?? '',
     status: member.statusKeanggotaan || 'AKTIF',
     alamat: member.alamat ?? '',
