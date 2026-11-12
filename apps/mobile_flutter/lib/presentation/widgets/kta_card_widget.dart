@@ -265,7 +265,7 @@ class _KtaFront extends StatelessWidget {
           Positioned(
             left: 0,
             top: 0,
-            child: _HeaderShadow(text: "DISTRIK KEUSKUPAN LARANTUKA", yMm: 43.1, fontSizePt: 5.6, yellow: false),
+            child: _HeaderShadow(text: "DISTRIK KEUSKUPAN ${kta.distrik}", yMm: 43.1, fontSizePt: 5.6, yellow: false),
           ),
           Positioned(
             left: 0,
@@ -542,7 +542,7 @@ class _BackMicrotext extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final text = isFront ? 'PRO PATRIA ET ECCLESIA' : 'Fortiter in Re, Suaviter in Modo';
+    final text = isFront ? 'PRO PATRIA ET ECCLESIA' : 'FORTITER IN RE, SUAVITER IN MODO';
     // Tengah pita guilloche bawah (inset 16 pada canvas 53,98 mm).
     final centerY = (KtaSpec.mmH - 1.6) * KtaSpec.pxPerMm;
     final repeatCount = 18;

@@ -9,6 +9,7 @@ class MemberKta {
   final String namaLengkap;
   final String jenisKelamin; // 'L' | 'P'
   final String ranting;
+  final String distrik;
   final String fotoUrl;
   final String qrImageUrl; // data URL hasil `GET /members/:id/digital-card`
   final String tingkat;
@@ -34,6 +35,7 @@ class MemberKta {
     required this.namaLengkap,
     required this.jenisKelamin,
     required this.ranting,
+    this.distrik = 'THS-THM',
     required this.fotoUrl,
     required this.qrImageUrl,
     required this.tingkat,
@@ -73,6 +75,7 @@ class MemberKta {
       namaLengkap: member.namaLengkap,
       jenisKelamin: member.jenisKelamin,
       ranting: member.namaRanting,
+      distrik: normalizeDistrictName(member.namaDistrik),
       fotoUrl: (cardData?.fotoDataUrl.isNotEmpty ?? false)
           ? cardData!.fotoDataUrl
           : member.fotoUrl,
@@ -99,4 +102,14 @@ class MemberKta {
       stampImageUrl: cardData?.stampImage ?? '',
     );
   }
+}
+
+
+String normalizeDistrictName(String? name) {
+  final trimmed = (name ?? '').trim();
+  if (trimmed.isEmpty) return 'THS-THM';
+  final stripped = trimmed
+      .replaceFirst(RegExp(r'^keuskupan\s*', caseSensitive: false), '')
+      .trim();
+  return stripped.isEmpty ? 'THS-THM' : stripped.toUpperCase();
 }
