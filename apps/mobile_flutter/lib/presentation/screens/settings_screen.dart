@@ -17,6 +17,8 @@ import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/member_avatar.dart';
+import '../../core/utils/name_initials.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -37,13 +39,14 @@ class SettingsScreen extends StatelessWidget {
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               final email = state is AuthAuthenticated ? state.user.email : '-';
+              final nama =
+                  state is AuthAuthenticated ? state.user.namaLengkap : '';
               return ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.person),
+                leading: MemberAvatar(
+                  size: 40,
+                  initials: nameInitials(nama),
                 ),
-                title: Text(state is AuthAuthenticated
-                    ? state.user.namaLengkap
-                    : 'Pengguna'),
+                title: Text(nama.isEmpty ? 'Pengguna' : nama),
                 subtitle: Text(email),
               );
             },

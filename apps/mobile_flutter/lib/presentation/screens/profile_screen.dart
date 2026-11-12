@@ -9,6 +9,7 @@ import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/member_avatar.dart';
 import '../widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -55,24 +56,12 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppTheme.space16),
             children: [
               Center(
-                child: CircleAvatar(
-                  radius: 48,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                  backgroundImage: member.fotoUrl.isNotEmpty
+                child: MemberAvatar(
+                  size: 96,
+                  image: member.fotoUrl.isNotEmpty
                       ? NetworkImage(member.fotoUrl)
                       : null,
-                  onBackgroundImageError: member.fotoUrl.isNotEmpty ? (_, __) {} : null,
-                  child: member.fotoUrl.isEmpty
-                      ? Text(
-                          nameInitials(member.namaLengkap),
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        )
-                      : null,
+                  initials: nameInitials(member.namaLengkap),
                 ),
               ),
               const SizedBox(height: AppTheme.space12),

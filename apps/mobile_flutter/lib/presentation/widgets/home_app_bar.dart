@@ -8,6 +8,7 @@ import '../../core/utils/name_initials.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../../logic/notification/notification_bloc.dart';
+import 'member_avatar.dart';
 
 /// AppBar Beranda ala aplikasi Expo — sapaan 3 baris dinamis:
 /// baris 1: `Gloria, selamat pagi` (pagi/siang/sore/malam — mengikuti jam).
@@ -154,45 +155,19 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bg = theme.colorScheme.primary;
-    final fg = theme.colorScheme.onPrimary;
-
     return BlocBuilder<MemberBloc, MemberState>(
       builder: (context, state) {
-        if (state is MemberLoaded && state.member.fotoUrl.isNotEmpty) {
-          return CircleAvatar(
-            radius: 24,
-            backgroundColor: bg,
-            child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: state.member.fotoUrl,
-                width: 46,
-                height: 46,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Text(
-                  nameInitials(state.member.namaLengkap),
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-              ),
-            ),
+        if (state is MemberLoaded) {
+          final fotoUrl = state.member.fotoUrl;
+          return MemberAvatar(
+            size: 48,
+            image: fotoUrl.isNotEmpty ? CachedNetworkImageProvider(fotoUrl) : null,
+            initials: nameInitials(state.member.namaLengkap),
           );
         }
         final auth = context.read<AuthBloc>().state;
         final nama = auth is AuthAuthenticated ? auth.user.namaLengkap : '';
-        final inisial = nameInitials(nama);
-        return CircleAvatar(
-          radius: 24,
-          backgroundColor: bg,
-          child: Text(
-            inisial,
-            style: TextStyle(
-              color: fg,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-            ),
-          ),
-        );
+        return MemberAvatar(size: 48, initials: nameInitials(nama));
       },
     );
   }

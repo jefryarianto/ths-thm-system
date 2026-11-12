@@ -13,6 +13,7 @@ import '../../data/models/member.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/member_avatar.dart';
 
 /// Layar edit profil anggota.
 ///
@@ -346,28 +347,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         return Center(
           child: Column(children: [
             Stack(alignment: Alignment.bottomRight, children: [
-              CircleAvatar(
-                radius: 56,
-                backgroundColor:
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                backgroundImage: backgroundImage,
-                child: backgroundImage == null
-                    ? Text(
-                        nameInitials(member?.namaLengkap ?? ''),
-                        style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+              MemberAvatar(
+                size: 112,
+                image: backgroundImage,
+                initials: nameInitials(member?.namaLengkap ?? ''),
+                overlay: _photoUploading
+                    ? Container(
+                        color: Colors.black45,
+                        child: const AppLoadingSpinner.small(
+                            color: Colors.white),
                       )
                     : null,
               ),
-              if (_photoUploading)
-                const Positioned.fill(
-                    child: CircleAvatar(
-                        radius: 56,
-                        backgroundColor: Colors.black45,
-                        child: AppLoadingSpinner.small(color: Colors.white))),
               Positioned(
                   bottom: 0,
                   right: 0,
