@@ -405,6 +405,15 @@ export class MembersController {
     return this.digitalCardService.getCardSecurity(id, req.scope, req.user);
   }
 
+  @Post(':id/digital-card/security/reset')
+  @CrudAuth('superadmin', 'admin_nasional', {
+    scope: 'self',
+    summary: 'Reset riwayat pemindaian QR kartu digital',
+  })
+  resetCardSecurity(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.resetCardSecurity(id, req.scope, req.user);
+  }
+
   @Patch(':id/digital-card/revoke')
   @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Cabut kartu anggota digital (nonaktifkan QR)',

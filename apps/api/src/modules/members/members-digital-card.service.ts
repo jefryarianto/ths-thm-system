@@ -368,6 +368,32 @@ export class MembersDigitalCardService {
     };
   }
 
+  /**
+   * Reset riwayat pemindaian kartu: hapus semua log scan dan kembalikan
+   * counter ke 0 agar batas pemindaian tidak lagi terkunci. Hanya untuk
+   * superadmin/admin_nasional (dijaga di controller).
+   */
+  async resetCardSecurity(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    const { qr } = await this.findKtaDocument(memberId, scope, user);
+    const [deleted] = await this.prisma.$transaction([
+      this.prisma.qrScan.deleteMany({ where: { qrValidationId: qr.id } }),
+      this.prisma.qRValidation.update({
+        where: { id: qr.id },
+        data: { scanCount: 0, scannedAt: null, isValid: true },
+      }),
+    ]);
+    const scanLimit = Number(process.env.QR_SCAN_LIMIT || 25);
+    return {
+      success: true,
+      data: {
+        deleted: deleted.count,
+        scanCount: 0,
+        scanLeft: scanLimit,
+        scanLog: [],
+      },
+    };
+  }
+
   /** Tanggal kedaluwarsa: 3 bulan setelah tanggal acuan. */
   private extendExpiry(from: Date): Date {
     const expiry = new Date(from);

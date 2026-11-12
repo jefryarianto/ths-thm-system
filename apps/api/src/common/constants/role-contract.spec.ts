@@ -197,6 +197,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'reactivate',
     'remove',
     'resendCredentials',
+    'resetCardSecurity',
     'revokeCard',
     'searchMembers',
     'suspend',

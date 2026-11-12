@@ -71,6 +71,7 @@ describe('MembersDigitalCardService', () => {
     },
     qrScan: {
       findMany: jest.fn(),
+      deleteMany: jest.fn(),
     },
     $transaction: jest.fn((arg: any) => (Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma))),
   };
@@ -461,6 +462,32 @@ describe('MembersDigitalCardService', () => {
       expect(result.data.scanLeft).toBe(22);
       expect(result.data.scanLog[0].ipAddress).toBe('203.0.113.x');
       expect(result.data.scanLog[0].userAgent).toBe('Mozilla/5.0 (KTA-Scanner) very long');
+    });
+
+    it('reset riwayat scan: hapus log + reset counter ke 0', async () => {
+      mockPrisma.qrScan.deleteMany.mockResolvedValue({ count: 2 });
+      mockPrisma.qRValidation.update.mockResolvedValue({
+        id: 'qr-1',
+        isValid: true,
+        scanCount: 0,
+        scannedAt: null,
+      });
+      const result = await service.resetCardSecurity('m-lrt-1');
+
+      expect(result.success).toBe(true);
+      expect(result.data.deleted).toBe(2);
+      expect(result.data.scanCount).toBe(0);
+      expect(result.data.scanLog).toEqual([]);
+      expect(mockPrisma.qrScan.deleteMany).toHaveBeenCalledWith({ where: { qrValidationId: 'qr-1' } });
+      expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith({
+        where: { id: 'qr-1' },
+        data: { scanCount: 0, scannedAt: null, isValid: true },
+      });
+    });
+
+    it('reset gagal bila QR belum terdaftar', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc({ qrValidations: [] }));
+      await expect(service.resetCardSecurity('m-lrt-1')).rejects.toThrow(NotFoundException);
     });
 
     it('mengambil 100 riwayat scan terbaru (desc)', async () => {
