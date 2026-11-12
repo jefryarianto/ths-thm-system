@@ -97,6 +97,15 @@ overrides:
   # Handlebar advisory patched; published package versions for other advisories are still vulnerable.
   handlebars: 4.7.10
 
+  # ── Dependabot 2026-11-12: sisa alert batch ──
+  # deepmerge LOW GHSA-7wpw-2hjm-89gp (prototype pollution) — TIDAK di-override:
+  # advisory minta >=4.3.2 tapi versi itu belum pernah dirilis (latest 4.3.1),
+  # jadi belum ada fix yang tersedia. Jalur: @nestjs/cli>fork-ts-checker (dev).
+  # fast-xml-parser LOW GHSA-474x-hrwr-fgx4 (quadratic CPU <5.11.3, PROD) — jalur
+  # firebase-admin>@google-cloud/storage (^5.x, in-range). 5.11.3 tak dirilis;
+  # lompat langsung ke 5.12.0.
+  fast-xml-parser: 5.12.0
+
 allowBuilds:
   # postinstall @firebase/util hanya berguna di Firebase App Hosting (butuh FIREBASE_WEBAPP_CONFIG)
   '@firebase/util': false
