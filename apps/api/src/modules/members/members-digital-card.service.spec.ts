@@ -190,13 +190,15 @@ describe('MembersDigitalCardService', () => {
         status: 'generated',
       };
       mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
-      jest
+      const spy = jest
         .spyOn(service as unknown as { resolvePhotoDataUrl: () => Promise<string | null> }, 'resolvePhotoDataUrl')
         .mockResolvedValue('data:image/png;base64,PHOTO');
 
       const result = await service.getDigitalCard('m-lrt-1');
 
       expect(result.data.fotoDataUrl).toBe('data:image/png;base64,PHOTO');
+      // Foto asli (bukan versi `.bg.png`) agar memenuhi bingkai kartu.
+      expect(spy).toHaveBeenCalledWith(expect.anything(), false, 700);
     });
 
     it('should backfill tanggal terbit/berlaku untuk dokumen KTA lama yang kosong', async () => {

@@ -17,7 +17,6 @@ const {
   PATTERN,
   FONTS,
   getLevelVisual,
-  photoCrop,
   fmt,
   patternRows,
   decorFrontSvg,
@@ -138,7 +137,6 @@ function getInitialsLocal(name: string): string {
 
 function photoEl(
   box: { x: number; y: number; w: number; h: number },
-  crop: { left: number; top: number; w: number; h: number },
   dataUrl: string | null | undefined,
   clipId: string,
   placeholder: { cx: number; cy: number; text: string; size?: number },
@@ -159,7 +157,7 @@ function photoEl(
   }
   return (
     `<g clip-path="url(#${clipId})">` +
-    `<image x="${Math.round(box.x + crop.left)}" y="${Math.round(box.y + crop.top)}" width="${crop.w}" height="${crop.h}" preserveAspectRatio="none" href="${dataUrl}" xlink:href="${dataUrl}"/>` +
+    `<image x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" preserveAspectRatio="xMidYMid slice" href="${dataUrl}" xlink:href="${dataUrl}"/>` +
     `</g>`
   );
 }
@@ -190,8 +188,6 @@ function frontSide(d: CardSvgData): string {
   const ttl = fmt.ttl(member.tempatLahir, member.tanggalLahir);
   const validUntilStr = fmt.validUntilText();
   const lv = getLevelVisual(member.tingkat, d.levelVisual || null);
-  const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
-  const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
   const cfg = d.template?.overlayConfig || null;
   const guillocheOff = cfg?.guilloche?.enabledFront === false;
   const guillocheStroke = cfg?.guilloche?.strokeFront || null;
@@ -249,7 +245,7 @@ function frontSide(d: CardSvgData): string {
   });
   s += `</g>`;
 
-  // Foto besar kiri + foto kecil kanan atas (crop ala SIM)
+  // Foto besar kiri + foto kecil kanan atas (memenuhi bingkai, object-fit cover)
   const big = {
     x: FRONT.photo.big.left,
     y: FRONT.photo.big.top,
@@ -264,13 +260,13 @@ function frontSide(d: CardSvgData): string {
   };
   s += `<clipPath id="clipBig"><rect x="${big.x}" y="${big.y}" width="${big.w}" height="${big.h}"/></clipPath>`;
   s += `<clipPath id="clipSmall"><rect x="${small.x}" y="${small.y}" width="${small.w}" height="${small.h}"/></clipPath>`;
-  s += photoEl(big, cropBig, d.photoDataUrl, 'clipBig', {
+  s += photoEl(big, d.photoDataUrl, 'clipBig', {
     cx: big.x + big.w / 2,
     cy: big.y + big.h / 2,
     text: getInitialsLocal(member.namaLengkap),
     size: 52,
   });
-  s += photoEl(small, cropSmall, d.photoDataUrl, 'clipSmall', {
+  s += photoEl(small, d.photoDataUrl, 'clipSmall', {
     cx: small.x + small.w / 2,
     cy: small.y + small.h / 2,
     text: getInitialsLocal(member.namaLengkap),

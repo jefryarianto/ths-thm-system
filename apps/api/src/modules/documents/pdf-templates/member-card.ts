@@ -25,7 +25,6 @@ const {
   PATTERN,
   fmt,
   getLevelVisual,
-  photoCrop,
   patternRows,
 } = require('../../../common/utils/card-design');
 
@@ -36,8 +35,6 @@ const WHITE = COLORS.white;
 const SLATE_800 = COLORS.value; // #111827 — teks data
 
 // Crop foto wajah ala SIM (kepala + bahu) — kalkulasi sama di semua renderer
-const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
-const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
 
 function getInitialsLocal(name: string): string {
   if (!name) return '?';
@@ -164,13 +161,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  // Foto ala SIM: crop kepala+bahu dari spec (photoCrop)
+  // Foto memenuhi bingkai (object-fit cover), tanpa crop model pasfoto.
   photoImage: {
     position: 'absolute',
-    left: cropBig.left,
+    left: 0,
     top: 0,
-    width: cropBig.w,
-    height: cropBig.h,
+    width: FRONT.photo.big.w,
+    height: FRONT.photo.big.h,
     objectFit: 'cover',
   },
   // Photo kecil kanan atas — TANPA bingkai, dinaikkan; rank 12px di bawahnya
@@ -186,10 +183,10 @@ const styles = StyleSheet.create({
   },
   photoImageSmall: {
     position: 'absolute',
-    left: cropSmall.left,
+    left: 0,
     top: 0,
-    width: cropSmall.w,
-    height: cropSmall.h,
+    width: FRONT.photo.small.w,
+    height: FRONT.photo.small.h,
     objectFit: 'cover',
   },
     photoPlaceholder: {

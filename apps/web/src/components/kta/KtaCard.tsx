@@ -3,6 +3,7 @@ import {useEffect,useId,useRef,useState, type RefObject} from 'react';
 import QRCode from 'qrcode';
 import type {Anggota} from './types';
 import {W,H,pt,y,u,fitSingle,wrap,expiry,type Measure} from './layout';
+import {getInitials} from '@/lib/initials';
 
 type Props={side:'depan'|'belakang'; anggota:Anggota; assetBase?:string; svgRef?:{current:SVGSVGElement|null}; onWarnings?:(messages:string[])=>void};
 const rank:Record<Anggota['tingkatan'],{count:number;color:string}>={pratama:{count:1,color:'#185AB5'},tamtama:{count:2,color:'#185AB5'},muda:{count:1,color:'#E4B500'},madya:{count:2,color:'#E4B500'},utama:{count:3,color:'#E4B500'}};
@@ -94,7 +95,9 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      <HeaderText x={683} baseline={y(43.1)} size={pt(5.6)} text="DISTRIK KEUSKUPAN LARANTUKA"/>
      <HeaderText x={683} baseline={y(37.1)} size={pt(6.4)} text="KARTU TANDA ANGGOTA" yellow/>
      <rect x="44" y="145.8" width="240" height="300" rx="14" fill="#DDE6EA"/>
-     {a.fotoUrl && <image href={a.fotoUrl} x="44" y="145.8" width="240" height="300" preserveAspectRatio="xMidYMid slice" clipPath={`url(#photo-${id})`}/>}
+     {a.fotoUrl
+       ? <image href={a.fotoUrl} x="44" y="145.8" width="240" height="300" preserveAspectRatio="xMidYMid slice" clipPath={`url(#photo-${id})`}/>
+       : <Text x={164} y={145.8+150+pt(4)} textAnchor="middle" fontSize={pt(9)} fontWeight="700" letterSpacing={2} fill="#64748B">{getInitials(a.nama)}</Text>}
      <rect x="44" y="453.8" width="240" height="48" rx="3" fill="#fff" stroke="#A9B9CB" strokeWidth="1"/>
      {badgeYs.map((yy,i)=><rect key={i} x="47.5" y={yy} width="233" height="15" rx="1.5" fill={badge.color}/>)}
      <Text x="306" y={y(33.5)} fontWeight="700" fontSize={pt(4)} fill="#000">NAMA LENGKAP</Text>
@@ -126,8 +129,10 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      <line x1="481" y1={y(5.7)} x2={481+measure(coordinator.text,coordinator.size,false)} y2={y(5.7)} stroke="#0B377B" strokeWidth="1.6"/>
      <Text x="481" y={y(3.5)} fontSize={coordinator.size}>{coordinator.text}</Text>
     </>}
-    {/* Mikroteks adalah lapisan SVG; file gambar latar tetap tanpa tulisan. */}
-    <Text x="-20" y={y(.75)} fontSize={pt(2.6)} fill="#0B377B" aria-label={side==='depan'?'PRO PATRIA ET ECCLESIA':'Fortiter in Re, Suaviter in Modo'}>
+    {/* Mikroteks adalah lapisan SVG; file gambar latar tetap tanpa tulisan.
+        Diletakkan tepat di tengah pita guilloche bawah (inset 16) dan
+        dipusatkan horizontal agar polanya simetris. */}
+    <Text x={W/2} y={y(1.6)} textAnchor="middle" dominantBaseline="middle" fontSize={pt(2.6)} fill="#0B377B" aria-label={side==='depan'?'PRO PATRIA ET ECCLESIA':'Fortiter in Re, Suaviter in Modo'}>
       {Array(18).fill(side==='depan'?'PRO PATRIA ET ECCLESIA •':'Fortiter in Re, Suaviter in Modo •').join(' ')}
     </Text>
    </g>

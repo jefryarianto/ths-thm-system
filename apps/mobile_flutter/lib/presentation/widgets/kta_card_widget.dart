@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/utils/kta_layout.dart';
 import '../../core/utils/kta_design.dart';
+import '../../core/utils/name_initials.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
 import '../../data/models/member_kta.dart';
@@ -219,7 +220,8 @@ class _KtaFront extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = layout.fields;
     final rank = KtaRank.forLevel(kta.tingkat);
-    final displayInitials = fallbackInitials ?? (kta.namaLengkap.isNotEmpty ? '${kta.namaLengkap.substring(0, 3).toUpperCase()}' : null);
+    final displayInitials =
+        fallbackInitials ?? nameInitials(kta.namaLengkap);
     
     return ClipRRect(
       borderRadius: BorderRadius.circular(KtaSpec.radiusPx),
@@ -281,9 +283,9 @@ class _KtaFront extends StatelessWidget {
                 borderRadius: BorderRadius.circular(KtaPositions.photoRadius),
                 border: Border.all(color: KtaColors.borderBlue, width: 1),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(KtaPositions.photoRadius),
-                child: _KtaImage(url: kta.fotoUrl, fit: BoxFit.cover),
+              child: _KtaPhoto(
+                url: kta.fotoUrl,
+                initials: displayInitials,
               ),
             ),
           ),
@@ -541,8 +543,8 @@ class _BackMicrotext extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final text = isFront ? 'PRO PATRIA ET ECCLESIA' : 'Fortiter in Re, Suaviter in Modo';
-    final yMm = 0.75;
-    final xStart = -20.0;
+    // Tengah pita guilloche bawah (inset 16 pada canvas 53,98 mm).
+    final centerY = (KtaSpec.mmH - 1.6) * KtaSpec.pxPerMm;
     final repeatCount = 18;
     
     final microtext = '$text • ';
@@ -562,7 +564,13 @@ class _BackMicrotext extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     
-    painter.paint(canvas, Offset(mmToPx(xStart), (KtaSpec.mmH - yMm) * KtaSpec.pxPerMm - painter.height / 2));
+    painter.paint(
+      canvas,
+      Offset(
+        (KtaSpec.w - painter.width) / 2,
+        centerY - painter.height / 2,
+      ),
+    );
   }
 
   @override
@@ -748,31 +756,63 @@ class _BackTextPainter extends CustomPainter {
       oldDelegate.kta != kta || oldDelegate.layout != layout;
 }
 
+/// Foto KTA: memenuhi bingkai (`BoxFit.cover`), tanpa model crop pasfoto SIM.
+class _KtaPhoto extends StatelessWidget {
+  final String url;
+  final String? initials;
+  const _KtaPhoto({required this.url, required this.initials});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) {
+      return Container(
+        alignment: Alignment.center,
+        child: Text(
+          initials ?? '?',
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            color: KtaColors.lightText,
+          ),
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(KtaPositions.photoRadius),
+      child: _KtaImage(url: url, fit: BoxFit.cover, fallbackInitials: initials),
+    );
+  }
+}
+
 class _KtaImage extends StatelessWidget {
   final String url;
   final BoxFit fit;
   final String? fallbackInitials;
   const _KtaImage({required this.url, required this.fit, this.fallbackInitials});
 
-  @override
-  Widget build(BuildContext context) {
-    if (url.isEmpty) {
-      // Fallback: tampilkan inisial 3 huruf dari nama jika foto tidak ada.
-      if (fallbackInitials != null) {
-        return Container(
-          alignment: Alignment.center,
-          child: Text(
-            fallbackInitials!,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: KtaColors.darkText,
-            ),
-          ),
-        );
-      }
+  Widget _fallback() {
+    if (fallbackInitials == null || fallbackInitials!.isEmpty) {
       return const SizedBox.shrink();
     }
+    // Fallback: tampilkan inisial nama jika foto tidak ada / gagal dimuat.
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        fallbackInitials!,
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
+          color: KtaColors.lightText,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isEmpty) return _fallback();
     // Handle data: URIs (base64-encoded images).
     if (url.startsWith('data:')) {
       final bytes = _tryDecodeDataUrl(url);
@@ -782,7 +822,7 @@ class _KtaImage extends StatelessWidget {
     // Handle full https?:// URLs via Image.network.
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return Image.network(url, fit: fit, errorBuilder: (_, __, ___) {
-        return const SizedBox.shrink();
+        return _fallback();
       });
     }
     // Handle any other string as an absolute path under /api/uploads/ (same convention
@@ -790,7 +830,7 @@ class _KtaImage extends StatelessWidget {
     final absUrl = _toAbsolutePhotoUrl(url);
     if (absUrl.isNotEmpty) {
       return Image.network(absUrl, fit: fit, errorBuilder: (_, __, ___) {
-        return const SizedBox.shrink();
+        return _fallback();
       });
     }
     // Fallback: empty placeholder.

@@ -430,7 +430,7 @@ export class MembersDigitalCardService {
     // Foto disematkan sebagai data URL: aset `member-photo-*` di /api/uploads
     // bersifat privat (butuh Bearer), sehingga `<img>`/Image.network tidak bisa
     // memuatnya. Data URL aman dikirim lewat JSON terautentikasi ini.
-    const fotoDataUrl = await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700);
+    const fotoDataUrl = await this.resolvePhotoDataUrl(memberData.fotoPath, false, 700);
     if (!card) {
       return {
         success: true,
@@ -542,7 +542,7 @@ export class MembersDigitalCardService {
           signerTitle: card.signerTitle,
           photoDataUrl: minimal
             ? null
-            : await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700),
+            : await this.resolvePhotoDataUrl(memberData.fotoPath, false, 700),
           signatureDataUrl: minimal
             ? null
             : await this.resolvePhotoDataUrl(card.signatureImage, false, 320),
@@ -634,7 +634,7 @@ export class MembersDigitalCardService {
         signerTitle: data.card.signerTitle,
         template: data.template || null,
       },
-      photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true, 700),
+      photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, false, 700),
       signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage, false, 320),
       stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage, false, 320),
       levelVisual: data.levelVisual,
