@@ -23,6 +23,7 @@ import { sanitizeHtmlSync } from '@/lib/sanitize';
 
 import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { formatPeriode, formatTempatTanggalLahir } from '@/lib/format';
@@ -477,6 +478,7 @@ function LevelStrips({
 export default function MemberDetailPage() {
   const toast = useToast();
   const params = useParams();
+  const auth = useAuth();
   const router = useRouter();
   const id = params?.id as string;
 
@@ -1753,10 +1755,32 @@ export default function MemberDetailPage() {
 
                   {/* Riwayat pemindaian */}
                   <div className="mt-5">
-                    <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2 flex items-center gap-1.5">
-                      <History size={13} />
-                      Riwayat Pemindaian Terbaru
-                    </h5>
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1.5">
+                        <History size={13} />
+                        Riwayat Pemindaian Terbaru
+                      </h5>
+                      {(auth.role === 'superadmin' || auth.role === 'admin_nasional') && cardSecurity.scanLog.length > 0 && (
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('Reset riwayat scan?')) return;
+                            setActionLoading('reset-scan');
+                            try {
+                                await apiClient.post(`/members/${id}/digital-card/security/reset`);
+                                toast('success', 'Riwayat scan berhasil direset');
+                                await fetchCardSecurity();
+                            } catch {
+                                toast('error', 'Gagal mereset riwayat');
+                            }
+                            setActionLoading(null);
+                          }}
+                          disabled={actionLoading === 'reset-scan'}
+                          className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          Reset Riwayat
+                        </button>
+                      )}
+                    </div>
                     {cardSecurity.scanLog.length > 0 ? (
                       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
                         <table className="w-full text-xs">
