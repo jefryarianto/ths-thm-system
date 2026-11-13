@@ -1,0 +1,6 @@
+id = "20261113000000_add_dues_lock_fields"
+checksum = "d41d8cd98f00b204e9800998ecf8427e"
+finished_at = 2026-11-13T00:00:00.000Z
+migration_name = "add_dues_lock_fields"
+logs = ""
+steps = 1
