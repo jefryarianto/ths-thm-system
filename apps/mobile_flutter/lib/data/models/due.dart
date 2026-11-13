@@ -9,6 +9,13 @@ class Due {
   final String? tanggalJatuhTempo;
   final String? buktiBayarPath;
   final String createdAt;
+  
+  // NEW: Lock fields
+  final bool isLocked;
+  final String? lockedAt;
+  final String? lockedBy;
+  final String? lockReason;
+  final String? lockExpiresAt;
 
   Due({
     required this.id,
@@ -19,6 +26,11 @@ class Due {
     this.tanggalJatuhTempo,
     this.buktiBayarPath,
     required this.createdAt,
+    this.isLocked = false,
+    this.lockedAt,
+    this.lockedBy,
+    this.lockReason,
+    this.lockExpiresAt,
   });
 
   /// URL absolut gambar bukti pembayaran (endpoint upload menyimpan path
@@ -43,6 +55,21 @@ class Due {
     return status;
   }
 
+  // NEW: Lock helper methods
+  bool get canUploadProof => !isLocked && status.toLowerCase() == 'belum_dibayar';
+  bool get canBatchPay => !isLocked && status.toLowerCase() == 'belum_dibayar';
+  
+  Duration? get gracePeriodRemaining {
+    if (lockExpiresAt == null) return null;
+    try {
+      final expires = DateTime.parse(lockExpiresAt!);
+      final remaining = expires.difference(DateTime.now());
+      return remaining.isNegative ? Duration.zero : remaining;
+    } catch (_) {
+      return null;
+    }
+  }
+
   factory Due.fromJson(Map<String, dynamic> json) {
     return Due(
       id: _str(json['id']),
@@ -53,30 +80,21 @@ class Due {
       tanggalJatuhTempo: json['tanggalJatuhTempo']?.toString(),
       buktiBayarPath: json['buktiBayarPath']?.toString(),
       createdAt: _str(json['createdAt']),
+      isLocked: json['isLocked'] == true,
+      lockedAt: json['lockedAt']?.toString(),
+      lockedBy: json['lockedBy']?.toString(),
+      lockReason: json['lockReason']?.toString(),
+      lockExpiresAt: json['lockExpiresAt']?.toString(),
     );
   }
 
   /// Ekstrak String dengan aman (null → '').
   static String _str(dynamic v) => v?.toString() ?? '';
 
-  /// Parsea nilai monetari — backend Prisma `Decimal` bisa terkirim sebagai
-  /// `num` (dari JSON) maupun `String` (dari serializer); nullable → 0.
+  /// Ekstrak num dengan aman (null → 0.0).
   static double _num(dynamic v) {
-    if (v == null) return 0;
+    if (v == null) return 0.0;
     if (v is num) return v.toDouble();
-    return double.tryParse(v.toString().replaceAll(',', '.')) ?? 0;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'periode': periode,
-      'jumlah': jumlah,
-      'status': status,
-      'tanggalBayar': tanggalBayar,
-      'tanggalJatuhTempo': tanggalJatuhTempo,
-      'buktiBayarPath': buktiBayarPath,
-      'createdAt': createdAt,
-    };
+    return double.tryParse(v.toString()) ?? 0.0;
   }
 }

@@ -24,6 +24,20 @@ import {
 } from './dto/dues.dto';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
+// NEW: DTOs for lock management
+export class LockRequest {
+  reason: string;
+}
+
+export class OverrideRequest {
+  graceDays: number;
+  reason: string;
+}
+
+export class UnlockRequest {
+  reason: string;
+}
+
 @ApiTags('Dues')
 @Controller('dues')
 @ApiBearerAuth()
@@ -192,5 +206,75 @@ export class DuesController {
     @Req() req: ScopedRequest,
   ) {
     return this.service.submitPaymentConfirmation(id, dto, req.user);
+  }
+
+  // ── Lock Management Endpoints ─────────────────────────────────
+
+  @Patch(':periode/lock')
+  @Idempotent({ ttl: 300_000 })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Kunci periode iuran (terapkan grace period standar)',
+  })
+  lockDues(
+    @Param('periode') periode: string,
+    @Body() dto: LockRequest,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.lockDues(periode, req.scope, req.user?.id);
+  }
+
+  @Patch(':periode/unlock')
+  @Idempotent({ ttl: 300_000 })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Unlock periode iuran',
+  })
+  unlockDues(
+    @Param('periode') periode: string,
+    @Body() dto: UnlockRequest,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.unlockDues(periode, req.scope, req.user?.id);
+  }
+
+  @Get('lock-status?')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Periksa status lock periode iuran',
+  })
+  getLockStatus(@Query('periode') periode: string, @Req() req: ScopedRequest) {
+    return this.service.getLockStatus(periode, req.scope);
+  }
+
+  @Patch(':periode/grace-override')
+  @Idempotent({ ttl: 300_000 })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Override grace period periode iuran (kustom)',
+  })
+  overrideGracePeriod(
+    @Param('periode') periode: string,
+    @Body() dto: OverrideRequest,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.adminOverrideGracePeriod(periode, dto.graceDays, dto.reason, req.user?.id);
+  }
+
+  @Delete(':periode/grace-override')
+  @Idempotent({ ttl: 300_000 })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Revoke grace period override periode iuran',
+  })
+  revokeGraceOverride(
+    @Param('periode') periode: string,
+    @Body() dto: { reason: string },
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.revokeAdminOverride(periode, dto.reason, req.user?.id);
+  }
+
+  @Post('cron/cleanup-expired-locks')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
+    summary: 'Expire locks yang sudah habis grace periodnya',
+  })
+  expireExpiredLocks(@Req() req: ScopedRequest) {
+    return this.service.expireLocksByGracePeriod();
   }
 }

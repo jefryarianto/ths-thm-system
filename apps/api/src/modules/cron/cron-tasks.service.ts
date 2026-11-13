@@ -749,4 +749,101 @@ export class CronTasksService {
       return null;
     }
   }
+
+  // ─────────────────────────────────────────────────────────
+  //  DUES LOCK: Lock previous month (2nd of month @ 2:30AM)
+  //  - Lock unpaid dues from previous month with standard 7-day grace period
+  //  - Runs after auto-generation (1st @ 1AM) and reminders (daily @ 7AM)
+  // ─────────────────────────────────────────────────────────
+
+  @Cron('30 2 2 * *')
+  async lockPreviousMonthDues(): Promise<void> {
+    return this.guard('lockPreviousMonthDues', () => this.lockPreviousMonthDuesImpl());
+  }
+
+  private async lockPreviousMonthDuesImpl(): Promise<void> {
+    const today = new Date();
+    if (today.getDate() !== 2) return;
+
+    const previousMonth = new Date(today);
+    previousMonth.setMonth(previousMonth.getMonth() - 1);
+    const periode = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+
+    this.logger.log(`Locking dues for previous month: ${periode}`);
+
+    // Lock unpaid dues for the previous month
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Standard 7-day grace period
+
+    const updated = await this.prisma.iuran.updateMany({
+      where: {
+        periode,
+        status: { in: ['belum_dibayar', 'menunggak', 'menunggu_verifikasi'] },
+      },
+      data: {
+        isLocked: true,
+        lockedAt: new Date(),
+        lockedBy: 'cron:lockPreviousMonthDues',
+        lockReason: 'Masa tenggang standar (7 hari)',
+        lockExpiresAt: expiresAt,
+      },
+    });
+
+    this.logger.log(`✓ Locked ${updated.count} dues for ${periode}`);
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_LOCK',
+        entity: 'iuran',
+        entityId: null,
+        userId: 'cron:lockPreviousMonthDues',
+        details: { updatedCount: updated.count, periode, graceDays: 7 },
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  DUES LOCK: Expire locks by grace period (hourly @ :00)
+  //  - Unlock dues where lockExpiresAt < now
+  // ─────────────────────────────────────────────────────────
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async expireExpiredLocks(): Promise<void> {
+    return this.guard('expireExpiredLocks', () => this.expireExpiredLocksImpl());
+  }
+
+  private async expireExpiredLocksImpl(): Promise<void> {
+    const now = new Date();
+    this.logger.log(`Expiring locks with lockExpiresAt < ${now.toISOString()}`);
+
+    const expired = await this.prisma.iuran.updateMany({
+      where: {
+        isLocked: true,
+        lockExpiresAt: { lt: now },
+      },
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        lockReason: null,
+        lockExpiresAt: null,
+      },
+    });
+
+    if (expired.count === 0) return;
+
+    this.logger.log(`Expired ${expired.count} dues locks`);
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_LOCK_EXPIRE',
+        entity: 'iuran',
+        entityId: null,
+        userId: 'cron:expireExpiredLocks',
+        details: { expiredCount: expired.count, expiredAt: now.toISOString() },
+      });
+    }
+  }
 }

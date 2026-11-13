@@ -27,7 +27,20 @@ import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.h
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import type { MetodeBayar, StatusIuran } from '@prisma/client';
+import type { MetodeBayar, StatusIuran, Iuran } from '@prisma/client';
+
+export interface LockStatus {
+  periode: string;
+  isLocked: boolean;
+  lockedCount: number;
+  graceDaysRemaining: number;
+  gracePeriodType: 'standard' | 'extended' | 'override';
+  lockedBy?: string | null;
+  lockedAt?: Date | null;
+  lockReason?: string | null;
+  expiresAt?: Date | null;
+  memberIds: string[];
+}
 
 @Injectable()
 export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
@@ -552,4 +565,260 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       }
     })();
   }
+
+  // ── Lock Management ─────────────────────────────────────
+
+  async lockDues(periode: string, scope?: UserScope, userId?: string): Promise<Iuran[]> {
+    // Tenant safety: ensure target member is within scope
+    await this.assertMemberInScope(periode, scope);
+    
+    const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
+    const where: any = {
+      periode,
+      ...scopeFilter,
+    };
+    
+    // Filter: only unpaid dues can be locked
+    where.status = { in: ['belum_dibayar', 'menunggak', 'menunggu_verifikasi'] };
+    
+    const updated = await this.prisma.iuran.updateMany({
+      where,
+      data: {
+        isLocked: true,
+        lockedAt: new Date(),
+        lockedBy: userId,
+        lockReason: 'Masa tenggang standar (7 hari)',
+        lockExpiresAt: (() => {
+          const expires = new Date();
+          expires.setDate(expires.getDate() + 7);
+          return expires;
+        })(),
+      },
+    });
+
+    // Cache invalidation
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_LOCK',
+        entity: 'iuran',
+        entityId: periode,
+        userId,
+        details: { updatedCount: updated.count, periode },
+      });
+    }
+
+    return [];
+  }
+
+  async unlockDues(periode: string, scope?: UserScope, userId?: string): Promise<Iuran[]> {
+    // Tenant safety
+    await this.assertMemberInScope(periode, scope);
+    
+    const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
+    const where: any = {
+      periode,
+      isLocked: true,
+      ...scopeFilter,
+    };
+    
+    const updated = await this.prisma.iuran.updateMany({
+      where,
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        lockReason: null,
+        lockExpiresAt: null,
+      },
+    });
+
+    // Cache invalidation
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_UNLOCK',
+        entity: 'iuran',
+        entityId: periode,
+        userId,
+        details: { updatedCount: updated.count, periode },
+      });
+    }
+
+    return [];
+  }
+
+  async getLockStatus(periode: string, scope?: UserScope): Promise<LockStatus> {
+    const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
+    
+    const dues = await this.prisma.iuran.findMany({
+      where: {
+        periode,
+        ...scopeFilter,
+      },
+      select: {
+        id: true,
+        anggotaId: true,
+        periode: true,
+        isLocked: true,
+        lockedAt: true,
+        lockedBy: true,
+        lockReason: true,
+        lockExpiresAt: true,
+        status: true,
+      },
+    });
+
+    const lockedDues = dues.filter((d) => d.isLocked);
+    const hasAnyLocked = lockedDues.length > 0;
+    
+    let graceDaysRemaining = 0;
+    let gracePeriodType: 'standard' | 'extended' | 'override' = 'standard';
+    
+    if (hasAnyLocked && lockedDues[0].lockExpiresAt) {
+      const now = new Date();
+      const expiresAt = new Date(lockedDues[0].lockExpiresAt);
+      graceDaysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      gracePeriodType = lockedDues[0].lockReason?.includes('extended') || lockedDues[0].lockReason?.includes('override') 
+        ? (lockedDues[0].lockReason?.includes('override') ? 'override' : 'extended')
+        : 'standard';
+    }
+
+    return {
+      periode,
+      isLocked: hasAnyLocked,
+      lockedCount: lockedDues.length,
+      graceDaysRemaining,
+      gracePeriodType,
+      lockedBy: lockedDues[0]?.lockedBy,
+      lockedAt: lockedDues[0]?.lockedAt,
+      lockReason: lockedDues[0]?.lockReason,
+      expiresAt: lockedDues[0]?.lockExpiresAt,
+      memberIds: lockedDues.map((d) => d.anggotaId),
+    };
+  }
+
+  async adminOverrideGracePeriod(periode: string, graceDays: number, reason: string, adminUserId: string): Promise<void> {
+    // Admin override: set lock with custom grace period
+    const scopeFilter = this.buildIndirectScopeFilter(undefined, 'anggota');
+    const where: any = {
+      periode,
+      ...scopeFilter,
+    };
+
+    const expiresAt = (() => {
+      const date = new Date();
+      date.setDate(date.getDate() + graceDays);
+      return date;
+    })();
+
+    // Override existing lock or create new one
+    await this.prisma.iuran.updateMany({
+      where,
+      data: {
+        isLocked: true,
+        lockedAt: new Date(),
+        lockedBy: adminUserId,
+        lockReason: graceDays > 30
+          ? 'Pengecualian admin: grace period extended 30+ hari'
+          : graceDays === 0
+          ? 'Override manual: periode saat ini tidak terkunci)'
+          : `Pengecualian admin: grace period ${graceDays} hari`,
+        lockExpiresAt: expiresAt,
+      },
+    });
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_GRACE_OVERRIDE',
+        entity: 'iuran',
+        entityId: periode,
+        userId: adminUserId,
+        details: { adminUserId, graceDays, reason },
+      });
+    }
+
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+  }
+
+  async revokeAdminOverride(periode: string, reason: string, adminUserId: string): Promise<void> {
+    // Remove lock - only for existing locks
+    const scopeFilter = this.buildIndirectScopeFilter(undefined, 'anggota');
+    const where: any = {
+      periode,
+      isLocked: true,
+      ...scopeFilter,
+    };
+
+    const updated = await this.prisma.iuran.updateMany({
+      where,
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        lockReason: null,
+        lockExpiresAt: null,
+      },
+    });
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_GRACE_REVOKE',
+        entity: 'iuran',
+        entityId: periode,
+        userId: adminUserId,
+        details: { adminUserId, reason, updatedCount: updated.count },
+      });
+    }
+
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+  }
+
+  async expireLocksByGracePeriod(): Promise<{ expired: number; periode: string[] }> {
+    const now = new Date();
+    const expired = await this.prisma.iuran.updateMany({
+      where: {
+        isLocked: true,
+        lockExpiresAt: { lt: now },
+      },
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        lockReason: null,
+        lockExpiresAt: null,
+      },
+    });
+
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+
+    // Audit log
+    if (this.persistentAudit) {
+      await this.persistentAudit.log({
+        action: 'DUES_LOCK_EXPIRE',
+        entity: 'iuran',
+        entityId: null,
+        userId: 'cron:expireLocksByGracePeriod',
+        details: { expiredCount: expired.count, expiredAt: now.toISOString() },
+      });
+    }
+
+    return {
+      expired: expired.count,
+      periode: [],
+    };
+  }
+
 }

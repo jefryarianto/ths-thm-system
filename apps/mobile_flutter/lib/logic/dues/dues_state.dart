@@ -20,14 +20,18 @@ class DuesLoaded extends DuesState {
   /// Pesan error non-blocking bila segarkan gagal tetapi cache tersedia.
   final String? errorMessage;
 
+  /// Status lock untuk periode saat ini
+  final LockStatus? lockStatus;
+
   const DuesLoaded({
     required this.dues,
     this.isStale = false,
     this.errorMessage,
+    this.lockStatus,
   });
 
   @override
-  List<Object> get props => [dues, isStale, errorMessage ?? ''];
+  List<Object> get props => [dues, isStale, errorMessage ?? '', lockStatus ?? LockStatus()];
 }
 
 class DuesError extends DuesState {
@@ -63,4 +67,45 @@ class DuesProofUploadSuccess extends DuesState {
 
   @override
   List<Object> get props => [dues, message];
+}
+
+/// Status lock untuk periode saat ini
+class LockStatus extends Equatable {
+  final bool isLocked;
+  final int lockedCount;
+  final int graceDaysRemaining;
+  final String gracePeriodType; // standard, extended, override
+  final String? lockedBy;
+  final String? lockedAt;
+  final String? lockReason;
+  final String? expiresAt;
+  final List<String> memberIds;
+  final String periode;
+
+  const LockStatus({
+    this.isLocked = false,
+    this.lockedCount = 0,
+    this.graceDaysRemaining = 0,
+    this.gracePeriodType = 'standard',
+    this.lockedBy,
+    this.lockedAt,
+    this.lockReason,
+    this.expiresAt,
+    this.memberIds = const [],
+    this.periode = '',
+  });
+
+  @override
+  List<Object> get props => [
+    isLocked,
+    lockedCount,
+    graceDaysRemaining,
+    gracePeriodType,
+    lockedBy ?? '',
+    lockedAt ?? '',
+    lockReason ?? '',
+    expiresAt ?? '',
+    memberIds,
+    periode,
+  ];
 }

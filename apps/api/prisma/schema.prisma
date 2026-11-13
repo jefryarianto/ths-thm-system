@@ -951,6 +951,14 @@ model Iuran {
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
   dueDate          DateTime?            @map("due_date")
+
+  // NEW: Lock fields
+  isLocked         Boolean              @default(false)
+  lockedAt         DateTime?            @map("locked_at")
+  lockedBy         String?              @map("locked_by")
+  lockReason       String?              @map("lock_reason")
+  lockExpiresAt    DateTime?            @map("lock_expires_at")
+
   anggota          Anggota              @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
   verifikator      User?                @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
   payments         PaymentTransaction[]
@@ -958,6 +966,8 @@ model Iuran {
   @@unique([anggotaId, periode])
   @@index([status])
   @@index([anggotaId])
+  @@index([isLocked])
+  @@index([lockedAt])
   @@map("iuran")
 }
 

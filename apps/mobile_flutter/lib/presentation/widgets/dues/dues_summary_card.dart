@@ -25,7 +25,7 @@ class DuesSummaryCard extends StatelessWidget {
           curr is DuesLoaded || curr is DuesLoading || curr is DuesError,
       builder: (context, state) {
         if (state is DuesLoading) {
-          return _buildSkeleton();
+          return _buildSkeleton(theme);
         }
         if (state is DuesError) {
           return _buildError(theme, state.message);
@@ -34,7 +34,21 @@ class DuesSummaryCard extends StatelessWidget {
 
         final dues = state.dues;
         final totalTagihan = dues.fold<double>(0, (s, d) => s + d.jumlah);
-        final totalDibayar = dues.where((d) => d.isPaid).fold<double>(0, (s, d) => s + d.jumlah);
+        final totalDibayar =
+            dues.where((d) => d.isPaid).fold<double>(0, (s, d) => s + d.jumlah);
+
+        final lockStatus = state.lockStatus;
+        final isLocked = lockStatus?.isLocked == true;
+
+        final children = <Widget>[];
+
+        if (isLocked) {
+          children.add(_buildLockBanner(lockStatus!));
+          children.add(const SizedBox(height: 12));
+        }
+
+        children.add(
+            _buildSummaryRows(totalTagihan, totalDibayar, isLocked, theme));
 
         return Card(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -42,13 +56,14 @@ class DuesSummaryCard extends StatelessWidget {
             initiallyExpanded: expanded,
             onExpansionChanged: (_) => onToggle(),
             leading: Icon(
-              Icons.account_balance_wallet_outlined,
-              color: theme.colorScheme.primary,
+              isLocked ? Icons.lock : Icons.account_balance_wallet_outlined,
+              color: isLocked ? Colors.red : theme.colorScheme.primary,
             ),
             title: Text(
-              'Ringkasan Iuran',
+              isLocked ? 'Iuran Terkunci' : 'Ringkasan Iuran',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: isLocked ? Colors.red : null,
               ),
             ),
             trailing: AnimatedRotation(
@@ -59,48 +74,100 @@ class DuesSummaryCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Column(
-                  children: [
-                    _buildStatRow(
-                      'Total Tagihan',
-                      Formatters.rupiah(totalTagihan),
-                      Icons.receipt_long,
-                      theme.colorScheme.primary,
-                    ),
-                    _buildStatRow(
-                      'Sudah Dibayar',
-                      Formatters.rupiah(totalDibayar),
-                      Icons.check_circle,
-                      Colors.green,
-                    ),
-                    _buildStatRow(
-                      'Belum Dibayar',
-                      Formatters.rupiah(totalTagihan - totalDibayar),
-                      Icons.pending,
-                      Colors.orange,
-                    ),
-                    if (totalDibayar > 0)
-                      _buildStatRow(
-                        'Terkumpul (Verified)',
-                        Formatters.rupiah(totalDibayar),
-                        Icons.verified,
-                        Colors.blue,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-             )
-            );
-
-             }
-           );
+            children: children,
+          ),
+        );
+      },
+    );
   }
 
-  Widget _buildStatRow(String label, String value, IconData icon, Color color) {
+  Widget _buildLockBanner(dynamic lockStatus) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock, color: Colors.red, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Periode Iuran Terkunci',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  lockStatus.gracePeriodType == 'override'
+                      ? 'Override manual - perlu unlock admin'
+                      : 'Masa tenggang: ${lockStatus.graceDaysRemaining} hari lagi',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.red.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRows(
+    double totalTagihan,
+    double totalDibayar,
+    bool isLocked,
+    ThemeData theme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        children: [
+          _buildStatRow(
+            'Total Tagihan',
+            Formatters.rupiah(totalTagihan),
+            Icons.receipt_long,
+            isLocked ? Colors.red : theme.colorScheme.primary,
+          ),
+          _buildStatRow(
+            'Sudah Dibayar',
+            Formatters.rupiah(totalDibayar),
+            Icons.check_circle,
+            Colors.green,
+          ),
+          _buildStatRow(
+            'Belum Dibayar',
+            Formatters.rupiah(totalTagihan - totalDibayar),
+            Icons.pending,
+            Colors.orange,
+          ),
+          _buildStatRow(
+            'Terkumpul (Verified)',
+            Formatters.rupiah(totalDibayar),
+            Icons.verified,
+            Colors.blue,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -115,7 +182,8 @@ class DuesSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                Text(label,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 Text(
                   value,
                   style: const TextStyle(
@@ -131,7 +199,7 @@ class DuesSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSkeleton() {
+  Widget _buildSkeleton(ThemeData theme) {
     return const Card(
       margin: EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: SkeletonBox(height: 160),
@@ -148,7 +216,10 @@ class DuesSummaryCard extends StatelessWidget {
           children: [
             Icon(Icons.error, color: theme.colorScheme.error),
             const SizedBox(width: 12),
-            Expanded(child: Text(message, style: TextStyle(color: theme.colorScheme.onErrorContainer))),
+            Expanded(
+                child: Text(message,
+                    style:
+                        TextStyle(color: theme.colorScheme.onErrorContainer))),
           ],
         ),
       ),

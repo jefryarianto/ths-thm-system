@@ -30,6 +30,30 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     return data.map((json) => Due.fromJson(json)).toList();
   }
 
+  /// Ambil status lock untuk periode saat ini
+  Future<LockStatus?> _fetchLockStatus() async {
+    try {
+      final response = await _apiClient.dio.get(AppConstants.duesLockStatus);
+      final data = response.data['data'];
+      if (data == null) return null;
+      
+      return LockStatus(
+        isLocked: data['isLocked'] == true,
+        lockedCount: data['lockedCount'] ?? 0,
+        graceDaysRemaining: data['graceDaysRemaining'] ?? 0,
+        gracePeriodType: data['gracePeriodType'] ?? 'standard',
+        lockedBy: data['lockedBy']?.toString(),
+        lockedAt: data['lockedAt']?.toString(),
+        lockReason: data['lockReason']?.toString(),
+        expiresAt: data['expiresAt']?.toString(),
+        memberIds: (data['memberIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+        periode: data['periode'] ?? '',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _onDuesLoadRequested(
     DuesLoadRequested event,
     Emitter<DuesState> emit,
@@ -48,7 +72,13 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
       if (cached != null) {
         final cachedDues =
             cached.data.map((json) => Due.fromJson(json)).toList();
-        emit(DuesLoaded(dues: cachedDues, isStale: cached.isStale));
+        // Fetch lock status for cached data
+        final lockStatus = await _fetchLockStatus();
+        emit(DuesLoaded(
+          dues: cachedDues, 
+          isStale: cached.isStale,
+          lockStatus: lockStatus,
+        ));
       }
     } catch (_) {
       // Cache rusak → abaikan, lanjut ke jaringan.
@@ -56,7 +86,8 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
 
     try {
       final dues = await _fetchDues();
-      emit(DuesLoaded(dues: dues));
+      final lockStatus = await _fetchLockStatus();
+      emit(DuesLoaded(dues: dues, lockStatus: lockStatus));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(DuesInitial());
@@ -90,13 +121,28 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
       return;
     }
 
+    // Check lock status before allowing upload
+    final currentState = state;
+    if (currentState is DuesLoaded && currentState.lockStatus?.isLocked == true) {
+      // Check if the specific iuran is locked
+      final iuran = currentState.dues.firstWhere(
+        (d) => d.id == event.iuranId,
+        orElse: () => Due(id: '', periode: '', jumlah: 0, status: '', createdAt: '', isLocked: false),
+      );
+      
+      if (iuran.isLocked) {
+        emit(DuesError(message: 'Tidak dapat upload bukti untuk periode terkunci. Hubungi admin.'));
+        return;
+      }
+    }
+
     // Pertahankan daftar saat ini agar kartu tidak hilang saat loading.
     final currentDues =
         state is DuesLoaded ? (state as DuesLoaded).dues : <Due>[];
     emit(DuesProofUploading(dues: currentDues, iuranId: event.iuranId));
 
     try {
-      final fileName = event.filePath.split(RegExp(r'[\\/]')).last;
+      final fileName = event.filePath.split(RegExp(r'[\/]')).last;
       final formData = FormData.fromMap({
         'bukti': await MultipartFile.fromFile(
           event.filePath,
@@ -113,10 +159,14 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
       );
 
       final dues = await _fetchDues();
+      final lockStatus = await _fetchLockStatus();
       emit(DuesProofUploadSuccess(
         dues: dues,
         message: 'Bukti pembayaran terkirim, menunggu verifikasi admin.',
       ));
+      
+      // Re-emit loaded state with lock status
+      emit(DuesLoaded(dues: dues, lockStatus: lockStatus));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(DuesInitial());

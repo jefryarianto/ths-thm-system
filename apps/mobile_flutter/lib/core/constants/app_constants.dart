@@ -67,6 +67,7 @@ class AppConstants {
 
   // Iuran
   static const String duesMe = '$baseUrl/dues/members/me';
+  static const String duesLockStatus = '$baseUrl/dues/lock-status';
   static String duesUploadProof(String id) =>
       '$baseUrl/payments/$id/upload-proof';
 
