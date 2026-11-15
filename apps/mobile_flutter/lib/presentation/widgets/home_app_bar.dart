@@ -1,5 +1,6 @@
 import '../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/utils/name_initials.dart';
@@ -22,12 +23,28 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
 
     return AppBar(
       toolbarHeight: 78,
       titleSpacing: 16,
+      // Header Beranda memakai gradien aksen Nordy (teal → ungu). Teks dan
+      // ikon putih kontras di kedua ujung gradien (4,78:1 dan 7,30:1).
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      foregroundColor: Colors.white,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actionsIconTheme: const IconThemeData(color: Colors.white),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      // `SizedBox.expand` wajib: tanpa child, DecoratedBox di dalam area
+      // flexibleSpace AppBar mendapat tinggi 0 sehingga gradien tidak tercat.
+      flexibleSpace: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: AppTheme.accentGradient(theme.brightness),
+        ),
+        child: const SizedBox.expand(),
+      ),
       title: Row(
         children: [
           const _Avatar(),
@@ -48,10 +65,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       'Gloria, selamat ${_kataWaktu(DateTime.now())}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: onSurfaceVariant,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -59,10 +76,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       'Kak $namaLengkap',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: onSurface,
+                        color: Colors.white,
                       ),
                     ),
                     if (role.isNotEmpty) const SizedBox(height: 2),
@@ -71,13 +88,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
                           _labelRole(role),
-                          style: TextStyle(
-                            color: theme.colorScheme.onPrimaryContainer,
+                          style: const TextStyle(
+                            color: AppTheme.accentInk,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                           ),
@@ -114,7 +131,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       decoration: BoxDecoration(
                         color: theme.colorScheme.error,
                         borderRadius: BorderRadius.circular(9),
-                        border: Border.all(color: theme.colorScheme.surface, width: 1),
+                        border: Border.all(color: Colors.white, width: 1),
                       ),
                       constraints: const BoxConstraints(minWidth: 16),
                       child: Text(

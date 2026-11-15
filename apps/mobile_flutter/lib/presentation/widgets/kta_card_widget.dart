@@ -63,49 +63,98 @@ class _KtaFlipCardState extends State<KtaFlipCard>
         child: SizedBox(
           width: w,
           height: h,
-          child: OverflowBox(
-            alignment: Alignment.center,
-            minWidth: 0,
-            maxWidth: KtaSpec.w,
-            minHeight: 0,
-            maxHeight: KtaSpec.h,
-            child: Transform.scale(
-              scale: scale,
-              child: KtaLayoutHost(
-                member: widget.member,
-                cardData: widget.cardData,
-                builder: (context, kta, layout) {
-                  return SizedBox(
-                    width: KtaSpec.w,
-                    height: KtaSpec.h,
-                    child: AnimatedBuilder(
-                      animation: _anim,
-                      builder: (context, _) {
-                        final angle = _anim.value * math.pi;
-                        return Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001)
-                            ..rotateY(angle),
-                          child: angle > math.pi / 2
-                              ? Transform(
-                                  alignment: Alignment.center,
-                                  transform: Matrix4.identity()
-                                    ..rotateY(math.pi),
-                                  child: _KtaBack(kta: kta, layout: layout),
-                                ):_KtaFront(kta: kta, layout: layout),
-                        );
-                      },
-                    ),
-
-                  );
-                },
+          // Bingkai digambar di ruang layar (di luar `Transform.scale`) agar
+          // bayangan dan garis tepi tetap setipis 1 dp pada ukuran berapa pun.
+          child: KtaCardFrame(
+            radius: KtaSpec.radiusPx * scale,
+            child: OverflowBox(
+              alignment: Alignment.center,
+              minWidth: 0,
+              maxWidth: KtaSpec.w,
+              minHeight: 0,
+              maxHeight: KtaSpec.h,
+              child: Transform.scale(
+                scale: scale,
+                child: KtaLayoutHost(
+                  member: widget.member,
+                  cardData: widget.cardData,
+                  builder: (context, kta, layout) {
+                    return SizedBox(
+                      width: KtaSpec.w,
+                      height: KtaSpec.h,
+                      child: AnimatedBuilder(
+                        animation: _anim,
+                        builder: (context, _) {
+                          final angle = _anim.value * math.pi;
+                          return Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..setEntry(3, 2, 0.001)
+                              ..rotateY(angle),
+                            child: angle > math.pi / 2
+                                ? Transform(
+                                    alignment: Alignment.center,
+                                    transform: Matrix4.identity()
+                                      ..rotateY(math.pi),
+                                    child: _KtaBack(kta: kta, layout: layout),
+                                  )
+                                : _KtaFront(kta: kta, layout: layout),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
         ),
       );
     });
+  }
+}
+
+/// Bingkai kartu KTA: bayangan lembut + garis tepi hairline di sekeliling
+/// kartu, agar tepinya tegas di atas latar halaman yang bertint.
+///
+/// Hanya menambah lapisan dekorasi — tata letak, isi, dan ukuran CR80 kartu
+/// tidak berubah. Radius mengikuti radius kartu yang sudah diskalakan.
+class KtaCardFrame extends StatelessWidget {
+  final Widget child;
+  final double radius;
+
+  const KtaCardFrame({super.key, required this.child, this.radius = 12});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(radius);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: DecoratedBox(
+        // Garis tepi digambar di atas kartu agar tidak menambah ukuran apa pun.
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.16)
+                : const Color(0x1A0B201E),
+            width: 1,
+          ),
+        ),
+        child: child,
+      ),
+    );
   }
 }
 

@@ -183,10 +183,12 @@ void main() {
     expect(find.byIcon(Icons.check_circle), findsNothing);
   });
 
-  test('Tema global: background #FAF9FF, primary #072AC8, card radius 16',
+  test('Tema global: background #F2F3F9, primary #072AC8, card radius 16',
       () {
     final theme = AppTheme.light();
-    expect(theme.scaffoldBackgroundColor, const Color(0xFFFAF9FF));
+    // Latar halaman dipisahkan dari permukaan kartu putih agar KTA menonjol.
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF2F3F9));
+    expect(theme.cardTheme.color, const Color(0xFFFFFFFF));
     expect(AppTheme.navy, const Color(0xFF06154F));
     expect(AppTheme.primary, const Color(0xFF072AC8));
     expect(theme.textTheme.titleMedium?.color, AppTheme.navy);

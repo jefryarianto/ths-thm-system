@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Tema aplikasi THS-THM — Sistem Warna Baru (Primary #072AC8)
-/// Latar abu ultra-terang `#FAF9FF`, skema teks Navy/Slate/Muted,
-/// Biru #072AC8 sebagai warna brand utama.
+/// Latar halaman `#F2F3F9` — sengaja lebih gelap dari permukaan kartu putih
+/// `#FFFFFF` agar kartu (termasuk KTA) terbaca sebagai lapisan di atas
+/// background. Skema teks Navy/Slate/Muted, biru #072AC8 sebagai brand utama.
 ///
 /// Semua teks di aplikasi mewarisi skema warna ini melalui `Theme.of(context)`
 /// sehingga perubahan tema langsung diterapkan secara global.
@@ -41,6 +42,58 @@ class AppTheme {
   /// Gold 300 — versi lebih terang (#E5C76E) untuk mode gelap, sama dengan
   /// `--gold-400` di web (dark mode).
   static const Color gold300 = Color(0xFFE5C76E);
+
+  // ── AKSEN — PALET NORDY (aditif, bukan pengganti primary) ─────────────
+  /// Lapisan aksen lembut (teal–ungu–lavender) untuk gradien hero, kartu
+  /// ringkasan alternatif, latar ilustrasi/empty state, dan chip. **Tidak**
+  /// mengubah `primary`/`secondary`/`tertiary`: aksi utama aplikasi tetap biru
+  /// merek ([primary] di mode terang, [darkPrimary] di mode gelap).
+  ///
+  /// Aturan pakai (audit WCAG ada di `test/contrast_test.dart`):
+  /// - [accentTeal] & [accentIndigo] boleh jadi teks/ikon di atas
+  ///   [lightSurface] putih (4,78:1 dan 7,30:1). Di atas latar halaman
+  ///   [lightBackground] teal turun ke 4,32:1 — jangan dipakai sebagai teks
+  ///   langsung di background.
+  /// - [accentMist], [accentLavender], [accentMint] hanya isian/dekorasi; teks
+  ///   di atasnya pakai [accentInk] (6,47–7,86:1).
+  /// - [accentViolet] di atas surface putih hanya 4,11:1 — jangan untuk teks
+  ///   normal, cukup isian/aksen gradien.
+  /// - Di mode gelap pakai varian `…OnDark` agar tetap ≥ 4,5:1.
+  static const Color accentTeal = Color(0xFF0D8264);
+  static const Color accentIndigo = Color(0xFF5646AD);
+  static const Color accentViolet = Color(0xFF8672B8);
+  static const Color accentInk = Color(0xFF0B201E);
+  static const Color accentMist = Color(0xFF74A8B6);
+  static const Color accentLavender = Color(0xFFAAAFCF);
+  static const Color accentMint = Color(0xFF64BDB5);
+
+  /// Varian aksen untuk permukaan gelap (#111318).
+  static const Color accentTealOnDark = Color(0xFF64BDB5);
+  static const Color accentIndigoOnDark = Color(0xFFB3A6FF);
+  static const Color accentVioletOnDark = Color(0xFFC9B8F0);
+
+  /// Teks di atas gradien aksen — putih lolos di kedua ujung: 4,78:1 & 7,30:1
+  /// (gradien terang), 11,82:1 & 10,74:1 (gradien gelap).
+  static const Color onAccentGradient = Colors.white;
+
+  /// Gradien aksen terang: teal → ungu.
+  static const LinearGradient accentGradientLight = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [accentTeal, accentIndigo],
+  );
+
+  /// Gradien aksen gelap: teal tua → ungu tua agar tetap tenang di surface
+  /// gelap, dengan teks putih yang tetap kontras tinggi.
+  static const LinearGradient accentGradientDark = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0B3F35), Color(0xFF3E2F86)],
+  );
+
+  /// Pilih gradien aksen sesuai [brightness] tema aktif.
+  static LinearGradient accentGradient(Brightness brightness) =>
+      brightness == Brightness.dark ? accentGradientDark : accentGradientLight;
 
   // ── SEMANTIC COLORS ───────────────────────────────────────────────────
   /// Info — informasi, badge informasi, status informasi, icon info (#2B63E6)
@@ -81,11 +134,12 @@ class AppTheme {
   static const Color linkBlueDark = Color(0xFF1646C7);
 
   // ── LIGHT MODE SURFACE COLORS ─────────────────────────────────────────
-  /// Light Background — #FAF9FF
-  static const Color lightBackground = Color(0xFFFAF9FF);
+  /// Light Background — #F2F3F9. Latar halaman; sengaja lebih gelap dari
+  /// [lightSurface] agar kartu/panel (termasuk KTA) terpisah dari background.
+  static const Color lightBackground = Color(0xFFF2F3F9);
 
-  /// Light Surface — #FAF9FF
-  static const Color lightSurface = Color(0xFFFAF9FF);
+  /// Light Surface — #FFFFFF. Permukaan kartu, app bar, nav bar, dan input.
+  static const Color lightSurface = Color(0xFFFFFFFF);
 
   /// Light Surface Variant — #E2E2EC
   static const Color lightSurfaceVariant = Color(0xFFE2E2EC);
@@ -97,11 +151,12 @@ class AppTheme {
   static const Color lightOutlineVariant = Color(0xFFC6C6D0);
 
   // ── DARK MODE SURFACE COLORS ──────────────────────────────────────────
-  /// Dark Background — #111318
-  static const Color darkBackground = Color(0xFF111318);
+  /// Dark Background — #0E1015. Latar halaman mode gelap.
+  static const Color darkBackground = Color(0xFF0E1015);
 
-  /// Dark Surface — #111318
-  static const Color darkSurface = Color(0xFF111318);
+  /// Dark Surface — #1A1D24. Permukaan kartu; lebih terang dari background
+  /// agar kartu tetap terpisah tanpa hanya mengandalkan border.
+  static const Color darkSurface = Color(0xFF1A1D24);
 
   /// Dark Surface Variant — #45464F
   static const Color darkSurfaceVariant = Color(0xFF45464F);
@@ -154,8 +209,8 @@ class AppTheme {
   /// Permukaan "redup" mode gelap — lebih gelap dari [darkSurface].
   static const Color darkSurfaceDim = Color(0xFF0D0F14);
 
-  /// Permukaan "cerah" mode gelap.
-  static const Color darkSurfaceBright = Color(0xFF1A1D24);
+  /// Permukaan "cerah" mode gelap (satu tingkat di atas [darkSurface]).
+  static const Color darkSurfaceBright = Color(0xFF242832);
 
   // ── FIXED COLORS (identik di terang & gelap — peran M3 "…Fixed") ───────
   static const Color primaryFixed = primaryContainer; // #DDE4FF
@@ -280,8 +335,12 @@ class AppTheme {
   static const Color textSlate = Color(0xFF1E293B);
 
   /// @deprecated Use [textMuted] instead
+  ///
+  /// Digelapkan dari #64748B ke #5B6B80 agar teks sekunder 12–14pt tetap
+  /// ≥ 4,5:1 di atas latar halaman baru [lightBackground] (4,91:1) sekaligus
+  /// lolos di atas kartu putih (5,44:1).
   @Deprecated('Use textMuted')
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color textMuted = Color(0xFF5B6B80);
 
   /// @deprecated Use [primaryDark] instead
   @Deprecated('Use primaryDark')
@@ -886,6 +945,19 @@ class AppTheme {
   /// Warna tautan yang kontras di tema aktif — gelap memakai biru terang.
   static Color linkOf(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? darkPrimary : linkBlue;
+
+  /// Aksen teal yang kontras di tema aktif — mode gelap memakai mint
+  /// ([accentTealOnDark]) karena [accentTeal] hanya ≈3,9:1 di #111318.
+  static Color accentTealOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? accentTealOnDark
+          : accentTeal;
+
+  /// Aksen ungu yang kontras di tema aktif (lihat [accentTealOf]).
+  static Color accentIndigoOf(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? accentIndigoOnDark
+          : accentIndigo;
 
   /// [statusColor] sadar tema: warna semantik memakai varian yang lolos
   /// WCAG di tema aktif, warna netral mengikuti `onSurfaceVariant`.

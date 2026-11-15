@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../logic/dues/dues_bloc.dart';
 import '../skeleton_loader.dart';
@@ -47,31 +48,45 @@ class DuesSummaryCard extends StatelessWidget {
           children.add(const SizedBox(height: 12));
         }
 
-        children.add(
-            _buildSummaryRows(totalTagihan, totalDibayar, isLocked, theme));
+        children.add(_buildSummaryRows(totalTagihan, totalDibayar));
 
-        return Card(
+        // Kartu ringkasan memakai gradien aksen Nordy (teal → ungu) dengan
+        // teks/ikon putih (`onAccentGradient`) yang lolos WCAG di kedua ujung.
+        return Container(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            gradient: AppTheme.accentGradient(theme.brightness),
+            borderRadius: AppTheme.radiusLgAll,
+            boxShadow: AppTheme.softShadow(),
+          ),
           child: ExpansionTile(
             initiallyExpanded: expanded,
             onExpansionChanged: (_) => onToggle(),
+            shape: const Border(),
+            collapsedShape: const Border(),
+            iconColor: AppTheme.onAccentGradient,
+            collapsedIconColor: AppTheme.onAccentGradient,
+            textColor: AppTheme.onAccentGradient,
+            collapsedTextColor: AppTheme.onAccentGradient,
             leading: Icon(
               isLocked ? Icons.lock : Icons.account_balance_wallet_outlined,
-              color: isLocked ? Colors.red : theme.colorScheme.primary,
+              color: AppTheme.onAccentGradient,
             ),
             title: Text(
               isLocked ? 'Iuran Terkunci' : 'Ringkasan Iuran',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isLocked ? Colors.red : null,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.onAccentGradient,
               ),
             ),
             trailing: AnimatedRotation(
               turns: expanded ? 0.5 : 0,
               duration: const Duration(milliseconds: 200),
-              child: Icon(
+              child: const Icon(
                 Icons.expand_more,
-                color: theme.colorScheme.onSurfaceVariant,
+                color: AppTheme.onAccentGradient,
               ),
             ),
             children: children,
@@ -85,14 +100,14 @@ class DuesSummaryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       padding: const EdgeInsets.all(12),
+      // Panel putih solid di atas gradien agar peringatan tetap terbaca.
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock, color: Colors.red, size: 20),
+          const Icon(Icons.lock, color: AppTheme.error, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -102,7 +117,7 @@ class DuesSummaryCard extends StatelessWidget {
                   'Periode Iuran Terkunci',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.red,
+                    color: AppTheme.error,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -110,9 +125,9 @@ class DuesSummaryCard extends StatelessWidget {
                   lockStatus.gracePeriodType == 'override'
                       ? 'Override manual - perlu unlock admin'
                       : 'Masa tenggang: ${lockStatus.graceDaysRemaining} hari lagi',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.red.withValues(alpha: 0.8),
+                    color: AppTheme.error,
                   ),
                 ),
               ],
@@ -123,12 +138,7 @@ class DuesSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRows(
-    double totalTagihan,
-    double totalDibayar,
-    bool isLocked,
-    ThemeData theme,
-  ) {
+  Widget _buildSummaryRows(double totalTagihan, double totalDibayar) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
@@ -137,58 +147,58 @@ class DuesSummaryCard extends StatelessWidget {
             'Total Tagihan',
             Formatters.rupiah(totalTagihan),
             Icons.receipt_long,
-            isLocked ? Colors.red : theme.colorScheme.primary,
           ),
           _buildStatRow(
             'Sudah Dibayar',
             Formatters.rupiah(totalDibayar),
             Icons.check_circle,
-            Colors.green,
           ),
           _buildStatRow(
             'Belum Dibayar',
             Formatters.rupiah(totalTagihan - totalDibayar),
             Icons.pending,
-            Colors.orange,
           ),
           _buildStatRow(
             'Terkumpul (Verified)',
             Formatters.rupiah(totalDibayar),
             Icons.verified,
-            Colors.blue,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  /// Baris statistik di atas gradien — seluruh teks/ikon putih agar tetap
+  /// kontras; hierarki dibentuk dari ukuran & ketebalan, bukan opacity.
+  Widget _buildStatRow(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: color.withValues(alpha: 0.1),
-            child: Icon(icon, size: 18, color: color),
+            backgroundColor: Colors.white.withValues(alpha: 0.18),
+            child: Icon(icon, size: 18, color: AppTheme.onAccentGradient),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.onAccentGradient,
+                  ),
+                ),
                 Text(
                   value,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onAccentGradient,
                   ),
                 ),
               ],

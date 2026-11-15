@@ -43,6 +43,17 @@ void main() {
       expect(ls.surfaceDim, isNot(ls.surfaceBright));
     });
 
+    test('surface terpisah dari background di kedua tema', () {
+      // Kartu KTA/panel memakai `surface`; latar halaman `surfaceContainerLowest`.
+      // Tanpa selisih ini kartu putih menyatu dengan background.
+      expect(contrastRatio(ls.surface, ls.surfaceContainerLowest),
+          greaterThan(1.08));
+      expect(contrastRatio(ds.surface, ds.surfaceContainerLowest),
+          greaterThan(1.08));
+      expect(ls.surface, isNot(ls.surfaceContainerLowest));
+      expect(ds.surface, isNot(ds.surfaceContainerLowest));
+    });
+
     test('mode gelap: peran container & error memakai varian gelap', () {
       expect(ds.secondaryContainer, isNot(ds.secondary));
       expect(ds.secondaryContainer, AppTheme.darkPrimaryContainer);
@@ -58,6 +69,11 @@ void main() {
     final pairs = <String, (Color, Color)>{
       'onSurface / surface': (ls.onSurface, ls.surface),
       'onSurfaceVariant / surface': (ls.onSurfaceVariant, ls.surface),
+      // Teks di atas latar halaman (bukan kartu) — latar sengaja dipecah dari
+      // surface agar kartu menonjol, jadi pasangan ini wajib ikut diuji.
+      'onSurface / background': (ls.onSurface, ls.surfaceContainerLowest),
+      'onSurfaceVariant / background':
+          (ls.onSurfaceVariant, ls.surfaceContainerLowest),
       'onPrimary / primary': (ls.onPrimary, ls.primary),
       'onPrimaryContainer / primaryContainer':
           (ls.onPrimaryContainer, ls.primaryContainer),
@@ -99,6 +115,9 @@ void main() {
     final pairs = <String, (Color, Color)>{
       'onSurface / surface': (ds.onSurface, ds.surface),
       'onSurfaceVariant / surface': (ds.onSurfaceVariant, ds.surface),
+      'onSurface / background': (ds.onSurface, ds.surfaceContainerLowest),
+      'onSurfaceVariant / background':
+          (ds.onSurfaceVariant, ds.surfaceContainerLowest),
       'onPrimary / primary': (ds.onPrimary, ds.primary),
       'onPrimaryContainer / primaryContainer':
           (ds.onPrimaryContainer, ds.primaryContainer),
@@ -135,6 +154,55 @@ void main() {
 
     test('outline / surface (border & ikon) ≥ 3:1', () {
       expect(contrastRatio(ds.outline, ds.surface), meets(3.0));
+    });
+  });
+
+  group('Palet aksen (Nordy) — aditif, primary tidak berubah', () {
+    test('primary tetap biru merek', () {
+      expect(ls.primary, AppTheme.primary);
+      expect(ds.primary, AppTheme.darkPrimary);
+    });
+
+    test('aksen yang boleh jadi teks lolos di surface terang', () {
+      expect(contrastRatio(AppTheme.accentTeal, ls.surface), meets(4.5));
+      expect(contrastRatio(AppTheme.accentIndigo, ls.surface), meets(4.5));
+    });
+
+    test('violet hanya dekoratif di surface terang (< 4.5:1)', () {
+      expect(contrastRatio(AppTheme.accentViolet, ls.surface), lessThan(4.5));
+    });
+
+    test('teks ink di atas isian lembut lolos (≥ 4.5:1)', () {
+      for (final fill in [
+        AppTheme.accentMist,
+        AppTheme.accentLavender,
+        AppTheme.accentMint,
+      ]) {
+        expect(contrastRatio(AppTheme.accentInk, fill), meets(4.5),
+            reason: 'ink di atas ${fill.toARGB32().toRadixString(16)}');
+      }
+    });
+
+    test('putih lolos di kedua ujung gradien aksen terang', () {
+      for (final color in AppTheme.accentGradientLight.colors) {
+        expect(contrastRatio(AppTheme.onAccentGradient, color), meets(4.5));
+      }
+    });
+
+    test('varian aksen gelap lolos di surface gelap (≥ 4.5:1)', () {
+      for (final color in [
+        AppTheme.accentTealOnDark,
+        AppTheme.accentIndigoOnDark,
+        AppTheme.accentVioletOnDark,
+      ]) {
+        expect(contrastRatio(color, ds.surface), meets(4.5));
+      }
+    });
+
+    test('putih lolos di kedua ujung gradien aksen gelap', () {
+      for (final color in AppTheme.accentGradientDark.colors) {
+        expect(contrastRatio(AppTheme.onAccentGradient, color), meets(4.5));
+      }
     });
   });
 
