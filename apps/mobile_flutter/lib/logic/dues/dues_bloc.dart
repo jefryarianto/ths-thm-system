@@ -30,6 +30,18 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     return data.map((json) => Due.fromJson(json)).toList();
   }
 
+
+  /// Ambil daftar rekening bank untuk pembayaran iuran
+  Future<List<dynamic>> _fetchBankInfos() async {
+    try {
+      final response = await _apiClient.dio.get(AppConstants.paymentsBankInfo);
+      return response.data['data'] as List<dynamic>? ?? [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+
   /// Ambil status lock untuk periode saat ini
   Future<LockStatus?> _fetchLockStatus() async {
     try {
@@ -74,10 +86,12 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
             cached.data.map((json) => Due.fromJson(json)).toList();
         // Fetch lock status for cached data
         final lockStatus = await _fetchLockStatus();
+        final bankInfos = await _fetchBankInfos();
         emit(DuesLoaded(
           dues: cachedDues, 
           isStale: cached.isStale,
           lockStatus: lockStatus,
+          bankInfos: bankInfos,
         ));
       }
     } catch (_) {
@@ -87,17 +101,20 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     try {
       final dues = await _fetchDues();
       final lockStatus = await _fetchLockStatus();
-      emit(DuesLoaded(dues: dues, lockStatus: lockStatus));
+      final bankInfos = await _fetchBankInfos();
+      emit(DuesLoaded(dues: dues, lockStatus: lockStatus, bankInfos: bankInfos));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(DuesInitial());
       } else if (cached != null) {
         final cachedDues =
             cached.data.map((json) => Due.fromJson(json)).toList();
+        final bankInfos = await _fetchBankInfos();
         emit(DuesLoaded(
           dues: cachedDues,
           isStale: true,
           errorMessage: _messageFromError(e),
+          bankInfos: bankInfos,
         ));
       } else {
         emit(DuesError(message: _messageFromError(e)));
@@ -119,21 +136,6 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     if (token == null || token.isEmpty) {
       emit(DuesInitial());
       return;
-    }
-
-    // Check lock status before allowing upload
-    final currentState = state;
-    if (currentState is DuesLoaded && currentState.lockStatus?.isLocked == true) {
-      // Check if the specific iuran is locked
-      final iuran = currentState.dues.firstWhere(
-        (d) => d.id == event.iuranId,
-        orElse: () => Due(id: '', periode: '', jumlah: 0, status: '', createdAt: '', isLocked: false),
-      );
-      
-      if (iuran.isLocked) {
-        emit(DuesError(message: 'Tidak dapat upload bukti untuk periode terkunci. Hubungi admin.'));
-        return;
-      }
     }
 
     // Pertahankan daftar saat ini agar kartu tidak hilang saat loading.
@@ -160,13 +162,14 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
 
       final dues = await _fetchDues();
       final lockStatus = await _fetchLockStatus();
+      final bankInfos = await _fetchBankInfos();
       emit(DuesProofUploadSuccess(
         dues: dues,
         message: 'Bukti pembayaran terkirim, menunggu verifikasi admin.',
       ));
       
       // Re-emit loaded state with lock status
-      emit(DuesLoaded(dues: dues, lockStatus: lockStatus));
+      emit(DuesLoaded(dues: dues, lockStatus: lockStatus, bankInfos: bankInfos));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         emit(DuesInitial());

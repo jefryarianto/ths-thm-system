@@ -1,6 +1,8 @@
 // Bank Info Card Widget
 import 'package:flutter/material.dart';
 
+import '../../../core/api/api_client.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../data/models/bank_info.dart';
 
 class BankInfoCard extends StatefulWidget {
@@ -26,9 +28,17 @@ class _BankInfoCardState extends State<BankInfoCard> {
   Future<void> _fetchBankInfo() async {
     if (_loaded) return;
     try {
-      setState(() => _loaded = true);
+      final response = await ApiClient().dio.get(AppConstants.paymentsBankInfo);
+      final data = response.data['data'] as List<dynamic>? ?? [];
+      setState(() {
+        _bankInfos = data.map((json) => BankInfo.fromJson(json)).toList();
+        _loaded = true;
+      });
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() {
+        _error = e.toString();
+        _loaded = true;
+      });
     }
   }
 

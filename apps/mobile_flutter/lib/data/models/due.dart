@@ -56,8 +56,11 @@ class Due {
   }
 
   // NEW: Lock helper methods
-  bool get canUploadProof => !isLocked && status.toLowerCase() == 'belum_dibayar';
-  bool get canBatchPay => !isLocked && status.toLowerCase() == 'belum_dibayar';
+  /// Boleh unggah bukti bayar selama belum lunas (belum_dibayar, menunggak,
+  /// atau ganti bukti saat menunggu_verifikasi). Anggota yang menunggak /
+  /// terkunci justru harus bisa membayar agar sanksi lock terangkat.
+  bool get canUploadProof => !isPaid;
+  bool get canBatchPay => !isPaid;
   
   Duration? get gracePeriodRemaining {
     if (lockExpiresAt == null) return null;

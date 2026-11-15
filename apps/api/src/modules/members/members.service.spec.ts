@@ -532,7 +532,7 @@ describe('MembersService', () => {
     it('should return member by exact email match', async () => {
       mockPrisma.anggota.findFirst.mockResolvedValue(member);
       const result = await service.findByEmail('jefry@example.com', 'Jefry Arianto Baba');
-      expect(result).toBe(member);
+      expect(result).toEqual(expect.objectContaining(member));
       // Fallback nama tidak perlu dicoba bila email cocok
       expect(mockPrisma.anggota.findMany).not.toHaveBeenCalled();
     });
@@ -542,7 +542,7 @@ describe('MembersService', () => {
       mockPrisma.anggota.findMany.mockResolvedValue([member]);
 
       const result = await service.findByEmail('akun@example.com', 'Jefry Arianto Baba');
-      expect(result).toBe(member);
+      expect(result).toEqual(expect.objectContaining(member));
       // Filter fallback: nama insensitive + hanya anggota ber-email kosong
       expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
         where: {

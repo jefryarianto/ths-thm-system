@@ -338,18 +338,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       builder: (context, state) {
         final member = state is MemberLoaded ? state.member : null;
         final fotoUrl = member?.fotoUrl ?? '';
-        ImageProvider? backgroundImage;
+        ImageProvider? localImage;
         if (_localPhotoUri != null && _localPhotoUri!.isNotEmpty) {
-          backgroundImage = FileImage(File(_localPhotoUri!));
-        } else if (fotoUrl.isNotEmpty) {
-          backgroundImage = NetworkImage(fotoUrl);
+          localImage = FileImage(File(_localPhotoUri!));
         }
         return Center(
           child: Column(children: [
             Stack(alignment: Alignment.bottomRight, children: [
               MemberAvatar(
                 size: 112,
-                image: backgroundImage,
+                image: localImage,
+                imageUrl: localImage == null ? fotoUrl : null,
                 initials: nameInitials(member?.namaLengkap ?? ''),
                 overlay: _photoUploading
                     ? Container(

@@ -98,7 +98,7 @@ class DuesSummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Periode Iuran Terkunci',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,

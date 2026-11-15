@@ -236,12 +236,23 @@ export class DuesController {
     return this.service.unlockDues(periode, req.scope, req.user?.id);
   }
 
-  @Get('lock-status?')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_nasional', {
-    summary: 'Periksa status lock periode iuran',
-  })
-  getLockStatus(@Query('periode') periode: string, @Req() req: ScopedRequest) {
-    return this.service.getLockStatus(periode, req.scope);
+  @Get('lock-status')
+  @CrudAuth(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_nasional',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+    {
+      scope: 'self',
+      summary: 'Periksa status lock periode iuran',
+    },
+  )
+  getLockStatus(@Query('periode') periode: string | undefined, @Req() req: ScopedRequest) {
+    return this.service.getLockStatus(periode, req.scope, req.user);
   }
 
   @Patch(':periode/grace-override')

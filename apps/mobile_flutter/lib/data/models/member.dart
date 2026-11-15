@@ -22,6 +22,7 @@ class Member {
   final String alamat;
   final String noHp;
   final String fotoPath;
+  final String? fotoDataUrl;
   final String rantingId;
   // Nested relation names
   final String namaRanting;
@@ -45,6 +46,7 @@ class Member {
     required this.alamat,
     required this.noHp,
     required this.fotoPath,
+    this.fotoDataUrl,
     required this.rantingId,
     required this.namaRanting,
     required this.namaWilayah,
@@ -53,9 +55,12 @@ class Member {
 
   // ── Backward-compatible getters (used by Profile / KTA screens) ──────
 
-  /// URL absolut foto profil. Jika `fotoPath` hanya filename, prefix
-  /// `/api/uploads/` otomatis ditambahkan.
+  /// URL foto profil. Bila `fotoDataUrl` (base64 data URL) tersedia dari API,
+  /// itu diprioritaskan agar tidak terkena 401 dan bekerja instan/offline.
+  /// Jika `fotoPath` hanya filename, prefix `/api/uploads/` otomatis ditambahkan.
   String get fotoUrl {
+    final d = fotoDataUrl?.trim() ?? '';
+    if (d.isNotEmpty) return d;
     final p = fotoPath.trim();
     if (p.isEmpty) return '';
     if (p.startsWith('http://') || p.startsWith('https://')) return p;
@@ -99,6 +104,7 @@ class Member {
       alamat: _str(json, 'alamat'),
       noHp: _str(json, 'noHp'),
       fotoPath: _str(json, 'fotoPath'),
+      fotoDataUrl: json['fotoDataUrl']?.toString(),
       rantingId: _str(json, 'rantingId'),
       namaRanting: _str(ranting, 'nama'),
       namaWilayah: _str(wilayah, 'nama'),

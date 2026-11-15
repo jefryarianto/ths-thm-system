@@ -58,9 +58,7 @@ class ProfileScreen extends StatelessWidget {
               Center(
                 child: MemberAvatar(
                   size: 96,
-                  image: member.fotoUrl.isNotEmpty
-                      ? NetworkImage(member.fotoUrl)
-                      : null,
+                  imageUrl: member.fotoUrl,
                   initials: nameInitials(member.namaLengkap),
                 ),
               ),

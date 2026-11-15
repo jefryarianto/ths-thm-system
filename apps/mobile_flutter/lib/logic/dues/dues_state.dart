@@ -23,15 +23,19 @@ class DuesLoaded extends DuesState {
   /// Status lock untuk periode saat ini
   final LockStatus? lockStatus;
 
+  /// Bank info untuk detail pembayaran
+  final List<dynamic>? bankInfos;
+
   const DuesLoaded({
     required this.dues,
     this.isStale = false,
     this.errorMessage,
     this.lockStatus,
+    this.bankInfos,
   });
 
   @override
-  List<Object> get props => [dues, isStale, errorMessage ?? '', lockStatus ?? LockStatus()];
+  List<Object> get props => [dues, isStale, errorMessage ?? '', lockStatus ?? const LockStatus(), bankInfos ?? []];
 }
 
 class DuesError extends DuesState {

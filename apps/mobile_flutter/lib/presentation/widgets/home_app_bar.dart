@@ -1,5 +1,4 @@
 import '../../core/theme/app_theme.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -161,7 +160,7 @@ class _Avatar extends StatelessWidget {
           final fotoUrl = state.member.fotoUrl;
           return MemberAvatar(
             size: 48,
-            image: fotoUrl.isNotEmpty ? CachedNetworkImageProvider(fotoUrl) : null,
+            imageUrl: fotoUrl,
             initials: nameInitials(state.member.namaLengkap),
           );
         }

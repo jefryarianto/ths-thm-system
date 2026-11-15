@@ -22,7 +22,7 @@ import {
   BatchPaymentDto,
   PaymentConfirmationDto,
 } from './dto/dues.dto';
-import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { UserScope, isSelfScope } from '../../common/interfaces/user-scope.interface';
 import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
@@ -654,14 +654,91 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return [];
   }
 
-  async getLockStatus(periode: string, scope?: UserScope): Promise<LockStatus> {
+  async getLockStatus(
+    periode?: string,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ): Promise<LockStatus> {
+    const now = new Date();
+    const defaultPeriode = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const targetPeriode = periode || defaultPeriode;
+
+    // Untuk role anggota / penguji (self-scope): periksa iuran milik anggota sendiri
+    if (user && (user.role === 'anggota' || user.role === 'penguji' || isSelfScope(scope))) {
+      let memberId: string | undefined;
+      const member = await this.prisma.anggota.findFirst({
+        where: { email: user.email, deletedAt: null },
+        select: { id: true },
+      });
+      if (member) {
+        memberId = member.id;
+      } else if (user.namaLengkap?.trim()) {
+        const byName = await this.prisma.anggota.findMany({
+          where: {
+            namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
+            OR: [{ email: null }, { email: '' }],
+            deletedAt: null,
+          },
+          select: { id: true },
+        });
+        if (byName.length === 1) memberId = byName[0].id;
+      }
+
+      if (!memberId) {
+        return {
+          periode: targetPeriode,
+          isLocked: false,
+          lockedCount: 0,
+          graceDaysRemaining: 0,
+          gracePeriodType: 'standard',
+          memberIds: [],
+        };
+      }
+
+      // Cari apakah anggota memiliki iuran yang terkunci (periode ini atau tunggakan apapun)
+      const myLocked = await this.prisma.iuran.findMany({
+        where: {
+          anggotaId: memberId,
+          isLocked: true,
+          status: { in: ['belum_dibayar', 'menunggak', 'menunggu_verifikasi'] },
+        },
+        orderBy: { lockExpiresAt: 'asc' },
+      });
+
+      const isLocked = myLocked.length > 0;
+      let graceDaysRemaining = 0;
+      let gracePeriodType: 'standard' | 'extended' | 'override' = 'standard';
+
+      if (isLocked && myLocked[0].lockExpiresAt) {
+        const expiresAt = new Date(myLocked[0].lockExpiresAt);
+        graceDaysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        gracePeriodType = myLocked[0].lockReason?.includes('extended') || myLocked[0].lockReason?.includes('override')
+          ? (myLocked[0].lockReason?.includes('override') ? 'override' : 'extended')
+          : 'standard';
+      }
+
+      return {
+        periode: targetPeriode,
+        isLocked,
+        lockedCount: myLocked.length,
+        graceDaysRemaining,
+        gracePeriodType,
+        lockedBy: myLocked[0]?.lockedBy,
+        lockedAt: myLocked[0]?.lockedAt,
+        lockReason: myLocked[0]?.lockReason,
+        expiresAt: myLocked[0]?.lockExpiresAt,
+        memberIds: [memberId],
+      };
+    }
+
     const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
-    
+    const where: any = {
+      periode: targetPeriode,
+      ...scopeFilter,
+    };
+
     const dues = await this.prisma.iuran.findMany({
-      where: {
-        periode,
-        ...scopeFilter,
-      },
+      where,
       select: {
         id: true,
         anggotaId: true,
@@ -677,22 +754,21 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
     const lockedDues = dues.filter((d) => d.isLocked);
     const hasAnyLocked = lockedDues.length > 0;
-    
+
     let graceDaysRemaining = 0;
     let gracePeriodType: 'standard' | 'extended' | 'override' = 'standard';
-    
+
     if (hasAnyLocked && lockedDues[0].lockExpiresAt) {
-      const now = new Date();
       const expiresAt = new Date(lockedDues[0].lockExpiresAt);
       graceDaysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-      
-      gracePeriodType = lockedDues[0].lockReason?.includes('extended') || lockedDues[0].lockReason?.includes('override') 
+
+      gracePeriodType = lockedDues[0].lockReason?.includes('extended') || lockedDues[0].lockReason?.includes('override')
         ? (lockedDues[0].lockReason?.includes('override') ? 'override' : 'extended')
         : 'standard';
     }
 
     return {
-      periode,
+      periode: targetPeriode,
       isLocked: hasAnyLocked,
       lockedCount: lockedDues.length,
       graceDaysRemaining,

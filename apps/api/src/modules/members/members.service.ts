@@ -34,6 +34,12 @@ import { ApprovalService } from '../approvals/approval.service';
 import { ImportBatchService } from '../imports/import-batch.service';
 import { calculateMissingFields } from '../../common/utils/member-completeness';
 import bcrypt from 'bcryptjs';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const sharp = require('sharp');
 
 /**
  * Password awal akun anggota yang dibuat/di-reset sistem.
@@ -569,6 +575,69 @@ export class MembersService
     return members;
   }
 
+  /**
+   * Generate fotoDataUrl for a member (base64 data URL for embedding in frontend)
+   */
+  private async resolvePhotoDataUrl(
+    fotoPath?: string | null,
+    preferBg = false,
+    maxDim?: number,
+  ): Promise<string | null> {
+    if (!fotoPath) return null;
+    try {
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const filePath = path.join(uploadDir, fotoPath);
+      if (!fs.existsSync(filePath)) return null;
+
+      // Foto kartu: prefer versi tanpa background (`<file>.bg.png`) ala SIM.
+      // Bila belum ada, generate on-demand via sharp (lazy, sekali saja).
+      let targetPath = filePath;
+      if (preferBg) {
+        const bgPath = path.join(process.env.UPLOAD_DIR || './uploads', `${fotoPath}.bg.png`);
+        if (fs.existsSync(bgPath)) {
+          targetPath = bgPath;
+        } else {
+          try {
+            const { removePhotoBackground } = require('../../common/utils/photo-bg.util');
+            const out = await removePhotoBackground(fs.readFileSync(filePath));
+            fs.writeFileSync(bgPath, out);
+            targetPath = bgPath;
+          } catch {
+            targetPath = filePath;
+          }
+        }
+      }
+
+      const ext = path.extname(targetPath).toLowerCase();
+      const isPngOrWebp = ext === '.png' || ext === '.webp';
+      const mime = ext === '.png' || ext === '.webp'
+        ? 'image/png'
+        : ext === '.jpeg' || ext === '.jpg'
+          ? 'image/jpeg'
+          : 'image/jpeg';
+      let buffer: Buffer = fs.readFileSync(targetPath);
+
+      // Resize jika melebihi maxDim
+      if (maxDim && (buffer.length > 100 * 1024 || require('sharp')(buffer).metadata().then((m: any) => Math.max(m.width, m.height) > maxDim))) {
+        try {
+          const metadata = await sharp(buffer).metadata();
+          if (Math.max(metadata.width || 0, metadata.height || 0) > maxDim) {
+            buffer = await sharp(buffer)
+              .resize({ width: maxDim, height: maxDim, fit: 'inside', withoutEnlargement: true })
+              .toBuffer();
+          }
+        } catch {
+          // ignore resize errors
+        }
+      }
+
+      const base64 = buffer.toString('base64');
+      return `data:${mime};base64,${base64}`;
+    } catch {
+      return null;
+    }
+  }
+
   // ── Domain: findByEmail ──────────────────────────────────
 
   /**
@@ -587,7 +656,10 @@ export class MembersService
       where: { email, deletedAt: null },
       include,
     });
-    if (member) return member;
+    if (member) {
+      const fotoDataUrl = await this.resolvePhotoDataUrl(member.fotoPath, false, 700);
+      return { ...member, fotoDataUrl };
+    }
 
     // Prioritas 2 (fallback nama): hanya untuk anggota ber-email kosong & hasil unik.
     if (namaLengkap && namaLengkap.trim()) {
@@ -599,7 +671,11 @@ export class MembersService
         },
         include,
       });
-      if (byName.length === 1) return byName[0];
+      if (byName.length === 1) {
+        const member = byName[0];
+        const fotoDataUrl = await this.resolvePhotoDataUrl(member.fotoPath, false, 700);
+        return { ...member, fotoDataUrl };
+      }
     }
 
     throw new NotFoundException('Anggota tidak ditemukan untuk email ini');
