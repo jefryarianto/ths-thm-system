@@ -174,7 +174,7 @@ export default function ClaimDetailPage() {
               <RefreshCw size={14} />
             </button>
           </div>
-          <div className="px-6 pb-6 -mt-2">
+          <div className="px-6 pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div className="w-14 h-14 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800">
                 <FileText size={22} className="text-orange-600" />
