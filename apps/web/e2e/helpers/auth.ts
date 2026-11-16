@@ -21,6 +21,7 @@ export const MOCK_USER = {
 
 const MOCK_ACCESS_TOKEN = 'mock-access-token-for-e2e-tests';
 const MOCK_REFRESH_TOKEN = 'mock-refresh-token-for-e2e-tests';
+const MOCK_CSRF_TOKEN = 'mock-csrf-token-for-e2e-tests';
 
 /**
  * Derive the web app base URL from environment (settable via E2E_BASE_URL).
@@ -114,6 +115,7 @@ export async function mockAuth(
     // NOTE: accessToken cookie intentionally removed per FASE 29P
     // Only refreshToken cookie is used for session verification
     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
+    { name: 'csrf_token', value: MOCK_CSRF_TOKEN, domain: cookieDomain, path: '/', httpOnly: false, sameSite: 'lax' }
   ]);
 
   // ── 2. Catch-all interceptors (registered FIRST — act as defaults) ──
@@ -161,6 +163,9 @@ export async function mockAuth(
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
+      headers: {
+        'set-cookie': `csrf_token=${MOCK_CSRF_TOKEN}; Path=/; SameSite=Lax; HttpOnly=False`,
+      },
       body: JSON.stringify({ success: true, data: userData }),
     });
   });
@@ -264,6 +269,9 @@ export async function mockLoginSuccess(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
+      headers: {
+        'set-cookie': `csrf_token=${MOCK_CSRF_TOKEN}; Path=/; SameSite=Lax; HttpOnly=False`,
+      },
       body: JSON.stringify({ success: true, data: MOCK_USER }),
     });
   });

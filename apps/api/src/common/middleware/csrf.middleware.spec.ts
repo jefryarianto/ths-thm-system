@@ -40,6 +40,29 @@ describe('CsrfMiddleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(403);
   });
 
+  it('meloloskan POST /api/auth/me tanpa token (exempt exact path)', () => {
+    const res = makeRes();
+    middleware.use(makeReq({ originalUrl: '/api/auth/me', method: 'POST' }), res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+    expect(res.cookie).toHaveBeenCalledWith(
+      'csrf_token',
+      expect.any(String),
+      expect.objectContaining({ httpOnly: false, sameSite: 'lax' }),
+    );
+  });
+
+  it('menyetel cookie CSRF pada GET /api/auth/me bila belum ada', () => {
+    const res = makeRes();
+    middleware.use(makeReq({ originalUrl: '/api/auth/me', method: 'GET' }), res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.cookie).toHaveBeenCalledWith(
+      'csrf_token',
+      expect.any(String),
+      expect.objectContaining({ httpOnly: false, sameSite: 'lax' }),
+    );
+  });
+
   it('meloloskan request ber-Bearer token tanpa header CSRF', () => {
     const res = makeRes();
     middleware.use(
@@ -51,9 +74,24 @@ describe('CsrfMiddleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(403);
   });
 
-  it('menolak POST tanpa Bearer dan tanpa token CSRF', () => {
+  it('meloloskan POST publik tanpa session (tidak punya refresh token)', () => {
     const res = makeRes();
+    // Request publik seperti POST /claims tidak butuh CSRF protection
     middleware.use(makeReq(), res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+  });
+
+  it('menolak POST dengan session tetapi tanpa token CSRF', () => {
+    const res = makeRes();
+    // Request dengan refresh token (session aktif) tetap butuh CSRF
+    middleware.use(
+      makeReq({
+        headers: { cookie: 'refreshToken=valid-refresh-token' },
+      }),
+      res,
+      next,
+    );
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
   });
@@ -62,7 +100,7 @@ describe('CsrfMiddleware', () => {
     const res = makeRes();
     middleware.use(
       makeReq({
-        headers: { cookie: 'csrf_token=abc123', 'x-csrf-token': 'abc123' },
+        headers: { cookie: 'csrf_token=abc123; refreshToken=valid-refresh', 'x-csrf-token': 'abc123' },
       }),
       res,
       next,
@@ -70,9 +108,15 @@ describe('CsrfMiddleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('menolak POST bila header CSRF tidak ada meski cookie ada', () => {
+  it('menolak POST dengan session tetapi CSRF token tidak cocok', () => {
     const res = makeRes();
-    middleware.use(makeReq({ headers: { cookie: 'csrf_token=abc123' } }), res, next);
+    middleware.use(
+      makeReq({
+        headers: { cookie: 'csrf_token=abc123; refreshToken=valid-refresh', 'x-csrf-token': 'wrong-token' },
+      }),
+      res,
+      next,
+    );
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
   });

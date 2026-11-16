@@ -23,7 +23,7 @@ import * as crypto from 'crypto';
  * mobile clients working without requiring a CSRF header on every call.
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const EXEMPT_PATHS = ['/auth/'];
+const EXEMPT_PATHS = ['/auth/', '/auth/me'];
 
 function getApiPrefix(): string {
   const raw = (process.env.API_PREFIX || 'api').trim();
@@ -50,12 +50,20 @@ function stripApiPrefix(pathname: string): string {
 
 function isExempt(req: Request): boolean {
   const pathname = stripApiPrefix(getRequestPath(req));
-  return EXEMPT_PATHS.some(path => pathname.startsWith(path));
+  return EXEMPT_PATHS.some(path => pathname.startsWith(path) || pathname === path);
 }
 
 function hasBearerToken(req: Request): boolean {
   const auth = req.headers.authorization;
   return typeof auth === 'string' && /^Bearer\s+\S+/i.test(auth);
+}
+
+function hasValidSession(req: Request): boolean {
+  // Request dengan refresh token cookie (HttpOnly) dianggap sudah terautentikasi
+  // dan perlu CSRF protection. Request publik (tanpa refresh token) tidak butuh CSRF.
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return false;
+  return /refreshToken=([^;]+)/.test(cookieHeader);
 }
 
 /**
@@ -86,13 +94,34 @@ function readCookie(req: Request, name: string): string | undefined {
 @Injectable()
 export class CsrfMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
-    // Skip CSRF check for safe methods, auth endpoints, and Bearer auth.
-    if (SAFE_METHODS.has(req.method) || isExempt(req) || hasBearerToken(req)) {
+    // Skip CSRF for auth endpoints (login deadlock prevention)
+    if (isExempt(req)) {
       this.ensureCsrfToken(req, res);
       return next();
     }
 
-    // Validate CSRF token on state-changing requests
+    // Skip CSRF for public endpoints (no session) - no session = no CSRF risk
+    // Public endpoints like POST /claims (member registration) are not vulnerable
+    // because there's no existing session for attacker to hijack
+    if (!hasValidSession(req)) {
+      this.ensureCsrfToken(req, res);
+      return next();
+    }
+
+    // Bearer token requests are exempt from CSRF (attacker cannot forge Authorization header)
+    // but we still ensure the CSRF cookie is set for subsequent non-Bearer requests.
+    if (hasBearerToken(req)) {
+      this.ensureCsrfToken(req, res);
+      return next();
+    }
+
+    // Skip CSRF check for safe methods (GET, HEAD, OPTIONS)
+    if (SAFE_METHODS.has(req.method)) {
+      this.ensureCsrfToken(req, res);
+      return next();
+    }
+
+    // Validate CSRF token on state-changing requests (POST, PUT, PATCH, DELETE)
     const cookieToken = readCookie(req, 'csrf_token');
     const headerToken = req.headers['x-csrf-token'] as string | undefined;
 

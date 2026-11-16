@@ -304,6 +304,16 @@ function getAccessToken(): string | null {
   return null;
 }
 
+function getCsrfToken(): string | null {
+  if (typeof window !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;)\s*csrf_token=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  return null;
+}
+
+const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
 // Endpoint auth selalu lolos dari blokir sesi-expired. Tanpa ini, login
 // setelah sesi kedaluwarsa akan deadlock: flag `isExpired` menolak request
 // login itu sendiri sehingga user terjebak sampai reload manual (F5).
@@ -359,6 +369,16 @@ apiClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Add CSRF token for state-changing methods
+  const method = config.method?.toUpperCase();
+  if (method && STATE_CHANGING_METHODS.has(method)) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+
   return config;
 });
 
