@@ -165,7 +165,7 @@ export default function ClaimDetailPage() {
 
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-          <div className="h-12 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 relative">
+          <div className="h-8 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 relative">
             <button
               onClick={fetchClaim}
               className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
