@@ -218,7 +218,9 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
           approvedAt: new Date(),
         },
       });
-      this.sendClaimStatusEmail(claim.anggota, 'disetujui');
+      if (claim.anggota?.email) {
+        this.sendClaimStatusEmail(claim.anggota, 'disetujui');
+      }
     }
 
     this.invalidateCache();
