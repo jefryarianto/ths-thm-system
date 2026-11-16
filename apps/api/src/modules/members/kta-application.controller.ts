@@ -41,6 +41,17 @@ export class KtaApplicationController {
     return this.ktaApplicationService.submitSelf(user.email, { id: user.id, role: user.role });
   }
 
+  // Body-less self-submit for the mobile app (POST /kta-applications/me).
+  // The root `@Post()` validates a CreateKtaDto body, but the app submits
+  // without a body, so it must have its own route (also keeps older builds working).
+  @Post('me')
+  @Roles('anggota')
+  @ApiOperation({ summary: 'Submit KTA application (member self-service)' })
+  @ApiResponse({ status: 201, description: 'KTA application submitted successfully' })
+  async createMyApplication(@CurrentUser() user: any) {
+    return this.ktaApplicationService.submitSelf(user.email, { id: user.id, role: user.role });
+  }
+
   @Get('me')
   @Roles('anggota')
   @ApiOperation({ summary: "Get current user's KTA application" })
@@ -53,6 +64,15 @@ export class KtaApplicationController {
   @ApiOperation({ summary: 'Cancel KTA application' })
   async cancel(@CurrentUser() user: any, @Body() body: { reason?: string }) {
     return this.ktaApplicationService.cancelMyApplication(user.email, body?.reason || '');
+  }
+
+  // ── ADMIN RESET (hard reset so member can re-submit) ──
+  @Post('members/:memberId/reset')
+  @Roles('superadmin', 'admin_nasional')
+  @ApiOperation({ summary: 'Reset KTA: revoke card and delete all applications for a member' })
+  @ApiResponse({ status: 201, description: 'KTA reset successfully' })
+  async resetMemberKta(@Param('memberId') memberId: string, @CurrentUser() user: any) {
+    return this.ktaApplicationService.resetMemberKta(memberId, { id: user.id, role: user.role });
   }
 
   // ── STATIC ADMIN ROUTES (before :id to avoid shadowing) ──

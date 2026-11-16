@@ -130,6 +130,36 @@ function formatRupiah(amount: number): string {
 
 @Injectable()
 export class KtaApplicationService {
+  // Retrieve the latest KTA status for a member (used by mobile banner).
+  async getStatus(memberId: string) {
+    const latest = await this.prisma.ktaApplication.findFirst({
+      where: { anggotaId: memberId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        status: true,
+        nomorAnggota: true,
+        diterbitkanAt: true,
+        createdAt: true,
+      },
+    });
+    if (!latest) {
+      return {
+        hasApplication: false,
+        status: null,
+        nomorAnggota: null,
+        diterbitkanAt: null,
+        appliedAt: null,
+      };
+    }
+    return {
+      hasApplication: true,
+      status: latest.status,
+      nomorAnggota: latest.nomorAnggota ?? null,
+      diterbitkanAt: latest.diterbitkanAt ?? null,
+      appliedAt: latest.createdAt,
+    };
+  }
+
   private readonly logger = new Logger(KtaApplicationService.name);
 
   constructor(
@@ -489,6 +519,69 @@ export class KtaApplicationService {
   }
 
   // ============================================================
+  // ADMIN RESET (hard reset so member can re-submit)
+  // ============================================================
+  async resetMemberKta(
+    memberId: string,
+    actor: { id: string; role: string },
+  ): Promise<{ success: true; deletedApplications: number; revokedDocuments: number }> {
+    const member = await this.prisma.anggota.findFirst({
+      where: { id: memberId, deletedAt: null },
+      select: { id: true, rantingId: true, nomorAnggota: true },
+    });
+    if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+
+    const apps = await this.prisma.ktaApplication.findMany({
+      where: { anggotaId: memberId },
+      select: { id: true, status: true, nomorAnggota: true, batchId: true },
+    });
+    const docs = await this.prisma.dokumen.findMany({
+      where: { anggotaId: memberId, tipe: 'kartu_anggota' },
+      select: { id: true, status: true },
+    });
+
+    const docIds = docs.map((d) => d.id);
+    const perBatch = new Map<string, number>();
+    for (const app of apps) {
+      if (app.status === 'CARD_GENERATED' && app.batchId) {
+        perBatch.set(app.batchId, (perBatch.get(app.batchId) ?? 0) + 1);
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      if (docIds.length > 0) {
+        await tx.dokumen.updateMany({ where: { id: { in: docIds } }, data: { status: 'revoked' } });
+        await tx.qRValidation.updateMany({
+          where: { dokumenId: { in: docIds }, isValid: true },
+          data: { isValid: false },
+        });
+      }
+      for (const [batchId, count] of perBatch) {
+        await tx.ktaBatch.update({
+          where: { id: batchId },
+          data: { totalGenerated: { decrement: count } },
+        });
+      }
+      await tx.ktaApplication.deleteMany({ where: { anggotaId: memberId } });
+    });
+
+    this.audit('KTA_RESET', memberId, actor.id, {
+      anggotaId: memberId,
+      rantingId: member.rantingId,
+      nomorAnggota: member.nomorAnggota,
+      role: actor.role,
+      deletedApplications: apps.map((a) => ({
+        id: a.id,
+        status: a.status,
+        nomorAnggota: a.nomorAnggota,
+      })),
+      revokedDocuments: docs.map((d) => ({ id: d.id, status: d.status })),
+    });
+
+    return { success: true, deletedApplications: apps.length, revokedDocuments: docs.length };
+  }
+
+  // ============================================================
   // SUPERADMIN BYPASS
   // ============================================================
   async superadminBypass(applicationId: string, superadminId: string) {
@@ -825,7 +918,16 @@ export class KtaApplicationService {
   }
 
   async getApplications(
-    filter: { status?: KtaAppStatus; anggotaId?: string; batchId?: string; search?: string; page?: number; limit?: number },
+    filter: {
+      status?: KtaAppStatus;
+      anggotaId?: string;
+      batchId?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+      order?: 'asc' | 'desc';
+    },
     scope?: UserScope,
   ) {
     const scopeFilter = this.buildScopeFilter(scope);
@@ -847,7 +949,7 @@ export class KtaApplicationService {
     const [items, total] = await Promise.all([
       this.prisma.ktaApplication.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: this.buildOrderBy(filter.sort, filter.order),
         skip: (page - 1) * limit,
         take: limit,
         include: {
@@ -965,12 +1067,17 @@ export class KtaApplicationService {
 
     const approvers = await tx.user.findMany({ where, select: { id: true } });
     for (const approver of approvers) {
-      await this.notificationsService?.send(approver.id, {
-        judul: '✅ Persetujuan KTA Dibutuhkan',
-        isi: `${LEVEL_LABELS[level]}: Aplikasi KTA ${app.anggota.namaLengkap} (${app.nomorAnggota || 'belum ada nomor'}) menunggu review.`,
-        tipe: 'kta_approval_request',
-        data: { applicationId, screen: 'kta-queue', screenId: applicationId },
-      });
+      try {
+        await this.notificationsService?.send(approver.id, {
+          judul: '✅ Persetujuan KTA Dibutuhkan',
+          isi: `${LEVEL_LABELS[level]}: Aplikasi KTA ${app.anggota.namaLengkap} (${app.nomorAnggota || 'belum ada nomor'}) menunggu review.`,
+          tipe: 'kta_approval_request',
+          data: { applicationId, screen: 'kta-queue', screenId: applicationId },
+        });
+      } catch (error) {
+        // Never abort the submit transaction because a notification failed.
+        this.logger.error(`notifyLevel failed for approver ${approver.id}: ${(error as Error).message}`);
+      }
     }
   }
 
@@ -997,16 +1104,43 @@ export class KtaApplicationService {
   }
 
   private async notifyMember(member: any, dto: { judul: string; isi: string; tipe: string; data: Record<string, unknown> }) {
-    if (!member?.email) return;
-    const user = await this.prisma.user.findUnique({ where: { email: member.email } });
-    if (user) {
-      await this.notificationsService?.send(user.id, dto as any);
+    try {
+      if (!member?.email) return;
+      const user = await this.prisma.user.findUnique({ where: { email: member.email } });
+      if (user) {
+        await this.notificationsService?.send(user.id, dto as any);
+      }
+    } catch (error) {
+      // Notification delivery must not break the KTA workflow.
+      this.logger.error(`notifyMember failed: ${(error as Error).message}`);
     }
   }
 
   private async verifyScope(rantingId: string, scope: UserScope) {
     if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rantingId))) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+  }
+
+  private buildOrderBy(
+    sort?: string,
+    order?: 'asc' | 'desc',
+  ): Prisma.KtaApplicationOrderByWithRelationInput {
+    const dir: Prisma.SortOrder = order === 'asc' ? 'asc' : 'desc';
+    switch (sort) {
+      case 'status':
+        return { status: dir };
+      case 'submittedByRole':
+        return { submittedByRole: dir };
+      case 'updatedAt':
+        return { updatedAt: dir };
+      case 'anggota.namaLengkap':
+        return { anggota: { namaLengkap: dir } };
+      case 'anggota.nomorAnggota':
+        return { anggota: { nomorAnggota: dir } };
+      case 'createdAt':
+      default:
+        return { createdAt: dir };
     }
   }
 

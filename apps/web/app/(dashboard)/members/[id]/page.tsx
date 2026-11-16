@@ -54,6 +54,7 @@ import {
   Pencil,
   AlertTriangle,
   RefreshCw,
+  RotateCcw,
   ShieldAlert,
   History,
   Lock,
@@ -492,6 +493,7 @@ export default function MemberDetailPage() {
     tabFromUrl || 'info',
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showResetKtaModal, setShowResetKtaModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardData, setCardData] = useState<{
     qrCode: string;
@@ -545,9 +547,17 @@ export default function MemberDetailPage() {
       setError(null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const status = err?.response?.status;
+      // apiClient menormalkan semua error menjadi { status, message, data }
+      // (tanpa `.response`). Baca `status`/`message` langsung agar penyebab
+      // sebenarnya (403/404/5xx) tidak tertutup pesan generik.
+      const status = err?.status ?? err?.response?.status;
+      const apiMessage = err?.message ?? err?.response?.data?.message;
       if (status === 404) setError('Anggota tidak ditemukan');
       else if (status === 403) setError('Akses ditolak: di luar cakupan wilayah Anda');
+      else if (status === 401) setError('Sesi Anda berakhir. Silakan masuk kembali.');
+      else if (status === 0)
+        setError('Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.');
+      else if (apiMessage && apiMessage !== 'Gagal memuat data anggota') setError(apiMessage);
       else setError('Gagal memuat data anggota');
     } finally {
       setLoading(false);
@@ -969,6 +979,29 @@ export default function MemberDetailPage() {
     router.push('/members');
   };
 
+  const handleResetKta = async () => {
+    if (!member) return;
+    setActionLoading('reset-kta');
+    try {
+      const { data } = await apiClient.post(`/kta-applications/members/${member.id}/reset`);
+      const res = data?.data ?? data;
+      toast(
+        'success',
+        res?.deletedApplications
+          ? `KTA direset: ${res.deletedApplications} pengajuan dihapus, ${res.revokedDocuments} kartu dicabut`
+          : 'Tidak ada data KTA untuk direset',
+      );
+      setShowResetKtaModal(false);
+      await fetchMember();
+    } catch (err) {
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
+      toast('error', apiError || 'Gagal mereset KTA');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) return <DetailSkeleton />;
 
   if (error) {
@@ -1139,6 +1172,16 @@ export default function MemberDetailPage() {
                 <Pencil size={14} />
                 Edit
               </button>
+              {(auth.role === 'superadmin' || auth.role === 'admin_nasional') &&
+              member.nomorAnggota ? (
+                <button
+                  onClick={() => setShowResetKtaModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition"
+                >
+                  <RotateCcw size={14} />
+                  Reset KTA
+                </button>
+              ) : null}
               <button
                 onClick={handleResendCredentials}
                 disabled={actionLoading === 'resend'}
@@ -2115,6 +2158,43 @@ export default function MemberDetailPage() {
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
               >
                 {actionLoading === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* ── Reset KTA Modal ── */}
+        <Modal
+          open={showResetKtaModal}
+          onClose={() => setShowResetKtaModal(false)}
+          title="Reset KTA"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+              <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700 dark:text-red-400">
+                Semua pengajuan KTA <strong>{toProperCase(member.namaLengkap)}</strong> akan dihapus
+                dan kartu yang ada akan dicabut. Anggota dapat mengajukan KTA baru dari aplikasi.
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Data anggota dan nomor anggota tetap dipertahankan. Tindakan ini tidak dapat
+              dibatalkan.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowResetKtaModal(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleResetKta}
+                disabled={actionLoading === 'reset-kta'}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {actionLoading === 'reset-kta' ? 'Memproses...' : 'Ya, Reset KTA'}
               </button>
             </div>
           </div>
