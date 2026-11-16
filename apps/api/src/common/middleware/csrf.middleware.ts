@@ -58,14 +58,6 @@ function hasBearerToken(req: Request): boolean {
   return typeof auth === 'string' && /^Bearer\s+\S+/i.test(auth);
 }
 
-function hasValidSession(req: Request): boolean {
-  // Request dengan refresh token cookie (HttpOnly) dianggap sudah terautentikasi
-  // dan perlu CSRF protection. Request publik (tanpa refresh token) tidak butuh CSRF.
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return false;
-  return /refreshToken=([^;]+)/.test(cookieHeader);
-}
-
 /**
  * Baca cookie tanpa ketergantungan cookie-parser (middleware ini berjalan
  * sebelum body/cookie parser Nest dan aplikasi tidak memasang cookie-parser).
@@ -96,14 +88,6 @@ export class CsrfMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     // Skip CSRF for auth endpoints (login deadlock prevention)
     if (isExempt(req)) {
-      this.ensureCsrfToken(req, res);
-      return next();
-    }
-
-    // Skip CSRF for public endpoints (no session) - no session = no CSRF risk
-    // Public endpoints like POST /claims (member registration) are not vulnerable
-    // because there's no existing session for attacker to hijack
-    if (!hasValidSession(req)) {
       this.ensureCsrfToken(req, res);
       return next();
     }
