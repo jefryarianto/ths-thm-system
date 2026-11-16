@@ -53,10 +53,12 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   },
   galeriUpload: { view: 'anggota', create: 'anggota' },
   galeriManage: {
-    view: 'admin_ranting',
-    edit: 'admin_ranting',
-    delete: 'admin_ranting',
-    approve: 'admin_ranting',
+    // Keputusan moderasi hanya superadmin; admin_berita lewat allowlist
+    // (selaras dengan guard API /galeri/admin* dan menu sidebar).
+    view: 'superadmin',
+    edit: 'superadmin',
+    delete: 'superadmin',
+    approve: 'superadmin',
     allowedRoles: ['admin_berita'],
   },
   members: { ...DEFAULT_MODULE },

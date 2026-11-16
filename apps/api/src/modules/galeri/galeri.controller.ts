@@ -32,17 +32,7 @@ import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import type { ScopedRequest } from '../../common/interfaces/user-scope.interface';
-import { GaleriService, MAX_REVIEW_BULK } from './galeri.service';
-
-const MODERATOR_ROLES = [
-  'superadmin',
-  'admin_nasional',
-  'admin_distrik',
-  'admin_wilayah',
-  'admin_ranting',
-  'admin_kegiatan',
-  'admin_berita',
-] as const;
+import { GaleriService, MAX_REVIEW_BULK, MODERATOR_ROLES } from './galeri.service';
 
 class ReviewGaleriDto {
   @Type(() => String)

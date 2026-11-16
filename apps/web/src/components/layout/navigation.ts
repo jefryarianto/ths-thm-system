@@ -113,7 +113,9 @@ export const menuGroups: MenuGroup[] = [
         href: '/galeri/manage',
         label: 'Moderasi Galeri',
         icon: ClipboardCheck,
-        minRole: 'admin_ranting',
+        // Keputusan moderasi hanya untuk superadmin & admin_berita (gerbang
+        // yang sama dengan endpoint /galeri/admin*).
+        minRole: 'superadmin',
         allowedRoles: ['admin_berita'],
       },
       { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },

@@ -255,6 +255,27 @@ describe('filterVisibleGroups', () => {
     expect(groups).toHaveLength(1);
   });
 
+  it('Moderasi Galeri hanya terlihat untuk superadmin & admin_berita', () => {
+    const visibleFor = (role: Role) =>
+      filterVisibleGroups(menuGroups, optionsFor(role))
+        .flatMap((g) => g.items.map((i) => i.href))
+        .includes('/galeri/manage');
+
+    expect(visibleFor('superadmin')).toBe(true);
+    expect(visibleFor('admin_berita')).toBe(true);
+    for (const role of [
+      'admin_nasional',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+      'penguji',
+      'anggota',
+    ] as Role[]) {
+      expect(visibleFor(role), `${role} tidak boleh melihat /galeri/manage`).toBe(false);
+    }
+  });
+
   it('override false tetap bisa menyembunyikan menu admin_berita', () => {
     const groups = filterVisibleGroups(menuGroups, {
       ...optionsFor('admin_berita'),

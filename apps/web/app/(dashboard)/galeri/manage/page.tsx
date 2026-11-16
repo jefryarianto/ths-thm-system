@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import { getSocket } from '@/lib/socket';
 
 type PhotoStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -239,188 +240,191 @@ export default function GalleryManagePage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-5 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Moderasi Galeri</h1>
-        {counts.PENDING > 0 && (
-          <span
-            className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900"
-            role="status"
-            aria-live="polite"
-          >
-            {counts.PENDING} menunggu ditinjau
-          </span>
-        )}
-      </div>
-
-      {/* Tab per status */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter status galeri">
-        {TABS.map((tab) => {
-          const active = tab.key === status;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => {
-                setStatus(tab.key);
-                setPage(1);
-              }}
-              className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
-                active ? 'bg-navy-800 text-white' : 'bg-white text-navy-800 hover:bg-gray-50'
-              }`}
+    <PermissionGuard module="galeriManage" action="view">
+      <main className="mx-auto max-w-5xl space-y-5 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">Moderasi Galeri</h1>
+          {counts.PENDING > 0 && (
+            <span
+              className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900"
+              role="status"
+              aria-live="polite"
             >
-              {tab.label} ({counts[tab.key]})
-            </button>
-          );
-        })}
-      </div>
-
-      {error && (
-        <p
-          role="alert"
-          className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
-        >
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="rounded border border-green-300 bg-green-50 p-3 text-sm">
-          {notice}
-        </p>
-      )}
-
-      {/* Aksi massal */}
-      {selectableIds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-gray-50 p-3 text-sm">
-          <label className="flex items-center gap-2 font-medium">
-            <input type="checkbox" checked={allSelected} onChange={toggleAll} />
-            Pilih semua di halaman ini
-          </label>
-          <span className="text-gray-600">{selected.length} dipilih</span>
-          <input
-            placeholder="Alasan penolakan (dipakai untuk aksi massal)"
-            value={bulkReason}
-            onChange={(e) => setBulkReason(e.target.value)}
-            className="min-w-[240px] flex-1 rounded border p-2"
-          />
-          <button
-            type="button"
-            disabled={busy || !selected.length}
-            onClick={() => bulkReview('APPROVED')}
-            className="rounded bg-green-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
-          >
-            Setujui terpilih
-          </button>
-          <button
-            type="button"
-            disabled={busy || !selected.length}
-            onClick={() => bulkReview('REJECTED')}
-            className="rounded bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
-          >
-            Tolak terpilih
-          </button>
+              {counts.PENDING} menunggu ditinjau
+            </span>
+          )}
         </div>
-      )}
 
-      {loading ? (
-        <p role="status" className="py-10 text-center text-gray-500">
-          Memuat antrian…
-        </p>
-      ) : items.length === 0 ? (
-        <p className="py-10 text-center text-gray-500">
-          Tidak ada foto pada status {TABS.find((tab) => tab.key === status)?.label.toLowerCase()}.
-        </p>
-      ) : (
-        <ul className="space-y-4">
-          {items.map((p) => (
-            <li key={p.id} className="flex flex-col gap-4 rounded-xl border p-4 md:flex-row">
-              {p.status === 'PENDING' && (
-                <input
-                  type="checkbox"
-                  aria-label={`Pilih ${p.judul}`}
-                  checked={selected.includes(p.id)}
-                  onChange={() => toggleOne(p.id)}
-                  className="mt-1 h-5 w-5 shrink-0"
-                />
-              )}
-              <GaleriPreview id={p.id} title={p.judul} />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold">{p.judul}</h2>
-                <p>Kategori: {p.kategori ?? '-'}</p>
-                {p.deskripsi && (
-                  <p className="whitespace-pre-line text-sm">Deskripsi: {p.deskripsi}</p>
-                )}
-                <p>
-                  Pengirim: {p.uploader?.namaLengkap ?? 'Tidak diketahui'} (
-                  {p.uploader?.email ?? '-'})
-                </p>
-                <p>Status: {p.status}</p>
-                {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
-                {p.status === 'PENDING' && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <input
-                      placeholder="Alasan penolakan"
-                      value={reason[p.id] ?? ''}
-                      onChange={(e) => setReason({ ...reason, [p.id]: e.target.value })}
-                      className="rounded border p-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => review(p.id, 'APPROVED')}
-                      className="rounded bg-green-700 px-3 py-2 text-white"
-                    >
-                      Setujui
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => review(p.id, 'REJECTED')}
-                      className="rounded bg-red-700 px-3 py-2 text-white"
-                    >
-                      Tolak
-                    </button>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => remove(p.id)}
-                  className="mt-3 rounded border px-3 py-2"
-                >
-                  Hapus
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        {/* Tab per status */}
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter status galeri">
+          {TABS.map((tab) => {
+            const active = tab.key === status;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => {
+                  setStatus(tab.key);
+                  setPage(1);
+                }}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
+                  active ? 'bg-navy-800 text-white' : 'bg-white text-navy-800 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label} ({counts[tab.key]})
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Pagination */}
-      {meta && meta.total > 0 && (
-        <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
-          <span>
-            Halaman {meta.page} dari {meta.totalPages} · {meta.total} item
-          </span>
-          <div className="flex gap-2">
+        {error && (
+          <p
+            role="alert"
+            className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+          >
+            {error}
+          </p>
+        )}
+        {notice && (
+          <p role="status" className="rounded border border-green-300 bg-green-50 p-3 text-sm">
+            {notice}
+          </p>
+        )}
+
+        {/* Aksi massal */}
+        {selectableIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-gray-50 p-3 text-sm">
+            <label className="flex items-center gap-2 font-medium">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+              Pilih semua di halaman ini
+            </label>
+            <span className="text-gray-600">{selected.length} dipilih</span>
+            <input
+              placeholder="Alasan penolakan (dipakai untuk aksi massal)"
+              value={bulkReason}
+              onChange={(e) => setBulkReason(e.target.value)}
+              className="min-w-[240px] flex-1 rounded border p-2"
+            />
             <button
               type="button"
-              disabled={meta.page <= 1 || loading}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-              className="rounded border px-3 py-2 disabled:opacity-50"
+              disabled={busy || !selected.length}
+              onClick={() => bulkReview('APPROVED')}
+              className="rounded bg-green-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
             >
-              Sebelumnya
+              Setujui terpilih
             </button>
             <button
               type="button"
-              disabled={meta.page >= meta.totalPages || loading}
-              onClick={() => setPage((current) => Math.min(meta.totalPages, current + 1))}
-              className="rounded border px-3 py-2 disabled:opacity-50"
+              disabled={busy || !selected.length}
+              onClick={() => bulkReview('REJECTED')}
+              className="rounded bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
             >
-              Berikutnya
+              Tolak terpilih
             </button>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+
+        {loading ? (
+          <p role="status" className="py-10 text-center text-gray-500">
+            Memuat antrian…
+          </p>
+        ) : items.length === 0 ? (
+          <p className="py-10 text-center text-gray-500">
+            Tidak ada foto pada status {TABS.find((tab) => tab.key === status)?.label.toLowerCase()}
+            .
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {items.map((p) => (
+              <li key={p.id} className="flex flex-col gap-4 rounded-xl border p-4 md:flex-row">
+                {p.status === 'PENDING' && (
+                  <input
+                    type="checkbox"
+                    aria-label={`Pilih ${p.judul}`}
+                    checked={selected.includes(p.id)}
+                    onChange={() => toggleOne(p.id)}
+                    className="mt-1 h-5 w-5 shrink-0"
+                  />
+                )}
+                <GaleriPreview id={p.id} title={p.judul} />
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold">{p.judul}</h2>
+                  <p>Kategori: {p.kategori ?? '-'}</p>
+                  {p.deskripsi && (
+                    <p className="whitespace-pre-line text-sm">Deskripsi: {p.deskripsi}</p>
+                  )}
+                  <p>
+                    Pengirim: {p.uploader?.namaLengkap ?? 'Tidak diketahui'} (
+                    {p.uploader?.email ?? '-'})
+                  </p>
+                  <p>Status: {p.status}</p>
+                  {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
+                  {p.status === 'PENDING' && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <input
+                        placeholder="Alasan penolakan"
+                        value={reason[p.id] ?? ''}
+                        onChange={(e) => setReason({ ...reason, [p.id]: e.target.value })}
+                        className="rounded border p-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => review(p.id, 'APPROVED')}
+                        className="rounded bg-green-700 px-3 py-2 text-white"
+                      >
+                        Setujui
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => review(p.id, 'REJECTED')}
+                        className="rounded bg-red-700 px-3 py-2 text-white"
+                      >
+                        Tolak
+                      </button>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => remove(p.id)}
+                    className="mt-3 rounded border px-3 py-2"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Pagination */}
+        {meta && meta.total > 0 && (
+          <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+            <span>
+              Halaman {meta.page} dari {meta.totalPages} · {meta.total} item
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={meta.page <= 1 || loading}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                className="rounded border px-3 py-2 disabled:opacity-50"
+              >
+                Sebelumnya
+              </button>
+              <button
+                type="button"
+                disabled={meta.page >= meta.totalPages || loading}
+                onClick={() => setPage((current) => Math.min(meta.totalPages, current + 1))}
+                className="rounded border px-3 py-2 disabled:opacity-50"
+              >
+                Berikutnya
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </PermissionGuard>
   );
 }

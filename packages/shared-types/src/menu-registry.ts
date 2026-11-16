@@ -53,7 +53,7 @@ export const MENU_REGISTRY = [
     menuKey: 'galeriManage',
     label: 'Moderasi Galeri',
     href: '/galeri/manage',
-    minRole: 'admin_ranting',
+    minRole: 'superadmin',
     allowedRoles: ['admin_berita'],
   },
   { menuKey: 'dashboard', label: 'Dashboard', href: '/dashboard', minRole: 'penguji' },

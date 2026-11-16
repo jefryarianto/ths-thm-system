@@ -15,6 +15,7 @@ import type { ReadStream } from 'node:fs';
 import sharp from 'sharp';
 
 const STORAGE_DIR = resolve(__dirname, '..', '..', '..', 'storage', 'galeri');
+/** Peran yang boleh menghapus foto milik orang lain (perilaku lama dipertahankan). */
 const ADMIN_ROLES: Role[] = [
   'superadmin',
   'admin_nasional',
@@ -24,6 +25,9 @@ const ADMIN_ROLES: Role[] = [
   'admin_kegiatan',
   'admin_berita',
 ];
+
+/** Satu-satunya peran yang menerima antrian moderasi & boleh memutuskan. */
+export const MODERATOR_ROLES: Role[] = ['superadmin', 'admin_berita'];
 
 /** Kategori yang boleh dipakai; disimpan sebagai string agar mudah ditambah. */
 export const GALERI_KATEGORI = [
@@ -38,6 +42,11 @@ export const MAX_REVIEW_BULK = 100;
 const PAGE_SIZE_DEFAULT = 20;
 const PAGE_SIZE_MAX = 100;
 const THUMB_WIDTH = 480;
+/** Batas piksel: menolak "image bomb" (file kecil dengan piksel raksasa). */
+const MAX_PIXELS = 24_000_000;
+const MAX_DIMENSION = 8000;
+/** Batas longgar untuk membaca header saja (bukan decode). */
+const MAX_METADATA_PIXELS = 100_000_000;
 
 type AdminQuery = { status?: string; page?: string; limit?: string };
 type ReviewStatus = 'APPROVED' | 'REJECTED';
@@ -111,38 +120,56 @@ export class GaleriService {
     if (file.buffer.length > 10 * 1024 * 1024 || file.size > 10 * 1024 * 1024)
       throw new BadRequestException('Ukuran maksimal foto 10 MB');
 
-    const ext =
-      mime === 'image/jpeg'
-        ? 'jpg'
-        : mime === 'image/png'
-          ? 'png'
-          : mime === 'image/webp'
-            ? 'webp'
-            : 'heic';
-    const base = randomUUID();
-    const key = `${base}.${ext}`;
-    const thumbKey = `${base}-thumb.jpg`;
-
-    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    // Byte asli tidak pernah disimpan: foto selalu di-decode ulang lalu
+    // di-encode ulang oleh sharp. Itu sekaligus membuang EXIF/GPS karena sharp
+    // hanya menyalin metadata bila .withMetadata() dipanggil. Batas piksel
+    // ditegakkan sebelum decode penuh supaya "image bomb" (file kecil, piksel
+    // raksasa) ditolak tanpa menghabiskan memori.
+    let processed: Buffer;
+    let thumb: Buffer;
     try {
-      await fs.writeFile(join(STORAGE_DIR, key), file.buffer, { flag: 'wx', mode: 0o600 });
-    } catch {
-      throw new InternalServerErrorException('Foto gagal disimpan di server');
-    }
-
-    // Thumbnail opsional: kalau dekoder tidak tersedia (mis. HEIC tanpa libheif),
-    // unggahan tetap jalan dan endpoint thumbnail menyajikan foto asli.
-    let thumbSaved = false;
-    try {
-      const thumb = await sharp(file.buffer)
+      // Baca header dengan batas longgar dulu supaya foto yang kebesaran bisa
+      // ditolak dengan pesan yang tepat; decode penuh tetap dibatasi MAX_PIXELS.
+      const meta = await sharp(file.buffer, { limitInputPixels: MAX_METADATA_PIXELS }).metadata();
+      if (!meta.width || !meta.height) throw new BadRequestException('Foto tidak dapat dibaca');
+      if (
+        meta.width > MAX_DIMENSION ||
+        meta.height > MAX_DIMENSION ||
+        meta.width * meta.height > MAX_PIXELS
+      ) {
+        throw new BadRequestException(
+          `Dimensi foto terlalu besar (maksimal ${MAX_DIMENSION} px per sisi dan ${MAX_PIXELS / 1_000_000} MP)`,
+        );
+      }
+      processed = await sharp(file.buffer, { limitInputPixels: MAX_PIXELS })
         .rotate()
+        .flatten({ background: '#ffffff' })
+        .jpeg({ quality: 85, mozjpeg: true })
+        .toBuffer();
+      thumb = await sharp(processed)
         .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
         .jpeg({ quality: 80 })
         .toBuffer();
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(
+        'Foto tidak dapat diproses. Unggah JPEG, PNG, atau WebP yang valid.',
+      );
+    }
+
+    const base = randomUUID();
+    const key = `${base}.jpg`;
+    const thumbKey = `${base}-thumb.jpg`;
+    const originalBase = file.originalname.replace(/\.[^./\\]+$/, '').slice(0, 200) || 'foto';
+
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+    try {
+      await fs.writeFile(join(STORAGE_DIR, key), processed, { flag: 'wx', mode: 0o600 });
       await fs.writeFile(join(STORAGE_DIR, thumbKey), thumb, { flag: 'wx', mode: 0o600 });
-      thumbSaved = true;
     } catch {
-      thumbSaved = false;
+      await fs.unlink(join(STORAGE_DIR, key)).catch(() => undefined);
+      await fs.unlink(join(STORAGE_DIR, thumbKey)).catch(() => undefined);
+      throw new InternalServerErrorException('Foto gagal disimpan di server');
     }
 
     try {
@@ -151,12 +178,12 @@ export class GaleriService {
           judul: judul.trim(),
           gambar: `/galeri/${key}`,
           storageKey: key,
-          thumbKey: thumbSaved ? thumbKey : null,
+          thumbKey,
           deskripsi: deskripsiBersih,
           kategori: kategori ?? null,
-          fileName: file.originalname.slice(0, 255),
-          mimeType: mime,
-          ukuranBytes: file.size,
+          fileName: `${originalBase}.jpg`,
+          mimeType: 'image/jpeg',
+          ukuranBytes: processed.length,
           uploaderId: userId,
           status: 'PENDING',
           isVisible: false,
@@ -166,7 +193,7 @@ export class GaleriService {
       return item;
     } catch (error) {
       await fs.unlink(join(STORAGE_DIR, key)).catch(() => undefined);
-      if (thumbSaved) await fs.unlink(join(STORAGE_DIR, thumbKey)).catch(() => undefined);
+      await fs.unlink(join(STORAGE_DIR, thumbKey)).catch(() => undefined);
       throw error;
     }
   }
@@ -359,7 +386,7 @@ export class GaleriService {
     const grouped = await this.prisma.galeri.groupBy({ by: ['status'], _count: { _all: true } });
     const counts = { PENDING: 0, APPROVED: 0, REJECTED: 0 };
     for (const row of grouped) counts[row.status] = row._count._all;
-    this.events.sendToRoles(ADMIN_ROLES, 'galeri:queue', { pending: counts.PENDING });
+    this.events.sendToRoles(MODERATOR_ROLES, 'galeri:queue', { pending: counts.PENDING });
   }
 
   async getStoredImage(
