@@ -40,6 +40,29 @@ describe('CsrfMiddleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(403);
   });
 
+  it('meloloskan POST /api/auth/me tanpa token (exempt exact path)', () => {
+    const res = makeRes();
+    middleware.use(makeReq({ originalUrl: '/api/auth/me', method: 'POST' }), res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+    expect(res.cookie).toHaveBeenCalledWith(
+      'csrf_token',
+      expect.any(String),
+      expect.objectContaining({ httpOnly: false, sameSite: 'lax' }),
+    );
+  });
+
+  it('menyetel cookie CSRF pada GET /api/auth/me bila belum ada', () => {
+    const res = makeRes();
+    middleware.use(makeReq({ originalUrl: '/api/auth/me', method: 'GET' }), res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.cookie).toHaveBeenCalledWith(
+      'csrf_token',
+      expect.any(String),
+      expect.objectContaining({ httpOnly: false, sameSite: 'lax' }),
+    );
+  });
+
   it('meloloskan request ber-Bearer token tanpa header CSRF', () => {
     const res = makeRes();
     middleware.use(
