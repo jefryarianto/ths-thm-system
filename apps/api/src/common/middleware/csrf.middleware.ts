@@ -21,6 +21,10 @@ import * as crypto from 'crypto';
  * in `Authorization`, which a cross-site attacker cannot forge or read, so the
  * request is not vulnerable to CSRF. This keeps browser (Bearer + cookies) and
  * mobile clients working without requiring a CSRF header on every call.
+ *
+ * Public requests (no session) are also exempt: without a valid session, there's
+ * no session to hijack, making CSRF protection unnecessary for endpoints like
+ * member registration (POST /claims).
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const EXEMPT_PATHS = ['/auth/', '/auth/me'];
@@ -59,8 +63,6 @@ function hasBearerToken(req: Request): boolean {
 }
 
 function hasValidSession(req: Request): boolean {
-  // Request dengan refresh token cookie (HttpOnly) dianggap sudah terautentikasi
-  // dan perlu CSRF protection. Request publik (tanpa refresh token) tidak butuh CSRF.
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return false;
   return /refreshToken=([^;]+)/.test(cookieHeader);
