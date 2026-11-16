@@ -30,14 +30,14 @@ interface ClaimDetail {
   status: string;
   catatan: string | null;
   alasanPenolakan: string | null;
-  anggotaId: string;
+  anggotaId: string | null;
   anggota: {
     id: string;
     nomorAnggota: string;
     namaLengkap: string;
     email: string | null;
     noHp: string | null;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -331,34 +331,42 @@ export default function ClaimDetailPage() {
               Data Anggota
             </h3>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Nama</p>
-                  <Link
-                    href={`/members/${claim.anggota.id}`}
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    {claim.anggota.namaLengkap}
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                <Calendar size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">No. Anggota</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">
-                    {claim.anggota.nomorAnggota}
-                  </p>
-                </div>
-              </div>
-              {claim.anggota.email && (
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                  <MessageSquare size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Email</p>
-                    <p className="text-sm text-gray-900 dark:text-white">{claim.anggota.email}</p>
+              {claim.anggota ? (
+                <>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Nama</p>
+                      <Link
+                        href={`/members/${claim.anggota.id}`}
+                        className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {claim.anggota.namaLengkap}
+                      </Link>
+                    </div>
                   </div>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <Calendar size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">No. Anggota</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">
+                        {claim.anggota.nomorAnggota}
+                      </p>
+                    </div>
+                  </div>
+                  {claim.anggota.email && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <MessageSquare size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Email</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{claim.anggota.email}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
+                  <em>Tidak ada data anggota terkait</em>
                 </div>
               )}
             </div>
