@@ -21,10 +21,6 @@ import * as crypto from 'crypto';
  * in `Authorization`, which a cross-site attacker cannot forge or read, so the
  * request is not vulnerable to CSRF. This keeps browser (Bearer + cookies) and
  * mobile clients working without requiring a CSRF header on every call.
- *
- * Public requests (no session) are also exempt: without a valid session, there's
- * no session to hijack, making CSRF protection unnecessary for endpoints like
- * member registration (POST /claims).
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const EXEMPT_PATHS = ['/auth/', '/auth/me'];
@@ -62,12 +58,6 @@ function hasBearerToken(req: Request): boolean {
   return typeof auth === 'string' && /^Bearer\s+\S+/i.test(auth);
 }
 
-function hasValidSession(req: Request): boolean {
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return false;
-  return /refreshToken=([^;]+)/.test(cookieHeader);
-}
-
 /**
  * Baca cookie tanpa ketergantungan cookie-parser (middleware ini berjalan
  * sebelum body/cookie parser Nest dan aplikasi tidak memasang cookie-parser).
@@ -98,14 +88,6 @@ export class CsrfMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     // Skip CSRF for auth endpoints (login deadlock prevention)
     if (isExempt(req)) {
-      this.ensureCsrfToken(req, res);
-      return next();
-    }
-
-    // Skip CSRF for public endpoints (no session) - no session = no CSRF risk
-    // Public endpoints like POST /claims (member registration) are not vulnerable
-    // because there's no existing session for attacker to hijack
-    if (!hasValidSession(req)) {
       this.ensureCsrfToken(req, res);
       return next();
     }
