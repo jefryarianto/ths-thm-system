@@ -199,6 +199,7 @@ export default function KlaimPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          tipe: 'keanggotaan',
           namaLengkap: form.namaLengkap,
           jenisKelamin: form.jenisKelamin,
           tempatLahir: form.tempatLahir,
