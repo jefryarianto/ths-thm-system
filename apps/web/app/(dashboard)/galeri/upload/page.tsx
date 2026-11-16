@@ -8,14 +8,19 @@ import { useAuth } from '@/hooks/use-auth';
 type Photo = {
   id: string;
   judul: string;
+  kategori?: string | null;
   status: string;
   rejectedReason?: string | null;
   createdAt: string;
 };
 
+const KATEGORI = ['Kegiatan', 'Pelatihan', 'Upacara', 'Bakti Sosial', 'Lainnya'];
+
 export default function GalleryUploadPage() {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
+  const [deskripsi, setDeskripsi] = useState('');
+  const [kategori, setKategori] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [notice, setNotice] = useState('');
@@ -36,11 +41,15 @@ export default function GalleryUploadPage() {
     const form = new FormData();
     form.append('file', file);
     form.append('judul', title);
+    if (deskripsi.trim()) form.append('deskripsi', deskripsi.trim());
+    if (kategori) form.append('kategori', kategori);
     setBusy(true);
     setNotice('');
     try {
       await apiClient.post('/galeri/upload', form);
       setTitle('');
+      setDeskripsi('');
+      setKategori('');
       setFile(null);
       setNotice('Foto terkirim dan menunggu persetujuan admin.');
       await load();
@@ -48,7 +57,9 @@ export default function GalleryUploadPage() {
       const axiosErr = err as AxiosError<{ message?: string | string[] }>;
       const msg = axiosErr.response?.data?.message ?? axiosErr.message;
       const friendlyMsg = Array.isArray(msg) ? msg.join('. ') : msg;
-      setNotice(`Foto gagal dikirim. ${friendlyMsg || 'Pastikan JPEG/PNG/WebP dan maksimal 10 MB.'}`);
+      setNotice(
+        `Foto gagal dikirim. ${friendlyMsg || 'Pastikan JPEG/PNG/WebP dan maksimal 10 MB.'}`,
+      );
     } finally {
       setBusy(false);
     }
@@ -69,11 +80,37 @@ export default function GalleryUploadPage() {
           />
         </label>
         <label className="block">
-          Foto (JPEG, PNG, WebP; maks. 10 MB)
+          Kategori
+          <select
+            value={kategori}
+            onChange={(e) => setKategori(e.target.value)}
+            className="mt-1 block w-full rounded border p-2"
+          >
+            <option value="">— Pilih kategori —</option>
+            {KATEGORI.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          Deskripsi (opsional, 20–1000 karakter)
+          <textarea
+            minLength={20}
+            maxLength={1000}
+            rows={4}
+            value={deskripsi}
+            onChange={(e) => setDeskripsi(e.target.value)}
+            className="mt-1 block w-full rounded border p-2"
+          />
+        </label>
+        <label className="block">
+          Foto (JPEG, PNG, WebP, HEIC; maks. 10 MB)
           <input
             required
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="mt-1 block w-full"
           />
@@ -90,7 +127,8 @@ export default function GalleryUploadPage() {
         <ul className="space-y-2">
           {photos.map((p) => (
             <li key={p.id} className="rounded border p-3">
-              <strong>{p.judul}</strong> — {p.status}
+              <strong>{p.judul}</strong>
+              {p.kategori ? ` · ${p.kategori}` : ''} — {p.status}
               {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
             </li>
           ))}

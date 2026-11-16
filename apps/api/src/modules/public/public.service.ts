@@ -27,10 +27,29 @@ export class PublicService {
   }
 
   async getGaleri() {
-    return this.prisma.galeri.findMany({
+    const items = await this.prisma.galeri.findMany({
       where: { isVisible: true, status: 'APPROVED' },
       orderBy: { tanggal: 'desc' },
+      // Hanya kolom yang memang publik: storageKey/jalur internal, ukuran file,
+      // dan data reviewer tidak boleh ikut keluar ke browser.
+      select: {
+        id: true,
+        judul: true,
+        deskripsi: true,
+        kategori: true,
+        tanggal: true,
+      },
     });
+
+    return items.map((item) => ({
+      id: item.id,
+      judul: item.judul,
+      deskripsi: item.deskripsi,
+      kategori: item.kategori ?? 'Lainnya',
+      tanggal: item.tanggal,
+      url: `/galeri/${item.id}/image`,
+      thumbnailUrl: `/galeri/${item.id}/thumbnail`,
+    }));
   }
 
   async getDonasiProgram() {

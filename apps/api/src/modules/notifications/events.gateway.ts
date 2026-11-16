@@ -110,8 +110,12 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     }
     this.userSockets.get(userId)!.add(client.id);
 
-    // Join user-specific room
+    // Join user-specific room + role room. Role room dipakai untuk broadcast
+    // seperti badge antrian moderasi; dengan adapter Redis, room ini tetap
+    // bekerja walau API berjalan multi-instance.
     client.join(`user:${userId}`);
+    const role = client.data.role as string | undefined;
+    if (role) client.join(`role:${role}`);
 
     // Throttle paket dari client (per socket, sliding window 10 detik).
     client.onAny(() => this.trackPacket(client));
@@ -173,6 +177,13 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   broadcast(event: string, data: any) {
     this.server.emit(event, data);
+  }
+
+  /** Emit event ke semua socket milik salah satu role tertentu. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendToRoles(roles: string[], event: string, data: any) {
+    if (!this.server) return;
+    this.server.to(roles.map((role) => `role:${role}`)).emit(event, data);
   }
 
   // ─── Emit to users with specific role ───

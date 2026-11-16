@@ -21,6 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 interface GambarGaleri {
   id: string;
   url: string;
+  thumbnailUrl?: string;
   judul: string;
   deskripsi?: string;
   kategori: string;
@@ -186,7 +187,7 @@ export default function GaleriPage() {
                 >
                   {item.url ? (
                     <img
-                      src={`${API_URL}/api/galeri/${item.id}/image`}
+                      src={`${API_URL}/api${item.thumbnailUrl ?? item.url}`}
                       alt={item.judul}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -297,7 +298,7 @@ export default function GaleriPage() {
             <div className="relative max-h-[70vh] bg-black flex items-center justify-center overflow-hidden">
               {currentLightboxPhoto.url ? (
                 <img
-                  src={`${API_URL}/api/galeri/${currentLightboxPhoto.id}/image`}
+                  src={`${API_URL}/api${currentLightboxPhoto.url}`}
                   alt={currentLightboxPhoto.judul}
                   className="max-h-[70vh] w-auto max-w-full object-contain"
                 />
