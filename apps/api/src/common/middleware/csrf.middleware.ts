@@ -111,12 +111,16 @@ export class CsrfMiddleware implements NestMiddleware {
     }
 
     // Bearer token requests are exempt from CSRF (attacker cannot forge Authorization header)
-    // but we still ensure the CSRF cookie is set for subsequent non-Bearer requests.
+    // This is safe because the Authorization header lives in a different security domain
+    // than cookies, so a cross-site attacker cannot forge Bearer tokens.
+    // We still ensure the CSRF cookie is set for subsequent non-Bearer requests.
     if (hasBearerToken(req)) {
       this.ensureCsrfToken(req, res);
       return next();
     }
 
+    // For requests with a session (refreshToken cookie) but no Bearer token,
+    // validate CSRF token (frontend must send X-CSRF-Token header)
     // Skip CSRF check for safe methods (GET, HEAD, OPTIONS)
     if (SAFE_METHODS.has(req.method)) {
       this.ensureCsrfToken(req, res);
@@ -142,7 +146,7 @@ export class CsrfMiddleware implements NestMiddleware {
   }
 
   private ensureCsrfToken(req: Request, res: Response): void {
-    // Only set cookie if not already present
+    // Set cookie if not already present
     if (!readCookie(req, 'csrf_token')) {
       const token = crypto.randomBytes(32).toString('hex');
       res.cookie('csrf_token', token, {
