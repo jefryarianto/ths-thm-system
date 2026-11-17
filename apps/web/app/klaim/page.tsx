@@ -104,13 +104,19 @@ export default function KlaimPage() {
       setDistrikLoading(true);
       try {
         const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
         setDistriks(data?.data || []);
       } catch (err) {
         console.error('Failed to fetch distriks:', err);
         setDistriks([]);
+        setDistrikLoading(false); // Ensure loading stops on error
       } finally {
-        setDistrikLoading(false);
+        if (distrikLoading) {
+          setDistrikLoading(false);
+        }
       }
     };
 
@@ -394,26 +400,25 @@ export default function KlaimPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Jenis Kelamin <span className="text-red-500">*</span>
                 </label>
-                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                <div className="flex gap-4" role="radiogroup" aria-label="Jenis Kelamin">
                   {(['L', 'P'] as const).map((jk) => (
-                    <button
-                      key={jk}
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        updateField('jenisKelamin', jk);
-                      }}
-                      className={`flex-1 py-2.5 text-sm font-medium transition touch-manipulation ${
+                    <label key={jk} className="flex items-center gap-2 flex-1 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="jenisKelamin"
+                        value={jk}
+                        checked={form.jenisKelamin === jk}
+                        onChange={(e) => updateField('jenisKelamin', e.target.value)}
+                        className="sr-only peer"
+                      />
+                      <div className={`flex-1 py-2.5 text-sm font-medium text-center rounded-lg border-2 transition ${
                         form.jenisKelamin === jk
-                          ? 'bg-navy-600 text-white'
-                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                      role="radio"
-                      aria-checked={form.jenisKelamin === jk}
-                    >
-                      {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
-                    </button>
+                          ? 'bg-navy-600 text-white border-navy-600'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                      }`}>
+                        {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
+                      </div>
+                    </label>
                   ))}
                 </div>
               </div>
@@ -442,7 +447,7 @@ export default function KlaimPage() {
                   max={new Date().toISOString().split('T')[0]}
                   value={form.tanggalLahir}
                   onChange={(e) => updateField('tanggalLahir', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  className="w-full sm:w-auto px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                 />
               </div>
 

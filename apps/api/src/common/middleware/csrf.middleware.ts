@@ -151,7 +151,7 @@ export class CsrfMiddleware implements NestMiddleware {
       const token = crypto.randomBytes(32).toString('hex');
       res.cookie('csrf_token', token, {
         httpOnly: false, // Must be readable by JS to send in header
-        secure: process.env.NODE_ENV === 'production',
+        secure: (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined),
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         path: '/',
