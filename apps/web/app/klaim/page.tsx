@@ -390,10 +390,10 @@ export default function KlaimPage() {
                 </div>
               </div>
 
-              {/* Tempat Lahir */}
+              /* Tempat Lahir */
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tempat Lahir
+                  Tempat Lahir <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -407,7 +407,7 @@ export default function KlaimPage() {
               {/* Tanggal Lahir */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tanggal Lahir
+                  Tanggal Lahir <span className="text-red-500"></span>
                 </label>
                 <input
                   type="date"
