@@ -16,7 +16,7 @@ import sharp from 'sharp';
 
 const STORAGE_DIR = resolve(__dirname, '..', '..', '..', 'storage', 'galeri');
 /** Satu-satunya peran yang menerima antrian moderasi & boleh memutuskan. */
-export const MODERATOR_ROLES: Role[] = ['superadmin', 'admin_berita'];
+export const MODERATOR_ROLES: readonly Role[] = ['superadmin', 'admin_berita'];
 
 /** Kategori yang boleh dipakai; disimpan sebagai string agar mudah ditambah. */
 export const GALERI_KATEGORI = [

@@ -181,7 +181,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
   /** Emit event ke semua socket milik salah satu role tertentu. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sendToRoles(roles: string[], event: string, data: any) {
+  sendToRoles(roles: readonly string[], event: string, data: any) {
     if (!this.server) return;
     this.server.to(roles.map((role) => `role:${role}`)).emit(event, data);
   }

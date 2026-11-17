@@ -160,7 +160,6 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'updateThread',
     'uploadForumImage',
   ],
-  GaleriController: ['adminImage', 'adminList', 'review'],
   JabatanController: ['create', 'findAll', 'findOne', 'remove', 'update'],
   KepengurusanController: [
     'approve',
@@ -376,5 +375,31 @@ describe('Role contract — admin_nasional', () => {
     }
 
     expect(violations).toEqual([]);
+  });
+});
+
+describe('Role contract — moderasi galeri', () => {
+  const rolesOf = (method: string) =>
+    Reflect.getMetadata(ROLES_KEY, GaleriController.prototype[method as keyof GaleriController]);
+
+  it('endpoint moderasi hanya mengizinkan superadmin & admin_berita', () => {
+    const moderatorMethods = [
+      'adminImage',
+      'adminThumbnail',
+      'adminList',
+      'history',
+      'review',
+      'reviewBulk',
+    ];
+    for (const method of moderatorMethods) {
+      expect({ method, roles: rolesOf(method) }).toEqual({
+        method,
+        roles: ['superadmin', 'admin_berita'],
+      });
+    }
+  });
+
+  it('hapus tidak memakai @Roles — izin pemilik/moderator dicek service', () => {
+    expect(rolesOf('delete')).toBeUndefined();
   });
 });
