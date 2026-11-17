@@ -132,6 +132,14 @@ export class CsrfMiddleware implements NestMiddleware {
     const headerToken = req.headers['x-csrf-token'] as string | undefined;
 
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+      // Clear invalid CSRF cookie so a fresh one can be generated on next request
+      const isSecure = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined;
+      res.clearCookie('csrf_token', {
+        httpOnly: false,
+        secure: isSecure,
+        sameSite: 'lax',
+        path: '/',
+      });
       res.status(403).json({
         statusCode: 403,
         message: 'Invalid CSRF token',

@@ -355,7 +355,7 @@ jobs:
             # Production image flattens API to /app/ — prisma/ is at /app/prisma/
             echo "   Running database migrations..."
             docker compose -f docker-compose.production.yml run --rm api \
-              sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+              sh -c "npx prisma migrate deploy"
             # Seed kepengurusan data (only if table is empty)
             echo "   Seeding kepengurusan data..."
             docker compose -f docker-compose.production.yml run --rm api \

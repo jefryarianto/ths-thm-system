@@ -1,7 +1,7 @@
 import { CsrfMiddleware } from './csrf.middleware';
 import type { Request, Response, NextFunction } from 'express';
 
-type MockResponse = Response & { status: jest.Mock; json: jest.Mock; cookie: jest.Mock };
+type MockResponse = Response & { status: jest.Mock; json: jest.Mock; cookie: jest.Mock; clearCookie: jest.Mock };
 
 function makeReq(overrides: Partial<Request> = {}): Request {
   return {
@@ -19,6 +19,7 @@ function makeRes(): MockResponse {
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
     cookie: jest.fn().mockReturnThis(),
+    clearCookie: jest.fn().mockReturnThis(),
   };
   return res as unknown as MockResponse;
 }
@@ -119,6 +120,7 @@ describe('CsrfMiddleware', () => {
     );
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.clearCookie).toHaveBeenCalledWith('csrf_token', expect.any(Object));
   });
 
   it('menyetel cookie CSRF pada request aman bila belum ada', () => {
