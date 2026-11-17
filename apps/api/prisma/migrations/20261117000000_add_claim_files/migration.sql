@@ -1,27 +1,27 @@
 -- Create BuktiKeanggotaan table
 CREATE TABLE "bukti_keanggotaan" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "klaimId" UUID NOT NULL,
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
+    "klaimId" TEXT NOT NULL,
     "tipe" VARCHAR(255) NOT NULL,
     "filePath" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
     "mimeType" TEXT NOT NULL,
     "size" INTEGER NOT NULL,
-    "uploadedById" UUID,
+    "uploadedById" TEXT,
     "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "bukti_keanggotaan_pkey" PRIMARY KEY ("id")
 );
 
 -- Create DokumenPendukung table
 CREATE TABLE "dokumen_pendukung" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "klaimId" UUID NOT NULL,
+    "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
+    "klaimId" TEXT NOT NULL,
     "filePath" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
     "mimeType" TEXT NOT NULL,
     "size" INTEGER NOT NULL,
     "description" TEXT,
-    "uploadedById" UUID,
+    "uploadedById" TEXT,
     "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "dokumen_pendukung_pkey" PRIMARY KEY ("id")
 );
