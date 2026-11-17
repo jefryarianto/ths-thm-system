@@ -15,17 +15,6 @@ import type { ReadStream } from 'node:fs';
 import sharp from 'sharp';
 
 const STORAGE_DIR = resolve(__dirname, '..', '..', '..', 'storage', 'galeri');
-/** Peran yang boleh menghapus foto milik orang lain (perilaku lama dipertahankan). */
-const ADMIN_ROLES: Role[] = [
-  'superadmin',
-  'admin_nasional',
-  'admin_distrik',
-  'admin_wilayah',
-  'admin_ranting',
-  'admin_kegiatan',
-  'admin_berita',
-];
-
 /** Satu-satunya peran yang menerima antrian moderasi & boleh memutuskan. */
 export const MODERATOR_ROLES: Role[] = ['superadmin', 'admin_berita'];
 
@@ -372,7 +361,9 @@ export class GaleriService {
   async delete(id: string, user: { id: string; role: Role }) {
     const item = await this.prisma.galeri.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('Foto tidak ditemukan');
-    if (item.uploaderId !== user.id && !ADMIN_ROLES.includes(user.role))
+    // Hapus mengikuti aturan moderasi: pemilik unggahan sendiri, atau
+    // superadmin/admin_berita. Role admin_* lain tidak boleh menghapus.
+    if (item.uploaderId !== user.id && !MODERATOR_ROLES.includes(user.role))
       throw new ForbiddenException();
     await this.prisma.galeri.delete({ where: { id } });
     if (item.storageKey) await fs.unlink(join(STORAGE_DIR, item.storageKey)).catch(() => undefined);
