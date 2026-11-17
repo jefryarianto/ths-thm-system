@@ -52,6 +52,7 @@ export default function KlaimPage() {
   const { t } = useI18n();
   const [step, setStep] = useState<'form' | 'success' | 'error'>('form');
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -193,8 +194,10 @@ export default function KlaimPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (submitting) return;
 
     setLoading(true);
+    setSubmitting(true);
     setErrorMsg('');
 
     try {
@@ -230,9 +233,10 @@ export default function KlaimPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
       setErrorMsg(message);
-      setStep('form'); // Keep us on the form to show error
+      setStep('form');
     } finally {
       setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -377,12 +381,18 @@ export default function KlaimPage() {
                     <button
                       key={jk}
                       type="button"
-                      onClick={() => updateField('jenisKelamin', jk)}
-                      className={`flex-1 py-2.5 text-sm font-medium transition ${
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        updateField('jenisKelamin', jk);
+                      }}
+                      className={`flex-1 py-2.5 text-sm font-medium transition touch-manipulation ${
                         form.jenisKelamin === jk
                           ? 'bg-navy-600 text-white'
                           : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}
+                      role="radio"
+                      aria-checked={form.jenisKelamin === jk}
                     >
                       {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
                     </button>
@@ -407,7 +417,7 @@ export default function KlaimPage() {
               {/* Tanggal Lahir */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tanggal Lahir <span className="text-red-500"></span>
+                  Tanggal Lahir <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -502,7 +512,7 @@ export default function KlaimPage() {
               {/* Alamat */}
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Alamat
+                  Alamat <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={form.alamat}
@@ -686,10 +696,10 @@ export default function KlaimPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || submitting}
               className="w-full py-3 bg-navy-600 hover:bg-navy-700 disabled:bg-navy-400 text-white font-medium rounded-lg transition flex items-center justify-center gap-2 text-sm"
             >
-              {loading ? (
+              {loading || submitting ? (
                 <>
                   <SmallLogoSpinner size={18} />
                   Mengirim...
