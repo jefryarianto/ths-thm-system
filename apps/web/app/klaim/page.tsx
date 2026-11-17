@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
+import { FileUploadZone } from '@/components/claims/FileUploadZone';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -41,6 +42,14 @@ interface Distrik {
 interface BuktiItem {
   tipe: 'sertifikat' | 'kartu_anggota';
   url: string;
+}
+
+interface FileWithPreview {
+  file: File;
+  preview: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'done' | 'error';
+  error?: string;
 }
 
 const BUKTI_LABEL: Record<BuktiItem['tipe'], string> = {
@@ -77,6 +86,8 @@ export default function KlaimPage() {
     catatan: '',
   });
   const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
+  const [buktiFiles, setBuktiFiles] = useState<FileWithPreview[]>([]);
+  const [dokumenFiles, setDokumenFiles] = useState<FileWithPreview[]>([]);
 
   // Loading states for each dropdown
   const [distrikLoading, setDistrikLoading] = useState<boolean>(true);
@@ -174,6 +185,18 @@ export default function KlaimPage() {
     setBuktiDokumen((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleBuktiChange = (files: FileWithPreview[]) => setBuktiFiles(files);
+  const handleBuktiRemove = (index: number) => {
+    URL.revokeObjectURL(buktiFiles[index].preview);
+    setBuktiFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDokumenChange = (files: FileWithPreview[]) => setDokumenFiles(files);
+  const handleDokumenRemove = (index: number) => {
+    URL.revokeObjectURL(dokumenFiles[index].preview);
+    setDokumenFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (form.namaLengkap.trim().length < 3) errs.namaLengkap = 'Nama lengkap minimal 3 karakter';
@@ -201,27 +224,22 @@ export default function KlaimPage() {
     setErrorMsg('');
 
     try {
+      const formData = new FormData();
+
+      // Text fields
+      Object.entries(form).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+      formData.append('rantingId', rantingId);
+      formData.append('tipe', 'keanggotaan');
+
+      // Files
+      buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
+      dokumenFiles.forEach((f) => formData.append('dokumenPendukungFiles', f.file));
+
       const res = await fetch(`${API_URL}/api/claims`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipe: 'keanggotaan',
-          namaLengkap: form.namaLengkap,
-          jenisKelamin: form.jenisKelamin,
-          tempatLahir: form.tempatLahir,
-          tanggalLahir: form.tanggalLahir,
-          tempatDadar: form.tempatDadar,
-          tahunDadar: form.tahunDadar,
-          alamat: form.alamat,
-          noHp: form.noHp,
-          email: form.email,
-          catatan: form.catatan,
-          rantingId,
-          buktiDokumen: buktiDokumen.map((b) => ({
-            tipe: b.tipe,
-            url: b.url,
-          })),
-        }),
+        body: formData,
       });
       const data = await res.json();
 
@@ -634,50 +652,28 @@ export default function KlaimPage() {
             </div>
 
             {/* Bukti Keanggotaan */}
-            <div>
-              <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Bukti Keanggotaan
-              </span>
-              <div className="flex gap-2">
-                {(['sertifikat', 'kartu_anggota'] as const).map((tipe) => (
-                  <button
-                    key={tipe}
-                    type="button"
-                    onClick={() => addBukti(tipe)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-navy-700 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-900/20 transition"
-                  >
-                    <PlusCircle size={16} />
-                    {tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}
-                  </button>
-                ))}
-              </div>
-              {buktiDokumen.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {buktiDokumen.map((b, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-40 shrink-0">
-                        {BUKTI_LABEL[b.tipe]}
-                      </span>
-                      <input
-                        type="url"
-                        value={b.url}
-                        onChange={(e) => updateBukti(i, e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
-                        placeholder="URL tautan dokumen (opsional)"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeBukti(i)}
-                        className="text-gray-400 hover:text-red-500 transition"
-                        aria-label="Hapus bukti"
-                      >
-                        <XCircle size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <FileUploadZone
+              label="Bukti Keanggotaan (Sertifikat/Kartu Anggota)"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              maxFiles={3}
+              maxSizeMB={5}
+              onFilesChange={handleBuktiChange}
+              files={buktiFiles}
+              onRemoveFile={handleBuktiRemove}
+              uploading={submitting}
+            />
+
+            {/* Dokumen Pendukung */}
+            <FileUploadZone
+              label="Dokumen Pendukung Lain (Foto KTP, Surat Keterangan, dll)"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              maxFiles={3}
+              maxSizeMB={5}
+              onFilesChange={handleDokumenChange}
+              files={dokumenFiles}
+              onRemoveFile={handleDokumenRemove}
+              uploading={submitting}
+            />
 
             {/* Catatan */}
             <div>
