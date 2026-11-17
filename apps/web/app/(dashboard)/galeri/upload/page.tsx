@@ -25,6 +25,7 @@ export default function GalleryUploadPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const load = async () => {
     const { data } = await apiClient.get('/galeri/mine');
     setPhotos(data.data ?? data);
@@ -64,6 +65,22 @@ export default function GalleryUploadPage() {
       setBusy(false);
     }
   }
+  async function remove(photo: Photo) {
+    if (!confirm(`Hapus unggahan "${photo.judul}" secara permanen?`)) return;
+    setDeletingId(photo.id);
+    setNotice('');
+    try {
+      await apiClient.delete(`/galeri/${photo.id}`);
+      setPhotos((prev) => prev.filter((item) => item.id !== photo.id));
+      setNotice('Foto dihapus.');
+    } catch (err) {
+      const message = (err as { message?: string } | null)?.message;
+      setNotice(`Foto gagal dihapus. ${message ?? 'Coba lagi.'}`);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-6">
       <h1 className="text-2xl font-bold">Kirim Foto Galeri</h1>
@@ -106,11 +123,11 @@ export default function GalleryUploadPage() {
           />
         </label>
         <label className="block">
-          Foto (JPEG, PNG, WebP, HEIC; maks. 10 MB)
+          Foto (JPEG, PNG, atau WebP; maks. 10 MB)
           <input
             required
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            accept="image/jpeg,image/png,image/webp"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="mt-1 block w-full"
           />
@@ -126,10 +143,23 @@ export default function GalleryUploadPage() {
         </h2>
         <ul className="space-y-2">
           {photos.map((p) => (
-            <li key={p.id} className="rounded border p-3">
-              <strong>{p.judul}</strong>
-              {p.kategori ? ` · ${p.kategori}` : ''} — {p.status}
-              {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
+            <li
+              key={p.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded border p-3"
+            >
+              <div>
+                <strong>{p.judul}</strong>
+                {p.kategori ? ` · ${p.kategori}` : ''} — {p.status}
+                {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(p)}
+                disabled={deletingId === p.id}
+                className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                {deletingId === p.id ? 'Menghapus…' : 'Hapus'}
+              </button>
             </li>
           ))}
         </ul>
