@@ -73,14 +73,8 @@ export class GaleriService {
         buffer.toString('ascii', 0, 4) === 'RIFF' &&
         buffer.toString('ascii', 8, 12) === 'WEBP'
       );
-    if (mime === 'image/heic' || mime === 'image/heif')
-      return (
-        buffer.length >= 12 &&
-        buffer.toString('ascii', 4, 8) === 'ftyp' &&
-        ['heic', 'hev1', 'mif1', 'heix'].some((brand) =>
-          buffer.toString('ascii', 8, 12).startsWith(brand),
-        )
-      );
+    // HEIC/HEIF sengaja tidak diterima: harus di-reencode agar EXIF terbuang,
+    // sedangkan dekoder HEIF tidak tersedia di build sharp server ini.
     return false;
   }
 
@@ -101,10 +95,10 @@ export class GaleriService {
     if (!file?.buffer) throw new BadRequestException('File foto wajib diunggah');
     const mime = file.mimetype;
     if (
-      !['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(mime) ||
+      !['image/jpeg', 'image/png', 'image/webp'].includes(mime) ||
       !this.hasValidImageSignature(file.buffer, mime)
     ) {
-      throw new BadRequestException('Format foto harus JPEG, PNG, WebP, atau HEIC');
+      throw new BadRequestException('Format foto harus JPEG, PNG, atau WebP');
     }
     if (file.buffer.length > 10 * 1024 * 1024 || file.size > 10 * 1024 * 1024)
       throw new BadRequestException('Ukuran maksimal foto 10 MB');
