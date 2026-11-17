@@ -12,10 +12,15 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { NraService } from '../../common/services/nra.service';
 import { normalizePhone } from '../../common/utils/phone.util';
 import { normalizePrismaDate } from '../../common/utils/date.util';
+import { deleteClaimFile } from '../../common/utils/claim-upload.util';
+import { Response } from 'express';
+import { TipeKlaim } from '@prisma/client';
 
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
   ranting: { select: { id: true, nama: true } },
+  buktiKeanggotaan: true,
+  dokumenPendukung: true,
 };
 
 @Injectable()
@@ -63,8 +68,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
   // ── CRUD overrides ─────────────────────────────────────
 
   async findAll(query: ClaimFilterDto, scope?: UserScope) {
-    // Tenant safety: bucket cache per scope — tanpa ini respons 'all' milik
-    // superadmin yang ter-cache akan disajikan ke admin ranting/distrik.
     const scopeBucket = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
     return this.baseFindAll(
       `claims:${scopeBucket}:${JSON.stringify(query)}`,
@@ -72,7 +75,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         const where: Record<string, unknown> = {};
         if (query.status) where.status = query.status;
         if (query.tipe) where.tipe = query.tipe;
-        // For keanggotaan claims, filter by ranting scope
         if (scope?.rantingId) {
           where.OR = [
             { rantingId: scope.rantingId },
@@ -96,8 +98,45 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     return this.baseFindOne(id, scope, CLAIM_INCLUDE);
   }
 
-  async create(dto: CreateClaimDto) {
-    return this.baseCreate(dto, undefined, undefined, 'Klaim berhasil diajukan');
+  async create(
+    dto: CreateClaimDto,
+    files?: { 
+      buktiFiles?: Express.Multer.File[]; 
+      dokumenPendukungFiles?: Express.Multer.File[] 
+    }
+  ) {
+    // Filter out undefined values from dto
+    const dtoData = Object.fromEntries(
+      Object.entries(dto).filter(([, value]) => value !== undefined)
+    ) as Record<string, unknown>;
+    
+    // Ensure required fields are present
+    const claimData = {
+      ...dtoData,
+      tipe: dto.tipe as TipeKlaim,
+      tanggalLahir: normalizePrismaDate(dto.tanggalLahir) ?? null,
+      status: 'pending' as const,
+    };
+    
+    // Create claim record first
+    const claim = await this.prisma.klaim.create({
+      data: claimData,
+    });
+
+    // Save bukti keanggotaan files
+    if (files?.buktiFiles?.length) {
+      await this.saveBuktiFiles(claim.id, files.buktiFiles);
+    }
+
+    // Save dokumen pendukung files
+    if (files?.dokumenPendukungFiles?.length) {
+      await this.saveDokumenFiles(claim.id, files.dokumenPendukungFiles);
+    }
+
+    this.invalidateCache();
+    this.audit('CLAIM_CREATE', 'Klaim', claim.id);
+    
+    return this.findOne(claim.id);
   }
 
   async update(id: string, dto: UpdateClaimDto, scope?: UserScope, userId?: string) {
@@ -105,6 +144,21 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
   }
 
   async remove(id: string, scope?: UserScope) {
+    // Delete associated files first
+    const claim = await this.prisma.klaim.findUnique({
+      where: { id },
+      include: { buktiKeanggotaan: true, dokumenPendukung: true },
+    });
+    
+    if (claim) {
+      for (const file of claim.buktiKeanggotaan) {
+        deleteClaimFile(file.filePath);
+      }
+      for (const file of claim.dokumenPendukung) {
+        deleteClaimFile(file.filePath);
+      }
+    }
+    
     return this.baseRemove(id, scope, 'Klaim berhasil dihapus');
   }
 
@@ -123,7 +177,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
 
-    // ── Klaim keanggotaan baru: buat Anggota + User account ──
     if (claim.tipe === 'keanggotaan') {
       if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) {
         throw new BadRequestException(
@@ -131,7 +184,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         );
       }
 
-      // Cek apakah sudah ada anggota dengan email yang sama
       if (claim.email) {
         const existingAnggota = await this.prisma.anggota.findFirst({
           where: { email: claim.email, deletedAt: null },
@@ -142,10 +194,8 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         }
       }
 
-      // Generate NRA
       const nomorAnggota = await this.nraService.generateMemberNumber(claim.rantingId);
 
-      // Buat Anggota baru
       const anggota = await this.prisma.anggota.create({
         data: {
           namaLengkap: claim.namaLengkap,
@@ -166,9 +216,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         },
       });
 
-      // Buat User account untuk login
       if (claim.email) {
-        // Generate password sementara
         const temporaryPassword = Math.random().toString(36).slice(-8);
         const bcrypt = await import('bcryptjs');
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
@@ -185,15 +233,12 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         });
 
         this.logger.log(`User account created for ${claim.email} with temporary password`);
-        // Kirim kredensial sementara ke pemohon supaya bisa langsung login
-        // dan mengganti password saat pertama kali masuk.
         this.sendCredentialEmail(
           { namaLengkap: claim.namaLengkap, email: claim.email },
           temporaryPassword,
         );
       }
 
-      // Update klaim dengan anggotaId
       await this.prismaDelegate.update({
         where: { id },
         data: {
@@ -209,7 +254,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         'disetujui',
       );
     } else {
-      // ── Klaim dokumen biasa ──
       await this.prismaDelegate.update({
         where: { id },
         data: {
@@ -225,7 +269,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
 
     this.invalidateCache();
     this.audit('CLAIM_APPROVE', 'Klaim', id);
-    // void — interceptor returns { success: true }
   }
 
   async reject(id: string, reason?: string, scope?: UserScope) {
@@ -244,7 +287,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
     this.invalidateCache();
     this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason });
-    // void — interceptor returns { success: true }
   }
 
   async process(id: string, scope?: UserScope) {
@@ -264,6 +306,113 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     this.sendClaimStatusEmail(claim.anggota, 'diproses');
     this.invalidateCache();
     return updated;
+  }
+
+  // ── File Handling ──────────────────────────────────────
+
+  private async saveBuktiFiles(klaimId: string, files: Express.Multer.File[]) {
+    const results = await Promise.allSettled(
+      files.map(file => this.prisma.buktiKeanggotaan.create({
+        data: {
+          klaimId,
+          tipe: 'sertifikat', // Default, bisa di-extend dari field terpisah jika perlu
+          filePath: file.path,
+          fileName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+        },
+      }))
+    );
+
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      failed.forEach((r, i) => {
+        this.logger.error(`Failed to save bukti file ${files[i].originalname}:`, r.reason);
+      });
+    }
+  }
+
+  private async saveDokumenFiles(klaimId: string, files: Express.Multer.File[]) {
+    const results = await Promise.allSettled(
+      files.map(file => this.prisma.dokumenPendukung.create({
+        data: {
+          klaimId,
+          filePath: file.path,
+          fileName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+        },
+      }))
+    );
+
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      failed.forEach((r, i) => {
+        this.logger.error(`Failed to save dokumen file ${files[i].originalname}:`, r.reason);
+      });
+    }
+  }
+
+  async downloadFile(claimId: string, fileId: string, res: Response) {
+    // Cek di BuktiKeanggotaan
+    const buktiFile = await this.prisma.buktiKeanggotaan.findUnique({
+      where: { id: fileId, klaimId: claimId },
+    });
+
+    // Cek di DokumenPendukung
+    const dokumenFile = await this.prisma.dokumenPendukung.findUnique({
+      where: { id: fileId, klaimId: claimId },
+    });
+
+    const file = buktiFile || dokumenFile;
+
+    if (!file) {
+      throw new NotFoundException('File tidak ditemukan');
+    }
+
+    const fs = require('fs');
+    const path = require('path');
+    const fullPath = path.resolve(file.filePath);
+
+    if (!fs.existsSync(fullPath)) {
+      throw new NotFoundException('File tidak ditemukan di storage');
+    }
+
+    res.download(fullPath, file.fileName);
+  }
+
+  async deleteFile(claimId: string, fileId: string) {
+    // Cek di BuktiKeanggotaan
+    const buktiFile = await this.prisma.buktiKeanggotaan.findUnique({
+      where: { id: fileId, klaimId: claimId },
+    });
+
+    // Cek di DokumenPendukung
+    const dokumenFile = await this.prisma.dokumenPendukung.findUnique({
+      where: { id: fileId, klaimId: claimId },
+    });
+
+    const file = buktiFile || dokumenFile;
+    const isBukti = !!buktiFile;
+
+    if (!file) {
+      throw new NotFoundException('File tidak ditemukan');
+    }
+
+    // Hapus dari database
+    if (buktiFile) {
+      await this.prisma.buktiKeanggotaan.delete({ where: { id: fileId } });
+    } else {
+      await this.prisma.dokumenPendukung.delete({ where: { id: fileId } });
+    }
+
+    // Hapus file fisik
+    deleteClaimFile(file.filePath);
+
+    this.invalidateCache();
+    this.audit('CLAIM_FILE_DELETE', 'Klaim', fileId);
+
+    return { success: true, message: 'File berhasil dihapus' };
   }
 
   // ── Email Helper ──────────────────────────────────────

@@ -1,7 +1,53 @@
-import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { StatusKlaim, TipeKlaim } from '@prisma/client';
+
+export class BuktiFileDto {
+  @ApiProperty({ enum: ['sertifikat', 'kartu_anggota'], description: 'Tipe bukti' })
+  @IsString()
+  @IsIn(['sertifikat', 'kartu_anggota'])
+  tipe: 'sertifikat' | 'kartu_anggota';
+
+  @ApiProperty({ description: 'Path file di storage' })
+  @IsString()
+  filePath: string;
+
+  @ApiProperty({ description: 'Nama file asli' })
+  @IsString()
+  fileName: string;
+
+  @ApiProperty({ description: 'MIME type' })
+  @IsString()
+  mimeType: string;
+
+  @ApiProperty({ description: 'Ukuran file (bytes)' })
+  @IsInt()
+  size: number;
+}
+
+export class DokumenPendukungDto {
+  @ApiProperty({ description: 'Path file di storage' })
+  @IsString()
+  filePath: string;
+
+  @ApiProperty({ description: 'Nama file asli' })
+  @IsString()
+  fileName: string;
+
+  @ApiProperty({ description: 'MIME type' })
+  @IsString()
+  mimeType: string;
+
+  @ApiProperty({ description: 'Ukuran file (bytes)' })
+  @IsInt()
+  size: number;
+
+  @ApiPropertyOptional({ description: 'Deskripsi dokumen' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
 
 export class CreateClaimDto {
   @ApiPropertyOptional({ description: 'ID anggota (opsional, ada jika klaim dokumen)' })
@@ -72,9 +118,22 @@ export class CreateClaimDto {
   @IsString()
   rantingId?: string;
 
-  @ApiPropertyOptional({ description: 'Bukti dokumen [{tipe: string, url: string}]' })
+  // File upload fields (handled via multipart/form-data)
+  @ApiPropertyOptional({ 
+    description: 'Bukti keanggotaan (max 3 files, image/PDF, 5MB each)',
+    type: 'array',
+    items: { type: 'string', format: 'binary' }
+  })
   @IsOptional()
-  buktiDokumen?: Array<{ tipe: string; url: string }>;
+  buktiFiles?: Express.Multer.File[];
+
+  @ApiPropertyOptional({ 
+    description: 'Dokumen pendukung lain (max 3 files, image/PDF, 5MB each)',
+    type: 'array',
+    items: { type: 'string', format: 'binary' }
+  })
+  @IsOptional()
+  dokumenPendukungFiles?: Express.Multer.File[];
 }
 
 export class UpdateClaimDto {

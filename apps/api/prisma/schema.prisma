@@ -260,14 +260,16 @@ model User {
   tandaTangans                TandaTangan[]
   ujianPraktekPenilais        UjianPraktekPenilai[]
    userSessions                UserSession[]
-   forumThreadReactions        ForumThreadReaction[]
-   forumPostReactions          ForumPostReaction[]
-   distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id])
-  ranting                     Ranting?              @relation(fields: [rantingId], references: [id])
-  wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id])
+forumThreadReactions        ForumThreadReaction[]
+    forumPostReactions          ForumPostReaction[]
+    distrik                     Distrik?              @relation("UserDistrikScope", fields: [distrikId], references: [id])
+    ranting                     Ranting?              @relation(fields: [rantingId], references: [id])
+    wilayah                     Wilayah?              @relation("UserWilayahScope", fields: [wilayahId], references: [id])
+    buktiKeanggotaan            BuktiKeanggotaan[]    @relation("BuktiKeanggotaanUploadedBy")
+    dokumenPendukung            DokumenPendukung[]    @relation("DokumenPendukungUploadedBy")
 
-  @@map("users")
-}
+    @@map("users")
+  }
 
 model UserSession {
   id           String    @id @default(uuid())
@@ -402,23 +404,27 @@ model Pendaftaran {
 }
 
 model Klaim {
-  id           String      @id @default(uuid())
-  anggotaId    String?     @map("anggota_id")
-  tipe         TipeKlaim
-  status       StatusKlaim @default(pending)
-  catatan      String?
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-  version      Int         @default(0) @map("version")
-  namaLengkap  String?     @map("nama_lengkap")
-  jenisKelamin String?     @map("jenis_kelamin")
-  tempatLahir  String?     @map("tempat_lahir")
-  tanggalLahir DateTime?   @map("tanggal_lahir")
-  alamat       String?
-  noHp         String?     @map("no_hp")
-  email        String?
-  rantingId    String?     @map("ranting_id")
-  buktiDokumen Json?       @map("bukti_dokumen")
+  id                String      @id @default(uuid())
+  anggotaId         String?     @map("anggota_id")
+  tipe              TipeKlaim
+  status            StatusKlaim @default(pending)
+  catatan           String?
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  version           Int         @default(0) @map("version")
+  namaLengkap       String?     @map("nama_lengkap")
+  jenisKelamin      String?     @map("jenis_kelamin")
+  tempatLahir       String?     @map("tempat_lahir")
+  tanggalLahir      DateTime?   @map("tanggal_lahir")
+  alamat            String?
+  noHp              String?     @map("no_hp")
+  email             String?
+  rantingId         String?     @map("ranting_id")
+  
+  // Relasi terpisah untuk file bukti
+  buktiKeanggotaan  BuktiKeanggotaan[]
+  dokumenPendukung  DokumenPendukung[]
+  
   approvedBy   String?     @map("approved_by")
   approvedAt   DateTime?   @map("approved_at")
   tempatDadar  String?     @map("tempat_dadar")
@@ -429,6 +435,40 @@ model Klaim {
   @@index([anggotaId])
   @@index([rantingId])
   @@map("klaim")
+}
+
+model BuktiKeanggotaan {
+  id        String   @id @default(uuid())
+  klaimId   String   @map("klaim_id")
+  tipe      String   // 'sertifikat' | 'kartu_anggota'
+  filePath  String   @map("file_path")
+  fileName  String   @map("file_name")
+  mimeType  String   @map("mime_type")
+  size      Int
+  uploadedById String? @map("uploaded_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  klaim     Klaim    @relation(fields: [klaimId], references: [id], onDelete: Cascade)
+  uploadedBy User?   @relation("BuktiKeanggotaanUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([klaimId])
+  @@map("bukti_keanggotaan")
+}
+
+model DokumenPendukung {
+  id        String   @id @default(uuid())
+  klaimId   String   @map("klaim_id")
+  filePath  String   @map("file_path")
+  fileName  String   @map("file_name")
+  mimeType  String   @map("mime_type")
+  size      Int
+  description String?
+  uploadedById String? @map("uploaded_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  klaim     Klaim    @relation(fields: [klaimId], references: [id], onDelete: Cascade)
+  uploadedBy User?   @relation("DokumenPendukungUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([klaimId])
+  @@map("dokumen_pendukung")
 }
 
 model Kegiatan {

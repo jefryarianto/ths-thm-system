@@ -19,6 +19,16 @@ describe('ClaimsService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
+    buktiKeanggotaan: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
+    dokumenPendukung: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   const mockScopeHelper = {
@@ -113,16 +123,19 @@ describe('ClaimsService', () => {
 
   describe('create', () => {
     it('should create a claim with pending status', async () => {
-      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', status: 'pending' });
-      const result = await service.create({ tipe: 'asuransi', anggotaId: 'a1' });
-      expect(result.data.status).toBe('pending');
+      const mockClaim = { id: 'cl1', status: 'pending', tipe: 'keanggotaan', anggotaId: 'a1' };
+      mockPrisma.klaim.create.mockResolvedValue(mockClaim);
+      // Spy on the service's findOne method
+      jest.spyOn(service, 'findOne').mockResolvedValue(mockClaim);
+      const result = await service.create({ tipe: 'keanggotaan', anggotaId: 'a1' });
+      expect(result.status).toBe('pending');
     });
   });
 
   describe('update', () => {
     it('should update a claim', async () => {
-      mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', tipe: 'asuransi' });
-      const result = await service.update('cl1', { tipe: 'asuransi' });
+      mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', tipe: 'keanggotaan' });
+      const result = await service.update('cl1', { tipe: 'keanggotaan' });
     });
 
     it('should throw ForbiddenException for out-of-scope resource', async () => {
@@ -139,6 +152,11 @@ describe('ClaimsService', () => {
 
   describe('remove', () => {
     it('should delete a claim', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1',
+        buktiKeanggotaan: [],
+        dokumenPendukung: [],
+      });
       await service.remove('cl1');
       expect(mockPrisma.klaim.delete).toHaveBeenCalledWith({ where: { id: 'cl1' } });
     });
