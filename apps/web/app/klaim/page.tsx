@@ -182,8 +182,8 @@ export default function KlaimPage() {
     if (!form.tempatLahir.trim()) errs.tempatLahir = 'Tempat lahir wajib diisi';
     if (!form.tanggalLahir) errs.tanggalLahir = 'Tanggal lahir wajib diisi';
     if (!form.alamat.trim()) errs.alamat = 'Alamat wajib diisi';
-    if (!form.noHp || !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
-      errs.noHp = 'No. HP wajib diisi (mulai 0 atau +62, 9-14 digit)';
+    if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
+      errs.noHp = 'Format No. HP tidak valid (mulai 0 atau +62, 9-14 digit)';
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       errs.email = 'Format email tidak valid';
     setFieldErrors(errs);
