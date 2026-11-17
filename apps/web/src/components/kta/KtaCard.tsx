@@ -67,7 +67,7 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
   const job=fitSingle(v(a.pekerjaan),520,pt(5.3),pt(4),measure,false);
   const status=fitSingle(v(a.status),520,pt(5.3),pt(4),measure,false);
   const pelantikan=fitSingle(v(a.tanggalPelantikan || a.tahunPelantikan),520,pt(5.3),pt(4),measure,false);
-  const coordinator=fitSingle(a.koordinator||'E. HENDRIKUS MASAN BEDA',330,pt(5),pt(3.8),measure,false);
+  const coordinator=fitSingle(a.koordinator||'Koordinator Distrik',330,pt(5),pt(3.8),measure,false);
   const issue=fitSingle('TANGGAL TERBIT : '+(a.tanggalTerbit||'...............'),360,pt(5),pt(3.6),measure,false);
   const messages:string[]=[];
   if(name.overflow||backName.overflow)messages.push('Nama terlalu panjang; mohon ringkas atau atur layout secara manual.');

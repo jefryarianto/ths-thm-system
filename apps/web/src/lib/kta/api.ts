@@ -58,7 +58,12 @@ interface ApiDigitalCard {
   qrCode?: string | null;
   signatureImage?: string | null;
   card?: { verificationUrl?: string | null; signerName?: string | null } | null;
-  member?: { pekerjaan?: string | null; tanggalBerlakuSampai?: string | null } | null;
+  member?: { 
+    pekerjaan?: string | null; 
+    tanggalBerlakuSampai?: string | null;
+    pelantikanTahun?: string | null;
+    tanggalPelantikan?: string | null;
+  } | null;
 }
 
 const TINGKATAN: Tingkatan[] = ['pratama', 'tamtama', 'muda', 'madya', 'utama'];
@@ -77,6 +82,10 @@ function toYearMonth(value?: string | null): string | undefined {
 function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
   const fotoDataUrl = card?.fotoDataUrl?.trim();
   const tandaTangan = card?.signatureImage?.trim();
+
+  // Pelantikan data from card member data (fallback to dadar data handled in backend)
+  const pelantikanTahun = card?.member?.pelantikanTahun ?? member.tahunDadar ?? '';
+  const tanggalPelantikan = card?.member?.tanggalPelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? '');
 
   return {
     id: member.id,
@@ -102,6 +111,8 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
     tandaTanganUrl: tandaTangan
       ? `/api/uploads/${encodeURIComponent(tandaTangan)}`
       : undefined,
+    tanggalPelantikan,
+    tahunPelantikan: pelantikanTahun,
   };
 }
 

@@ -1599,7 +1599,7 @@ export default function MemberDetailPage() {
                       pekerjaan: '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
-                      koordinator: cardData?.signerName || 'E. HENDRIKUS MASAN BEDA',
+                      koordinator: cardData?.signerName || 'Koordinator Distrik',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
                   }}
                 />
@@ -1629,7 +1629,7 @@ export default function MemberDetailPage() {
                       pekerjaan: '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
-                      koordinator: cardData?.signerName || 'E. HENDRIKUS MASAN BEDA',
+                      koordinator: cardData?.signerName || 'Koordinator Distrik',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
                   }}
                 />
