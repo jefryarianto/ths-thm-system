@@ -29,6 +29,14 @@ describe('ClaimsService', () => {
       findUnique: jest.fn(),
       delete: jest.fn(),
     },
+    anggota: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
   };
 
   const mockScopeHelper = {
@@ -52,6 +60,10 @@ describe('ClaimsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockNraService = {
+    generateMemberNumber: jest.fn().mockResolvedValue('NRA-001'),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
@@ -65,6 +77,10 @@ describe('ClaimsService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: MailService, useValue: mockMailService },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        {
+          provide: require('../../common/services/nra.service').NraService,
+          useValue: mockNraService,
+        },
         {
           provide: require('../../common/services/cache.service').CacheService,
           useValue: mockCache,
@@ -178,6 +194,34 @@ describe('ClaimsService', () => {
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'budi@test.com' }),
+      );
+    });
+
+    it('should approve membership claim by scoped admin using claim.rantingId', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl2',
+        tipe: 'keanggotaan',
+        status: 'pending',
+        namaLengkap: 'Pemohon Baru',
+        jenisKelamin: 'L',
+        rantingId: 'r1',
+        anggotaId: null,
+        anggota: null,
+      });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'new-ang-1' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+
+      await service.approve('cl2', { rantingId: 'r1' });
+
+      expect(mockPrisma.klaim.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'cl2' },
+          data: expect.objectContaining({
+            status: 'disetujui',
+            anggotaId: 'new-ang-1',
+          }),
+        }),
       );
     });
   });

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Optional, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Optional,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -160,6 +166,51 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     }
     
     return this.baseRemove(id, scope, 'Klaim berhasil dihapus');
+  }
+
+  // ── Scope Verification Override ────────────────────────
+
+  protected override async verifyScope(id: string, scope?: UserScope): Promise<void> {
+    if (!scope) return;
+
+    // Admin nasional / superadmin memiliki akses penuh tanpa pembatasan ranting
+    if (scope.role === 'admin_nasional' || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
+      const exists = await this.prisma.klaim.findUnique({
+        where: { id },
+        select: { id: true },
+      });
+      if (!exists) {
+        throw new NotFoundException('Klaim tidak ditemukan');
+      }
+      return;
+    }
+
+    const claim = await this.prisma.klaim.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        rantingId: true,
+        anggotaId: true,
+        anggota: { select: { rantingId: true } },
+      },
+    });
+
+    if (!claim) {
+      throw new NotFoundException('Klaim tidak ditemukan');
+    }
+
+    // Klaim keanggotaan baru belum terikat ke `anggotaId`; ranting tercatat di `claim.rantingId`
+    const targetRantingId = claim.anggota?.rantingId || claim.rantingId || undefined;
+
+    const hasAccess = await this.scopeHelper.hasAccessToResourceAsync(
+      this.prisma,
+      scope,
+      targetRantingId,
+    );
+
+    if (!hasAccess) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
   }
 
   // ── Domain Methods ─────────────────────────────────────
