@@ -27,7 +27,9 @@ import * as crypto from 'crypto';
  * member registration (POST /claims).
  */
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const EXEMPT_PATHS = ['/auth/', '/auth/me'];
+const EXEMPT_PREFIXES = ['/auth/'];
+const EXEMPT_EXACT = ['/auth/me'];
+const PUBLIC_SUBMISSIONS = ['/claims', '/registrations'];
 
 function getApiPrefix(): string {
   const raw = (process.env.API_PREFIX || 'api').trim();
@@ -54,7 +56,10 @@ function stripApiPrefix(pathname: string): string {
 
 function isExempt(req: Request): boolean {
   const pathname = stripApiPrefix(getRequestPath(req));
-  return EXEMPT_PATHS.some(path => pathname.startsWith(path) || pathname === path);
+  if (EXEMPT_PREFIXES.some(prefix => pathname.startsWith(prefix))) return true;
+  if (EXEMPT_EXACT.includes(pathname)) return true;
+  if (req.method === 'POST' && PUBLIC_SUBMISSIONS.includes(pathname)) return true;
+  return false;
 }
 
 function hasBearerToken(req: Request): boolean {

@@ -83,11 +83,26 @@ describe('CsrfMiddleware', () => {
     expect(res.status).not.toHaveBeenCalledWith(403);
   });
 
-  it('menolak POST dengan session tetapi tanpa token CSRF', () => {
+  it('meloloskan POST /api/claims walau browser memiliki cookie session (exempt publik)', () => {
+    const res = makeRes();
+    middleware.use(
+      makeReq({
+        originalUrl: '/api/claims',
+        headers: { cookie: 'refreshToken=valid-refresh-token' },
+      }),
+      res,
+      next,
+    );
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalledWith(403);
+  });
+
+  it('menolak POST dengan session tetapi tanpa token CSRF pada rute internal', () => {
     const res = makeRes();
     // Request dengan refresh token (session aktif) tetap butuh CSRF
     middleware.use(
       makeReq({
+        originalUrl: '/api/anggota',
         headers: { cookie: 'refreshToken=valid-refresh-token' },
       }),
       res,

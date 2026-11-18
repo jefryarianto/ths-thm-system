@@ -8,16 +8,13 @@ import {
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  PlusCircle,
-  XCircle,
   ChevronRight,
 } from 'lucide-react';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
-import { FileUploadZone } from '@/components/claims/FileUploadZone';
+import { FileUploadZone, FileWithPreview } from '@/components/claims/FileUploadZone';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || '');
 
 interface Ranting {
   id: string;
@@ -38,24 +35,6 @@ interface Distrik {
   nama: string;
   kodeDistrik?: string;
 }
-
-interface BuktiItem {
-  tipe: 'sertifikat' | 'kartu_anggota';
-  url: string;
-}
-
-interface FileWithPreview {
-  file: File;
-  preview: string;
-  progress: number;
-  status: 'pending' | 'uploading' | 'done' | 'error';
-  error?: string;
-}
-
-const BUKTI_LABEL: Record<BuktiItem['tipe'], string> = {
-  sertifikat: 'Sertifikat Pendadaran',
-  kartu_anggota: 'Kartu Anggota',
-};
 
 export default function KlaimPage() {
   const { t } = useI18n();
@@ -85,7 +64,6 @@ export default function KlaimPage() {
     email: '',
     catatan: '',
   });
-  const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
   const [buktiFiles, setBuktiFiles] = useState<FileWithPreview[]>([]);
   const [dokumenFiles, setDokumenFiles] = useState<FileWithPreview[]>([]);
 
@@ -100,6 +78,7 @@ export default function KlaimPage() {
 
   // Fetch all distriks on mount
   useEffect(() => {
+    let active = true;
     const fetchDistriks = async () => {
       setDistrikLoading(true);
       try {
@@ -108,23 +87,30 @@ export default function KlaimPage() {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        setDistriks(data?.data || []);
+        if (active) {
+          setDistriks(Array.isArray(data?.data) ? data.data : []);
+        }
       } catch (err) {
         console.error('Failed to fetch distriks:', err);
-        setDistriks([]);
-        setDistrikLoading(false); // Ensure loading stops on error
+        if (active) {
+          setDistriks([]);
+        }
       } finally {
-        if (distrikLoading) {
+        if (active) {
           setDistrikLoading(false);
         }
       }
     };
 
     fetchDistriks();
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Fetch wilayahs when distrik changes
   useEffect(() => {
+    let active = true;
     const fetchWilayahs = async () => {
       if (!selectedDistrikId) {
         setWilayahs([]);
@@ -138,23 +124,36 @@ export default function KlaimPage() {
       setWilayahLoading(true);
       try {
         const res = await fetch(
-          `${API_URL}/api/public/struktur/wilayah?distrikId=${selectedDistrikId}`,
+          `${API_URL}/api/public/struktur/wilayah?distrikId=${encodeURIComponent(selectedDistrikId)}`,
         );
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        setWilayahs(data?.data || []);
+        if (active) {
+          setWilayahs(Array.isArray(data?.data) ? data.data : []);
+        }
       } catch (err) {
         console.error('Failed to fetch wilayahs:', err);
-        setWilayahs([]);
+        if (active) {
+          setWilayahs([]);
+        }
       } finally {
-        setWilayahLoading(false);
+        if (active) {
+          setWilayahLoading(false);
+        }
       }
     };
 
     fetchWilayahs();
+    return () => {
+      active = false;
+    };
   }, [selectedDistrikId]);
 
   // Fetch rantings when wilayah changes
   useEffect(() => {
+    let active = true;
     const fetchRantings = async () => {
       if (!selectedWilayahId) {
         setRantings([]);
@@ -166,30 +165,32 @@ export default function KlaimPage() {
       setRantingLoading(true);
       try {
         const res = await fetch(
-          `${API_URL}/api/public/struktur/ranting?wilayahId=${selectedWilayahId}`,
+          `${API_URL}/api/public/struktur/ranting?wilayahId=${encodeURIComponent(selectedWilayahId)}`,
         );
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        setRantings(data?.data || []);
+        if (active) {
+          setRantings(Array.isArray(data?.data) ? data.data : []);
+        }
       } catch (err) {
         console.error('Failed to fetch rantings:', err);
-        setRantings([]);
+        if (active) {
+          setRantings([]);
+        }
       } finally {
-        setRantingLoading(false);
+        if (active) {
+          setRantingLoading(false);
+        }
       }
     };
 
     fetchRantings();
+    return () => {
+      active = false;
+    };
   }, [selectedWilayahId]);
-
-  const addBukti = (tipe: BuktiItem['tipe']) => {
-    setBuktiDokumen((prev) => [...prev, { tipe, url: '' }]);
-  };
-  const updateBukti = (index: number, url: string) => {
-    setBuktiDokumen((prev) => prev.map((b, i) => (i === index ? { ...b, url } : b)));
-  };
-  const removeBukti = (index: number) => {
-    setBuktiDokumen((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleBuktiChange = (files: FileWithPreview[]) => setBuktiFiles(files);
   const handleBuktiRemove = (index: number) => {
@@ -400,30 +401,18 @@ export default function KlaimPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Jenis Kelamin <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-4" role="radiogroup" aria-label="Jenis Kelamin">
-                  {(['L', 'P'] as const).map((jk) => (
-                    <label key={jk} className="flex items-center gap-2 flex-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="jenisKelamin"
-                        value={jk}
-                        checked={form.jenisKelamin === jk}
-                        onChange={(e) => updateField('jenisKelamin', e.target.value)}
-                        className="sr-only peer"
-                      />
-                      <div className={`flex-1 py-2.5 text-sm font-medium text-center rounded-lg border-2 transition ${
-                        form.jenisKelamin === jk
-                          ? 'bg-navy-600 text-white border-navy-600'
-                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
-                      }`}>
-                        {jk === 'L' ? 'Laki-laki' : 'Perempuan'}
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                <select
+                  required
+                  value={form.jenisKelamin}
+                  onChange={(e) => updateField('jenisKelamin', e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                >
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
+                </select>
               </div>
 
-              /* Tempat Lahir */
+              {/* Tempat Lahir */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tempat Lahir <span className="text-red-500">*</span>
@@ -447,7 +436,7 @@ export default function KlaimPage() {
                   max={new Date().toISOString().split('T')[0]}
                   value={form.tanggalLahir}
                   onChange={(e) => updateField('tanggalLahir', e.target.value)}
-                  className="w-full sm:w-auto px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
                 />
               </div>
 

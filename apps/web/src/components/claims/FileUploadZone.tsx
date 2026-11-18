@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { PlusCircle, XCircle, CheckCircle, FileText, Loader2 } from 'lucide-react';
 
 export interface FileWithPreview {
   file: File;
@@ -23,7 +22,6 @@ interface FileUploadZoneProps {
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
 
 export function FileUploadZone({
   label,
@@ -42,7 +40,7 @@ export function FileUploadZone({
     if (!ALLOWED_TYPES.includes(file.type)) {
       return 'Hanya file JPG, PNG, WebP, dan PDF yang diizinkan';
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > maxSizeMB * 1024 * 1024) {
       return `Ukuran file melebihi batas ${maxSizeMB}MB`;
     }
     return null;
@@ -66,7 +64,7 @@ export function FileUploadZone({
     if (validFiles.length > 0) {
       onFilesChange([...files, ...validFiles].slice(0, maxFiles));
     }
-  }, [files, maxFiles, onFilesChange]);
+  }, [files, maxFiles, onFilesChange, validateFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -94,10 +92,6 @@ export function FileUploadZone({
       e.target.value = '';
     }
   }, [handleFiles]);
-
-  const handleRemove = useCallback((index: number) => {
-    URL.revokeObjectURL(files[index].preview);
-  }, [files]);
 
   return (
     <div className="space-y-2">
@@ -225,6 +219,7 @@ export function FileUploadZone({
                 )}
                 {!uploading && f.status !== 'uploading' && (
                   <button
+                    type="button"
                     onClick={() => onRemoveFile(i)}
                     className="text-gray-400 hover:text-red-500 transition"
                     aria-label="Hapus file"
