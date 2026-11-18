@@ -217,26 +217,35 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
       });
 
       if (claim.email) {
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-        const bcrypt = await import('bcryptjs');
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-        await this.prisma.user.create({
-          data: {
-            email: claim.email,
-            passwordHash: hashedPassword,
-            namaLengkap: claim.namaLengkap,
-            role: 'anggota',
-            isActive: true,
-            mustChangePassword: true,
-          },
+        const existingUser = await this.prisma.user.findUnique({
+          where: { email: claim.email },
+          select: { id: true },
         });
 
-        this.logger.log(`User account created for ${claim.email} with temporary password`);
-        this.sendCredentialEmail(
-          { namaLengkap: claim.namaLengkap, email: claim.email },
-          temporaryPassword,
-        );
+        if (!existingUser) {
+          const temporaryPassword = Math.random().toString(36).slice(-8);
+          const bcrypt = await import('bcryptjs');
+          const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+          await this.prisma.user.create({
+            data: {
+              email: claim.email,
+              passwordHash: hashedPassword,
+              namaLengkap: claim.namaLengkap,
+              role: 'anggota',
+              isActive: true,
+              mustChangePassword: true,
+            },
+          });
+
+          this.logger.log(`User account created for ${claim.email} with temporary password`);
+          this.sendCredentialEmail(
+            { namaLengkap: claim.namaLengkap, email: claim.email },
+            temporaryPassword,
+          );
+        } else {
+          this.logger.log(`User account already exists for ${claim.email}, skipping user creation`);
+        }
       }
 
       await this.prismaDelegate.update({

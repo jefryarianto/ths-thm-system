@@ -30,6 +30,36 @@ interface ClaimDetail {
   status: string;
   catatan: string | null;
   alasanPenolakan: string | null;
+  namaLengkap?: string | null;
+  jenisKelamin?: string | null;
+  tempatLahir?: string | null;
+  tanggalLahir?: string | null;
+  tempatDadar?: string | null;
+  tahunDadar?: string | null;
+  alamat?: string | null;
+  noHp?: string | null;
+  email?: string | null;
+  rantingId?: string | null;
+  ranting?: {
+    id: string;
+    nama: string;
+  } | null;
+  buktiKeanggotaan?: Array<{
+    id: string;
+    tipe: string;
+    fileName: string;
+    filePath: string;
+    fileSize?: number;
+    mimeType?: string;
+  }>;
+  dokumenPendukung?: Array<{
+    id: string;
+    fileName: string;
+    filePath: string;
+    fileSize?: number;
+    mimeType?: string;
+    description?: string | null;
+  }>;
   anggotaId: string | null;
   anggota: {
     id: string;
@@ -112,8 +142,9 @@ export default function ClaimDetailPage() {
       setShowRejectInput(false);
       setRejectReason('');
       await fetchClaim();
-    } catch {
-      toast('error', 'Gagal memproses klaim');
+    } catch (err: unknown) {
+      const serverMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', serverMessage || 'Gagal memproses klaim');
     }
     setActionLoading(null);
   };
@@ -328,10 +359,113 @@ export default function ClaimDetailPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
               <User size={18} className="text-blue-500" />
-              Data Anggota
+              {claim.tipe === 'keanggotaan' ? 'Data Pemohon Klaim' : 'Data Anggota Terkait'}
             </h3>
             <div className="space-y-3">
-              {claim.anggota ? (
+              {claim.tipe === 'keanggotaan' && (claim.namaLengkap || claim.email || claim.noHp || claim.ranting) ? (
+                <>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Nama Lengkap</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {claim.namaLengkap || '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Jenis Kelamin</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {claim.jenisKelamin === 'L' ? 'Laki-laki' : claim.jenisKelamin === 'P' ? 'Perempuan' : '-'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Calendar size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Kelahiran</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {[claim.tempatLahir, claim.tanggalLahir ? formatDate(claim.tanggalLahir) : null]
+                            .filter(Boolean)
+                            .join(', ') || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {(claim.tempatDadar || claim.tahunDadar) && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Calendar size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Pendadaran (Dadar)</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {[claim.tempatDadar, claim.tahunDadar].filter(Boolean).join(' • ')}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {claim.ranting && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Activity size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Ranting Asal</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{claim.ranting.nama}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {claim.noHp && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Activity size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">No. HP</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{claim.noHp}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {claim.email && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <MessageSquare size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Email</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{claim.email}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {claim.alamat && (
+                    <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <FileText size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Alamat</p>
+                        <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{claim.alamat}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {claim.anggota && (
+                    <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/40 rounded-xl border border-green-200 dark:border-green-800">
+                      <CheckCircle2 size={16} className="text-green-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs text-green-700 dark:text-green-400 uppercase font-semibold">Tautan Profil Anggota</p>
+                        <Link
+                          href={`/members/${claim.anggota.id}`}
+                          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {claim.anggota.namaLengkap} ({claim.anggota.nomorAnggota})
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : claim.anggota ? (
                 <>
                   <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                     <User size={16} className="text-gray-400 dark:text-gray-500 mt-0.5" />
@@ -366,12 +500,88 @@ export default function ClaimDetailPage() {
                 </>
               ) : (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
-                  <em>Tidak ada data anggota terkait</em>
+                  <em>Tidak ada data pemohon atau anggota terkait</em>
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Dokumen Bukti & Pendukung */}
+        {((claim.buktiKeanggotaan && claim.buktiKeanggotaan.length > 0) ||
+          (claim.dokumenPendukung && claim.dokumenPendukung.length > 0)) && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+              <FileText size={18} className="text-orange-500" />
+              Berkas Bukti & Dokumen Pendukung
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {claim.buktiKeanggotaan && claim.buktiKeanggotaan.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                    Bukti Keanggotaan
+                  </p>
+                  {claim.buktiKeanggotaan.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase text-orange-600 dark:text-orange-400">
+                          {doc.tipe}
+                        </p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {doc.fileName}
+                        </p>
+                      </div>
+                      <a
+                        href={`/api/claims/${claim.id}/files/${doc.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+                      >
+                        Lihat / Unduh
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {claim.dokumenPendukung && claim.dokumenPendukung.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                    Dokumen Pendukung
+                  </p>
+                  {claim.dokumenPendukung.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {doc.fileName}
+                        </p>
+                        {doc.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {doc.description}
+                          </p>
+                        )}
+                      </div>
+                      <a
+                        href={`/api/claims/${claim.id}/files/${doc.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+                      >
+                        Lihat / Unduh
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </PermissionGuard>
   );
