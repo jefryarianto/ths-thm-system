@@ -111,7 +111,8 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     files?: { 
       buktiFiles?: Express.Multer.File[]; 
       dokumenPendukungFiles?: Express.Multer.File[] 
-    }
+    },
+    buktiTipe: 'sertifikat' | 'kartu_anggota' = 'kartu_anggota',
   ) {
     // Filter out undefined values from dto
     const dtoData = Object.fromEntries(
@@ -133,7 +134,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
 
     // Save bukti keanggotaan files
     if (files?.buktiFiles?.length) {
-      await this.saveBuktiFiles(claim.id, files.buktiFiles);
+      await this.saveBuktiFiles(claim.id, files.buktiFiles, buktiTipe);
     }
 
     // Save dokumen pendukung files
@@ -151,7 +152,37 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     return this.baseUpdate(id, dto, scope, 'Klaim berhasil diperbarui', userId);
   }
 
-async remove(id: string, scope?: UserScope) {
+async addBuktiFiles(
+    id: string,
+    files: Express.Multer.File[],
+    tipe: 'sertifikat' | 'kartu_anggota',
+    scope?: UserScope,
+  ) {
+    await this.verifyScope(id, scope);
+    const claim = await this.prisma.klaim.findUnique({ where: { id } });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+    await this.saveBuktiFiles(id, files, tipe);
+    this.invalidateCache();
+    this.audit('CLAIM_ADD_BUKTI', 'Klaim', id, undefined, { tipe, count: files.length });
+    return this.findOne(id);
+  }
+
+  async addDokumenFiles(
+    id: string,
+    files: Express.Multer.File[],
+    description?: string,
+    scope?: UserScope,
+  ) {
+    await this.verifyScope(id, scope);
+    const claim = await this.prisma.klaim.findUnique({ where: { id } });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+    await this.saveDokumenFiles(id, files, description);
+    this.invalidateCache();
+    this.audit('CLAIM_ADD_DOKUMEN', 'Klaim', id, undefined, { count: files.length });
+    return this.findOne(id);
+  }
+
+  async remove(id: string, scope?: UserScope) {
     const claim = await this.prisma.klaim.findUnique({
       where: { id },
       include: { buktiKeanggotaan: true, dokumenPendukung: true },
@@ -373,12 +404,12 @@ async remove(id: string, scope?: UserScope) {
 
   // ── File Handling ──────────────────────────────────────
 
-  private async saveBuktiFiles(klaimId: string, files: Express.Multer.File[]) {
+  private async saveBuktiFiles(klaimId: string, files: Express.Multer.File[], tipe: 'sertifikat' | 'kartu_anggota' = 'kartu_anggota') {
     const results = await Promise.allSettled(
       files.map(file => this.prisma.buktiKeanggotaan.create({
         data: {
           klaimId,
-          tipe: 'sertifikat', // Default, bisa di-extend dari field terpisah jika perlu
+          tipe,
           filePath: file.path,
           fileName: file.originalname,
           mimeType: file.mimetype,
@@ -395,7 +426,7 @@ async remove(id: string, scope?: UserScope) {
     }
   }
 
-  private async saveDokumenFiles(klaimId: string, files: Express.Multer.File[]) {
+  private async saveDokumenFiles(klaimId: string, files: Express.Multer.File[], description?: string) {
     const results = await Promise.allSettled(
       files.map(file => this.prisma.dokumenPendukung.create({
         data: {
@@ -404,6 +435,7 @@ async remove(id: string, scope?: UserScope) {
           fileName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
+          description: description || null,
         },
       }))
     );

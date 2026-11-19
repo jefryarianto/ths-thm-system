@@ -88,17 +88,15 @@ export class CreateClaimDto {
   @IsString()
   tanggalLahir?: string;
 
-  @ApiPropertyOptional({ description: 'Tempat pendadaran (dadar)' })
-  @IsOptional()
+@ApiProperty({ description: 'Tempat pendadaran (dadar)' })
   @IsString()
-  tempatDadar?: string;
+  tempatDadar: string;
 
-  @ApiPropertyOptional({ description: 'Tahun pendadaran (dadar)' })
-  @IsOptional()
+  @ApiProperty({ description: 'Tahun pendadaran (dadar)' })
   @IsString()
-  tahunDadar?: string;
+  tahunDadar: string;
 
-  @ApiPropertyOptional({ description: 'Alamat lengkap' })
+  @ApiPropertyOptional({ description: 'alamat lengkap' })
   @IsOptional()
   @IsString()
   alamat?: string;
@@ -108,10 +106,9 @@ export class CreateClaimDto {
   @IsString()
   noHp?: string;
 
-  @ApiPropertyOptional({ description: 'Email' })
-  @IsOptional()
+  @ApiProperty({ description: 'Email' })
   @IsEmail()
-  email?: string;
+  email: string;
 
   @ApiPropertyOptional({ description: 'ID ranting asal keanggotaan' })
   @IsOptional()
@@ -134,6 +131,11 @@ export class CreateClaimDto {
   })
   @IsOptional()
   dokumenPendukungFiles?: Express.Multer.File[];
+
+  @ApiPropertyOptional({ enum: ['sertifikat', 'kartu_anggota'], description: 'Tipe bukti keanggotaan' })
+  @IsOptional()
+  @IsIn(['sertifikat', 'kartu_anggota'])
+  buktiTipe?: 'sertifikat' | 'kartu_anggota';
 }
 
 export class UpdateClaimDto {

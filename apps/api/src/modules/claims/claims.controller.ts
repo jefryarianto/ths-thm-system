@@ -84,7 +84,7 @@ export class ClaimsController {
       dokumenPendukungFiles?: Express.Multer.File[] 
     }
   ) {
-    return this.service.create(dto, files);
+    return this.service.create(dto, files, dto.buktiTipe as 'sertifikat' | 'kartu_anggota' || 'kartu_anggota');
   }
 
   @Patch(':id')
@@ -125,6 +125,38 @@ export class ClaimsController {
   })
   process(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.process(id, req.scope);
+  }
+
+  @Post(':id/bukti')
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 5 }], buildClaimUploadOptions())
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Tambah bukti keanggotaan multi-dokumen ke klaim' })
+  addBukti(
+    @Param('id') id: string,
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
+    @Body('tipe') tipe: 'sertifikat' | 'kartu_anggota',
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.addBuktiFiles(id, files.files || [], tipe, req.scope);
+  }
+
+  @Post(':id/dokumen')
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 5 }], buildClaimUploadOptions())
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Tambah dokumen pendukung multi-dokumen ke klaim' })
+  addDokumen(
+    @Param('id') id: string,
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
+    @Req() req: ScopedRequest,
+    @Body('description') description?: string,
+  ) {
+    return this.service.addDokumenFiles(id, files.files || [], description, req.scope);
   }
 
   @Get(':id/files/:fileId')
