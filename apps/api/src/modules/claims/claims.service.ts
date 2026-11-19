@@ -83,13 +83,25 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         const where: Record<string, unknown> = {};
         if (query.status) where.status = query.status;
         if (query.tipe) where.tipe = query.tipe;
+
         if (scope?.rantingId) {
           where.OR = [
             { rantingId: scope.rantingId },
             { anggota: this.buildIndirectScopeFilter(scope, 'anggota').anggota },
           ];
-        } else {
-          Object.assign(where, this.buildIndirectScopeFilter(scope, 'anggota'));
+        } else if (scope?.wilayahId || scope?.distrikId) {
+          // Filter by claim's direct ranting relation (for claims without anggota yet)
+          // AND by anggota's ranting relation (for claims with anggota)
+          const rantingFilter: Record<string, unknown> = {};
+          if (scope.wilayahId) rantingFilter.wilayahId = scope.wilayahId;
+          if (scope.distrikId) rantingFilter.wilayah = { distrikId: scope.distrikId };
+
+          const anggotaFilter = this.buildIndirectScopeFilter(scope, 'anggota').anggota;
+
+          where.OR = [
+            { ranting: rantingFilter },
+            { anggota: anggotaFilter },
+          ];
         }
         return where;
       },
