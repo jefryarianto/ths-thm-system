@@ -65,7 +65,6 @@ export default function KlaimPage() {
     catatan: '',
   });
   const [buktiFiles, setBuktiFiles] = useState<FileWithPreview[]>([]);
-  const [dokumenFiles, setDokumenFiles] = useState<FileWithPreview[]>([]);
 
   // Loading states for each dropdown
   const [distrikLoading, setDistrikLoading] = useState<boolean>(true);
@@ -198,12 +197,6 @@ export default function KlaimPage() {
     setBuktiFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleDokumenChange = (files: FileWithPreview[]) => setDokumenFiles(files);
-  const handleDokumenRemove = (index: number) => {
-    URL.revokeObjectURL(dokumenFiles[index].preview);
-    setDokumenFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (form.namaLengkap.trim().length < 3) errs.namaLengkap = 'Nama lengkap minimal 3 karakter';
@@ -212,11 +205,14 @@ export default function KlaimPage() {
     if (!rantingId) errs.rantingId = 'Pilih ranting';
     if (!form.tempatLahir.trim()) errs.tempatLahir = 'Tempat lahir wajib diisi';
     if (!form.tanggalLahir) errs.tanggalLahir = 'Tanggal lahir wajib diisi';
+    if (!form.tempatDadar.trim()) errs.tempatDadar = 'Tempat pendadaran wajib diisi';
+    if (!form.tahunDadar.trim()) errs.tahunDadar = 'Tahun pendadaran wajib diisi';
     if (!form.alamat.trim()) errs.alamat = 'Alamat wajib diisi';
+    if (!form.email.trim()) errs.email = 'Email wajib diisi';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      errs.email = 'Format email tidak valid';
     if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
       errs.noHp = 'Format No. HP tidak valid (mulai 0 atau +62, 9-14 digit)';
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      errs.email = 'Format email tidak valid';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -242,7 +238,6 @@ export default function KlaimPage() {
 
       // Files
       buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
-      dokumenFiles.forEach((f) => formData.append('dokumenPendukungFiles', f.file));
 
       const res = await fetch(`${API_URL}/api/claims`, {
         method: 'POST',
@@ -443,34 +438,55 @@ export default function KlaimPage() {
               {/* Tempat Pendadaran (Dadar) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tempat Pendadaran (Dadar)
+                  Tempat Pendadaran (Dadar) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  required
                   value={form.tempatDadar}
-                  onChange={(e) => updateField('tempatDadar', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  onChange={(e) => {
+                    updateField('tempatDadar', e.target.value);
+                    if (fieldErrors.tempatDadar) setFieldErrors((x) => ({ ...x, tempatDadar: '' }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                    fieldErrors.tempatDadar
+                      ? 'border-red-400 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Kota pendadaran"
                 />
+                {fieldErrors.tempatDadar && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.tempatDadar}</p>
+                )}
               </div>
 
               {/* Tahun Pendadaran (Dadar) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tahun Pendadaran (Dadar)
+                  Tahun Pendadaran (Dadar) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]{4}"
                   maxLength={4}
+                  required
                   value={form.tahunDadar}
-                  onChange={(e) =>
-                    updateField('tahunDadar', e.target.value.replace(/\D/g, '').slice(0, 4))
-                  }
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    updateField('tahunDadar', val);
+                    if (fieldErrors.tahunDadar) setFieldErrors((x) => ({ ...x, tahunDadar: '' }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                    fieldErrors.tahunDadar
+                      ? 'border-red-400 dark:border-red-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="2024"
                 />
+                {fieldErrors.tahunDadar && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.tahunDadar}</p>
+                )}
               </div>
 
               {/* No HP */}
@@ -500,10 +516,11 @@ export default function KlaimPage() {
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
+                  required
                   value={form.email}
                   onChange={(e) => {
                     updateField('email', e.target.value);
@@ -645,27 +662,15 @@ export default function KlaimPage() {
               </div>
             </div>
 
-            {/* Bukti Keanggotaan */}
+            {/* Bukti Keanggotaan & Dokumen Pendukung */}
             <FileUploadZone
-              label="Bukti Keanggotaan (Sertifikat/Kartu Anggota)"
+              label="Bukti Keanggotaan & Dokumen Pendukung (Sertifikat, Kartu Anggota, KTP, Surat Keterangan, dll)"
               accept="image/jpeg,image/png,image/webp,application/pdf"
-              maxFiles={3}
+              maxFiles={6}
               maxSizeMB={5}
               onFilesChange={handleBuktiChange}
               files={buktiFiles}
               onRemoveFile={handleBuktiRemove}
-              uploading={submitting}
-            />
-
-            {/* Dokumen Pendukung */}
-            <FileUploadZone
-              label="Dokumen Pendukung Lain (Foto KTP, Surat Keterangan, dll)"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              maxFiles={3}
-              maxSizeMB={5}
-              onFilesChange={handleDokumenChange}
-              files={dokumenFiles}
-              onRemoveFile={handleDokumenRemove}
               uploading={submitting}
             />
 
