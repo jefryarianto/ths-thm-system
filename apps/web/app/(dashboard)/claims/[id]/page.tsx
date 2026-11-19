@@ -60,6 +60,24 @@ interface ClaimDetail {
     mimeType?: string;
     description?: string | null;
   }>;
+  currentStage?: string;
+  ktaApplicationId?: string | null;
+  approvalHistories?: Array<{
+    id: string;
+    stage: string;
+    action: string;
+    actorRole: string | null;
+    catatan?: string | null;
+    createdAt: string;
+  }>;
+  ktaApplication?: {
+    id: string;
+    status: string;
+    biaya?: number | string | null;
+    rekeningTujuan?: string | null;
+    statusPembayaran?: string | null;
+    diterbitkanAt?: string | null;
+  } | null;
   anggotaId: string | null;
   anggota: {
     id: string;
@@ -107,6 +125,20 @@ export default function ClaimDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const payload = token?.split('.')[1];
+      if (!payload) return;
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = JSON.parse(atob(normalized)) as { role?: string };
+      setCurrentRole(decoded.role || null);
+    } catch {
+      setCurrentRole(null);
+    }
+  }, []);
 
   const fetchClaim = useCallback(async () => {
     if (!id) return;
@@ -127,6 +159,21 @@ export default function ClaimDetailPage() {
   useEffect(() => {
     fetchClaim();
   }, [fetchClaim]);
+
+  const expectedStageRole: Record<string, string> = {
+    ranting: 'admin_ranting',
+    wilayah: 'admin_wilayah',
+    distrik: 'admin_distrik',
+    nasional: 'admin_nasional',
+  };
+  const canActOnStage = currentRole === 'superadmin' || currentRole === expectedStageRole[claim?.currentStage || ''];
+  const currentStageLabel: Record<string, string> = {
+    ranting: 'Menunggu verifikasi Admin Ranting',
+    wilayah: 'Menunggu verifikasi Admin Wilayah',
+    distrik: 'Menunggu verifikasi Admin Distrik',
+    nasional: 'Menunggu persetujuan Admin Nasional',
+    kta_processing: 'Klaim disetujui — proses KTA di Admin Distrik',
+  };
 
   const handleAction = async (action: string) => {
     if (!claim) return;
@@ -224,26 +271,23 @@ export default function ClaimDetailPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Diajukan {formatDate(claim.createdAt)}
                 </p>
+                {claim.tipe === 'keanggotaan' && claim.currentStage && (
+                  <p className="mt-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {currentStageLabel[claim.currentStage] || claim.currentStage}
+                  </p>
+                )}
               </div>
               {/* Actions */}
               <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                {claim.status === 'pending' && (
+                {claim.tipe === 'keanggotaan' && claim.status === 'pending' && canActOnStage && (
                   <>
-                    <button
-                      onClick={() => handleAction('process')}
-                      disabled={actionLoading === 'process'}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
-                    >
-                      <Activity size={14} />
-                      {actionLoading === 'process' ? 'Memproses...' : 'Proses'}
-                    </button>
                     <button
                       onClick={() => handleAction('approve')}
                       disabled={actionLoading === 'approve'}
                       className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition disabled:opacity-50"
                     >
                       <ThumbsUp size={14} />
-                      Setujui
+                      {actionLoading === 'approve' ? 'Menyetujui...' : `Verifikasi & Eskalasi`}
                     </button>
                     <button
                       onClick={() => setShowRejectInput(true)}
@@ -255,15 +299,17 @@ export default function ClaimDetailPage() {
                     </button>
                   </>
                 )}
-                {claim.status === 'processed' && (
-                  <button
-                    onClick={() => handleAction('approve')}
-                    disabled={actionLoading === 'approve'}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition disabled:opacity-50"
-                  >
-                    <CheckCircle2 size={14} />
-                    Setujui
-                  </button>
+                {claim.tipe !== 'keanggotaan' && claim.status === 'pending' && (
+                  <>
+                    <button onClick={() => handleAction('process')} disabled={actionLoading === 'process'} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50">
+                      <Activity size={14} />{actionLoading === 'process' ? 'Memproses...' : 'Proses'}
+                    </button>
+                    <button onClick={() => handleAction('approve')} disabled={actionLoading === 'approve'} className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition disabled:opacity-50"><ThumbsUp size={14} />Setujui</button>
+                    <button onClick={() => setShowRejectInput(true)} disabled={actionLoading === 'reject'} className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition"><ThumbsDown size={14} />Tolak</button>
+                  </>
+                )}
+                {claim.tipe !== 'keanggotaan' && claim.status === 'diproses' && (
+                  <button onClick={() => handleAction('approve')} disabled={actionLoading === 'approve'} className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition disabled:opacity-50"><CheckCircle2 size={14} />Setujui</button>
                 )}
               </div>
             </div>

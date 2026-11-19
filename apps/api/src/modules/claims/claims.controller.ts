@@ -116,7 +116,7 @@ export class ClaimsController {
     summary: 'Tolak klaim',
   })
   reject(@Param('id') id: string, @Body() b: RejectClaimDto, @Req() req: ScopedRequest) {
-    return this.service.reject(id, b?.reason, req.scope);
+    return this.service.reject(id, b?.reason, req.scope, req.user?.id);
   }
 
   @Post(':id/process')

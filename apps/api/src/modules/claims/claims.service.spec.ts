@@ -37,7 +37,22 @@ describe('ClaimsService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
     },
+    ktaApplication: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
+    ktaAppHistory: {
+      create: jest.fn(),
+    },
+    klaimApprovalHistory: {
+      create: jest.fn(),
+    },
+    ranting: {
+      findUnique: jest.fn(),
+    },
+    $transaction: jest.fn(),
   };
+  mockPrisma.$transaction.mockImplementation(async (callback: (tx: typeof mockPrisma) => unknown) => callback(mockPrisma));
 
   const mockScopeHelper = {
     buildScopeFilter: jest.fn().mockReturnValue({}),
@@ -84,6 +99,10 @@ describe('ClaimsService', () => {
         {
           provide: require('../../common/services/cache.service').CacheService,
           useValue: mockCache,
+        },
+        {
+          provide: require('../members/kta-application.service').KtaApplicationService,
+          useValue: {},
         },
       ],
     }).compile();
@@ -167,14 +186,115 @@ describe('ClaimsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete a claim', async () => {
+    it('should reject deletion of a claim that is not rejected', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
         id: 'cl1',
+        status: 'pending',
+        rantingId: 'r1',
+        anggota: null,
         buktiKeanggotaan: [],
         dokumenPendukung: [],
       });
-      await service.remove('cl1');
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+
+      await expect(
+        service.remove('cl1', { role: 'admin_ranting', rantingId: 'r1' }),
+      ).rejects.toThrow('Hanya klaim yang ditolak yang dapat dihapus');
+      expect(mockPrisma.klaim.delete).not.toHaveBeenCalled();
+    });
+
+    it('should delete a rejected claim within scope', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1',
+        status: 'ditolak',
+        rantingId: 'r1',
+        anggotaId: null,
+        anggota: null,
+        buktiKeanggotaan: [],
+        dokumenPendukung: [],
+      });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      await service.remove('cl1', { role: 'admin_ranting', rantingId: 'r1' });
       expect(mockPrisma.klaim.delete).toHaveBeenCalledWith({ where: { id: 'cl1' } });
+    });
+
+  });
+
+
+  describe('staged approval', () => {
+    const baseClaim = {
+      id: 'cl1', tipe: 'keanggotaan', status: 'pending', currentStage: 'ranting',
+      namaLengkap: 'Pemohon', jenisKelamin: 'L', rantingId: 'r1', anggotaId: null,
+    };
+
+    it('requires ranting approval before wilayah', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim,
+        ranting: { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+      await expect(service.approve('cl1', { role: 'admin_wilayah', wilayahId: 'w1' }))
+        .rejects.toThrow('Level ini hanya dapat diproses oleh Admin Ranting');
+    });
+
+    it('routes ranting approval to wilayah when the branch has one', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue({ wilayahId: 'w1' });
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim,
+        ranting: { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+      await service.approve('cl1', { role: 'admin_ranting', rantingId: 'r1' }, 'user-r');
+      expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'cl1' }, data: expect.objectContaining({ currentStage: 'wilayah', status: 'pending' }),
+      }));
+    });
+
+    it('routes ranting approval directly to distrik when branch has no wilayah', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(null);
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim,
+        ranting: { id: 'r1', wilayahId: null, wilayah: null },
+      });
+      await service.approve('cl1', { role: 'admin_ranting', rantingId: 'r1' }, 'user-r');
+      expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ currentStage: 'distrik', status: 'pending' }),
+      }));
+    });
+
+    it('requires wilayah approval before distrik when the branch has one', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim, status: 'pending', currentStage: 'wilayah',
+        ranting: { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } },
+      });
+      await expect(service.approve('cl1', { role: 'admin_distrik', distrikId: 'd1' }))
+        .rejects.toThrow('Level ini hanya dapat diproses oleh Admin Wilayah');
+    });
+
+    it('routes distrik approval to nasional without creating the member yet', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim, status: 'pending', currentStage: 'distrik',
+      });
+      await service.approve('cl1', { role: 'admin_distrik', distrikId: 'd1' }, 'user-d');
+      expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ currentStage: 'nasional', status: 'pending' }),
+      }));
+      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+    });
+
+    it('creates member and KTA application after national approval', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        ...baseClaim, status: 'pending', currentStage: 'nasional',
+      });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+      mockPrisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+      await service.approve('cl1', { role: 'admin_nasional' }, 'user-n');
+      expect(mockPrisma.ktaApplication.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ anggotaId: 'member-1', status: 'APPROVED' }),
+      }));
+      expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ anggotaId: 'member-1', currentStage: 'kta_processing' }),
+      }));
     });
   });
 
@@ -198,28 +318,29 @@ describe('ClaimsService', () => {
     });
 
     it('should approve membership claim by scoped admin using claim.rantingId', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue({ wilayahId: 'w1' });
       mockPrisma.klaim.findUnique.mockResolvedValue({
         id: 'cl2',
         tipe: 'keanggotaan',
         status: 'pending',
+        currentStage: 'ranting',
         namaLengkap: 'Pemohon Baru',
         jenisKelamin: 'L',
         rantingId: 'r1',
         anggotaId: null,
         anggota: null,
       });
-      mockPrisma.anggota.findFirst.mockResolvedValue(null);
-      mockPrisma.anggota.create.mockResolvedValue({ id: 'new-ang-1' });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
 
-      await service.approve('cl2', { rantingId: 'r1' });
+      await service.approve('cl2', { role: 'admin_ranting', rantingId: 'r1' }, 'user-r');
 
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'cl2' },
           data: expect.objectContaining({
-            status: 'disetujui',
-            anggotaId: 'new-ang-1',
+            currentStage: 'wilayah',
+            status: 'pending',
+            rantingApprovedBy: 'user-r',
           }),
         }),
       );

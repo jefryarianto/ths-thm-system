@@ -20,7 +20,8 @@ import { normalizePhone } from '../../common/utils/phone.util';
 import { normalizePrismaDate } from '../../common/utils/date.util';
 import { deleteClaimFile } from '../../common/utils/claim-upload.util';
 import { Response } from 'express';
-import { TipeKlaim } from '@prisma/client';
+import { KtaAppAction, KtaAppLevel, TipeKlaim } from '@prisma/client';
+import { KtaApplicationService } from '../members/kta-application.service';
 
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
@@ -39,6 +40,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     private readonly nraService: NraService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
+    @Optional() private readonly ktaApplicationService?: KtaApplicationService,
   ) {
     super(
       prisma,
@@ -149,23 +151,21 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     return this.baseUpdate(id, dto, scope, 'Klaim berhasil diperbarui', userId);
   }
 
-  async remove(id: string, scope?: UserScope) {
-    // Delete associated files first
+async remove(id: string, scope?: UserScope) {
     const claim = await this.prisma.klaim.findUnique({
       where: { id },
       include: { buktiKeanggotaan: true, dokumenPendukung: true },
     });
-    
-    if (claim) {
-      for (const file of claim.buktiKeanggotaan) {
-        deleteClaimFile(file.filePath);
-      }
-      for (const file of claim.dokumenPendukung) {
-        deleteClaimFile(file.filePath);
-      }
-    }
-    
-    return this.baseRemove(id, scope, 'Klaim berhasil dihapus');
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+    await this.verifyScope(id, scope);
+    if (claim.status !== 'ditolak') throw new BadRequestException('Hanya klaim yang ditolak yang dapat dihapus');
+
+    for (const file of claim.buktiKeanggotaan) deleteClaimFile(file.filePath);
+    for (const file of claim.dokumenPendukung) deleteClaimFile(file.filePath);
+    await this.prisma.klaim.delete({ where: { id } });
+    this.invalidateCache();
+    this.audit('CLAIM_DELETE_REJECTED', 'Klaim', id);
+    return { message: 'Klaim harus dihapus' };
   }
 
   // ── Scope Verification Override ────────────────────────
@@ -215,154 +215,157 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
 
   // ── Domain Methods ─────────────────────────────────────
 
-  async approve(id: string, scope?: UserScope, userId?: string) {
-    await this.verifyScope(id, scope);
-    const claim = await this.prismaDelegate.findUnique({
-      where: { id },
-      include: {
-        anggota: {
-          select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true },
-        },
-        ranting: { select: { id: true, nama: true } },
-      },
-    });
-    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
-
-    if (claim.tipe === 'keanggotaan') {
-      if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) {
-        throw new BadRequestException(
-          'Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi',
-        );
-      }
-
-      if (claim.email) {
-        const existingAnggota = await this.prisma.anggota.findFirst({
-          where: { email: claim.email, deletedAt: null },
-          select: { id: true },
-        });
-        if (existingAnggota) {
-          throw new BadRequestException('Email sudah terdaftar sebagai anggota');
-        }
-      }
-
-      const nomorAnggota = await this.nraService.generateMemberNumber(claim.rantingId);
-
-      const anggota = await this.prisma.anggota.create({
-        data: {
-          namaLengkap: claim.namaLengkap,
-          jenisKelamin: claim.jenisKelamin as 'L' | 'P',
-          tempatLahir: claim.tempatLahir,
-          tanggalLahir: claim.tanggalLahir,
-          tempatDadar: claim.tempatDadar,
-          tahunDadar: claim.tahunDadar,
-          alamat: claim.alamat,
-          noHp: claim.noHp,
-          noHpNormalized: normalizePhone(claim.noHp),
-          email: claim.email,
-          rantingId: claim.rantingId,
-          nomorAnggota,
-          statusKeanggotaan: 'aktif',
-          statusData: 'complete',
-          statusValidasi: 'approved',
-        },
-      });
-
-      if (claim.email) {
-        const existingUser = await this.prisma.user.findUnique({
-          where: { email: claim.email },
-          select: { id: true },
-        });
-
-        if (!existingUser) {
-          const temporaryPassword = Math.random().toString(36).slice(-8);
-          const bcrypt = await import('bcryptjs');
-          const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-          await this.prisma.user.create({
-            data: {
-              email: claim.email,
-              passwordHash: hashedPassword,
-              namaLengkap: claim.namaLengkap,
-              role: 'anggota',
-              isActive: true,
-              mustChangePassword: true,
-            },
-          });
-
-          this.logger.log(`User account created for ${claim.email} with temporary password`);
-          this.sendCredentialEmail(
-            { namaLengkap: claim.namaLengkap, email: claim.email },
-            temporaryPassword,
-          );
-        } else {
-          this.logger.log(`User account already exists for ${claim.email}, skipping user creation`);
-        }
-      }
-
-      await this.prismaDelegate.update({
-        where: { id },
-        data: {
-          status: 'disetujui',
-          anggotaId: anggota.id,
-          approvedBy: userId || null,
-          approvedAt: new Date(),
-        },
-      });
-
-      this.sendClaimStatusEmail(
-        { namaLengkap: claim.namaLengkap, email: claim.email },
-        'disetujui',
-      );
-    } else {
-      await this.prismaDelegate.update({
-        where: { id },
-        data: {
-          status: 'disetujui',
-          approvedBy: userId || null,
-          approvedAt: new Date(),
-        },
-      });
-      if (claim.anggota?.email) {
-        this.sendClaimStatusEmail(claim.anggota, 'disetujui');
-      }
-    }
-
-    this.invalidateCache();
-    this.audit('CLAIM_APPROVE', 'Klaim', id);
+  private expectedApprovalRole(stage: string): string | null {
+    if (stage === 'ranting') return 'admin_ranting';
+    if (stage === 'wilayah') return 'admin_wilayah';
+    if (stage === 'distrik') return 'admin_distrik';
+    if (stage === 'nasional') return 'admin_nasional';
+    return null;
   }
 
-  async reject(id: string, reason?: string, scope?: UserScope) {
+  private async nextApprovalStage(stage: string, rantingId: string): Promise<string> {
+    if (stage === 'ranting') {
+      const ranting = await this.prisma.ranting.findUnique({ where: { id: rantingId }, select: { wilayahId: true } });
+      return ranting?.wilayahId ? 'wilayah' : 'distrik';
+    }
+    if (stage === 'wilayah') return 'distrik';
+    if (stage === 'distrik') return 'nasional';
+    return 'kta_processing';
+  }
+
+  private async assertApprovalStage(claim: { currentStage: string }, scope?: UserScope): Promise<void> {
+    if (!scope || scope.role === 'superadmin') return;
+    if (scope.role !== this.expectedApprovalRole(claim.currentStage)) {
+      const labels: Record<string, string> = { ranting: 'Admin Ranting', wilayah: 'Admin Wilayah', distrik: 'Admin Distrik', nasional: 'Admin Nasional' };
+      throw new ForbiddenException(`Level ini hanya dapat diproses oleh ${labels[claim.currentStage] || 'admin yang berwenang'}`);
+    }
+  }
+
+  async approve(id: string, scope?: UserScope, userId?: string) {
     await this.verifyScope(id, scope);
-    const claim = await this.prismaDelegate.findUnique({
+    const claim = await this.prisma.klaim.findUnique({
       where: { id },
       include: {
-        anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } },
+        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true } },
+        ranting: { include: { wilayah: { include: { distrik: true } } } },
       },
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
 
-    const updateData: Record<string, unknown> = { status: 'ditolak' };
-    if (reason) updateData.catatan = reason;
-    await this.prismaDelegate.update({ where: { id }, data: updateData });
-    this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
+    if (claim.tipe !== 'keanggotaan') {
+      await this.prismaDelegate.update({ where: { id }, data: { status: 'disetujui', approvedBy: userId || null, approvedAt: new Date() } });
+      if (claim.anggota?.email) this.sendClaimStatusEmail({ namaLengkap: claim.anggota.namaLengkap, email: claim.anggota.email }, 'disetujui');
+      this.invalidateCache();
+      this.audit('CLAIM_APPROVE', 'Klaim', id);
+      return { success: true, status: 'disetujui' };
+    }
+
+    await this.assertApprovalStage(claim, scope);
+    if (claim.status === 'ditolak') throw new BadRequestException('Klaim yang ditolak tidak dapat disetujui');
+    if (claim.currentStage === 'kta_processing' || claim.status === 'disetujui') throw new BadRequestException('Tahap verifikasi klaim telah selesai');
+    if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) throw new BadRequestException('Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi');
+
+    if (claim.currentStage !== 'nasional') {
+      const nextStage = await this.nextApprovalStage(claim.currentStage, claim.rantingId);
+      const approverField: Record<string, string> = { ranting: 'rantingApprovedBy', wilayah: 'wilayahApprovedBy', distrik: 'distrikApprovedBy' };
+      await this.prisma.$transaction(async (tx) => {
+        await tx.klaim.update({ where: { id }, data: { currentStage: nextStage, status: 'pending', ...(approverField[claim.currentStage] ? { [approverField[claim.currentStage]]: userId || null } : {}) } });
+        await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'superadmin' } });
+        if (claim.currentStage === 'ranting' && nextStage === 'distrik') {
+          await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'WILAYAH', action: 'SKIPPED', actorId: userId || null, actorRole: scope?.role || 'superadmin', catatan: 'Ranting tidak terhubung dengan Wilayah' } });
+        }
+      });
+      this.invalidateCache();
+      this.audit('CLAIM_STAGE_APPROVE', 'Klaim', id, undefined, { stage: claim.currentStage, nextStage, actorId: userId });
+      return { success: true, status: 'pending', nextStage };
+    }
+
+    if (!this.ktaApplicationService) throw new BadRequestException('Layanan pengajuan KTA tidak tersedia');
+    if (claim.email && await this.prisma.anggota.findFirst({ where: { email: claim.email, deletedAt: null }, select: { id: true } })) {
+      throw new BadRequestException('Email sudah terdaftar sebagai anggota');
+    }
+
+    const finalized = await this.prisma.$transaction(async (tx) => {
+      const nomorAnggota = await this.nraService.generateMemberNumber(claim.rantingId!);
+      const anggota = await tx.anggota.create({
+        data: {
+          namaLengkap: claim.namaLengkap!, jenisKelamin: claim.jenisKelamin as 'L' | 'P',
+          tempatLahir: claim.tempatLahir, tanggalLahir: claim.tanggalLahir,
+          tempatDadar: claim.tempatDadar, tahunDadar: claim.tahunDadar, alamat: claim.alamat,
+          noHp: claim.noHp, noHpNormalized: normalizePhone(claim.noHp), email: claim.email,
+          rantingId: claim.rantingId!, nomorAnggota,
+          statusKeanggotaan: 'aktif', statusData: 'complete', statusValidasi: 'approved',
+        },
+      });
+      if (claim.email && !(await tx.user.findUnique({ where: { email: claim.email }, select: { id: true } }))) {
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        await tx.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
+        this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
+      }
+      const app = await tx.ktaApplication.create({
+        data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: 'admin_nasional', status: 'APPROVED' },
+      });
+      const history = [
+        { level: 'RANTING', action: 'APPROVED', skipped: false, actorId: claim.rantingApprovedBy || userId || anggota.id, actorRole: 'admin_ranting' },
+        { level: 'WILAYAH', action: claim.ranting?.wilayahId ? 'APPROVED' : 'SKIPPED', skipped: !claim.ranting?.wilayahId, actorId: claim.ranting?.wilayahId ? (claim.wilayahApprovedBy || userId || anggota.id) : userId || anggota.id, actorRole: claim.ranting?.wilayahId ? 'admin_wilayah' : 'system' },
+        { level: 'DISTRIK', action: 'APPROVED', skipped: false, actorId: claim.distrikApprovedBy || userId || anggota.id, actorRole: 'admin_distrik' },
+        { level: 'NASIONAL', action: 'APPROVED', skipped: false, actorId: userId || anggota.id, actorRole: scope?.role || 'admin_nasional' },
+      ];
+      for (const item of history) {
+        await tx.ktaAppHistory.create({ data: { ktaApplicationId: app.id, level: item.level as KtaAppLevel, action: item.action as KtaAppAction, actorId: item.actorId, actorRole: item.actorRole, isSkipped: item.skipped, skippedReason: item.skipped ? 'Ranting tidak terhubung dengan Wilayah' : null } });
+      }
+      await tx.klaim.update({ where: { id }, data: { status: 'disetujui', currentStage: 'kta_processing', anggotaId: anggota.id, ktaApplicationId: app.id, approvedBy: userId || null, approvedAt: new Date() } });
+      await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'NASIONAL', action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_nasional' } });
+      return { anggotaId: anggota.id, ktaApplicationId: app.id };
+    });
     this.invalidateCache();
-    this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason });
+    this.audit('CLAIM_APPROVE_NATIONAL', 'Klaim', id, undefined, finalized);
+    this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, 'disetujui');
+    return { success: true, status: 'disetujui', ...finalized };
+  }
+
+
+
+  async reject(id: string, reason?: string, scope?: UserScope, userId?: string) {
+    await this.verifyScope(id, scope);
+    const claim = await this.prisma.klaim.findUnique({
+      where: { id },
+      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
+    });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+    if (claim.tipe === 'keanggotaan') {
+      await this.assertApprovalStage(claim, scope);
+      if (claim.currentStage === 'kta_processing' || claim.status === 'disetujui') {
+        throw new BadRequestException('Klaim yang sudah disetujui tidak dapat ditolak');
+      }
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.klaim.update({ where: { id }, data: { status: 'ditolak', catatan: reason || claim.catatan } });
+      if (claim.tipe === 'keanggotaan') {
+        await tx.klaimApprovalHistory.create({
+          data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'REJECTED', actorId: userId || null, actorRole: scope?.role || 'superadmin', catatan: reason || null },
+        });
+      }
+    });
+    if (claim.anggota?.email) this.sendClaimStatusEmail({ namaLengkap: claim.anggota.namaLengkap, email: claim.anggota.email }, 'ditolak', reason);
+    this.invalidateCache();
+    this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason, stage: claim.currentStage });
+    return { success: true, status: 'ditolak' };
   }
 
   async process(id: string, scope?: UserScope) {
     await this.verifyScope(id, scope);
     const claim = await this.prismaDelegate.findUnique({
       where: { id },
-      include: {
-        anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } },
-      },
+      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
-
-    const updated = await this.prismaDelegate.update({
-      where: { id },
-      data: { status: 'diproses' },
-    });
+    if (claim.tipe === 'keanggotaan') {
+      throw new BadRequestException('Klaim keanggotaan menggunakan persetujuan bertahap; gunakan Setujui atau Tolak pada tahap Anda');
+    }
+    const updated = await this.prismaDelegate.update({ where: { id }, data: { status: 'diproses' } });
     this.sendClaimStatusEmail(claim.anggota, 'diproses');
     this.invalidateCache();
     return updated;

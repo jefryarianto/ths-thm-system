@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Plus, FileText, CheckCircle, XCircle, Clock, ExternalLink, Trash2 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -21,6 +21,7 @@ interface ClaimRow {
   id: string;
   tipe: string;
   status: string;
+  currentStage?: string;
   anggota?: { namaLengkap: string };
   namaLengkap?: string;
   ranting?: { nama: string };
@@ -44,7 +45,20 @@ export default function ClaimsPage() {
     filters: [{ key: 'status', defaultValue: '' }],
   });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const encodedPayload = token?.split('.')[1];
+      if (!encodedPayload) return;
+      const payload = JSON.parse(atob(encodedPayload.replace(/-/g, '+').replace(/_/g, '/'))) as { role?: string };
+      setCurrentRole(payload.role || null);
+    } catch {
+      setCurrentRole(null);
+    }
+  }, []);
 
   const { data, meta, loading, refetch } = usePaginatedList<ClaimRow>(() => {
     const params = getApiParams({ limit: 10 });
@@ -57,11 +71,18 @@ export default function ClaimsPage() {
   const handleAction = async (id: string, action: string) => {
     setActionLoading(`${id}-${action}`);
     try {
-      const body = action === 'reject' ? { reason: 'Ditolak oleh admin' } : {};
-      await apiClient.post(`/claims/${id}/${action}`, body);
+      if (action === 'delete') {
+        if (!window.confirm('Hapus pengajuan klaim yang ditolak? Tindakan ini tidak dapat dibatalkan.')) return;
+        await apiClient.delete(`/claims/${id}`);
+      } else {
+        const body = action === 'reject' ? { reason: 'Ditolak oleh admin' } : {};
+        await apiClient.post(`/claims/${id}/${action}`, body);
+      }
       await refetch();
-    } catch {
-      toast('error', `Gagal ${action} klaim`);
+      toast('success', action === 'delete' ? 'Klaim ditolak berhasil dihapus' : 'Tahap klaim berhasil diperbarui');
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', message || `Gagal ${action} klaim`);
     } finally {
       setActionLoading(null);
     }
@@ -161,53 +182,23 @@ export default function ClaimsPage() {
                   >
                     <ExternalLink size={14} />
                   </button>
-                  {row.status === 'pending' && (
+                  {row.status === 'pending' && (row.tipe !== 'keanggotaan' || currentRole === 'superadmin' || currentRole === ({ ranting: 'admin_ranting', wilayah: 'admin_wilayah', distrik: 'admin_distrik', nasional: 'admin_nasional' } as Record<string, string>)[row.currentStage || '']) && (
                     <>
-                      <button
-                        onClick={() => handleAction(row.id, 'process')}
-                        disabled={actionLoading === `${row.id}-process`}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
-                        title="Proses"
-                      >
-                        <Clock size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleAction(row.id, 'approve')}
-                        disabled={actionLoading === `${row.id}-approve`}
-                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                        title="Setujui"
-                      >
-                        <CheckCircle size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleAction(row.id, 'reject')}
-                        disabled={actionLoading === `${row.id}-reject`}
-                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                        title="Tolak"
-                      >
-                        <XCircle size={15} />
-                      </button>
+                      {row.tipe !== 'keanggotaan' && (
+                        <button onClick={() => handleAction(row.id, 'process')} disabled={actionLoading === `${row.id}-process`} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors" title="Proses"><Clock size={15} /></button>
+                      )}
+                      <button onClick={() => handleAction(row.id, 'approve')} disabled={actionLoading === `${row.id}-approve`} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors" title={row.tipe === 'keanggotaan' ? 'Verifikasi & eskalasi' : 'Setujui'}><CheckCircle size={15} /></button>
+                      <button onClick={() => handleAction(row.id, 'reject')} disabled={actionLoading === `${row.id}-reject`} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors" title="Tolak"><XCircle size={15} /></button>
                     </>
                   )}
-                  {row.status === 'diproses' && (
+                  {row.tipe !== 'keanggotaan' && row.status === 'diproses' && (
                     <>
-                      <button
-                        onClick={() => handleAction(row.id, 'approve')}
-                        disabled={actionLoading === `${row.id}-approve`}
-                        className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
-                        title="Setujui"
-                      >
-                        <CheckCircle size={15} />
-                      </button>
-                      <button
-                        onClick={() => handleAction(row.id, 'reject')}
-                        disabled={actionLoading === `${row.id}-reject`}
-                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                        title="Tolak"
-                      >
-                        <XCircle size={15} />
-                      </button>
+                      <button onClick={() => handleAction(row.id, 'approve')} disabled={actionLoading === `${row.id}-approve`} className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors" title="Setujui"><CheckCircle size={15} /></button>
+                      <button onClick={() => handleAction(row.id, 'reject')} disabled={actionLoading === `${row.id}-reject`} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors" title="Tolak"><XCircle size={15} /></button>
                     </>
+                  )}
+                  {row.status === 'ditolak' && (
+                    <button onClick={() => handleAction(row.id, 'delete')} disabled={actionLoading === `${row.id}-delete`} className="p-1.5 text-red-700 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors" title="Hapus klaim ditolak"><Trash2 size={15} /></button>
                   )}
                 </div>
               </td>

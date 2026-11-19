@@ -420,11 +420,17 @@ model Klaim {
   noHp              String?     @map("no_hp")
   email             String?
   rantingId         String?     @map("ranting_id")
-  
-  // Relasi terpisah untuk file bukti
+  currentStage      String      @default("ranting") @map("current_stage")
+  ktaApplicationId  String?     @map("kta_application_id")
+  rantingApprovedBy String?     @map("ranting_approved_by")
+  wilayahApprovedBy String?     @map("wilayah_approved_by")
+  distrikApprovedBy String?     @map("distrik_approved_by")
+
+  approvalHistories KlaimApprovalHistory[]
+  ktaApplication    KtaApplication? @relation(fields: [ktaApplicationId], references: [id], onDelete: SetNull)
   buktiKeanggotaan  BuktiKeanggotaan[]
   dokumenPendukung  DokumenPendukung[]
-  
+
   approvedBy   String?     @map("approved_by")
   approvedAt   DateTime?   @map("approved_at")
   tempatDadar  String?     @map("tempat_dadar")
@@ -434,7 +440,24 @@ model Klaim {
 
   @@index([anggotaId])
   @@index([rantingId])
+  @@index([currentStage, status])
+  @@index([ktaApplicationId])
   @@map("klaim")
+}
+
+model KlaimApprovalHistory {
+  id        String   @id @default(uuid())
+  klaimId   String   @map("klaim_id")
+  stage     String
+  action    String
+  actorId   String?  @map("actor_id")
+  actorRole String?  @map("actor_role")
+  catatan   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  klaim     Klaim    @relation(fields: [klaimId], references: [id], onDelete: Cascade)
+
+  @@index([klaimId, createdAt])
+  @@map("klaim_approval_history")
 }
 
 model BuktiKeanggotaan {
@@ -2296,6 +2319,7 @@ model KtaApplication {
   updatedAt        DateTime     @updatedAt @map("updated_at")
 
   anggota          Anggota      @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  claims           Klaim[]
   histories        KtaAppHistory[]
   batch            KtaBatch?      @relation(fields: [batchId], references: [id])
 
