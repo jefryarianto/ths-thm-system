@@ -6,10 +6,11 @@ import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
+import { FileUploadZone } from '@/components/claims/FileUploadZone';
 
 interface Distrik {
   id: string;
@@ -22,11 +23,6 @@ interface Wilayah {
 interface Ranting {
   id: string;
   nama: string;
-}
-
-interface BuktiItem {
-  tipe: 'sertifikat' | 'kartu_anggota';
-  url: string;
 }
 
 export default function NewClaimPage() {
@@ -51,11 +47,13 @@ export default function NewClaimPage() {
   const [jenisKelamin, setJenisKelamin] = useState<'L' | 'P'>('L');
   const [tempatLahir, setTempatLahir] = useState('');
   const [tanggalLahir, setTanggalLahir] = useState('');
+  const [tempatDadar, setTempatDadar] = useState('');
+  const [tahunDadar, setTahunDadar] = useState('');
   const [alamat, setAlamat] = useState('');
   const [noHp, setNoHp] = useState('');
   const [email, setEmail] = useState('');
   const [catatan, setCatatan] = useState('');
-  const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
+  const [buktiFiles, setBuktiFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Fetch distriks on mount
@@ -103,43 +101,53 @@ export default function NewClaimPage() {
       .finally(() => setLoadingRantings(false));
   }, [wilayahId]);
 
-  const addBukti = (tipe: 'sertifikat' | 'kartu_anggota') => {
-    const url = prompt(
-      `Masukkan URL ${tipe === 'sertifikat' ? 'Sertifikat Pendadaran' : 'Kartu Anggota'}:`,
-    );
-    if (url) {
-      setBuktiDokumen([...buktiDokumen, { tipe, url }]);
-    }
-  };
-
-  const removeBukti = (index: number) => {
-    setBuktiDokumen(buktiDokumen.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namaLengkap.trim()) {
       toast('error', 'Nama lengkap wajib diisi');
       return;
     }
+    if (!tempatDadar.trim()) {
+      toast('error', 'Tempat dadar wajib diisi');
+      return;
+    }
+    if (!tahunDadar.trim()) {
+      toast('error', 'Tahun dadar wajib diisi');
+      return;
+    }
+    if (!email.trim()) {
+      toast('error', 'Email wajib diisi');
+      return;
+    }
     if (!rantingId) {
       toast('error', 'Ranting asal wajib dipilih');
       return;
     }
+    if (buktiFiles.length === 0) {
+      toast('error', 'Minimal 1 bukti keanggotaan wajib diupload');
+      return;
+    }
     setSaving(true);
     try {
-      await apiClient.post('/claims', {
-        tipe: 'keanggotaan',
-        namaLengkap: namaLengkap.trim(),
-        jenisKelamin,
-        tempatLahir: tempatLahir || undefined,
-        tanggalLahir: tanggalLahir || undefined,
-        alamat: alamat || undefined,
-        noHp: noHp || undefined,
-        email: email || undefined,
-        rantingId,
-        catatan: catatan || undefined,
-        buktiDokumen: buktiDokumen.length > 0 ? buktiDokumen : undefined,
+      const formData = new FormData();
+      formData.append('tipe', 'keanggotaan');
+      formData.append('namaLengkap', namaLengkap.trim());
+      formData.append('jenisKelamin', jenisKelamin);
+      formData.append('tempatLahir', tempatLahir);
+      formData.append('tanggalLahir', tanggalLahir);
+      formData.append('tempatDadar', tempatDadar.trim());
+      formData.append('tahunDadar', tahunDadar.trim());
+      formData.append('alamat', alamat);
+      formData.append('noHp', noHp);
+      formData.append('email', email.trim());
+      formData.append('rantingId', rantingId);
+      formData.append('catatan', catatan);
+      buktiFiles.forEach((file) => {
+        formData.append('buktiFiles', file);
+      });
+
+      await apiClient.post('/claims', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast('success', 'Klaim keanggotaan berhasil diajukan');
       router.push('/claims');
@@ -252,6 +260,34 @@ export default function NewClaimPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tempat Dadar *
+                </label>
+                <input
+                  type="text"
+                  value={tempatDadar}
+                  onChange={(e) => setTempatDadar(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tahun Dadar *
+                </label>
+                <input
+                  type="text"
+                  value={tahunDadar}
+                  onChange={(e) => setTahunDadar(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  placeholder="Contoh: 2015"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   No. HP
                 </label>
                 <input
@@ -263,12 +299,13 @@ export default function NewClaimPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
+                  Email *
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -359,45 +396,26 @@ export default function NewClaimPage() {
           {/* Bukti Dokumen */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-              Bukti Keanggotaan
+              Bukti Keanggotaan *
             </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => addBukti('sertifikat')}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-              >
-                <Upload size={14} /> + Sertifikat
-              </button>
-              <button
-                type="button"
-                onClick={() => addBukti('kartu_anggota')}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-              >
-                <Upload size={14} /> + Kartu Anggota
-              </button>
-            </div>
-            {buktiDokumen.length > 0 && (
-              <div className="space-y-2">
-                {buktiDokumen.map((b, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                  >
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {b.tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}: {b.url}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeBukti(i)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <FileUploadZone
+              label="Upload bukti keanggotaan (sertifikat pendadaran, kartu anggota, dll)"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              maxFiles={10}
+              maxSizeMB={5}
+              files={buktiFiles.map((f) => ({
+                file: f,
+                preview: URL.createObjectURL(f),
+                progress: 100,
+                status: 'done' as const,
+              }))}
+              onFilesChange={(files) => setBuktiFiles(files.map((f) => f.file))}
+              onRemoveFile={(index) => setBuktiFiles(buktiFiles.filter((_, i) => i !== index))}
+              uploading={saving}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Maksimal 10 file (JPG, PNG, WebP, PDF), 5MB per file. Minimal 1 file wajib diupload.
+            </p>
           </div>
 
           {/* Catatan */}
