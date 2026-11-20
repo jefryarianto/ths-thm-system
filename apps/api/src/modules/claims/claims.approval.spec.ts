@@ -49,6 +49,7 @@ describe('ClaimsService approval workflow', () => {
     nraService as unknown as NraService,
     undefined,
     undefined,
+    undefined,
     { } as unknown as KtaApplicationService,
   );
   });

@@ -328,7 +328,7 @@ async addBuktiFiles(
       return { success: true, status: 'pending', nextStage };
     }
 
-    if (!this.ktaApplicationService) throw new BadRequestException('Layanan pengajuan KTA tidak tersedia');
+    if (!this.ktaApplicationService || typeof this.ktaApplicationService !== 'object') throw new BadRequestException('Layanan pengajuan KTA tidak tersedia');
     if (claim.email && await this.prisma.anggota.findFirst({ where: { email: claim.email, deletedAt: null }, select: { id: true } })) {
       throw new BadRequestException('Email sudah terdaftar sebagai anggota');
     }
