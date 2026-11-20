@@ -23,10 +23,13 @@ class ClaimCreateRequested extends ClaimEvent {
   final String? jenisKelamin;
   final String? tempatLahir;
   final String? tanggalLahir;
+  final String? tempatDadar;
+  final String? tahunDadar;
   final String? alamat;
   final String? noHp;
   final String? email;
   final String? rantingId;
+  final List<String>? buktiFileUrls;
   const ClaimCreateRequested({
     required this.tipe,
     this.anggotaId,
@@ -35,10 +38,13 @@ class ClaimCreateRequested extends ClaimEvent {
     this.jenisKelamin,
     this.tempatLahir,
     this.tanggalLahir,
+    this.tempatDadar,
+    this.tahunDadar,
     this.alamat,
     this.noHp,
     this.email,
     this.rantingId,
+    this.buktiFileUrls,
   });
   @override
   List<Object?> get props => [tipe, anggotaId, namaLengkap];

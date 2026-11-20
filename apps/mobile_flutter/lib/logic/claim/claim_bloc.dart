@@ -82,6 +82,8 @@ class ClaimBloc extends Bloc<ClaimEvent, ClaimState> {
         if (event.jenisKelamin != null) body['jenisKelamin'] = event.jenisKelamin;
         if (event.tempatLahir != null) body['tempatLahir'] = event.tempatLahir;
         if (event.tanggalLahir != null) body['tanggalLahir'] = event.tanggalLahir;
+        if (event.tempatDadar != null) body['tempatDadar'] = event.tempatDadar;
+        if (event.tahunDadar != null) body['tahunDadar'] = event.tahunDadar;
         if (event.alamat != null) body['alamat'] = event.alamat;
         if (event.noHp != null) body['noHp'] = event.noHp;
         if (event.email != null) body['email'] = event.email;

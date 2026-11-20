@@ -23,6 +23,8 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   String _jenisKelamin = 'L';
   final _tempatLahirCtrl = TextEditingController();
   DateTime? _tanggalLahir;
+  final _tempatDadarCtrl = TextEditingController();
+  final _tahunDadarCtrl = TextEditingController();
   final _alamatCtrl = TextEditingController();
   final _noHpCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -34,6 +36,8 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
     _catatanCtrl.dispose();
     _namaCtrl.dispose();
     _tempatLahirCtrl.dispose();
+    _tempatDadarCtrl.dispose();
+    _tahunDadarCtrl.dispose();
     _alamatCtrl.dispose();
     _noHpCtrl.dispose();
     _emailCtrl.dispose();
@@ -57,9 +61,23 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   }
 
   void _submit() {
-    if (_tipe == 'keanggotaan' && _namaCtrl.text.trim().isEmpty) {
-      showCenteredSnackBar(context, 'Nama wajib diisi');
-      return;
+    if (_tipe == 'keanggotaan') {
+      if (_namaCtrl.text.trim().isEmpty) {
+        showCenteredSnackBar(context, 'Nama wajib diisi');
+        return;
+      }
+      if (_tempatDadarCtrl.text.trim().isEmpty) {
+        showCenteredSnackBar(context, 'Tempat dadar wajib diisi');
+        return;
+      }
+      if (_tahunDadarCtrl.text.trim().isEmpty) {
+        showCenteredSnackBar(context, 'Tahun dadar wajib diisi');
+        return;
+      }
+      if (_emailCtrl.text.trim().isEmpty) {
+        showCenteredSnackBar(context, 'Email wajib diisi');
+        return;
+      }
     }
     context.read<ClaimBloc>().add(ClaimCreateRequested(
           tipe: _tipe,
@@ -76,6 +94,12 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
               : _tempatLahirCtrl.text.trim(),
           tanggalLahir:
               _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
+          tempatDadar: _tempatDadarCtrl.text.trim().isEmpty
+              ? null
+              : _tempatDadarCtrl.text.trim(),
+          tahunDadar: _tahunDadarCtrl.text.trim().isEmpty
+              ? null
+              : _tahunDadarCtrl.text.trim(),
           alamat:
               _alamatCtrl.text.trim().isEmpty ? null : _alamatCtrl.text.trim(),
           noHp: _noHpCtrl.text.trim().isEmpty ? null : _noHpCtrl.text.trim(),
@@ -193,6 +217,19 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
                             : Theme.of(context).colorScheme.onSurfaceVariant)))),
         const SizedBox(height: 14),
         TextFormField(
+            controller: _tempatDadarCtrl,
+            decoration: const InputDecoration(
+                labelText: 'Tempat Dadar *',
+                prefixIcon: Icon(Icons.location_city_outlined))),
+        const SizedBox(height: 14),
+        TextFormField(
+            controller: _tahunDadarCtrl,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+                labelText: 'Tahun Dadar *',
+                prefixIcon: Icon(Icons.calendar_today_outlined))),
+        const SizedBox(height: 14),
+        TextFormField(
             controller: _alamatCtrl,
             maxLines: 2,
             decoration: const InputDecoration(
@@ -210,7 +247,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
-                labelText: 'Email', prefixIcon: Icon(Icons.email_outlined))),
+                labelText: 'Email *', prefixIcon: Icon(Icons.email_outlined))),
       ];
 
   void _onStateChanged(BuildContext context, ClaimState state) {
