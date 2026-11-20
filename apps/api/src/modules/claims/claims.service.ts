@@ -23,6 +23,8 @@ import { Response } from 'express';
 import { KtaAppAction, KtaAppLevel, TipeKlaim } from '@prisma/client';
 import { KtaApplicationService } from '../members/kta-application.service';
 
+import { NotificationsService } from '../notifications/notifications.service';
+
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
   ranting: { select: { id: true, nama: true } },
@@ -38,6 +40,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     cache: CacheService,
     private readonly mailService: MailService,
     private readonly nraService: NraService,
+    @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
     @Optional() private readonly ktaApplicationService?: KtaApplicationService,
@@ -320,6 +323,8 @@ async addBuktiFiles(
       });
       this.invalidateCache();
       this.audit('CLAIM_STAGE_APPROVE', 'Klaim', id, undefined, { stage: claim.currentStage, nextStage, actorId: userId });
+      // Send in-app notification to admin at the next stage
+      await this.sendNotificationToNextStageApprovers(claim.id, nextStage, claim.ranting?.nama || 'Tidak diketahui', userId);
       return { success: true, status: 'pending', nextStage };
     }
 
@@ -363,11 +368,13 @@ async addBuktiFiles(
       await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'NASIONAL', action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_nasional' } });
       return { anggotaId: anggota.id, ktaApplicationId: app.id };
     });
-    this.invalidateCache();
-    this.audit('CLAIM_APPROVE_NATIONAL', 'Klaim', id, undefined, finalized);
-    this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, 'disetujui');
-    return { success: true, status: 'disetujui', ...finalized };
-  }
+this.invalidateCache();
+      this.audit('CLAIM_APPROVE_NATIONAL', 'Klaim', id, undefined, finalized);
+      this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, 'disetujui');
+      // Send in-app notification to admin_nasional
+      await this.sendNotificationToNationalApprovers(claim.id, claim.namaLengkap || 'Pelanggan', userId);
+      return { success: true, status: 'disetujui', ...finalized };
+    }
 
 
 
@@ -575,5 +582,63 @@ async addBuktiFiles(
         this.logger.error(`Claim status email failed for ${email}: ${(err as Error).message}`);
       }
     })();
+  }
+
+  private async sendNotificationToNextStageApprovers(
+    claimId: string,
+    nextStage: string,
+    rantingNama: string,
+    approvedById?: string,
+  ) {
+    if (!this.notificationsService) return;
+
+    const stageLabels: Record<string, string> = {
+      ranting: 'Admin Ranting',
+      wilayah: 'Admin Wilayah',
+      distrik: 'Admin Distrik',
+      nasional: 'Admin Nasional',
+    };
+
+    const roleByStage: Record<string, string> = {
+      ranting: 'admin_ranting',
+      wilayah: 'admin_wilayah',
+      distrik: 'admin_distrik',
+      nasional: 'admin_nasional',
+    };
+
+    const role = roleByStage[nextStage];
+    if (!role) return;
+
+    const stageLabel = stageLabels[nextStage] || role;
+
+    try {
+      await this.notificationsService.sendToRole({
+        judul: 'Klaim Menunggu Verifikasi',
+        isi: `Klaim anggota dari ${rantingNama} telah dinormalisasi ke ${stageLabel}. Silakan verifikasi.`,
+        data: { claimId, actorId: approvedById },
+        role,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send notification to ${role}: ${(err as Error).message}`);
+    }
+  }
+
+  private async sendNotificationToNationalApprovers(
+    claimId: string,
+    namaLengkap: string,
+    approvedById?: string,
+  ) {
+    if (!this.notificationsService) return;
+
+    try {
+      await this.notificationsService.sendToRole({
+        judul: 'Klaim Siap Diproses',
+        isi: `Klaim pendaftaran ${namaLengkap} telah disetujui dan siap untuk proses KTA.`,
+        data: { claimId, actorId: approvedById },
+        role: 'admin_nasional',
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send notification to admin_nasional: ${(err as Error).message}`);
+    }
   }
 }
