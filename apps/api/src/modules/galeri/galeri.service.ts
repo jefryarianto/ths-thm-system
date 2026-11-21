@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ForbiddenException,
-  InternalServerErrorException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsGateway } from '../notifications/events.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '@ths-thm/shared-types';
 import { randomUUID } from 'node:crypto';
 import { createReadStream, promises as fs } from 'node:fs';
@@ -54,9 +56,12 @@ function parsePositiveInt(raw: unknown, fallback: number): number {
 
 @Injectable()
 export class GaleriService {
+  private readonly logger = new Logger(GaleriService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventsGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private hasValidImageSignature(buffer: Buffer, mime: string): boolean {
@@ -269,7 +274,36 @@ export class GaleriService {
       reviewerId,
     );
     await this.emitQueueCounts();
+    await this.notifyUploader(found, status, rejectedReason);
     return updated;
+  }
+
+  /**
+   * Kabari pengunggah lewat notifikasi yang sudah ada (in-app + socket lewat
+   * EventsGateway + email lewat MailService). Kegagalan pengiriman tidak boleh
+   * menggagalkan keputusan moderasi yang sudah tersimpan.
+   */
+  private async notifyUploader(
+    item: { id: string; judul: string; uploaderId: string | null },
+    status: ReviewStatus,
+    reason: string | null,
+  ): Promise<void> {
+    if (!item.uploaderId) return;
+    const disetujui = status === 'APPROVED';
+    try {
+      await this.notifications.send(item.uploaderId, {
+        judul: disetujui ? 'Foto galeri disetujui' : 'Foto galeri ditolak',
+        isi: disetujui
+          ? `Foto "${item.judul}" telah disetujui dan sekarang tampil di galeri.`
+          : `Foto "${item.judul}" ditolak. Alasan: ${reason ?? 'tidak disebutkan'}`,
+        tipe: 'umum',
+        data: { module: 'galeri', galeriId: item.id, status, reason },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Notifikasi moderasi galeri gagal untuk ${item.uploaderId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   /** Terapkan satu keputusan + catat log secara atomik. */
@@ -324,12 +358,13 @@ export class GaleriService {
 
     const items = await this.prisma.galeri.findMany({
       where: { id: { in: uniqueIds } },
-      select: { id: true, status: true, uploaderId: true },
+      select: { id: true, judul: true, status: true, uploaderId: true },
     });
     const byId = new Map(items.map((item) => [item.id, item]));
 
     let updated = 0;
     const failed: Array<{ id: string; reason: string }> = [];
+    const diputuskan: Array<{ id: string; judul: string; uploaderId: string | null }> = [];
     for (const id of uniqueIds) {
       const item = byId.get(id);
       if (!item) {
@@ -343,12 +378,16 @@ export class GaleriService {
       try {
         await this.applyReview(id, item.status, status, rejectedReason, reviewerId);
         updated++;
+        diputuskan.push({ id: item.id, judul: item.judul, uploaderId: item.uploaderId });
       } catch {
         failed.push({ id, reason: 'Gagal menyimpan keputusan' });
       }
     }
 
     if (updated > 0) await this.emitQueueCounts();
+    await Promise.allSettled(
+      diputuskan.map((item) => this.notifyUploader(item, status, rejectedReason)),
+    );
     return { updated, failed };
   }
 

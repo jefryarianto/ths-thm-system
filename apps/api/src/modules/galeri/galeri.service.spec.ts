@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GaleriService } from './galeri.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsGateway } from '../notifications/events.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /**
  * Byte awal berkas HEIC/HEIF: box `ftyp` di offset 4 dengan brand khas HEIF.
@@ -58,12 +59,15 @@ describe('GaleriService upload — format foto', () => {
     sendToRoles: jest.fn(),
   };
 
+  const mockNotifications = { send: jest.fn() };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GaleriService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventsGateway, useValue: mockEvents },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -135,6 +139,7 @@ describe('GaleriService delete — jejak audit', () => {
   };
 
   const mockEvents = { sendToRoles: jest.fn() };
+  const mockNotifications = { send: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -142,6 +147,7 @@ describe('GaleriService delete — jejak audit', () => {
         GaleriService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventsGateway, useValue: mockEvents },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -263,6 +269,7 @@ describe('GaleriService moderasi', () => {
   };
 
   const mockEvents = { sendToRoles: jest.fn() };
+  const mockNotifications = { send: jest.fn() };
 
   const foto = (over: Record<string, unknown> = {}) => ({
     id: 'g1',
@@ -278,11 +285,13 @@ describe('GaleriService moderasi', () => {
         GaleriService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventsGateway, useValue: mockEvents },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
     service = module.get<GaleriService>(GaleriService);
     jest.clearAllMocks();
+    mockNotifications.send.mockResolvedValue(undefined);
     mockPrisma.$transaction.mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops));
     mockPrisma.galeri.update.mockImplementation((args: { where: { id: string }; data: object }) =>
       Promise.resolve({ id: args.where.id, ...args.data }),
@@ -400,12 +409,59 @@ describe('GaleriService moderasi', () => {
         { pending: 3 },
       );
     });
+
+    it('mengabari pengunggah saat fotonya disetujui', async () => {
+      mockPrisma.galeri.findUnique.mockResolvedValue(foto());
+
+      await service.review('g1', 'APPROVED', undefined, 'mod-1');
+
+      expect(mockNotifications.send).toHaveBeenCalledWith(
+        'pemilik-1',
+        expect.objectContaining({
+          judul: 'Foto galeri disetujui',
+          isi: expect.stringContaining('Foto "Foto 1" telah disetujui'),
+          data: expect.objectContaining({ module: 'galeri', galeriId: 'g1', status: 'APPROVED' }),
+        }),
+      );
+    });
+
+    it('menyampaikan alasan penolakan ke pengunggah', async () => {
+      mockPrisma.galeri.findUnique.mockResolvedValue(foto());
+
+      await service.review('g1', 'REJECTED', 'Buram', 'mod-1');
+
+      expect(mockNotifications.send).toHaveBeenCalledWith(
+        'pemilik-1',
+        expect.objectContaining({
+          judul: 'Foto galeri ditolak',
+          isi: 'Foto "Foto 1" ditolak. Alasan: Buram',
+          data: expect.objectContaining({ status: 'REJECTED', reason: 'Buram' }),
+        }),
+      );
+    });
+
+    it('tidak mengirim notifikasi bila unggahan tidak punya pengunggah', async () => {
+      mockPrisma.galeri.findUnique.mockResolvedValue(foto({ uploaderId: null }));
+
+      await service.review('g1', 'APPROVED', undefined, 'mod-1');
+
+      expect(mockNotifications.send).not.toHaveBeenCalled();
+    });
+
+    it('kegagalan notifikasi tidak menggagalkan keputusan moderasi', async () => {
+      mockPrisma.galeri.findUnique.mockResolvedValue(foto());
+      mockNotifications.send.mockRejectedValue(new Error('smtp mati'));
+
+      await expect(service.review('g1', 'APPROVED', undefined, 'mod-1')).resolves.toEqual(
+        expect.objectContaining({ status: 'APPROVED' }),
+      );
+    });
   });
 
   describe('reviewBulk', () => {
     const duaFoto = [
-      { id: 'g1', status: 'PENDING', uploaderId: 'u1' },
-      { id: 'g2', status: 'PENDING', uploaderId: 'u2' },
+      { id: 'g1', judul: 'Foto 1', status: 'PENDING', uploaderId: 'u1' },
+      { id: 'g2', judul: 'Foto 2', status: 'PENDING', uploaderId: 'u2' },
     ];
 
     it('menyetujui banyak foto sekaligus dan mengirim event sekali', async () => {
@@ -421,8 +477,8 @@ describe('GaleriService moderasi', () => {
 
     it('melewati unggahan sendiri dan tetap memproses sisanya', async () => {
       mockPrisma.galeri.findMany.mockResolvedValue([
-        { id: 'g1', status: 'PENDING', uploaderId: 'mod-1' },
-        { id: 'g2', status: 'PENDING', uploaderId: 'u2' },
+        { id: 'g1', judul: 'Foto 1', status: 'PENDING', uploaderId: 'mod-1' },
+        { id: 'g2', judul: 'Foto 2', status: 'PENDING', uploaderId: 'u2' },
       ]);
 
       const result = await service.reviewBulk(['g1', 'g2'], 'APPROVED', undefined, 'mod-1');
@@ -490,6 +546,43 @@ describe('GaleriService moderasi', () => {
 
       expect(result.updated).toBe(0);
       expect(mockEvents.sendToRoles).not.toHaveBeenCalled();
+    });
+
+    it('mengabari tiap pengunggah yang diputuskan (sekali per foto)', async () => {
+      mockPrisma.galeri.findMany.mockResolvedValue(duaFoto);
+
+      await service.reviewBulk(['g1', 'g2'], 'REJECTED', 'Buram', 'mod-1');
+
+      expect(mockNotifications.send).toHaveBeenCalledTimes(2);
+      expect(mockNotifications.send).toHaveBeenCalledWith(
+        'u1',
+        expect.objectContaining({ isi: 'Foto "Foto 1" ditolak. Alasan: Buram' }),
+      );
+      expect(mockNotifications.send).toHaveBeenCalledWith(
+        'u2',
+        expect.objectContaining({ isi: 'Foto "Foto 2" ditolak. Alasan: Buram' }),
+      );
+    });
+
+    it('tidak mengabari unggahan sendiri yang dilewati', async () => {
+      mockPrisma.galeri.findMany.mockResolvedValue([
+        { id: 'g1', judul: 'Foto 1', status: 'PENDING', uploaderId: 'mod-1' },
+        { id: 'g2', judul: 'Foto 2', status: 'PENDING', uploaderId: 'u2' },
+      ]);
+
+      await service.reviewBulk(['g1', 'g2'], 'APPROVED', undefined, 'mod-1');
+
+      expect(mockNotifications.send).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.send).toHaveBeenCalledWith('u2', expect.anything());
+    });
+
+    it('kegagalan notifikasi tidak mengubah hasil bulk', async () => {
+      mockPrisma.galeri.findMany.mockResolvedValue(duaFoto);
+      mockNotifications.send.mockRejectedValue(new Error('smtp mati'));
+
+      await expect(
+        service.reviewBulk(['g1', 'g2'], 'APPROVED', undefined, 'mod-1'),
+      ).resolves.toEqual({ updated: 2, failed: [] });
     });
   });
 
