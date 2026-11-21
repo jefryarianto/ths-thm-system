@@ -138,11 +138,7 @@ test.describe('Graduations — edit & status quick actions', () => {
     await page.goto('/graduations');
     await expect(page.getByText('Pendadaran Uji').first()).toBeVisible({ timeout: 10000 });
 
-    // Navigasi programatik (router.push) — referrerPolicy mencegah proxy
-    // salah klasifikasi navigasi lintas situs → kick ke /login.
-    await page
-      .locator('button[title="Edit / Ubah Status"]')
-      .click({ referrerPolicy: 'no-referrer' });
+    await page.locator('button[title="Edit / Ubah Status"]').click();
     await expect(page).toHaveURL(new RegExp(`/graduations/${GRAD_ID}/edit`));
     await expect(page.locator('h1')).toContainText('Edit Pendadaran', { timeout: 10000 });
   });

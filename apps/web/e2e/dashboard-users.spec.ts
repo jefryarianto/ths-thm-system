@@ -454,7 +454,8 @@ test.describe('Users Dashboard Page', () => {
     await expect(page.getByText('Ranting wajib dipilih untuk role anggota')).toHaveCount(0);
     await expect.poll(() => patchBody).not.toBeNull();
     expect(patchBody).toMatchObject({ role: 'anggota', rantingId: 'r1' });
-  });test('mengubah role TIDAK mereset penempatan organisasi yang sudah ter-prefill', async ({
+  });
+  test('mengubah role TIDAK mereset penempatan organisasi yang sudah ter-prefill', async ({
     page,
   }) => {
     await mockOrgStructure(page);
@@ -524,14 +525,15 @@ test.describe('Users Dashboard Page', () => {
     });
   });
 
-test('membuat user admin_nasional tanpa distrik/wilayah/ranting', async ({ page }) => {
+  test('membuat user admin_nasional tanpa distrik/wilayah/ranting', async ({ page }) => {
     // Mock auth as admin_nasional tanpa scope organisasi
     await mockAuth(page, { mockMembers: true, role: 'admin_nasional' });
 
-    let createBody: Record<string, unknown> | null = null;
+    // Array, bukan `let ... | null`: TS tidak melacak penugasan dari callback route.
+    const createBodies: Record<string, unknown>[] = [];
     await page.route('**/api/users', async (route) => {
       if (route.request().method() === 'POST') {
-        createBody = route.request().postDataJSON() as Record<string, unknown>;
+        createBodies.push(route.request().postDataJSON() as Record<string, unknown>);
         await route.fulfill(
           json({ success: true, data: { id: 'new-user' }, message: 'User berhasil dibuat' }),
         );
@@ -550,12 +552,13 @@ test('membuat user admin_nasional tanpa distrik/wilayah/ranting', async ({ page 
     await page.getByTestId('user-role').selectOption('admin_nasional');
     await page.getByRole('button', { name: 'Simpan' }).click();
 
-    await expect.poll(() => createBody).not.toBeNull();
+    await expect.poll(() => createBodies.length).toBeGreaterThan(0);
+    const body = createBodies[0];
     // Admin_nasional: org fields harus dikosongkan (null) secara otomatis
-    expect(createBody).toMatchObject({ role: 'admin_nasional' });
+    expect(body).toMatchObject({ role: 'admin_nasional' });
     // Pastikan form tidak memaksa distrik/wilayah/ranting untuk admin_nasional
-    expect(createBody.distrikId).toBeNull();
-    expect(createBody.wilayahId).toBeNull();
-    expect(createBody.rantingId).toBeNull();
+    expect(body.distrikId).toBeNull();
+    expect(body.wilayahId).toBeNull();
+    expect(body.rantingId).toBeNull();
   });
 });

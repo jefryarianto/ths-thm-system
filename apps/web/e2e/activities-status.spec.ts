@@ -166,9 +166,7 @@ test.describe('Activities — edit & status quick actions', () => {
     // Form punya 2 select (Tipe & Status) — pilih yang berisi opsi status
     const statusSelect = page.locator('select:has(option[value="published"])');
     await statusSelect.selectOption('published');
-    // Tombol men-submit lalu router.push — referrerPolicy mencegah proxy
-    // salah klasifikasi navigasi lintas situs → kick ke /login.
-    await page.getByRole('button', { name: 'Simpan' }).click({ referrerPolicy: 'no-referrer' });
+    await page.getByRole('button', { name: 'Simpan' }).click();
 
     await expect(page).toHaveURL(new RegExp(`/activities/${ACT_ID}$`));
     await expect(page.locator('span:has-text("published")')).toBeVisible({ timeout: 8000 });

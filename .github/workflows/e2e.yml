@@ -140,6 +140,13 @@ jobs:
       - name: Build shared-types
         run: pnpm --filter @ths-thm/shared-types build
 
+      # Folder e2e di-`exclude` dari tsconfig.json Next.js, sehingga
+      # kesalahan tipe spec Playwright (mis. sameSite: 'lax' yang ditolak
+      # Playwright 1.60) dulu baru terlihat sebagai kegagalan runtime di
+      # keempat shard. Typecheck ini murah dan berjalan sebelum build.
+      - name: Typecheck E2E specs (tsc --noEmit)
+        run: pnpm --filter @ths-thm/web typecheck:e2e
+
       - name: Build Next.js app (production)
         run: pnpm --filter @ths-thm/web build
         env:

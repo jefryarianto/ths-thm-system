@@ -1,0 +1,16 @@
+// Typecheck khusus spec Playwright. Folder `e2e` di-`exclude` dari
+// tsconfig.json Next.js, sehingga tanpa config ini kesalahan tipe seperti
+// `sameSite: 'lax'` (ditolak Playwright 1.60) baru terlihat sebagai
+// kegagalan runtime di CI. Dijalankan oleh `pnpm typecheck:e2e`.
+{
+  "extends": "./tsconfig.json",
+  // `exclude` WAJIB ditimpa: nilai warisan dari tsconfig.json memuat "e2e"
+  // dan "playwright.config.ts", yang membuat `include` di bawah kosong
+  // (tsc: TS18003 "No inputs were found").
+  "exclude": ["node_modules"],
+  "include": ["e2e/**/*.ts", "playwright.config.ts"],
+  "compilerOptions": {
+    // Jangan tulis tsconfig.e2e.tsbuildinfo ke working tree.
+    "incremental": false
+  }
+}
