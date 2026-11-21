@@ -26,6 +26,24 @@ type QueueMeta = {
   counts: Record<PhotoStatus, number>;
 };
 
+type DeletionLog = {
+  id: string;
+  galeriId: string;
+  judul: string;
+  kategori?: string | null;
+  status: PhotoStatus;
+  reason?: string | null;
+  actorId?: string | null;
+  actorNama?: string | null;
+  actorRole?: string | null;
+  ukuranBytes?: number | null;
+  deletedAt: string;
+};
+
+type ListMeta = { total: number; page: number; limit: number; totalPages: number };
+type DeletionFilters = { from: string; to: string; actorId: string };
+const EMPTY_FILTERS: DeletionFilters = { from: '', to: '', actorId: '' };
+
 const LIMIT = 20;
 const TABS: Array<{ key: PhotoStatus; label: string }> = [
   { key: 'PENDING', label: 'Menunggu' },
@@ -120,6 +138,14 @@ export default function GalleryManagePage() {
     APPROVED: 0,
     REJECTED: 0,
   });
+  const [view, setView] = useState<'queue' | 'deletions'>('queue');
+  const [deletions, setDeletions] = useState<DeletionLog[]>([]);
+  const [deletionMeta, setDeletionMeta] = useState<ListMeta | null>(null);
+  const [deletionPage, setDeletionPage] = useState(1);
+  const [deletionFilters, setDeletionFilters] = useState<DeletionFilters>(EMPTY_FILTERS);
+  const [filterDraft, setFilterDraft] = useState<DeletionFilters>(EMPTY_FILTERS);
+  const [deletionLoading, setDeletionLoading] = useState(false);
+  const [deletionError, setDeletionError] = useState('');
 
   const load = useCallback(async (nextStatus: PhotoStatus, nextPage: number) => {
     setLoading(true);
@@ -202,6 +228,32 @@ export default function GalleryManagePage() {
     }
   }
 
+  const loadDeletions = useCallback(async () => {
+    setDeletionLoading(true);
+    try {
+      const { data } = await apiClient.get('/galeri/admin/deletions', {
+        params: {
+          page: deletionPage,
+          limit: LIMIT,
+          ...(deletionFilters.actorId ? { actorId: deletionFilters.actorId } : {}),
+          ...(deletionFilters.from ? { from: deletionFilters.from } : {}),
+          ...(deletionFilters.to ? { to: deletionFilters.to } : {}),
+        },
+      });
+      setDeletions(Array.isArray(data.data) ? data.data : []);
+      setDeletionMeta(data.meta ?? null);
+      setDeletionError('');
+    } catch (err) {
+      setDeletionError(messageOf(err, 'Tidak dapat memuat riwayat hapus.'));
+    } finally {
+      setDeletionLoading(false);
+    }
+  }, [deletionPage, deletionFilters]);
+
+  useEffect(() => {
+    if (view === 'deletions') void loadDeletions();
+  }, [view, loadDeletions]);
+
   const selectableIds = items.filter((item) => item.status === 'PENDING').map((item) => item.id);
   const allSelected =
     selectableIds.length > 0 && selectableIds.every((id) => selected.includes(id));
@@ -261,174 +313,326 @@ export default function GalleryManagePage() {
           )}
         </div>
 
-        {/* Tab per status */}
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter status galeri">
-          {TABS.map((tab) => {
-            const active = tab.key === status;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => {
-                  setStatus(tab.key);
-                  setPage(1);
-                }}
-                className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
-                  active ? 'bg-navy-800 text-white' : 'bg-white text-navy-800 hover:bg-gray-50'
-                }`}
-              >
-                {tab.label} ({counts[tab.key]})
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Tampilan moderasi">
+          {[
+            { key: 'queue', label: 'Antrian & Status' },
+            { key: 'deletions', label: 'Riwayat Hapus' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={view === tab.key}
+              onClick={() => setView(tab.key as 'queue' | 'deletions')}
+              className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
+                view === tab.key
+                  ? 'bg-navy-800 text-white'
+                  : 'bg-white text-navy-800 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {error && (
-          <p
-            role="alert"
-            className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
-          >
-            {error}
-          </p>
-        )}
-        {notice && (
-          <p role="status" className="rounded border border-green-300 bg-green-50 p-3 text-sm">
-            {notice}
-          </p>
-        )}
-
-        {/* Aksi massal */}
-        {selectableIds.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-gray-50 p-3 text-sm">
-            <label className="flex items-center gap-2 font-medium">
-              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
-              Pilih semua di halaman ini
-            </label>
-            <span className="text-gray-600">{selected.length} dipilih</span>
-            <input
-              placeholder="Alasan penolakan (dipakai untuk aksi massal)"
-              value={bulkReason}
-              onChange={(e) => setBulkReason(e.target.value)}
-              className="min-w-[240px] flex-1 rounded border p-2"
-            />
-            <button
-              type="button"
-              disabled={busy || !selected.length}
-              onClick={() => bulkReview('APPROVED')}
-              className="rounded bg-green-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
-            >
-              Setujui terpilih
-            </button>
-            <button
-              type="button"
-              disabled={busy || !selected.length}
-              onClick={() => bulkReview('REJECTED')}
-              className="rounded bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
-            >
-              Tolak terpilih
-            </button>
+        <div className={view === 'queue' ? 'space-y-5' : 'hidden'}>
+          {/* Tab per status */}
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter status galeri">
+            {TABS.map((tab) => {
+              const active = tab.key === status;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setStatus(tab.key);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
+                    active ? 'bg-navy-800 text-white' : 'bg-white text-navy-800 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.label} ({counts[tab.key]})
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        {loading ? (
-          <p role="status" className="py-10 text-center text-gray-500">
-            Memuat antrian…
-          </p>
-        ) : items.length === 0 ? (
-          <p className="py-10 text-center text-gray-500">
-            Tidak ada foto pada status {TABS.find((tab) => tab.key === status)?.label.toLowerCase()}
-            .
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {items.map((p) => (
-              <li key={p.id} className="flex flex-col gap-4 rounded-xl border p-4 md:flex-row">
-                {p.status === 'PENDING' && (
-                  <input
-                    type="checkbox"
-                    aria-label={`Pilih ${p.judul}`}
-                    checked={selected.includes(p.id)}
-                    onChange={() => toggleOne(p.id)}
-                    className="mt-1 h-5 w-5 shrink-0"
-                  />
-                )}
-                <GaleriPreview id={p.id} title={p.judul} />
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold">{p.judul}</h2>
-                  <p>Kategori: {p.kategori ?? '-'}</p>
-                  {p.deskripsi && (
-                    <p className="whitespace-pre-line text-sm">Deskripsi: {p.deskripsi}</p>
-                  )}
-                  <p>
-                    Pengirim: {p.uploader?.namaLengkap ?? 'Tidak diketahui'} (
-                    {p.uploader?.email ?? '-'})
-                  </p>
-                  <p>Status: {p.status}</p>
-                  {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
-                  {p.status === 'PENDING' && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <input
-                        placeholder="Alasan penolakan"
-                        value={reason[p.id] ?? ''}
-                        onChange={(e) => setReason({ ...reason, [p.id]: e.target.value })}
-                        className="rounded border p-2"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => review(p.id, 'APPROVED')}
-                        className="rounded bg-green-700 px-3 py-2 text-white"
-                      >
-                        Setujui
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => review(p.id, 'REJECTED')}
-                        className="rounded bg-red-700 px-3 py-2 text-white"
-                      >
-                        Tolak
-                      </button>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => remove(p.id)}
-                    className="mt-3 rounded border px-3 py-2"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+          {error && (
+            <p
+              role="alert"
+              className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+            >
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p role="status" className="rounded border border-green-300 bg-green-50 p-3 text-sm">
+              {notice}
+            </p>
+          )}
 
-        {/* Pagination */}
-        {meta && meta.total > 0 && (
-          <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
-            <span>
-              Halaman {meta.page} dari {meta.totalPages} · {meta.total} item
-            </span>
-            <div className="flex gap-2">
+          {/* Aksi massal */}
+          {selectableIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-gray-50 p-3 text-sm">
+              <label className="flex items-center gap-2 font-medium">
+                <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+                Pilih semua di halaman ini
+              </label>
+              <span className="text-gray-600">{selected.length} dipilih</span>
+              <input
+                placeholder="Alasan penolakan (dipakai untuk aksi massal)"
+                value={bulkReason}
+                onChange={(e) => setBulkReason(e.target.value)}
+                className="min-w-[240px] flex-1 rounded border p-2"
+              />
               <button
                 type="button"
-                disabled={meta.page <= 1 || loading}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                className="rounded border px-3 py-2 disabled:opacity-50"
+                disabled={busy || !selected.length}
+                onClick={() => bulkReview('APPROVED')}
+                className="rounded bg-green-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
               >
-                Sebelumnya
+                Setujui terpilih
               </button>
               <button
                 type="button"
-                disabled={meta.page >= meta.totalPages || loading}
-                onClick={() => setPage((current) => Math.min(meta.totalPages, current + 1))}
-                className="rounded border px-3 py-2 disabled:opacity-50"
+                disabled={busy || !selected.length}
+                onClick={() => bulkReview('REJECTED')}
+                className="rounded bg-red-700 px-3 py-2 font-semibold text-white disabled:opacity-50"
               >
-                Berikutnya
+                Tolak terpilih
               </button>
             </div>
-          </div>
+          )}
+
+          {loading ? (
+            <p role="status" className="py-10 text-center text-gray-500">
+              Memuat antrian…
+            </p>
+          ) : items.length === 0 ? (
+            <p className="py-10 text-center text-gray-500">
+              Tidak ada foto pada status{' '}
+              {TABS.find((tab) => tab.key === status)?.label.toLowerCase()}.
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {items.map((p) => (
+                <li key={p.id} className="flex flex-col gap-4 rounded-xl border p-4 md:flex-row">
+                  {p.status === 'PENDING' && (
+                    <input
+                      type="checkbox"
+                      aria-label={`Pilih ${p.judul}`}
+                      checked={selected.includes(p.id)}
+                      onChange={() => toggleOne(p.id)}
+                      className="mt-1 h-5 w-5 shrink-0"
+                    />
+                  )}
+                  <GaleriPreview id={p.id} title={p.judul} />
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold">{p.judul}</h2>
+                    <p>Kategori: {p.kategori ?? '-'}</p>
+                    {p.deskripsi && (
+                      <p className="whitespace-pre-line text-sm">Deskripsi: {p.deskripsi}</p>
+                    )}
+                    <p>
+                      Pengirim: {p.uploader?.namaLengkap ?? 'Tidak diketahui'} (
+                      {p.uploader?.email ?? '-'})
+                    </p>
+                    <p>Status: {p.status}</p>
+                    {p.rejectedReason && <p>Alasan: {p.rejectedReason}</p>}
+                    {p.status === 'PENDING' && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <input
+                          placeholder="Alasan penolakan"
+                          value={reason[p.id] ?? ''}
+                          onChange={(e) => setReason({ ...reason, [p.id]: e.target.value })}
+                          className="rounded border p-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => review(p.id, 'APPROVED')}
+                          className="rounded bg-green-700 px-3 py-2 text-white"
+                        >
+                          Setujui
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => review(p.id, 'REJECTED')}
+                          className="rounded bg-red-700 px-3 py-2 text-white"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => remove(p.id)}
+                      className="mt-3 rounded border px-3 py-2"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Pagination */}
+          {meta && meta.total > 0 && (
+            <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+              <span>
+                Halaman {meta.page} dari {meta.totalPages} · {meta.total} item
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={meta.page <= 1 || loading}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  className="rounded border px-3 py-2 disabled:opacity-50"
+                >
+                  Sebelumnya
+                </button>
+                <button
+                  type="button"
+                  disabled={meta.page >= meta.totalPages || loading}
+                  onClick={() => setPage((current) => Math.min(meta.totalPages, current + 1))}
+                  className="rounded border px-3 py-2 disabled:opacity-50"
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {view === 'deletions' && (
+          <section className="space-y-4" aria-label="Riwayat penghapusan">
+            <form
+              className="flex flex-wrap items-end gap-3 rounded-lg border bg-gray-50 p-3 text-sm"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setDeletionPage(1);
+                setDeletionFilters({ ...filterDraft });
+              }}
+            >
+              <label className="flex flex-col gap-1">
+                <span className="font-medium">Dari tanggal</span>
+                <input
+                  type="date"
+                  value={filterDraft.from}
+                  onChange={(e) => setFilterDraft({ ...filterDraft, from: e.target.value })}
+                  className="rounded border p-2"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-medium">Sampai tanggal</span>
+                <input
+                  type="date"
+                  value={filterDraft.to}
+                  onChange={(e) => setFilterDraft({ ...filterDraft, to: e.target.value })}
+                  className="rounded border p-2"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1">
+                <span className="font-medium">ID pelaku (opsional)</span>
+                <input
+                  placeholder="UUID pengguna"
+                  value={filterDraft.actorId}
+                  onChange={(e) => setFilterDraft({ ...filterDraft, actorId: e.target.value })}
+                  className="min-w-[220px] rounded border p-2"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={deletionLoading}
+                className="rounded bg-navy-800 px-3 py-2 font-semibold text-white disabled:opacity-50"
+              >
+                Terapkan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterDraft(EMPTY_FILTERS);
+                  setDeletionFilters(EMPTY_FILTERS);
+                  setDeletionPage(1);
+                }}
+                className="rounded border px-3 py-2"
+              >
+                Reset
+              </button>
+            </form>
+
+            {deletionError && (
+              <p
+                role="alert"
+                className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+              >
+                {deletionError}
+              </p>
+            )}
+
+            {deletionLoading ? (
+              <p role="status" className="py-10 text-center text-gray-500">
+                Memuat riwayat hapus…
+              </p>
+            ) : deletions.length === 0 ? (
+              <p className="py-10 text-center text-gray-500">
+                Tidak ada penghapusan pada filter ini.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {deletions.map((row) => (
+                  <li key={row.id} className="rounded-xl border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h2 className="text-lg font-semibold">{row.judul}</h2>
+                      <span className="text-xs text-gray-600">
+                        {new Date(row.deletedAt).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <p className="text-sm">
+                      Dihapus oleh: {row.actorNama ?? row.actorId ?? 'Tidak diketahui'}
+                      {row.actorRole ? ` (${row.actorRole})` : ''}
+                    </p>
+                    <p className="text-sm">
+                      Status terakhir: {row.status} · Kategori: {row.kategori ?? '-'}
+                    </p>
+                    <p className="text-sm">Alasan: {row.reason ?? 'Tidak disebutkan'}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {deletionMeta && deletionMeta.total > 0 && (
+              <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+                <span>
+                  Halaman {deletionMeta.page} dari {deletionMeta.totalPages} · {deletionMeta.total}{' '}
+                  penghapusan
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={deletionMeta.page <= 1 || deletionLoading}
+                    onClick={() => setDeletionPage((current) => Math.max(1, current - 1))}
+                    className="rounded border px-3 py-2 disabled:opacity-50"
+                  >
+                    Sebelumnya
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletionMeta.page >= deletionMeta.totalPages || deletionLoading}
+                    onClick={() =>
+                      setDeletionPage((current) => Math.min(deletionMeta.totalPages, current + 1))
+                    }
+                    className="rounded border px-3 py-2 disabled:opacity-50"
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
         )}
       </main>
     </PermissionGuard>
