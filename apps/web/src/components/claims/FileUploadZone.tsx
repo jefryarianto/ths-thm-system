@@ -93,6 +93,10 @@ export function FileUploadZone({
     }
   }, [handleFiles]);
 
+  const handleClick = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -107,7 +111,11 @@ export function FileUploadZone({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={handleClick}
+        onTouchStart={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
       >
         <input
           ref={inputRef}
@@ -115,8 +123,9 @@ export function FileUploadZone({
           accept={accept}
           multiple
           onChange={handleInputChange}
-          className="hidden"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={uploading || files.length >= maxFiles}
+          aria-label="Pilih file untuk upload"
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
