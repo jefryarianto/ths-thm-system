@@ -15,6 +15,7 @@ import { useI18n } from '@/i18n/context';
 import { FileUploadZone, FileWithPreview } from '@/components/claims/FileUploadZone';
 
 const API_URL = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || '');
+const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 interface Ranting {
   id: string;
@@ -81,7 +82,7 @@ export default function KlaimPage() {
     const fetchDistriks = async () => {
       setDistrikLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+        const res = await fetch(`${PUBLIC_API_URL}/api/public/struktur/distrik`);
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -123,7 +124,7 @@ export default function KlaimPage() {
       setWilayahLoading(true);
       try {
         const res = await fetch(
-          `${API_URL}/api/public/struktur/wilayah?distrikId=${encodeURIComponent(selectedDistrikId)}`,
+          `${PUBLIC_API_URL}/api/public/struktur/wilayah?distrikId=${encodeURIComponent(selectedDistrikId)}`,
         );
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -164,7 +165,7 @@ export default function KlaimPage() {
       setRantingLoading(true);
       try {
         const res = await fetch(
-          `${API_URL}/api/public/struktur/ranting?wilayahId=${encodeURIComponent(selectedWilayahId)}`,
+          `${PUBLIC_API_URL}/api/public/struktur/ranting?wilayahId=${encodeURIComponent(selectedWilayahId)}`,
         );
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
