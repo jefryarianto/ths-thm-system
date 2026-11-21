@@ -71,6 +71,32 @@ model GaleriModerationLog {
   @@map("galeri_moderation_log")
 }
 
+/// Jejak audit penghapusan foto. Sengaja tanpa relasi ke `galeri` (dan tanpa
+/// ON DELETE CASCADE) supaya barisnya tetap ada setelah fotonya hilang, dengan
+/// snapshot data penting pada saat dihapus. Append-only lewat trigger DB.
+model GaleriDeletionLog {
+  id          String       @id @default(uuid())
+  galeriId    String       @map("galeri_id")
+  actorId     String?      @map("actor_id")
+  actorRole   String?      @map("actor_role")
+  reason      String?
+  judul       String
+  uploaderId  String?      @map("uploader_id")
+  kategori    String?
+  status      StatusGaleri
+  storageKey  String?      @map("storage_key")
+  thumbKey    String?      @map("thumb_key")
+  ukuranBytes Int?         @map("ukuran_bytes")
+  fotoCreatedAt DateTime?  @map("foto_created_at")
+  deletedAt   DateTime     @default(now()) @map("deleted_at")
+  actor       User?        @relation("GaleriDeletionActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([deletedAt])
+  @@index([actorId, deletedAt])
+  @@index([galeriId])
+  @@map("galeri_deletion_log")
+}
+
 model DonasiProgram {
   id         String   @id @default(uuid())
   nama       String
@@ -245,6 +271,7 @@ model User {
   galeriReviewed              Galeri[]              @relation("GaleriReviewer")
   galeriUploads               Galeri[]              @relation("GaleriUploader")
   galeriModerationLogs        GaleriModerationLog[] @relation("GaleriModerationActor")
+  galeriDeletionLogs          GaleriDeletionLog[]   @relation("GaleriDeletionActor")
   hasilPendadaranDivValidated HasilPendadaran[]     @relation("HasilPendadaranValidasi")
   importBatches               ImportBatch[]         @relation("ImportBatchImportedBy")
   iuranDiverifikasi           Iuran[]               @relation("IuranVerifikator")

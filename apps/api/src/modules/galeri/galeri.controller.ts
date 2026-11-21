@@ -148,8 +148,12 @@ export class GaleriController {
 
   @Delete(':id')
   @ApiBearerAuth()
-  delete(@Param('id', ParseUUIDPipe) id: string, @Req() req: ScopedRequest) {
-    return this.service.delete(id, req.user!);
+  delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: ScopedRequest,
+    @Query('reason') reason?: string,
+  ) {
+    return this.service.delete(id, req.user!, reason);
   }
 
   @Get(':id/image')

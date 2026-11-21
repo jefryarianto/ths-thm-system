@@ -352,14 +352,36 @@ export class GaleriService {
     return { updated, failed };
   }
 
-  async delete(id: string, user: { id: string; role: Role }) {
+  async delete(id: string, user: { id: string; role: Role }, reason?: string) {
     const item = await this.prisma.galeri.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('Foto tidak ditemukan');
     // Hapus mengikuti aturan moderasi: pemilik unggahan sendiri, atau
     // superadmin/admin_berita. Role admin_* lain tidak boleh menghapus.
     if (item.uploaderId !== user.id && !MODERATOR_ROLES.includes(user.role))
       throw new ForbiddenException();
-    await this.prisma.galeri.delete({ where: { id } });
+    const catatan = reason?.trim().slice(0, 500) || null;
+    // Log dan penghapusan ditulis dalam satu transaksi supaya tidak mungkin ada
+    // foto yang hilang tanpa jejak audit (atau jejak tanpa foto yang hilang).
+    // Baris log menyimpan snapshot karena `galeri` sudah tidak ada setelahnya.
+    await this.prisma.$transaction([
+      this.prisma.galeriDeletionLog.create({
+        data: {
+          galeriId: item.id,
+          actorId: user.id,
+          actorRole: user.role,
+          reason: catatan,
+          judul: item.judul,
+          uploaderId: item.uploaderId,
+          kategori: item.kategori,
+          status: item.status,
+          storageKey: item.storageKey,
+          thumbKey: item.thumbKey,
+          ukuranBytes: item.ukuranBytes,
+          fotoCreatedAt: item.createdAt,
+        },
+      }),
+      this.prisma.galeri.delete({ where: { id } }),
+    ]);
     if (item.storageKey) await fs.unlink(join(STORAGE_DIR, item.storageKey)).catch(() => undefined);
     if (item.thumbKey) await fs.unlink(join(STORAGE_DIR, item.thumbKey)).catch(() => undefined);
     await this.emitQueueCounts();
