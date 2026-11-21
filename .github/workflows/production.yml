@@ -43,8 +43,65 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: read
 
     steps:
+      # ── Gate: deploy hanya untuk commit yang CI + E2E-nya HIJAU ──
+      # Dulu workflow ini dipicu langsung oleh push, sehingga deploy berjalan
+      # PARALEL dengan CI/E2E: commit yang tesnya merah tetap bisa rilis.
+      # Step ini menunggu run CI/CD Pipeline dan E2E untuk SHA ini selesai,
+      # lalu berhenti (exit 1) bila salah satunya tidak success — seluruh
+      # step build/deploy di bawahnya tidak pernah dijalankan.
+      # workflow_dispatch (deploy darurat) sengaja MELEWATI gate ini.
+      - name: Tunggu CI & E2E hijau untuk commit ini
+        if: github.event_name == 'push'
+        timeout-minutes: 35
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          # Nama workflow persis seperti di tab Actions.
+          REQUIRED_WORKFLOWS: 'CI/CD Pipeline|🧪 E2E Tests'
+          GATE_TIMEOUT_SECONDS: '2100'
+          GATE_POLL_SECONDS: '20'
+        run: |
+          set -uo pipefail
+          echo "Menunggu hasil tes untuk $SHA: $REQUIRED_WORKFLOWS"
+          DEADLINE=$((SECONDS + GATE_TIMEOUT_SECONDS))
+          while :; do
+            pending=0
+            IFS='|' read -ra WORKFLOWS <<< "$REQUIRED_WORKFLOWS"
+            for wf in "${WORKFLOWS[@]}"; do
+              # Run terbaru untuk SHA ini dari workflow tersebut (re-run ikut terambil).
+              line=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100"                 --jq "[.workflow_runs[] | select(.name == \"$wf\")] | sort_by(.created_at) | last | if . == null then \"none none\" else (.status + \" \" + (.conclusion // \"pending\")) end")
+              status=${line%% *}
+              conclusion=${line##* }
+              if [ "$status" = "none" ]; then
+                echo "⏳ $wf: belum ada run untuk $SHA"
+                pending=1
+                continue
+              fi
+              if [ "$status" != "completed" ]; then
+                echo "⏳ $wf: $status"
+                pending=1
+                continue
+              fi
+              if [ "$conclusion" != "success" ]; then
+                echo "::error::$wf untuk $SHA selesai dengan '$conclusion' — deploy dibatalkan."
+                exit 1
+              fi
+              echo "✅ $wf: success"
+            done
+            if [ "$pending" -eq 0 ]; then
+              echo "✅ CI & E2E hijau untuk $SHA — lanjut build & deploy"
+              exit 0
+            fi
+            if [ "$SECONDS" -ge "$DEADLINE" ]; then
+              echo "::error::Timeout menunggu CI/E2E untuk $SHA; deploy dibatalkan agar tidak merilis commit yang belum terverifikasi."
+              exit 1
+            fi
+            sleep "$GATE_POLL_SECONDS"
+          done
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -84,10 +141,15 @@ jobs:
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client
-          git diff --exit-code -- apps/api/swagger.json \
-            || echo "⚠️ Perubahan kecil dalam swagger.json terdeteksi (perbedaan Node version CI vs local)."
-          git diff --exit-code -- apps/web/src/types/api.d.ts \
-            || echo "⚠️ Perubahan kecil dalam api.d.ts terdeteksi (perbedaan Node version CI vs local)."
+          # Gagal keras bila regenerasi menghasilkan diff — jangan pernah menelan
+          # exit code di sini (|| true, || echo, atau `;`). Guard yang selalu hijau
+          # tidak menjaga apa pun; dan karena deploy darurat lewat
+          # workflow_dispatch melewati gate CI/E2E di atas, step inilah satu-satunya
+          # penjaga kontrak untuk jalur tersebut.
+          if ! git diff --exit-code --stat -- apps/api/swagger.json apps/web/src/types/api.d.ts; then
+            echo "::error::Kontrak API tidak sinkron. Jalankan: pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client, lalu commit apps/api/swagger.json + apps/web/src/types/api.d.ts."
+            exit 1
+          fi
           echo "✅ Kontrak API sinkron — aman build image"
 
       - name: Set up Docker Buildx
