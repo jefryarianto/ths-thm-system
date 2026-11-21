@@ -93,10 +93,6 @@ export function FileUploadZone({
     }
   }, [handleFiles]);
 
-  const handleClick = useCallback(() => {
-    inputRef.current?.click();
-  }, []);
-
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -104,50 +100,48 @@ export function FileUploadZone({
       </label>
 
       <div
-        ref={inputRef}
         className={`border-2 border-dashed rounded-lg p-6 text-center transition ${
           dragActive ? 'border-navy-500 bg-navy-50 dark:bg-navy-900/20' : 'border-gray-300 dark:border-gray-600'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={handleClick}
-        onTouchStart={handleClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          multiple
-          onChange={handleInputChange}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={uploading || files.length >= maxFiles}
-          aria-label="Pilih file untuk upload"
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-upload mx-auto text-gray-400 mb-2"
+        <label
+          className="flex flex-col items-center gap-3 cursor-pointer p-4 -m-4 rounded-lg hover:bg-navy-50 dark:hover:bg-navy-900/20 transition-colors"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Klik atau tarik file ke sini</p>
-        <p className="text-xs text-gray-400 mt-1">{accept}</p>
-        {files.length >= maxFiles && (
-          <p className="text-xs text-amber-500 mt-1">Maksimal {maxFiles} file tercapai</p>
-        )}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-upload mx-auto text-gray-400"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Klik atau tarik file ke sini</p>
+          <p className="text-xs text-gray-400">{accept}</p>
+          {files.length >= maxFiles && (
+            <p className="text-xs text-amber-500">Maksimal {maxFiles} file tercapai</p>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept={accept}
+            multiple
+            onChange={handleInputChange}
+            className="sr-only"
+            disabled={uploading || files.length >= maxFiles}
+            aria-label="Pilih file untuk upload"
+          />
+        </label>
       </div>
 
       {files.length > 0 && (
