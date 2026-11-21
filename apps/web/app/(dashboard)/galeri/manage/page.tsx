@@ -186,10 +186,16 @@ export default function GalleryManagePage() {
 
   async function remove(id: string) {
     if (!confirm('Hapus foto ini secara permanen?')) return;
+    // Alasan opsional, ikut tercatat di jejak audit penghapusan.
+    const alasan = prompt('Alasan penghapusan (opsional, boleh dikosongkan):');
+    if (alasan === null) return;
+    const trimmed = alasan.trim();
     setError('');
     setNotice('');
     try {
-      await apiClient.delete(`/galeri/${id}`);
+      await apiClient.delete(
+        `/galeri/${id}${trimmed ? `?reason=${encodeURIComponent(trimmed)}` : ''}`,
+      );
       await load(status, page);
     } catch (err) {
       setError(messageOf(err, 'Foto gagal dihapus.'));
