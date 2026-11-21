@@ -47,6 +47,11 @@ services:
           name: ths-thm-web
           type: web
           property: url
+      - key: CORS_ORIGINS
+        fromService:
+          name: ths-thm-web
+          type: web
+          property: url
       # Transactional email via Resend (recommended — generous free tier)
       # Replace legacy SMTP vars below with RESEND_API_KEY when migrating
       - key: RESEND_DOMAIN
