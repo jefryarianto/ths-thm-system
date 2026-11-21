@@ -14,7 +14,9 @@ import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { FileUploadZone, FileWithPreview } from '@/components/claims/FileUploadZone';
 
-const API_URL = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || '');
+const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+const INPUT_CLASS = "w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm";
 
 interface Ranting {
   id: string;
@@ -71,6 +73,11 @@ export default function KlaimPage() {
   const [wilayahLoading, setWilayahLoading] = useState<boolean>(false);
   const [rantingLoading, setRantingLoading] = useState<boolean>(false);
 
+  // Error states for dropdowns
+  const [distrikError, setDistrikError] = useState<string | null>(null);
+  const [wilayahError, setWilayahError] = useState<string | null>(null);
+  const [rantingError, setRantingError] = useState<string | null>(null);
+
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -80,8 +87,16 @@ export default function KlaimPage() {
     let active = true;
     const fetchDistriks = async () => {
       setDistrikLoading(true);
+      setDistrikError(null);
       try {
-        const res = await fetch(`${API_URL}/api/public/struktur/distrik`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const res = await fetch(`${PUBLIC_API_URL}/api/public/struktur/distrik`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -90,8 +105,12 @@ export default function KlaimPage() {
           setDistriks(Array.isArray(data?.data) ? data.data : []);
         }
       } catch (err) {
-        console.error('Failed to fetch distriks:', err);
         if (active) {
+          if (err instanceof Error && err.name === 'AbortError') {
+            setDistrikError('Permintaan timeout. Silakan coba lagi.');
+          } else {
+            setDistrikError(`Gagal memuat: ${err instanceof Error ? err.message : 'Unknown error'}. Coba lagi?`);
+          }
           setDistriks([]);
         }
       } finally {
@@ -121,10 +140,17 @@ export default function KlaimPage() {
       }
 
       setWilayahLoading(true);
+      setWilayahError(null);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
         const res = await fetch(
-          `${API_URL}/api/public/struktur/wilayah?distrikId=${encodeURIComponent(selectedDistrikId)}`,
+          `${PUBLIC_API_URL}/api/public/struktur/wilayah?distrikId=${encodeURIComponent(selectedDistrikId)}`,
+          { signal: controller.signal },
         );
+        clearTimeout(timeout);
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -133,8 +159,12 @@ export default function KlaimPage() {
           setWilayahs(Array.isArray(data?.data) ? data.data : []);
         }
       } catch (err) {
-        console.error('Failed to fetch wilayahs:', err);
         if (active) {
+          if (err instanceof Error && err.name === 'AbortError') {
+            setWilayahError('Permintaan timeout. Silakan coba lagi.');
+          } else {
+            setWilayahError(`Gagal memuat: ${err instanceof Error ? err.message : 'Unknown error'}. Coba lagi?`);
+          }
           setWilayahs([]);
         }
       } finally {
@@ -162,10 +192,17 @@ export default function KlaimPage() {
       }
 
       setRantingLoading(true);
+      setRantingError(null);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
         const res = await fetch(
-          `${API_URL}/api/public/struktur/ranting?wilayahId=${encodeURIComponent(selectedWilayahId)}`,
+          `${PUBLIC_API_URL}/api/public/struktur/ranting?wilayahId=${encodeURIComponent(selectedWilayahId)}`,
+          { signal: controller.signal },
         );
+        clearTimeout(timeout);
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -174,8 +211,12 @@ export default function KlaimPage() {
           setRantings(Array.isArray(data?.data) ? data.data : []);
         }
       } catch (err) {
-        console.error('Failed to fetch rantings:', err);
         if (active) {
+          if (err instanceof Error && err.name === 'AbortError') {
+            setRantingError('Permintaan timeout. Silakan coba lagi.');
+          } else {
+            setRantingError(`Gagal memuat: ${err instanceof Error ? err.message : 'Unknown error'}. Coba lagi?`);
+          }
           setRantings([]);
         }
       } finally {
@@ -239,7 +280,7 @@ export default function KlaimPage() {
       // Files
       buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
 
-      const res = await fetch(`${API_URL}/api/claims`, {
+      const res = await fetch(`${PUBLIC_API_URL}/api/claims`, {
         method: 'POST',
         body: formData,
       });
@@ -377,10 +418,10 @@ export default function KlaimPage() {
                     updateField('namaLengkap', e.target.value);
                     if (fieldErrors.namaLengkap) setFieldErrors((x) => ({ ...x, namaLengkap: '' }));
                   }}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                  className={`${INPUT_CLASS} ${
                     fieldErrors.namaLengkap
                       ? 'border-red-400 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   }`}
                   placeholder="Masukkan nama lengkap"
                 />
@@ -400,7 +441,7 @@ export default function KlaimPage() {
                   required
                   value={form.jenisKelamin}
                   onChange={(e) => updateField('jenisKelamin', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  className={INPUT_CLASS}
                 >
                   <option value="L">Laki-laki</option>
                   <option value="P">Perempuan</option>
@@ -416,7 +457,7 @@ export default function KlaimPage() {
                   type="text"
                   value={form.tempatLahir}
                   onChange={(e) => updateField('tempatLahir', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm"
+                  className={INPUT_CLASS}
                   placeholder="Kota lahir"
                 />
               </div>
@@ -431,8 +472,7 @@ export default function KlaimPage() {
                   max={new Date().toISOString().split('T')[0]}
                   value={form.tanggalLahir}
                   onChange={(e) => updateField('tanggalLahir', e.target.value)}
-                  className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-base"
-                  inputMode="numeric"
+                  className={INPUT_CLASS}
                 />
               </div>
 
@@ -449,10 +489,10 @@ export default function KlaimPage() {
                     updateField('tempatDadar', e.target.value);
                     if (fieldErrors.tempatDadar) setFieldErrors((x) => ({ ...x, tempatDadar: '' }));
                   }}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                  className={`${INPUT_CLASS} ${
                     fieldErrors.tempatDadar
                       ? 'border-red-400 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   }`}
                   placeholder="Kota pendadaran"
                 />
@@ -478,10 +518,10 @@ export default function KlaimPage() {
                     updateField('tahunDadar', val);
                     if (fieldErrors.tahunDadar) setFieldErrors((x) => ({ ...x, tahunDadar: '' }));
                   }}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                  className={`${INPUT_CLASS} ${
                     fieldErrors.tahunDadar
                       ? 'border-red-400 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   }`}
                   placeholder="2024"
                 />
@@ -502,10 +542,10 @@ export default function KlaimPage() {
                     updateField('noHp', e.target.value);
                     if (fieldErrors.noHp) setFieldErrors((x) => ({ ...x, noHp: '' }));
                   }}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                  className={`${INPUT_CLASS} ${
                     fieldErrors.noHp
                       ? 'border-red-400 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   }`}
                   placeholder="08123456789"
                 />
@@ -527,10 +567,10 @@ export default function KlaimPage() {
                     updateField('email', e.target.value);
                     if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: '' }));
                   }}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm ${
+                  className={`${INPUT_CLASS} ${
                     fieldErrors.email
                       ? 'border-red-400 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : ''
                   }`}
                   placeholder="email@contoh.com"
                 />
@@ -548,7 +588,7 @@ export default function KlaimPage() {
                   value={form.alamat}
                   onChange={(e) => updateField('alamat', e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
+                  className={`${INPUT_CLASS} resize-none`}
                   placeholder="Alamat lengkap"
                 />
               </div>
@@ -577,15 +617,30 @@ export default function KlaimPage() {
                       }));
                   }}
                   disabled={distrikLoading}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                  className={INPUT_CLASS}
                 >
-                  <option value="">{distrikLoading ? 'Memuat distrik...' : 'Pilih Distrik'}</option>
+                  <option value="">
+                    {distrikLoading
+                      ? 'Memuat distrik...'
+                      : distrikError
+                        ? 'Gagal memuat - klik coba lagi'
+                        : 'Pilih Distrik'}
+                  </option>
                   {distriks.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.nama}
                     </option>
                   ))}
                 </select>
+                {distrikError && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-1 text-xs text-navy-600 hover:underline"
+                  >
+                    Coba lagi
+                  </button>
+                )}
                 {fieldErrors.distrikId && (
                   <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
                     {fieldErrors.distrikId}
@@ -607,14 +662,16 @@ export default function KlaimPage() {
                       setFieldErrors((x) => ({ ...x, wilayahId: '', rantingId: '' }));
                   }}
                   disabled={!selectedDistrikId || wilayahLoading}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                  className={INPUT_CLASS}
                 >
                   <option value="">
                     {!selectedDistrikId
                       ? 'Pilih Distrik terlebih dahulu'
                       : wilayahLoading
                         ? 'Memuat wilayah...'
-                        : 'Pilih Wilayah'}
+                        : wilayahError
+                          ? 'Gagal memuat - klik coba lagi'
+                          : 'Pilih Wilayah'}
                   </option>
                   {wilayahs.map((w) => (
                     <option key={w.id} value={w.id}>
@@ -622,6 +679,15 @@ export default function KlaimPage() {
                     </option>
                   ))}
                 </select>
+                {wilayahError && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-1 text-xs text-navy-600 hover:underline"
+                  >
+                    Coba lagi
+                  </button>
+                )}
                 {fieldErrors.wilayahId && (
                   <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
                     {fieldErrors.wilayahId}
@@ -640,14 +706,16 @@ export default function KlaimPage() {
                     if (fieldErrors.rantingId) setFieldErrors((x) => ({ ...x, rantingId: '' }));
                   }}
                   disabled={!selectedWilayahId || rantingLoading}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm disabled:opacity-50"
+                  className={INPUT_CLASS}
                 >
                   <option value="">
                     {!selectedWilayahId
                       ? 'Pilih Wilayah terlebih dahulu'
                       : rantingLoading
                         ? 'Memuat ranting...'
-                        : 'Pilih Ranting'}
+                        : rantingError
+                          ? 'Gagal memuat - klik coba lagi'
+                          : 'Pilih Ranting'}
                   </option>
                   {rantings.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -655,6 +723,15 @@ export default function KlaimPage() {
                     </option>
                   ))}
                 </select>
+                {rantingError && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-1 text-xs text-navy-600 hover:underline"
+                  >
+                    Coba lagi
+                  </button>
+                )}
                 {fieldErrors.rantingId && (
                   <span className="mt-1 block text-xs text-red-600 dark:text-red-400">
                     {fieldErrors.rantingId}
@@ -684,7 +761,7 @@ export default function KlaimPage() {
                 value={form.catatan}
                 onChange={(e) => updateField('catatan', e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none transition text-sm resize-none"
+                className={`${INPUT_CLASS} resize-none`}
                 placeholder="Catatan tambahan (opsional)"
               />
             </div>
