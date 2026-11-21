@@ -264,7 +264,11 @@ describe('GaleriService moderasi', () => {
       delete: jest.fn().mockResolvedValue({ id: 'g1' }),
     },
     galeriModerationLog: { create: jest.fn() },
-    galeriDeletionLog: { create: jest.fn() },
+    galeriDeletionLog: {
+      create: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    },
     $transaction: jest.fn(),
   };
 
@@ -644,6 +648,75 @@ describe('GaleriService moderasi', () => {
       await service.listAdmin({ status: 'draft' });
 
       expect(mockPrisma.galeri.findMany.mock.calls[0][0].where).toEqual({});
+    });
+  });
+
+  describe('listDeletions — riwayat hapus', () => {
+    it('default: terbaru dulu, halaman 1, 20 per halaman', async () => {
+      mockPrisma.galeriDeletionLog.findMany.mockResolvedValue([{ id: 'del-1' }]);
+      mockPrisma.galeriDeletionLog.count.mockResolvedValue(1);
+
+      const result = await service.listDeletions();
+
+      expect(mockPrisma.galeriDeletionLog.findMany).toHaveBeenCalledWith({
+        where: {},
+        orderBy: { deletedAt: 'desc' },
+        skip: 0,
+        take: 20,
+        include: { actor: { select: { id: true, namaLengkap: true, email: true } } },
+      });
+      expect(result.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
+    });
+
+    it('memfilter pelaku dan rentang tanggal', async () => {
+      await service.listDeletions({
+        actorId: ' mod-1 ',
+        from: '2026-11-01T00:00:00Z',
+        to: '2026-11-30T23:59:59Z',
+      });
+
+      const args = mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0];
+      expect(args.where).toEqual({
+        actorId: 'mod-1',
+        deletedAt: { gte: new Date('2026-11-01T00:00:00Z'), lte: new Date('2026-11-30T23:59:59Z') },
+      });
+      expect(mockPrisma.galeriDeletionLog.count).toHaveBeenCalledWith({ where: args.where });
+    });
+
+    it('hanya batas awal atau hanya batas akhir', async () => {
+      await service.listDeletions({ from: '2026-11-01' });
+      expect(mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0].where).toEqual({
+        deletedAt: { gte: new Date('2026-11-01') },
+      });
+
+      mockPrisma.galeriDeletionLog.findMany.mockClear();
+      await service.listDeletions({ to: '2026-11-30' });
+      // tanggal tanpa jam pada `to` mencakup seluruh hari itu
+      expect(mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0].where).toEqual({
+        deletedAt: { lte: new Date('2026-11-30T23:59:59.999Z') },
+      });
+    });
+
+    it('mengabaikan tanggal/actor yang tidak valid alih-alih error', async () => {
+      await service.listDeletions({ from: 'kemarin', to: '', actorId: '   ' });
+
+      expect(mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0].where).toEqual({});
+    });
+
+    it('paginasi: skip dihitung dari halaman dan limit dibatasi 100', async () => {
+      mockPrisma.galeriDeletionLog.count.mockResolvedValue(51);
+
+      const result = await service.listDeletions({ page: '3', limit: '25' });
+      expect(mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ skip: 50, take: 25 }),
+      );
+      expect(result.meta).toEqual({ total: 51, page: 3, limit: 25, totalPages: 3 });
+
+      mockPrisma.galeriDeletionLog.findMany.mockClear();
+      await service.listDeletions({ page: '0', limit: '500' });
+      expect(mockPrisma.galeriDeletionLog.findMany.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ skip: 0, take: 100 }),
+      );
     });
   });
 

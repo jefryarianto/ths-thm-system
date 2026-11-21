@@ -387,6 +387,7 @@ describe('Role contract — moderasi galeri', () => {
       'adminImage',
       'adminThumbnail',
       'adminList',
+      'deletionHistory',
       'history',
       'review',
       'reviewBulk',

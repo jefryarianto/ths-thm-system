@@ -94,6 +94,19 @@ export class GaleriController {
     return this.service.listAdmin({ status, page, limit });
   }
 
+  @Get('admin/deletions')
+  @ApiBearerAuth()
+  @Roles(...MODERATOR_ROLES)
+  deletionHistory(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('actorId') actorId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.service.listDeletions({ page, limit, actorId, from, to });
+  }
+
   @Get('admin/:id/image')
   @ApiBearerAuth()
   @Roles(...MODERATOR_ROLES)

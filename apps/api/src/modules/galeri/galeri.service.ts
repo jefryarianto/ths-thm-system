@@ -40,6 +40,13 @@ const MAX_DIMENSION = 8000;
 const MAX_METADATA_PIXELS = 100_000_000;
 
 type AdminQuery = { status?: string; page?: string; limit?: string };
+type DeletionQuery = {
+  page?: string;
+  limit?: string;
+  actorId?: string;
+  from?: string;
+  to?: string;
+};
 type ReviewStatus = 'APPROVED' | 'REJECTED';
 
 function parseStatusFilter(raw?: string): 'PENDING' | 'APPROVED' | 'REJECTED' | undefined {
@@ -47,6 +54,18 @@ function parseStatusFilter(raw?: string): 'PENDING' | 'APPROVED' | 'REJECTED' | 
   return status === 'PENDING' || status === 'APPROVED' || status === 'REJECTED'
     ? status
     : undefined;
+}
+
+/** `boundary: 'end'` membuat tanggal tanpa jam mencakup seluruh hari itu. */
+function parseDate(raw?: string, boundary: 'start' | 'end' = 'start'): Date | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  const value = new Date(trimmed);
+  if (Number.isNaN(value.getTime())) return undefined;
+  if (boundary === 'end' && /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    value.setUTCHours(23, 59, 59, 999);
+  }
+  return value;
 }
 
 function parsePositiveInt(raw: unknown, fallback: number): number {
@@ -240,6 +259,35 @@ export class GaleriService {
       data: items,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit), counts },
     };
+  }
+
+  /**
+   * Riwayat penghapusan untuk moderator: terbaru dulu, dengan filter sederhana
+   * pelaku (actorId) dan rentang waktu (from/to, inklusif). Param yang tidak
+   * valid diabaikan, bukan menghasilkan 400, supaya filter bisa diketik bebas.
+   */
+  async listDeletions(query: DeletionQuery = {}) {
+    const page = parsePositiveInt(query.page, 1);
+    const limit = Math.min(parsePositiveInt(query.limit, PAGE_SIZE_DEFAULT), PAGE_SIZE_MAX);
+    const actorId = query.actorId?.trim() || undefined;
+    const from = parseDate(query.from);
+    const to = parseDate(query.to, 'end');
+    const deletedAt =
+      from || to ? { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } : undefined;
+    const where = { ...(actorId ? { actorId } : {}), ...(deletedAt ? { deletedAt } : {}) };
+
+    const [data, total] = await Promise.all([
+      this.prisma.galeriDeletionLog.findMany({
+        where,
+        orderBy: { deletedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { actor: { select: { id: true, namaLengkap: true, email: true } } },
+      }),
+      this.prisma.galeriDeletionLog.count({ where }),
+    ]);
+
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async history(id: string) {
