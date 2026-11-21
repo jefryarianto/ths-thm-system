@@ -289,11 +289,14 @@ export class GaleriService {
     return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
+  /**
+   * Riwayat keputusan untuk satu foto. Tetap bisa dibaca setelah foto dihapus
+   * karena baris log menyimpan snapshot judul dan nama pelaku.
+   */
   async history(id: string) {
     return this.prisma.galeriModerationLog.findMany({
       where: { galeriId: id },
       orderBy: { createdAt: 'desc' },
-      include: { actor: { select: { id: true, namaLengkap: true } } },
     });
   }
 
@@ -306,19 +309,28 @@ export class GaleriService {
     return status === 'REJECTED' ? trimmed!.slice(0, 2000) : null;
   }
 
-  async review(id: string, status: ReviewStatus, reason: string | undefined, reviewerId: string) {
+  async review(
+    id: string,
+    status: ReviewStatus,
+    reason: string | undefined,
+    reviewerId: string,
+    reviewerNama?: string,
+  ) {
     const rejectedReason = this.normalizeReview(status, reason);
     const found = await this.prisma.galeri.findUnique({ where: { id } });
     if (!found) throw new NotFoundException('Foto tidak ditemukan');
     if (found.uploaderId === reviewerId)
       throw new ForbiddenException('Tidak dapat meninjau unggahan sendiri');
 
+    const actorNama = await this.resolveActorNama({ id: reviewerId, namaLengkap: reviewerNama });
     const updated = await this.applyReview(
       found.id,
+      found.judul,
       found.status,
       status,
       rejectedReason,
       reviewerId,
+      actorNama,
     );
     await this.emitQueueCounts();
     await this.notifyUploader(found, status, rejectedReason);
@@ -356,10 +368,12 @@ export class GaleriService {
   /** Terapkan satu keputusan + catat log secara atomik. */
   private async applyReview(
     id: string,
+    judulFoto: string,
     fromStatus: string,
     status: ReviewStatus,
     rejectedReason: string | null,
     reviewerId: string,
+    actorNama: string | null,
   ) {
     const [updated] = await this.prisma.$transaction([
       this.prisma.galeri.update({
@@ -375,7 +389,9 @@ export class GaleriService {
       this.prisma.galeriModerationLog.create({
         data: {
           galeriId: id,
+          judulFoto,
           actorId: reviewerId,
+          actorNama,
           action: 'REVIEW',
           fromStatus: fromStatus as 'PENDING' | 'APPROVED' | 'REJECTED',
           toStatus: status,
@@ -396,12 +412,16 @@ export class GaleriService {
     status: ReviewStatus,
     reason: string | undefined,
     reviewerId: string,
+    reviewerNama?: string,
   ) {
     const rejectedReason = this.normalizeReview(status, reason);
     const uniqueIds = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
     if (uniqueIds.length === 0) throw new BadRequestException('Pilih minimal satu foto');
     if (uniqueIds.length > MAX_REVIEW_BULK)
       throw new BadRequestException(`Maksimal ${MAX_REVIEW_BULK} foto per aksi`);
+
+    // Satu lookup nama untuk seluruh batch, bukan per foto.
+    const actorNama = await this.resolveActorNama({ id: reviewerId, namaLengkap: reviewerNama });
 
     const items = await this.prisma.galeri.findMany({
       where: { id: { in: uniqueIds } },
@@ -423,7 +443,15 @@ export class GaleriService {
         continue;
       }
       try {
-        await this.applyReview(id, item.status, status, rejectedReason, reviewerId);
+        await this.applyReview(
+          id,
+          item.judul,
+          item.status,
+          status,
+          rejectedReason,
+          reviewerId,
+          actorNama,
+        );
         updated++;
         diputuskan.push({ id: item.id, judul: item.judul, uploaderId: item.uploaderId });
       } catch {

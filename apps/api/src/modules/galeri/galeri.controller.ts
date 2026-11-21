@@ -145,7 +145,13 @@ export class GaleriController {
     @Body(new ValidationPipe({ whitelist: true, transform: true })) body: ReviewBulkGaleriDto,
     @Req() req: ScopedRequest,
   ) {
-    return this.service.reviewBulk(body.ids, body.status, body.reason, req.user!.id);
+    return this.service.reviewBulk(
+      body.ids,
+      body.status,
+      body.reason,
+      req.user!.id,
+      req.user!.namaLengkap,
+    );
   }
 
   @Patch(':id/review')
@@ -156,7 +162,7 @@ export class GaleriController {
     @Body(new ValidationPipe({ whitelist: true, transform: true })) body: ReviewGaleriDto,
     @Req() req: ScopedRequest,
   ) {
-    return this.service.review(id, body.status, body.reason, req.user!.id);
+    return this.service.review(id, body.status, body.reason, req.user!.id, req.user!.namaLengkap);
   }
 
   @Delete(':id')

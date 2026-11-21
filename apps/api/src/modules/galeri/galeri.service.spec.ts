@@ -290,7 +290,10 @@ describe('GaleriService moderasi', () => {
       update: jest.fn(),
       delete: jest.fn().mockResolvedValue({ id: 'g1' }),
     },
-    galeriModerationLog: { create: jest.fn() },
+    galeriModerationLog: {
+      create: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     galeriDeletionLog: {
       create: jest.fn(),
       findMany: jest.fn().mockResolvedValue([]),
@@ -365,6 +368,18 @@ describe('GaleriService moderasi', () => {
           reason: null,
         }),
       });
+    });
+
+    it('menyimpan snapshot judul foto dan nama peninjau di log', async () => {
+      mockPrisma.galeri.findUnique.mockResolvedValue(foto());
+
+      await service.review('g1', 'APPROVED', undefined, 'mod-1', 'Mod Satu');
+
+      expect(mockPrisma.galeriModerationLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ judulFoto: 'Foto 1', actorNama: 'Mod Satu' }),
+      });
+      // nama dari request dipakai, jadi tidak perlu lookup user tambahan
+      expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('menolak tanpa alasan harus gagal sebelum menyentuh database', async () => {
@@ -505,6 +520,14 @@ describe('GaleriService moderasi', () => {
       expect(mockPrisma.galeri.update).toHaveBeenCalledTimes(2);
       expect(mockPrisma.galeriModerationLog.create).toHaveBeenCalledTimes(2);
       expect(mockEvents.sendToRoles).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.galeriModerationLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ galeriId: 'g1', judulFoto: 'Foto 1' }),
+      });
+      expect(mockPrisma.galeriModerationLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ galeriId: 'g2', judulFoto: 'Foto 2' }),
+      });
+      // nama peninjau diresolusi sekali untuk seluruh batch
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledTimes(1);
     });
 
     it('melewati unggahan sendiri dan tetap memproses sisanya', async () => {
@@ -676,6 +699,34 @@ describe('GaleriService moderasi', () => {
       await service.listAdmin({ status: 'draft' });
 
       expect(mockPrisma.galeri.findMany.mock.calls[0][0].where).toEqual({});
+    });
+  });
+
+  describe('history — riwayat review', () => {
+    it('membaca log per foto tanpa join (tetap ada setelah foto dihapus)', async () => {
+      const logs = [
+        {
+          id: 'log-2',
+          galeriId: 'g1',
+          judulFoto: 'Foto 1',
+          actorId: 'mod-1',
+          actorNama: 'Mod Satu',
+          action: 'REVIEW',
+          fromStatus: 'PENDING',
+          toStatus: 'APPROVED',
+          reason: null,
+          createdAt: new Date('2026-11-02T00:00:00Z'),
+        },
+      ];
+      mockPrisma.galeriModerationLog.findMany.mockResolvedValue(logs);
+
+      const result = await service.history('g1');
+
+      expect(mockPrisma.galeriModerationLog.findMany).toHaveBeenCalledWith({
+        where: { galeriId: 'g1' },
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(result).toEqual(logs);
     });
   });
 

@@ -47,7 +47,6 @@ model Galeri {
   thumbKey       String?      @unique @map("thumb_key")
   reviewer       User?        @relation("GaleriReviewer", fields: [reviewerId], references: [id])
   uploader       User?        @relation("GaleriUploader", fields: [uploaderId], references: [id])
-  moderationLogs GaleriModerationLog[]
 
   @@index([status, isVisible, tanggal])
   @@index([uploaderId])
@@ -55,17 +54,20 @@ model Galeri {
   @@map("galeri")
 }
 
+/// Riwayat keputusan moderasi. Tanpa FK ke `galeri`/`users` supaya barisnya
+/// tetap ada setelah foto (atau akun pelaku) dihapus; identitas disimpan sebagai
+/// snapshot. Append-only lewat trigger DB.
 model GaleriModerationLog {
   id         String       @id @default(uuid())
   galeriId   String       @map("galeri_id")
+  judulFoto  String?      @map("judul_foto")
   actorId    String?      @map("actor_id")
+  actorNama  String?      @map("actor_nama")
   action     String       @default("REVIEW")
   fromStatus StatusGaleri? @map("from_status")
   toStatus   StatusGaleri  @map("to_status")
   reason     String?
   createdAt  DateTime     @default(now()) @map("created_at")
-  galeri     Galeri       @relation(fields: [galeriId], references: [id], onDelete: Cascade)
-  actor      User?        @relation("GaleriModerationActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([galeriId, createdAt])
   @@map("galeri_moderation_log")
@@ -270,7 +272,6 @@ model User {
   dokumenOrgUploaded          DokumenOrganisasi[]   @relation("DokumenOrgUploader")
   galeriReviewed              Galeri[]              @relation("GaleriReviewer")
   galeriUploads               Galeri[]              @relation("GaleriUploader")
-  galeriModerationLogs        GaleriModerationLog[] @relation("GaleriModerationActor")
   hasilPendadaranDivValidated HasilPendadaran[]     @relation("HasilPendadaranValidasi")
   importBatches               ImportBatch[]         @relation("ImportBatchImportedBy")
   iuranDiverifikasi           Iuran[]               @relation("IuranVerifikator")
