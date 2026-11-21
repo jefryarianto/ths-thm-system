@@ -123,6 +123,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install
+      # jsdom murni: tidak butuh build/DB, jadi jalankan sebelum build agar gagal cepat.
+      - name: Unit test web (vitest)
+        run: pnpm --filter @ths-thm/web exec vitest run
       - run: pnpm --filter @ths-thm/web build
 
   # ─── Test Flutter (mobile) ────────────────────────────────────────
