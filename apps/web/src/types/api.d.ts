@@ -1641,6 +1641,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/members/{id}/digital-card/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate KTA manual dari member area */
+        post: operations["MembersController_generateDigitalCard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/members/{id}/digital-card/pdf": {
         parameters: {
             query?: never;
@@ -1686,6 +1703,23 @@ export interface paths {
         get: operations["MembersController_getCardSecurity"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/members/{id}/digital-card/security/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset riwayat pemindaian QR kartu digital */
+        post: operations["MembersController_resetCardSecurity"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2299,6 +2333,58 @@ export interface paths {
         /** Proses klaim */
         post: operations["ClaimsController_process"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/bukti": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tambah bukti keanggotaan multi-dokumen ke klaim */
+        post: operations["ClaimsController_addBukti"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/dokumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tambah dokumen pendukung multi-dokumen ke klaim */
+        post: operations["ClaimsController_addDokumen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/files/{fileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download file bukti klaim */
+        get: operations["ClaimsController_downloadFile"];
+        put?: never;
+        post?: never;
+        /** Hapus file bukti klaim */
+        delete: operations["ClaimsController_deleteFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4574,6 +4660,92 @@ export interface paths {
         put?: never;
         /** Konfirmasi pembayaran manual */
         post: operations["DuesController_submitPaymentConfirmation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dues/{periode}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Kunci periode iuran (terapkan grace period standar) */
+        patch: operations["DuesController_lockDues"];
+        trace?: never;
+    };
+    "/dues/{periode}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Unlock periode iuran */
+        patch: operations["DuesController_unlockDues"];
+        trace?: never;
+    };
+    "/dues/lock-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Periksa status lock periode iuran */
+        get: operations["DuesController_getLockStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dues/{periode}/grace-override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke grace period override periode iuran */
+        delete: operations["DuesController_revokeGraceOverride"];
+        options?: never;
+        head?: never;
+        /** Override grace period periode iuran (kustom) */
+        patch: operations["DuesController_overrideGracePeriod"];
+        trace?: never;
+    };
+    "/dues/cron/cleanup-expired-locks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Expire locks yang sudah habis grace periodnya */
+        post: operations["DuesController_expireExpiredLocks"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7383,6 +7555,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/galeri/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_adminList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_deletionHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/galeri/admin/{id}/image": {
         parameters: {
             query?: never;
@@ -7399,20 +7603,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/galeri/admin": {
+    "/galeri/admin/{id}/thumbnail": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["GaleriController_adminList"];
+        get: operations["GaleriController_adminThumbnail"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/review/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["GaleriController_reviewBulk"];
         trace?: never;
     };
     "/galeri/{id}/review": {
@@ -7455,6 +7691,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GaleriController_image"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/{id}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_thumbnail"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7603,7 +7855,7 @@ export interface components {
             /** @example Ahmad Fauzi */
             namaLengkap: string;
             /** @enum {string} */
-            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7614,7 +7866,7 @@ export interface components {
             password?: string;
             namaLengkap?: string;
             /** @enum {string} */
-            role?: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role?: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7705,41 +7957,6 @@ export interface components {
         };
         RejectRegistrationDto: {
             reason?: string;
-        };
-        CreateClaimDto: {
-            /** @description ID anggota (opsional, ada jika klaim dokumen) */
-            anggotaId?: string;
-            /**
-             * @description Tipe klaim
-             * @enum {string}
-             */
-            tipe: "keanggotaan" | "dokumen";
-            catatan?: string;
-            /** @description Nama lengkap pelapor */
-            namaLengkap?: string;
-            /**
-             * @description Jenis kelamin
-             * @enum {string}
-             */
-            jenisKelamin?: "L" | "P";
-            /** @description Tempat lahir */
-            tempatLahir?: string;
-            /** @description Tanggal lahir (ISO string) */
-            tanggalLahir?: string;
-            /** @description Tempat pendadaran (dadar) */
-            tempatDadar?: string;
-            /** @description Tahun pendadaran (dadar) */
-            tahunDadar?: string;
-            /** @description Alamat lengkap */
-            alamat?: string;
-            /** @description Nomor HP */
-            noHp?: string;
-            /** @description Email */
-            email?: string;
-            /** @description ID ranting asal keanggotaan */
-            rantingId?: string;
-            /** @description Bukti dokumen [{tipe: string, url: string}] */
-            buktiDokumen?: string[];
         };
         UpdateClaimDto: {
             catatan?: string;
@@ -8080,6 +8297,9 @@ export interface components {
             buktiBayarPath?: string;
             catatan?: string;
         };
+        LockRequest: Record<string, never>;
+        UnlockRequest: Record<string, never>;
+        OverrideRequest: Record<string, never>;
         CreatePeriodDto: {
             nama: string;
             tglMulai: string;
@@ -8211,7 +8431,7 @@ export interface components {
              * @example admin_ranting
              * @enum {string}
              */
-            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             /** @example members */
             menuKey: string;
             /** @example true */
@@ -8228,6 +8448,13 @@ export interface components {
             permissions: {
                 [key: string]: boolean;
             };
+        };
+        ReviewBulkGaleriDto: {
+            /** @enum {string} */
+            status: "APPROVED" | "REJECTED";
+            reason?: string;
+            /** @description Maksimal 100 id */
+            ids: string[];
         };
         ReviewGaleriDto: {
             /** @enum {string} */
@@ -10321,6 +10548,25 @@ export interface operations {
             };
         };
     };
+    MembersController_generateDigitalCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     MembersController_getDigitalCardPdf: {
         parameters: {
             query?: never;
@@ -10373,6 +10619,25 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MembersController_resetCardSecurity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11236,7 +11501,28 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateClaimDto"];
+                "multipart/form-data": {
+                    /** @enum {string} */
+                    tipe?: "keanggotaan" | "dokumen";
+                    namaLengkap?: string;
+                    /** @enum {string} */
+                    jenisKelamin?: "L" | "P";
+                    tempatLahir?: string;
+                    /** Format: date */
+                    tanggalLahir?: string;
+                    tempatDadar?: string;
+                    tahunDadar?: string;
+                    alamat?: string;
+                    noHp?: string;
+                    /** Format: email */
+                    email?: string;
+                    catatan?: string;
+                    rantingId?: string;
+                    /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
+                    buktiFiles?: string[];
+                    /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
+                    dokumenPendukungFiles?: string[];
+                };
             };
         };
         responses: {
@@ -11363,6 +11649,84 @@ export interface operations {
         requestBody?: never;
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_addBukti: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_addDokumen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_downloadFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14990,6 +15354,128 @@ export interface operations {
                 "application/json": components["schemas"]["PaymentConfirmationDto"];
             };
         };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_lockDues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LockRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_unlockDues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlockRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_getLockStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_revokeGraceOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_overrideGracePeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverrideRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_expireExpiredLocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             201: {
                 headers: {
@@ -19240,6 +19726,50 @@ export interface operations {
             };
         };
     };
+    GaleriController_adminList: {
+        parameters: {
+            query: {
+                status: string;
+                page: string;
+                limit: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_deletionHistory: {
+        parameters: {
+            query: {
+                page: string;
+                limit: string;
+                actorId: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     GaleriController_adminImage: {
         parameters: {
             query?: never;
@@ -19259,14 +19789,56 @@ export interface operations {
             };
         };
     };
-    GaleriController_adminList: {
+    GaleriController_adminThumbnail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_reviewBulk: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewBulkGaleriDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -19301,7 +19873,9 @@ export interface operations {
     };
     GaleriController_delete: {
         parameters: {
-            query?: never;
+            query: {
+                reason: string;
+            };
             header?: never;
             path: {
                 id: string;
@@ -19319,6 +19893,25 @@ export interface operations {
         };
     };
     GaleriController_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_thumbnail: {
         parameters: {
             query?: never;
             header?: never;

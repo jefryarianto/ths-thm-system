@@ -3262,6 +3262,35 @@
         ]
       }
     },
+    "/members/{id}/digital-card/generate": {
+      "post": {
+        "operationId": "MembersController_generateDigitalCard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate KTA manual dari member area",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
     "/members/{id}/digital-card/pdf": {
       "get": {
         "operationId": "MembersController_getDigitalCardPdf",
@@ -3352,6 +3381,35 @@
           }
         ],
         "summary": "Status keamanan QR & riwayat pemindaian kartu digital",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/members/{id}/digital-card/security/reset": {
+      "post": {
+        "operationId": "MembersController_resetCardSecurity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reset riwayat pemindaian QR kartu digital",
         "tags": [
           "Members"
         ]
@@ -4756,9 +4814,73 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateClaimDto"
+                "type": "object",
+                "properties": {
+                  "tipe": {
+                    "type": "string",
+                    "enum": [
+                      "keanggotaan",
+                      "dokumen"
+                    ]
+                  },
+                  "namaLengkap": {
+                    "type": "string"
+                  },
+                  "jenisKelamin": {
+                    "type": "string",
+                    "enum": [
+                      "L",
+                      "P"
+                    ]
+                  },
+                  "tempatLahir": {
+                    "type": "string"
+                  },
+                  "tanggalLahir": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "tempatDadar": {
+                    "type": "string"
+                  },
+                  "tahunDadar": {
+                    "type": "string"
+                  },
+                  "alamat": {
+                    "type": "string"
+                  },
+                  "noHp": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "catatan": {
+                    "type": "string"
+                  },
+                  "rantingId": {
+                    "type": "string"
+                  },
+                  "buktiFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Bukti keanggotaan (max 3 files, image/PDF, 5MB each)"
+                  },
+                  "dokumenPendukungFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Dokumen pendukung lain (max 3 files, image/PDF, 5MB each)"
+                  }
+                }
               }
             }
           }
@@ -4964,6 +5086,136 @@
           }
         ],
         "summary": "Proses klaim",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/claims/{id}/bukti": {
+      "post": {
+        "operationId": "ClaimsController_addBukti",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tambah bukti keanggotaan multi-dokumen ke klaim",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/claims/{id}/dokumen": {
+      "post": {
+        "operationId": "ClaimsController_addDokumen",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tambah dokumen pendukung multi-dokumen ke klaim",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/claims/{id}/files/{fileId}": {
+      "get": {
+        "operationId": "ClaimsController_downloadFile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download file bukti klaim",
+        "tags": [
+          "Claims"
+        ]
+      },
+      "delete": {
+        "operationId": "ClaimsController_deleteFile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hapus file bukti klaim",
         "tags": [
           "Claims"
         ]
@@ -10732,6 +10984,190 @@
           }
         ],
         "summary": "Konfirmasi pembayaran manual",
+        "tags": [
+          "Dues"
+        ]
+      }
+    },
+    "/dues/{periode}/lock": {
+      "patch": {
+        "operationId": "DuesController_lockDues",
+        "parameters": [
+          {
+            "name": "periode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kunci periode iuran (terapkan grace period standar)",
+        "tags": [
+          "Dues"
+        ]
+      }
+    },
+    "/dues/{periode}/unlock": {
+      "patch": {
+        "operationId": "DuesController_unlockDues",
+        "parameters": [
+          {
+            "name": "periode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlock periode iuran",
+        "tags": [
+          "Dues"
+        ]
+      }
+    },
+    "/dues/lock-status": {
+      "get": {
+        "operationId": "DuesController_getLockStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Periksa status lock periode iuran",
+        "tags": [
+          "Dues"
+        ]
+      }
+    },
+    "/dues/{periode}/grace-override": {
+      "patch": {
+        "operationId": "DuesController_overrideGracePeriod",
+        "parameters": [
+          {
+            "name": "periode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Override grace period periode iuran (kustom)",
+        "tags": [
+          "Dues"
+        ]
+      },
+      "delete": {
+        "operationId": "DuesController_revokeGraceOverride",
+        "parameters": [
+          {
+            "name": "periode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke grace period override periode iuran",
+        "tags": [
+          "Dues"
+        ]
+      }
+    },
+    "/dues/cron/cleanup-expired-locks": {
+      "post": {
+        "operationId": "DuesController_expireExpiredLocks",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Expire locks yang sudah habis grace periodnya",
         "tags": [
           "Dues"
         ]
@@ -16779,6 +17215,110 @@
         ]
       }
     },
+    "/galeri/admin": {
+      "get": {
+        "operationId": "GaleriController_adminList",
+        "parameters": [
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/admin/deletions": {
+      "get": {
+        "operationId": "GaleriController_deletionHistory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
     "/galeri/admin/{id}/image": {
       "get": {
         "operationId": "GaleriController_adminImage",
@@ -16807,10 +17347,76 @@
         ]
       }
     },
-    "/galeri/admin": {
+    "/galeri/admin/{id}/thumbnail": {
       "get": {
-        "operationId": "GaleriController_adminList",
+        "operationId": "GaleriController_adminThumbnail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/admin/{id}/history": {
+      "get": {
+        "operationId": "GaleriController_history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/review/bulk": {
+      "patch": {
+        "operationId": "GaleriController_reviewBulk",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewBulkGaleriDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
@@ -16875,6 +17481,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "reason",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -16895,6 +17509,29 @@
     "/galeri/{id}/image": {
       "get": {
         "operationId": "GaleriController_image",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Galeri"
+        ]
+      }
+    },
+    "/galeri/{id}/thumbnail": {
+      "get": {
+        "operationId": "GaleriController_thumbnail",
         "parameters": [
           {
             "name": "id",
@@ -17360,6 +17997,7 @@
               "admin_wilayah",
               "admin_ranting",
               "admin_kegiatan",
+              "admin_berita",
               "penguji",
               "anggota"
             ]
@@ -17404,6 +18042,7 @@
               "admin_wilayah",
               "admin_ranting",
               "admin_kegiatan",
+              "admin_berita",
               "penguji",
               "anggota"
             ]
@@ -17687,80 +18326,6 @@
             "type": "string"
           }
         }
-      },
-      "CreateClaimDto": {
-        "type": "object",
-        "properties": {
-          "anggotaId": {
-            "type": "string",
-            "description": "ID anggota (opsional, ada jika klaim dokumen)"
-          },
-          "tipe": {
-            "type": "string",
-            "enum": [
-              "keanggotaan",
-              "dokumen"
-            ],
-            "description": "Tipe klaim"
-          },
-          "catatan": {
-            "type": "string"
-          },
-          "namaLengkap": {
-            "type": "string",
-            "description": "Nama lengkap pelapor"
-          },
-          "jenisKelamin": {
-            "type": "string",
-            "enum": [
-              "L",
-              "P"
-            ],
-            "description": "Jenis kelamin"
-          },
-          "tempatLahir": {
-            "type": "string",
-            "description": "Tempat lahir"
-          },
-          "tanggalLahir": {
-            "type": "string",
-            "description": "Tanggal lahir (ISO string)"
-          },
-          "tempatDadar": {
-            "type": "string",
-            "description": "Tempat pendadaran (dadar)"
-          },
-          "tahunDadar": {
-            "type": "string",
-            "description": "Tahun pendadaran (dadar)"
-          },
-          "alamat": {
-            "type": "string",
-            "description": "Alamat lengkap"
-          },
-          "noHp": {
-            "type": "string",
-            "description": "Nomor HP"
-          },
-          "email": {
-            "type": "string",
-            "description": "Email"
-          },
-          "rantingId": {
-            "type": "string",
-            "description": "ID ranting asal keanggotaan"
-          },
-          "buktiDokumen": {
-            "description": "Bukti dokumen [{tipe: string, url: string}]",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "tipe"
-        ]
       },
       "UpdateClaimDto": {
         "type": "object",
@@ -18860,6 +19425,18 @@
           }
         }
       },
+      "LockRequest": {
+        "type": "object",
+        "properties": {}
+      },
+      "UnlockRequest": {
+        "type": "object",
+        "properties": {}
+      },
+      "OverrideRequest": {
+        "type": "object",
+        "properties": {}
+      },
       "CreatePeriodDto": {
         "type": "object",
         "properties": {
@@ -19268,6 +19845,7 @@
               "admin_wilayah",
               "admin_ranting",
               "admin_kegiatan",
+              "admin_berita",
               "penguji",
               "anggota"
             ],
@@ -19305,6 +19883,33 @@
         },
         "required": [
           "permissions"
+        ]
+      },
+      "ReviewBulkGaleriDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "ids": {
+            "description": "Maksimal 100 id",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "ids"
         ]
       },
       "ReviewGaleriDto": {

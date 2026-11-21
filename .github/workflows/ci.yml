@@ -70,11 +70,15 @@ jobs:
           pnpm --filter @ths-thm/api generate:client
       - name: Verifikasi swagger.json & api.d.ts sinkron
         run: |
-          git diff --exit-code -- apps/api/swagger.json \
-            || echo "⚠️ Perubahan kecil dalam swagger.json terdeteksi (perbedaan Node version CI vs local)."
-          git diff --exit-code -- apps/web/src/types/api.d.ts \
-            || echo "⚠️ Perubahan kecil dalam api.d.ts terdeteksi (perbedaan Node version CI vs local)."
+          # Gagal keras bila regenerasi menghasilkan diff. Jangan pernah menelan
+          # exit code di sini (|| true, || echo, atau `;`): guard yang selalu hijau
+          # tidak menjaga apa pun.
+          if ! git diff --exit-code --stat -- apps/api/swagger.json apps/web/src/types/api.d.ts; then
+            echo "::error::Kontrak API tidak sinkron. Jalankan: pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client, lalu commit apps/api/swagger.json + apps/web/src/types/api.d.ts."
+            exit 1
+          fi
           echo "✅ Kontrak API sinkron"
+
   test-api:
     runs-on: ubuntu-latest
     services:
