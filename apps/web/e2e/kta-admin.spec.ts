@@ -1,46 +1,98 @@
 import { test, expect } from '@playwright/test';
 import { mockAuth, mockLoginSuccess } from './helpers';
 
-test.describe('Admin KTA Flow', () => {
-  const mockMember = {
-    nama: 'Test Member',
-    nomor: 'test-member-1',
-    ranting: 'Ranting Sukun',
-    tempatDadar: 'Malang',
-    tahunDadar: '2015',
-    tingkatan: 'pratama',
-    tempatTanggalLahir: 'Malang, 01-01-1990',
+/**
+ * Halaman KTA memakai `@/lib/kta/api` yang memanggil `${NEXT_PUBLIC_API_URL}/api`,
+ * BUKAN origin Next.js. Di CI `NEXT_PUBLIC_API_URL` = http://127.0.0.1:59999
+ * (port mati khusus E2E), jadi mock harus mencocokkan URL absolut itu — bukan
+ * catch-all `E2E_BASE_URL/api/**` milik helper auth.
+ *
+ * Endpoint yang dipakai (lihat src/lib/kta/api.ts):
+ *   GET /api/members?search=<q>&limit=20
+ *   GET /api/members/<id>
+ *   GET /api/members/<id>/digital-card
+ */
+const MOCK_MEMBER = {
+  id: 'test-member-1',
+  nomorAnggota: 'test-member-1',
+  namaLengkap: 'Test Member',
+  jenisKelamin: 'L',
+  tempatLahir: 'Malang',
+  tanggalLahir: '1990-01-01',
+  tempatDadar: 'Malang',
+  tahunDadar: '2015',
+  alamat: 'Jl. Melati No. 12',
+  pekerjaan: 'Wiraswasta',
+  statusKeanggotaan: 'AKTIF',
+  tingkat: 'pratama',
+  tanggalBerlakuSampai: '2031-10-31',
+  ranting: { nama: 'Ranting Sukun', wilayah: { distrik: { nama: 'Klojen' } } },
+};
+
+const MOCK_DIGITAL_CARD = {
+  fotoDataUrl: null,
+  qrCode: null,
+  signatureImage: null,
+  card: {
+    verificationUrl: 'https://ths-thm.cloud/verify/test-member-1',
+    signerName: 'Koordinator',
+  },
+  member: {
     pekerjaan: 'Wiraswasta',
-    status: 'Aktif',
-    alamat: 'Jl. Melati No. 12',
-    berlakuSampai: '2031-10',
-  };
+    tanggalBerlakuSampai: '2031-10-31',
+    pelantikanTahun: '2015',
+    tanggalPelantikan: 'Malang, 2015',
+  },
+};
 
-  test.beforeEach(async ({ page }) => {
-    // Intercept anggota search API
-    await page.route(/\/api\/anggota\/search/, async (route) => {
-      await route.fulfill({
+/**
+ * Daftarkan mock KTA. Panggil SETELAH mockAuth()/mockLoginSuccess(): handler
+ * yang terdaftar terakhir menang pada Playwright 1.60+.
+ */
+async function registerKtaMocks(page: import('@playwright/test').Page) {
+  await page.route(/\/api\/members(\/|\?|$)/, async (route) => {
+    const { pathname, searchParams } = new URL(route.request().url());
+
+    if (pathname.endsWith('/digital-card')) {
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([mockMember]),
+        body: JSON.stringify({ success: true, data: MOCK_DIGITAL_CARD }),
       });
-    });
+    }
 
-    // Intercept member detail API
-    await page.route(/\/api\/anggota\/(test-member-1|123)/, async (route) => {
-      await route.fulfill({
+    if (pathname === '/api/members') {
+      // Pencarian: halaman hanya mengirim permintaan setelah >= 2 karakter.
+      const query = searchParams.get('search') || '';
+      const data = query.length >= 2 ? [MOCK_MEMBER] : [];
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(mockMember),
+        body: JSON.stringify({
+          success: true,
+          data,
+          meta: { total: data.length, totalPages: 1, page: 1, limit: 20 },
+        }),
       });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: MOCK_MEMBER }),
     });
   });
+}
 
+test.describe('Admin KTA Flow', () => {
   test('admin can preview and export KTA', async ({ page }) => {
     await mockLoginSuccess(page);
+    await registerKtaMocks(page);
 
     await page.goto('/login');
-    const identifierInput = page.locator('input[name="identifier"], input[name="email"], #identifier').first();
+    const identifierInput = page
+      .locator('input[name="identifier"], input[name="email"], #identifier')
+      .first();
     await identifierInput.fill('admin@example.com');
     await page.fill('input[type="password"]', 'password');
     await page.click('button[type="submit"]');
@@ -72,14 +124,7 @@ test.describe('Admin KTA Flow', () => {
 
   test('admin can search members and navigate to preview', async ({ page }) => {
     await mockAuth(page, { role: 'admin_ranting' });
-
-    await page.route(/\/api\/anggota\/search/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([mockMember]),
-      });
-    });
+    await registerKtaMocks(page);
 
     await page.goto('/admin/kta');
     await expect(page.locator('h1')).toContainText('Kelola Kartu Tanda Anggota (KTA)');
@@ -99,6 +144,7 @@ test.describe('Admin KTA Flow', () => {
 
   test('renders both front and back card preview with download buttons', async ({ page }) => {
     await mockAuth(page, { role: 'admin_ranting' });
+    await registerKtaMocks(page);
 
     await page.goto('/admin/kta/test-member-1');
 
@@ -125,6 +171,7 @@ test.describe('Admin KTA Flow', () => {
 
   test('prints generated PNG in new window when print button is clicked', async ({ page }) => {
     await mockAuth(page, { role: 'admin_ranting' });
+    await registerKtaMocks(page);
 
     await page.goto('/admin/kta/test-member-1');
     await expect(page.locator('text=Depan').first()).toBeVisible({ timeout: 10000 });
@@ -137,7 +184,9 @@ test.describe('Admin KTA Flow', () => {
       const fakeWindow = {
         document: { write: () => {}, close: () => {}, getElementById: () => null },
         focus: () => {},
-        print: () => { w.__printed = true; },
+        print: () => {
+          w.__printed = true;
+        },
       };
       window.open = (() => fakeWindow) as unknown as typeof window.open;
     });

@@ -115,7 +115,14 @@ export async function mockAuth(
     // NOTE: accessToken cookie intentionally removed per FASE 29P
     // Only refreshToken cookie is used for session verification
     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
-    { name: 'csrf_token', value: MOCK_CSRF_TOKEN, domain: cookieDomain, path: '/', httpOnly: false, sameSite: 'lax' }
+    {
+      name: 'csrf_token',
+      value: MOCK_CSRF_TOKEN,
+      domain: cookieDomain,
+      path: '/',
+      httpOnly: false,
+      sameSite: 'Lax',
+    },
   ]);
 
   // ── 2. Catch-all interceptors (registered FIRST — act as defaults) ──
