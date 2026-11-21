@@ -78,6 +78,7 @@ model GaleriDeletionLog {
   id          String       @id @default(uuid())
   galeriId    String       @map("galeri_id")
   actorId     String?      @map("actor_id")
+  actorNama   String?      @map("actor_nama")
   actorRole   String?      @map("actor_role")
   reason      String?
   judul       String
@@ -89,7 +90,6 @@ model GaleriDeletionLog {
   ukuranBytes Int?         @map("ukuran_bytes")
   fotoCreatedAt DateTime?  @map("foto_created_at")
   deletedAt   DateTime     @default(now()) @map("deleted_at")
-  actor       User?        @relation("GaleriDeletionActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
   @@index([actorId, deletedAt])
@@ -271,7 +271,6 @@ model User {
   galeriReviewed              Galeri[]              @relation("GaleriReviewer")
   galeriUploads               Galeri[]              @relation("GaleriUploader")
   galeriModerationLogs        GaleriModerationLog[] @relation("GaleriModerationActor")
-  galeriDeletionLogs          GaleriDeletionLog[]   @relation("GaleriDeletionActor")
   hasilPendadaranDivValidated HasilPendadaran[]     @relation("HasilPendadaranValidasi")
   importBatches               ImportBatch[]         @relation("ImportBatchImportedBy")
   iuranDiverifikasi           Iuran[]               @relation("IuranVerifikator")

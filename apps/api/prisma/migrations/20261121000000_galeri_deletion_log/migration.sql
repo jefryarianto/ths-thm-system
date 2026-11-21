@@ -5,6 +5,7 @@ CREATE TABLE "galeri_deletion_log" (
     "id" TEXT NOT NULL,
     "galeri_id" TEXT NOT NULL,
     "actor_id" TEXT,
+    "actor_nama" TEXT,
     "actor_role" TEXT,
     "reason" TEXT,
     "judul" TEXT NOT NULL,
@@ -29,8 +30,10 @@ CREATE INDEX "galeri_deletion_log_actor_id_deleted_at_idx"
 CREATE INDEX "galeri_deletion_log_galeri_id_idx"
   ON "galeri_deletion_log"("galeri_id");
 
-ALTER TABLE "galeri_deletion_log" ADD CONSTRAINT "galeri_deletion_log_actor_id_fkey"
-  FOREIGN KEY ("actor_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- Sengaja tanpa foreign key ke `users`: FK ON DELETE SET NULL adalah UPDATE
+-- internal yang akan ditolak trigger append-only di bawah, sehingga menghapus
+-- user bisa gagal. Identitas pelaku disimpan sebagai snapshot (actor_id +
+-- actor_nama), jadi log tetap terbaca walau akunnya sudah tidak ada.
 
 -- Append-only: baris audit tidak boleh diubah maupun dihapus.
 CREATE OR REPLACE FUNCTION "galeri_deletion_log_append_only"() RETURNS trigger

@@ -135,6 +135,7 @@ describe('GaleriService delete — jejak audit', () => {
     galeriDeletionLog: {
       create: jest.fn().mockResolvedValue({ id: 'log-1' }),
     },
+    user: { findUnique: jest.fn().mockResolvedValue(null) },
     $transaction: jest.fn((ops: Promise<unknown>[]): Promise<unknown[]> => Promise.all(ops)),
   };
 
@@ -162,7 +163,7 @@ describe('GaleriService delete — jejak audit', () => {
   it('mencatat siapa, kapan, foto mana, dan alasannya saat moderator menghapus', async () => {
     const result = await service.delete(
       'g1',
-      { id: 'mod-1', role: 'admin_berita' },
+      { id: 'mod-1', role: 'admin_berita', namaLengkap: 'Mod Satu' },
       'Duplikat foto',
     );
 
@@ -171,6 +172,7 @@ describe('GaleriService delete — jejak audit', () => {
       data: expect.objectContaining({
         galeriId: 'g1',
         actorId: 'mod-1',
+        actorNama: 'Mod Satu',
         actorRole: 'admin_berita',
         reason: 'Duplikat foto',
         judul: 'Foto Kegiatan',
@@ -184,6 +186,31 @@ describe('GaleriService delete — jejak audit', () => {
       }),
     });
     expect(mockPrisma.galeri.delete).toHaveBeenCalledWith({ where: { id: 'g1' } });
+  });
+
+  it('mengambil nama pelaku dari tabel user bila tidak ada di request', async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ namaLengkap: 'Mod Dari DB' });
+
+    await service.delete('g1', { id: 'mod-1', role: 'superadmin' });
+
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: 'mod-1' },
+      select: { namaLengkap: true },
+    });
+    expect(mockPrisma.galeriDeletionLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorNama: 'Mod Dari DB' }),
+    });
+  });
+
+  it('tetap menghapus walau nama pelaku tidak bisa dibaca', async () => {
+    mockPrisma.user.findUnique.mockRejectedValueOnce(new Error('db sibuk'));
+
+    await expect(service.delete('g1', { id: 'mod-1', role: 'superadmin' })).resolves.toEqual({
+      success: true,
+    });
+    expect(mockPrisma.galeriDeletionLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorNama: null }),
+    });
   });
 
   it('mengirim pencatatan log dan penghapusan sebagai satu transaksi', async () => {
@@ -269,6 +296,7 @@ describe('GaleriService moderasi', () => {
       findMany: jest.fn().mockResolvedValue([]),
       count: jest.fn().mockResolvedValue(0),
     },
+    user: { findUnique: jest.fn().mockResolvedValue(null) },
     $transaction: jest.fn(),
   };
 
@@ -663,7 +691,6 @@ describe('GaleriService moderasi', () => {
         orderBy: { deletedAt: 'desc' },
         skip: 0,
         take: 20,
-        include: { actor: { select: { id: true, namaLengkap: true, email: true } } },
       });
       expect(result.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 });
     });

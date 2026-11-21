@@ -282,7 +282,6 @@ export class GaleriService {
         orderBy: { deletedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
-        include: { actor: { select: { id: true, namaLengkap: true, email: true } } },
       }),
       this.prisma.galeriDeletionLog.count({ where }),
     ]);
@@ -439,7 +438,32 @@ export class GaleriService {
     return { updated, failed };
   }
 
-  async delete(id: string, user: { id: string; role: Role }, reason?: string) {
+  /**
+   * Nama pelaku disimpan sebagai snapshot agar log tidak bergantung pada tabel
+   * `users` (dan tidak butuh FK yang bisa bentrok dengan trigger append-only).
+   */
+  private async resolveActorNama(user: {
+    id: string;
+    namaLengkap?: string;
+  }): Promise<string | null> {
+    const dariRequest = user.namaLengkap?.trim();
+    if (dariRequest) return dariRequest;
+    try {
+      const found = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { namaLengkap: true },
+      });
+      return found?.namaLengkap ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async delete(
+    id: string,
+    user: { id: string; role: Role; namaLengkap?: string },
+    reason?: string,
+  ) {
     const item = await this.prisma.galeri.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('Foto tidak ditemukan');
     // Hapus mengikuti aturan moderasi: pemilik unggahan sendiri, atau
@@ -447,6 +471,7 @@ export class GaleriService {
     if (item.uploaderId !== user.id && !MODERATOR_ROLES.includes(user.role))
       throw new ForbiddenException();
     const catatan = reason?.trim().slice(0, 500) || null;
+    const actorNama = await this.resolveActorNama(user);
     // Log dan penghapusan ditulis dalam satu transaksi supaya tidak mungkin ada
     // foto yang hilang tanpa jejak audit (atau jejak tanpa foto yang hilang).
     // Baris log menyimpan snapshot karena `galeri` sudah tidak ada setelahnya.
@@ -455,6 +480,7 @@ export class GaleriService {
         data: {
           galeriId: item.id,
           actorId: user.id,
+          actorNama,
           actorRole: user.role,
           reason: catatan,
           judul: item.judul,
