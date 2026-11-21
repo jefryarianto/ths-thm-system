@@ -91,7 +91,7 @@ export class NraService {
         );
       } else {
         try {
-          await db.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${NRA_ADVISORY_LOCK_PREFIX}${rantingId}, 0))`;
+          await db.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${NRA_ADVISORY_LOCK_PREFIX + rantingId}, 0))`;
         } catch (error) {
           // Non-fatal: kegagalan lock (mis. DB non-Postgres) tidak boleh
           // memblokir pembuatan anggota — unique constraint tetap aktif.

@@ -201,19 +201,19 @@ describe('NraService', () => {
       expect(nra).toBe('0114-0101-001-2026');
     });
 
-    it('mengambil pg_advisory_xact_lock per ranting sebelum membaca sequence', async () => {
+    it('mengambil pg_advisory_xact_lock dengan satu parameter agar SQL valid', async () => {
       mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
       mockTx.anggota.findFirst.mockResolvedValue(null);
 
       await service.generateMemberNumber('r1');
 
       expect(mockTx.$queryRaw).toHaveBeenCalledTimes(1);
-      const [query] = mockTx.$queryRaw.mock.calls[0];
-      expect(String(query)).toContain('pg_advisory_xact_lock');
-      // Nilai interpolasi: param pertama = prefix lock, param kedua = rantingId
-      const [, prefixParam, rantingParam] = mockTx.$queryRaw.mock.calls[0];
-      expect(String(prefixParam)).toContain('ths-thm:nra:ranting:');
-      expect(String(rantingParam)).toBe('r1');
+      const call = mockTx.$queryRaw.mock.calls[0];
+      expect(String(call[0])).toContain('pg_advisory_xact_lock');
+      // Dua interpolasi bersebelahan menghasilkan SQL `$1$2` (syntax error) dan
+      // menggagalkan transaksi. Kunci lock harus disatukan jadi SATU parameter.
+      expect(call).toHaveLength(2);
+      expect(String(call[1])).toBe('ths-thm:nra:ranting:r1');
       // Lock diambil SEBELUM pembacaan anggota (sequence)
       const lockCallIndex = 0;
       const seqCallIndex = mockTx.anggota.findFirst.mock.invocationCallOrder[0];
