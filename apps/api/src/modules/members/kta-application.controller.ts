@@ -7,12 +7,15 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ScopeGuard } from '../../common/guards/scope.guard';
+import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { KtaApplicationService } from './kta-application.service';
 import { KtaEscalationService } from './kta-escalation.service';
 import { KtaAnalyticsService } from './kta-analytics.service';
@@ -79,46 +82,60 @@ export class KtaApplicationController {
   @Get('distrik-queue')
   @Roles('admin_distrik', 'admin_nasional', 'superadmin')
   @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Antrian proses KTA untuk admin distrik' })
-  async distrikQueue() {
-    return this.ktaApplicationService.getDistrikQueue(undefined);
+  async distrikQueue(@Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getDistrikQueue(req.scope);
   }
 
   @Post('bulk')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik')
   @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Bulk submit KTA applications' })
-  async bulkSubmit(@Body() dto: SubmitBulkKtaDto, @CurrentUser() user: any) {
+  async bulkSubmit(
+    @Body() dto: SubmitBulkKtaDto,
+    @CurrentUser() user: any,
+    @Req() req: ScopedRequest,
+  ) {
     return this.ktaApplicationService.submitBulk(
       dto.anggotaIds,
       { id: user.id, role: user.role },
       dto.batchName || '',
-      undefined,
+      req.scope,
     );
   }
 
   @Get('batches')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'List KTA batches' })
-  async listBatches() {
-    return this.ktaApplicationService.getBatches(undefined);
+  async listBatches(@Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getBatches(req.scope);
   }
 
   @Get('batches/:id')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get KTA batch details' })
-  async getBatch(@Param('id') id: string) {
-    return this.ktaApplicationService.getBatchDetail(id, undefined);
+  async getBatch(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getBatchDetail(id, req.scope);
   }
 
   @Get('batches/:id/export')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Export batch data' })
+  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'excel', 'pdf'] })
   async exportBatch(
     @Param('id') id: string,
     @Query('format') format: 'csv' | 'excel' | 'pdf' = 'csv',
+    @Req() req: ScopedRequest,
   ) {
-    return this.ktaApplicationService.exportBatch(id, format || 'csv');
+    return this.ktaApplicationService.exportBatch(id, format || 'csv', req.scope);
   }
 
   @Get('escalation/sla')
@@ -167,38 +184,66 @@ export class KtaApplicationController {
   @Get()
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
   @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'List KTA applications with filters' })
-  async findAll(@Query() filter: KtaAppFilterDto) {
-    return this.ktaApplicationService.getApplications(filter, undefined);
+  async findAll(@Query() filter: KtaAppFilterDto, @Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getApplications(filter, req.scope);
   }
 
   @Get(':id')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
   @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get KTA application detail' })
-  async findOne(@Param('id') id: string) {
-    return this.ktaApplicationService.getApplicationDetail(id, undefined);
+  async findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getApplicationDetail(id, req.scope);
   }
 
   @Get(':id/history')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get KTA application history' })
-  async getHistory(@Param('id') id: string) {
-    return this.ktaApplicationService.getHistory(id);
+  async getHistory(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getHistory(id, req.scope);
   }
 
   @Patch(':id/approve')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Approve KTA application (per level)' })
-  async approve(@Param('id') id: string, @Body() dto: ApproveKtaDto, @CurrentUser() user: any) {
-    return this.ktaApplicationService.approve(id, { id: user.id, role: user.role }, dto?.catatan);
+  async approve(
+    @Param('id') id: string,
+    @Body() dto: ApproveKtaDto,
+    @CurrentUser() user: any,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.ktaApplicationService.approve(
+      id,
+      { id: user.id, role: user.role },
+      dto?.catatan,
+      req.scope,
+    );
   }
 
   @Patch(':id/reject')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Reject KTA application' })
-  async reject(@Param('id') id: string, @Body() dto: RejectKtaDto, @CurrentUser() user: any) {
-    return this.ktaApplicationService.reject(id, { id: user.id, role: user.role }, dto.reason);
+  async reject(
+    @Param('id') id: string,
+    @Body() dto: RejectKtaDto,
+    @CurrentUser() user: any,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.ktaApplicationService.reject(
+      id,
+      { id: user.id, role: user.role },
+      dto.reason,
+      req.scope,
+    );
   }
 
   @Post(':id/setup-fee')

@@ -10,7 +10,7 @@ import * as crypto from 'crypto';
 import { Prisma, KtaAppStatus, KtaAppLevel, KtaAppAction, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { ScopeHelper, isOrgScopedRoleWithoutOrgId } from '../../common/utils/scope-helpers';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
@@ -377,12 +377,18 @@ export class KtaApplicationService {
   // ============================================================
   // APPROVE (Per Level)
   // ============================================================
-  async approve(applicationId: string, approver: { id: string; role: string }, catatan?: string) {
+  async approve(
+    applicationId: string,
+    approver: { id: string; role: string },
+    catatan?: string,
+    scope?: UserScope,
+  ) {
     const app = await this.prisma.ktaApplication.findUnique({
       where: { id: applicationId },
       include: { anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } } },
     });
     if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
 
     const currentLevel = getLevelFromStatus(app.status);
     const expectedRole = LEVEL_TO_ROLE[currentLevel];
@@ -429,7 +435,12 @@ export class KtaApplicationService {
   // ============================================================
   // REJECT
   // ============================================================
-  async reject(applicationId: string, rejector: { id: string; role: string }, reason: string) {
+  async reject(
+    applicationId: string,
+    rejector: { id: string; role: string },
+    reason: string,
+    scope?: UserScope,
+  ) {
     if (!reason || !reason.trim()) throw new BadRequestException('Alasan penolakan wajib diisi');
 
     const app = await this.prisma.ktaApplication.findUnique({
@@ -437,6 +448,7 @@ export class KtaApplicationService {
       include: { anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } } },
     });
     if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
 
     const currentLevel = getLevelFromStatus(app.status);
     const expectedRole = LEVEL_TO_ROLE[currentLevel];
@@ -977,7 +989,14 @@ export class KtaApplicationService {
     return app;
   }
 
-  async getHistory(applicationId: string) {
+  async getHistory(applicationId: string, scope?: UserScope) {
+    const app = await this.prisma.ktaApplication.findUnique({
+      where: { id: applicationId },
+      select: { anggota: { select: { rantingId: true } } },
+    });
+    if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
+
     return this.prisma.ktaAppHistory.findMany({
       where: { ktaApplicationId: applicationId },
       orderBy: { createdAt: 'asc' },
@@ -986,7 +1005,9 @@ export class KtaApplicationService {
 
   async getBatches(scope?: UserScope) {
     const where: Prisma.KtaBatchWhereInput = {};
-    if (scope?.rantingId) {
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      where.id = '';
+    } else if (scope?.rantingId) {
       where.scopeLevel = 'ranting';
       where.scopeId = scope.rantingId;
     } else if (scope?.wilayahId) {
@@ -1017,12 +1038,12 @@ export class KtaApplicationService {
       },
     });
     if (!batch) throw new NotFoundException('Batch tidak ditemukan');
-    if (scope) await this.verifyScope(batch.scopeId, scope);
+    if (scope) this.verifyBatchScope(batch, scope);
     return batch;
   }
 
-  async exportBatch(batchId: string, format: 'csv' | 'excel' | 'pdf') {
-    const batch = await this.getBatchDetail(batchId);
+  async exportBatch(batchId: string, format: 'csv' | 'excel' | 'pdf', scope?: UserScope) {
+    const batch = await this.getBatchDetail(batchId, scope);
     return { batchId, format, data: batch };
   }
 
@@ -1122,6 +1143,28 @@ export class KtaApplicationService {
     }
   }
 
+  private verifyBatchScope(batch: { scopeLevel: string; scopeId: string }, scope: UserScope) {
+    if (scope.role === 'admin_nasional' || scope.role === 'superadmin') return;
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+
+    const allowed =
+      (scope.role === 'admin_ranting' &&
+        batch.scopeLevel === 'ranting' &&
+        scope.rantingId === batch.scopeId) ||
+      (scope.role === 'admin_wilayah' &&
+        batch.scopeLevel === 'wilayah' &&
+        scope.wilayahId === batch.scopeId) ||
+      (scope.role === 'admin_distrik' &&
+        batch.scopeLevel === 'distrik' &&
+        scope.distrikId === batch.scopeId);
+
+    if (!allowed) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+  }
+
   private buildOrderBy(
     sort?: string,
     order?: 'asc' | 'desc',
@@ -1146,6 +1189,9 @@ export class KtaApplicationService {
 
   private buildScopeFilter(scope?: UserScope): Prisma.KtaApplicationWhereInput {
     if (!scope) return {};
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      return { anggotaId: '' };
+    }
     if (scope.rantingId) return { anggota: { rantingId: scope.rantingId } };
     if (scope.wilayahId) return { anggota: { ranting: { wilayahId: scope.wilayahId } } };
     if (scope.distrikId) return { anggota: { ranting: { wilayah: { distrikId: scope.distrikId } } } };

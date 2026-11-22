@@ -3,6 +3,7 @@ import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { MembersWorkflowService } from './members-workflow.service';
+import { KtaApplicationController } from './kta-application.controller';
 import { KtaApplicationService } from './kta-application.service';
 import { KtaEscalationService } from './kta-escalation.service';
 import { KtaAnalyticsService } from './kta-analytics.service';
@@ -21,7 +22,7 @@ import { ImportsModule } from '../imports/imports.module';
     ApprovalModule,
     ImportsModule,
   ],
-  controllers: [MembersController],
+  controllers: [MembersController, KtaApplicationController],
   providers: [
     MembersService,
     MembersDigitalCardService,

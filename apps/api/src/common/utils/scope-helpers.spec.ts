@@ -197,4 +197,43 @@ describe('ScopeHelper — self-scope isolation', () => {
       expect(helper.hasAccessToResource({ role: 'admin_nasional' }, 'r1')).toBe(true);
     });
   });
+
+  describe('branch-scoped role tanpa rantingId', () => {
+    it('hasAccessToResourceAsync menolak admin_ranting tanpa id', async () => {
+      const prisma = { ranting: { findUnique: jest.fn() } };
+      await expect(
+        helper.hasAccessToResourceAsync(prisma as never, { role: 'admin_ranting' }, 'r1'),
+      ).resolves.toBe(false);
+      expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('hasAccessToResource menolak admin_kegiatan tanpa id', () => {
+      expect(helper.hasAccessToResource({ role: 'admin_kegiatan' }, 'r1')).toBe(false);
+    });
+  });
+
+  describe('role admin wilayah/distrik tanpa id hierarki sendiri', () => {
+    const roleOnlyScopes: UserScope[] = [
+      { role: 'admin_wilayah', rantingId: 'r1' },
+      { role: 'admin_distrik', rantingId: 'r1' },
+    ];
+
+    it.each(roleOnlyScopes)(
+      'hasAccessToResource menolak %j sebelum bypass nasional',
+      (scope) => {
+        expect(helper.hasAccessToResource(scope, 'r1')).toBe(false);
+      },
+    );
+
+    it.each(roleOnlyScopes)(
+      'hasAccessToResourceAsync menolak %j sebelum lookup ranting',
+      async (scope) => {
+        const prisma = { ranting: { findUnique: jest.fn() } };
+        await expect(
+          helper.hasAccessToResourceAsync(prisma as never, scope, 'r1'),
+        ).resolves.toBe(false);
+        expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+      },
+    );
+  });
 });
