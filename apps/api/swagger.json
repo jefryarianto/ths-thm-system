@@ -3568,6 +3568,591 @@
         ]
       }
     },
+    "/kta-applications": {
+      "post": {
+        "operationId": "KtaApplicationController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKtaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "KTA application submitted successfully"
+          }
+        },
+        "summary": "Submit KTA application",
+        "tags": [
+          "kta-applications"
+        ]
+      },
+      "get": {
+        "operationId": "KtaApplicationController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUBMITTED",
+                "RANTING_REVIEW",
+                "WILAYAH_REVIEW",
+                "DISTRIK_REVIEW",
+                "NASIONAL_REVIEW",
+                "APPROVED",
+                "PAYMENT_SETUP",
+                "PAYMENT_PENDING",
+                "PAYMENT_VERIFIED",
+                "CARD_GENERATING",
+                "CARD_GENERATED",
+                "REJECTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "anggotaId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List KTA applications with filters",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/me": {
+      "post": {
+        "operationId": "KtaApplicationController_createMyApplication",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "KTA application submitted successfully"
+          }
+        },
+        "summary": "Submit KTA application (member self-service)",
+        "tags": [
+          "kta-applications"
+        ]
+      },
+      "get": {
+        "operationId": "KtaApplicationController_getMyApplication",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get current user's KTA application",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/me/cancel": {
+      "patch": {
+        "operationId": "KtaApplicationController_cancel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Cancel KTA application",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/members/{memberId}/reset": {
+      "post": {
+        "operationId": "KtaApplicationController_resetMemberKta",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "KTA reset successfully"
+          }
+        },
+        "summary": "Reset KTA: revoke card and delete all applications for a member",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/distrik-queue": {
+      "get": {
+        "operationId": "KtaApplicationController_distrikQueue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Antrian proses KTA untuk admin distrik",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/bulk": {
+      "post": {
+        "operationId": "KtaApplicationController_bulkSubmit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitBulkKtaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Bulk submit KTA applications",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/batches": {
+      "get": {
+        "operationId": "KtaApplicationController_listBatches",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List KTA batches",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/batches/{id}": {
+      "get": {
+        "operationId": "KtaApplicationController_getBatch",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get KTA batch details",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/batches/{id}/export": {
+      "get": {
+        "operationId": "KtaApplicationController_exportBatch",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Export batch data",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/escalation/sla": {
+      "get": {
+        "operationId": "KtaApplicationController_getEscalationSla",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get KTA auto-escalation SLA status",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/escalate/{id}": {
+      "post": {
+        "operationId": "KtaApplicationController_manualEscalation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Manual escalation of KTA application",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/analytics/funnel": {
+      "get": {
+        "operationId": "KtaApplicationController_getFunnel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get KTA funnel conversion data",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/analytics/processing-time": {
+      "get": {
+        "operationId": "KtaApplicationController_getProcessingTime",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get average processing time per level",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/analytics/trend": {
+      "get": {
+        "operationId": "KtaApplicationController_getTrend",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get monthly trend data",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/analytics/bottlenecks": {
+      "get": {
+        "operationId": "KtaApplicationController_getBottlenecks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get bottleneck & SLA breach data",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}": {
+      "get": {
+        "operationId": "KtaApplicationController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get KTA application detail",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/history": {
+      "get": {
+        "operationId": "KtaApplicationController_getHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get KTA application history",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/approve": {
+      "patch": {
+        "operationId": "KtaApplicationController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveKtaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Approve KTA application (per level)",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/reject": {
+      "patch": {
+        "operationId": "KtaApplicationController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectKtaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Reject KTA application",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/setup-fee": {
+      "post": {
+        "operationId": "KtaApplicationController_setupFee",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Set biaya & rekening tujuan KTA",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/verify-payment": {
+      "post": {
+        "operationId": "KtaApplicationController_verifyPayment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Verifikasi pembayaran KTA",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/generate-card": {
+      "post": {
+        "operationId": "KtaApplicationController_generateCard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Generate KTA (manual oleh admin)",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
+    "/kta-applications/{id}/superadmin-bypass": {
+      "post": {
+        "operationId": "KtaApplicationController_superadminBypass",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "SuperAdmin bypass semua level approval",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
     "/penandatangan": {
       "get": {
         "operationId": "PenandatanganController_findAll",
@@ -18250,6 +18835,79 @@
             "description": "Versi data saat dibaca client (optimistic locking). Wajib dikirim bila ingin mencegah konflik update bersamaan."
           }
         }
+      },
+      "CreateKtaDto": {
+        "type": "object",
+        "properties": {
+          "namaLengkap": {
+            "type": "string"
+          },
+          "jenisKelamin": {
+            "type": "string",
+            "enum": [
+              "L",
+              "P"
+            ]
+          },
+          "tempatLahir": {
+            "type": "string"
+          },
+          "tanggalLahir": {
+            "type": "string"
+          },
+          "alamat": {
+            "type": "string"
+          },
+          "noHp": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isCompliant": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "namaLengkap",
+          "jenisKelamin"
+        ]
+      },
+      "SubmitBulkKtaDto": {
+        "type": "object",
+        "properties": {
+          "anggotaIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "batchName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "anggotaIds"
+        ]
+      },
+      "ApproveKtaDto": {
+        "type": "object",
+        "properties": {
+          "catatan": {
+            "type": "string"
+          }
+        }
+      },
+      "RejectKtaDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "CreatePenandatanganDto": {
         "type": "object",
