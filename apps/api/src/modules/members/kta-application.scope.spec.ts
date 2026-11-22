@@ -23,9 +23,8 @@ it('bulkSubmit meneruskan req.scope ke submitBulk', async () => {
   );
 });
 
-it('semua handler baca scoped punya metadata branch', () => {
+it('semua handler baca KTA punya metadata scope branch', () => {
   for (const name of [
-    'bulkSubmit',
     'distrikQueue',
     'listBatches',
     'getBatch',
@@ -33,9 +32,13 @@ it('semua handler baca scoped punya metadata branch', () => {
     'findAll',
     'findOne',
     'getHistory',
-    'approve',
-    'reject',
   ] as const) {
+    expect(Reflect.getMetadata(SCOPE_KEY, KtaApplicationController.prototype[name])).toBe('branch');
+  }
+});
+
+it('semua handler mutasi KTA punya metadata scope branch', () => {
+  for (const name of ['bulkSubmit', 'approve', 'reject'] as const) {
     expect(Reflect.getMetadata(SCOPE_KEY, KtaApplicationController.prototype[name])).toBe('branch');
   }
 });
@@ -159,6 +162,110 @@ it('getBatchDetail menolak batch dengan level berbeda dari scope admin', async (
     service.getBatchDetail('b1', { role: 'admin_wilayah', wilayahId: 'w1' }),
   ).rejects.toThrow('Akses ditolak: diluar cakupan wilayah Anda');
 });
+
+it('getBatchDetail mengizinkan admin_ranting pada batch scope ranting sendiri', async () => {
+  const { service, prisma, batch } = makeBatchService('ranting', 'r1');
+
+  await expect(
+    service.getBatchDetail('b1', { role: 'admin_ranting', rantingId: 'r1' }),
+  ).resolves.toEqual(batch);
+  expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+});
+
+const roleOnlyScopes = [
+  { role: 'admin_ranting' },
+  { role: 'admin_wilayah' },
+  { role: 'admin_distrik' },
+] as const;
+
+it.each(roleOnlyScopes)(
+  'getBatchDetail menolak scope hanya role %j',
+  async (roleOnlyScope) => {
+    const { service } = makeBatchService('wilayah', 'w1');
+    await expect(service.getBatchDetail('b1', roleOnlyScope as any)).rejects.toThrow(
+      'Akses ditolak: diluar cakupan wilayah Anda',
+    );
+  },
+);
+
+function makeBatchListService() {
+  const batch = { id: 'b1', scopeLevel: 'wilayah', scopeId: 'w1' };
+  const prisma = {
+    ktaBatch: {
+      findMany: jest.fn(async ({ where }: { where: { id?: string } }) =>
+        where.id === '' ? [] : [batch],
+      ),
+    },
+  };
+  const service = new KtaApplicationService(prisma as any, new ScopeHelper(), {} as any);
+  return { service, prisma, batch };
+}
+
+function makeApplicationListService() {
+  const app = { id: 'a1' };
+  const prisma = {
+    ktaApplication: {
+      findMany: jest.fn(async ({ where }: { where: { anggotaId?: string } }) =>
+        where.anggotaId === '' ? [] : [app],
+      ),
+      count: jest.fn(async ({ where }: { where: { anggotaId?: string } }) =>
+        where.anggotaId === '' ? 0 : 1,
+      ),
+    },
+  };
+  const service = new KtaApplicationService(prisma as any, new ScopeHelper(), {} as any);
+  return { service, prisma, app };
+}
+
+it('getBatches memfilter berdasarkan id organisasi scope', async () => {
+  const { service, prisma, batch } = makeBatchListService();
+
+  await expect(service.getBatches({ role: 'admin_wilayah', wilayahId: 'w1' })).resolves.toEqual([
+    batch,
+  ]);
+  expect(prisma.ktaBatch.findMany).toHaveBeenCalledWith(
+    expect.objectContaining({ where: { scopeLevel: 'wilayah', scopeId: 'w1' } }),
+  );
+});
+
+it.each(roleOnlyScopes)(
+  'getBatches tidak mengembalikan batch untuk scope hanya role %j',
+  async (roleOnlyScope) => {
+    const { service, prisma } = makeBatchListService();
+
+    await expect(service.getBatches(roleOnlyScope as any)).resolves.toEqual([]);
+    expect(prisma.ktaBatch.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: '' } }),
+    );
+  },
+);
+
+it('getApplications/getDistrikQueue tetap mengembalikan data untuk admin_wilayah ber-id', async () => {
+  const { service, app } = makeApplicationListService();
+
+  await expect(
+    service.getApplications({}, { role: 'admin_wilayah', wilayahId: 'w1' }),
+  ).resolves.toEqual({
+    data: [app],
+    meta: { total: 1, totalPages: 1, page: 1, limit: 20 },
+  });
+  await expect(service.getDistrikQueue({ role: 'admin_wilayah', wilayahId: 'w1' })).resolves.toEqual([
+    app,
+  ]);
+});
+
+it.each(roleOnlyScopes)(
+  'getApplications/getDistrikQueue tidak membocorkan data untuk scope hanya role %j',
+  async (roleOnlyScope) => {
+    const { service } = makeApplicationListService();
+
+    await expect(service.getApplications({}, roleOnlyScope as any)).resolves.toEqual({
+      data: [],
+      meta: { total: 0, totalPages: 0, page: 1, limit: 20 },
+    });
+    await expect(service.getDistrikQueue(roleOnlyScope as any)).resolves.toEqual([]);
+  },
+);
 
 it('handler history dan mutasi meneruskan req.scope', async () => {
   const approve = jest.fn().mockResolvedValue({ success: true });

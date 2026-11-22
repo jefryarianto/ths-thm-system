@@ -18,6 +18,8 @@ describe('ScopeGuard', () => {
     email?: string;
     role: string;
     rantingId?: string;
+    wilayahId?: string;
+    distrikId?: string;
     namaLengkap?: string;
   }) => ({
     user,
@@ -105,9 +107,9 @@ describe('ScopeGuard', () => {
     });
 
     it('should allow access to branch-level endpoints', async () => {
-      const req = mockRequest({ id: 'u1', role: 'admin_distrik', rantingId: 'r1' });
+      const req = mockRequest({ id: 'u1', role: 'admin_distrik', distrikId: 'd1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ role: 'admin_distrik', rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'admin_distrik', distrikId: 'd1' });
     });
 
     it('should allow access to district-level endpoints', async () => {
@@ -116,7 +118,7 @@ describe('ScopeGuard', () => {
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
-      const req = mockRequest({ id: 'u1', role: 'admin_distrik', rantingId: 'r1' });
+      const req = mockRequest({ id: 'u1', role: 'admin_distrik', distrikId: 'd1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
     });
 
@@ -149,9 +151,9 @@ describe('ScopeGuard', () => {
     });
 
     it('should allow access to branch-level endpoints', async () => {
-      const req = mockRequest({ id: 'u1', role: 'admin_wilayah', rantingId: 'r1' });
+      const req = mockRequest({ id: 'u1', role: 'admin_wilayah', wilayahId: 'w1' });
       expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
-      expect(req.scope).toEqual({ role: 'admin_wilayah', rantingId: 'r1' });
+      expect(req.scope).toEqual({ role: 'admin_wilayah', wilayahId: 'w1' });
     });
 
     it('should deny access to district-level endpoints and log violation', async () => {
@@ -213,6 +215,33 @@ describe('ScopeGuard', () => {
           userRole: 'admin_ranting',
           requiredScope: 'region',
         }),
+      );
+    });
+  });
+
+  describe('org-scoped role tanpa id hierarki sendiri', () => {
+    beforeEach(() => {
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockImplementation((key: string) =>
+          key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
+        );
+    });
+
+    it.each([
+      ['admin_wilayah', 'wilayahId'],
+      ['admin_distrik', 'distrikId'],
+    ] as const)('should deny branch-level endpoints when %s has no %s', async (role, idField) => {
+      const req = mockRequest({
+        id: 'u1',
+        email: `${role}@test.com`,
+        role,
+        rantingId: 'r1',
+      });
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(req.scope).toBeUndefined();
+      expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
+        expect.objectContaining({ userRole: role, requiredScope: 'branch' }),
       );
     });
   });

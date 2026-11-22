@@ -1,6 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { UserScope, isSelfScope } from '../interfaces/user-scope.interface';
 
+export function isOrgScopedRoleWithoutOrgId(scope?: UserScope | null): boolean {
+  if (!scope) return false;
+  return (
+    ((scope.role === 'admin_ranting' || scope.role === 'admin_kegiatan') && !scope.rantingId) ||
+    (scope.role === 'admin_wilayah' && !scope.wilayahId) ||
+    (scope.role === 'admin_distrik' && !scope.distrikId)
+  );
+}
+
 /**
  * Helper to extract scope from request and build Prisma where clauses.
  * Services can inject this to filter data by organizational hierarchy.
@@ -153,9 +162,7 @@ export class ScopeHelper {
     if (isSelfScope(scope)) {
       return !!scope.rantingId && scope.rantingId === resourceRantingId;
     }
-    if (scope?.role === 'admin_ranting' || scope?.role === 'admin_kegiatan') {
-      if (!scope.rantingId) return false;
-    }
+    if (isOrgScopedRoleWithoutOrgId(scope)) return false;
     if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
       return true; // National level — full access
     }
@@ -195,9 +202,7 @@ export class ScopeHelper {
     if (isSelfScope(scope)) {
       return !!scope.rantingId && scope.rantingId === resourceRantingId;
     }
-    if (scope?.role === 'admin_ranting' || scope?.role === 'admin_kegiatan') {
-      if (!scope.rantingId) return false;
-    }
+    if (isOrgScopedRoleWithoutOrgId(scope)) return false;
 
     // Admin nasional: akses tingkat nasional penuh (setara superadmin) untuk
     // resource mana pun, termasuk yang berada di bawah ranting. Tanpa ini

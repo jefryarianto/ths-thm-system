@@ -9,7 +9,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -129,6 +129,7 @@ export class KtaApplicationController {
   @UseGuards(ScopeGuard)
   @RequireScope('branch')
   @ApiOperation({ summary: 'Export batch data' })
+  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'excel', 'pdf'] })
   async exportBatch(
     @Param('id') id: string,
     @Query('format') format: 'csv' | 'excel' | 'pdf' = 'csv',

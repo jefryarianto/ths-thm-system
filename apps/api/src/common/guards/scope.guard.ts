@@ -72,15 +72,19 @@ export class ScopeGuard implements CanActivate {
 
     const userScopeLevel = ROLE_SCOPE[user.role] || 'self';
 
-    const branchRoleWithoutRanting =
-      (user.role === 'admin_ranting' || user.role === 'admin_kegiatan') && !user.rantingId;
-    if (branchRoleWithoutRanting) {
+    const orgRoleWithoutId =
+      ((user.role === 'admin_ranting' || user.role === 'admin_kegiatan') && !user.rantingId) ||
+      (user.role === 'admin_wilayah' && !user.wilayahId) ||
+      (user.role === 'admin_distrik' && !user.distrikId);
+    if (orgRoleWithoutId) {
       this.auditService.logScopeViolation({
         userId: user.id,
         userEmail: user.email,
         userRole: user.role,
         userScope: {
           rantingId: user.rantingId,
+          wilayahId: user.wilayahId,
+          distrikId: user.distrikId,
         },
         requiredScope,
         method: request.method ?? 'UNKNOWN',

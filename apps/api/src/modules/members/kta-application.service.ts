@@ -10,7 +10,7 @@ import * as crypto from 'crypto';
 import { Prisma, KtaAppStatus, KtaAppLevel, KtaAppAction, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { ScopeHelper, isOrgScopedRoleWithoutOrgId } from '../../common/utils/scope-helpers';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
@@ -1005,7 +1005,9 @@ export class KtaApplicationService {
 
   async getBatches(scope?: UserScope) {
     const where: Prisma.KtaBatchWhereInput = {};
-    if (scope?.rantingId) {
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      where.id = '';
+    } else if (scope?.rantingId) {
       where.scopeLevel = 'ranting';
       where.scopeId = scope.rantingId;
     } else if (scope?.wilayahId) {
@@ -1143,6 +1145,9 @@ export class KtaApplicationService {
 
   private verifyBatchScope(batch: { scopeLevel: string; scopeId: string }, scope: UserScope) {
     if (scope.role === 'admin_nasional' || scope.role === 'superadmin') return;
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
 
     const allowed =
       (scope.role === 'admin_ranting' &&
@@ -1184,6 +1189,9 @@ export class KtaApplicationService {
 
   private buildScopeFilter(scope?: UserScope): Prisma.KtaApplicationWhereInput {
     if (!scope) return {};
+    if (isOrgScopedRoleWithoutOrgId(scope)) {
+      return { anggotaId: '' };
+    }
     if (scope.rantingId) return { anggota: { rantingId: scope.rantingId } };
     if (scope.wilayahId) return { anggota: { ranting: { wilayahId: scope.wilayahId } } };
     if (scope.distrikId) return { anggota: { ranting: { wilayah: { distrikId: scope.distrikId } } } };

@@ -11444,8 +11444,8 @@ export interface operations {
     };
     KtaApplicationController_exportBatch: {
         parameters: {
-            query: {
-                format: string;
+            query?: {
+                format?: "csv" | "excel" | "pdf";
             };
             header?: never;
             path: {

@@ -13,6 +13,7 @@ import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { useToast } from '@/components/ui/toast';
+import { Can } from '@/components/auth/can';
 import { KtaStatusBadge } from '@/components/kta/KtaStatusBadge';
 import { KTA_STATUS_LABELS, KTA_PROCESSING_STATUSES } from '@/components/kta/constants';
 
@@ -116,13 +117,15 @@ export default function KtaQueuePage() {
   return (
     <PageContainer>
       <PageHeader title="Antrian KTA" onRefresh={refetch}>
-        <Link
-          href="/kta/bulk"
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus size={14} />
-          Bulk KTA
-        </Link>
+        <Can roles={['admin_ranting', 'admin_wilayah', 'admin_distrik']}>
+          <Link
+            href="/kta/bulk"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus size={14} />
+            Bulk KTA
+          </Link>
+        </Can>
       </PageHeader>
 
       <SearchBar

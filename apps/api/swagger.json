@@ -3824,9 +3824,14 @@
           },
           {
             "name": "format",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "csv",
+                "excel",
+                "pdf"
+              ],
               "type": "string"
             }
           }
