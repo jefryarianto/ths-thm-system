@@ -215,6 +215,46 @@ describe('ClaimsService', () => {
     });
   });
 
+  describe('createBulk', () => {
+    it('rejects more than 100 claims', async () => {
+      const claims = Array.from({ length: 101 }, () => ({ tipe: 'keanggotaan', rantingId: 'r1' }));
+      await expect(service.createBulk({ claims })).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects claims outside the admin ranting scope', async () => {
+      await expect(service.createBulk({
+        claims: [{ tipe: 'keanggotaan', rantingId: 'r1' }, { tipe: 'keanggotaan', rantingId: 'r2' }],
+      }, { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
+    });
+
+    it('creates every claim with a unique tracking token', async () => {
+      let seq = 0;
+      mockPrisma.klaim.create.mockImplementation(async ({ data }: { data: { trackingToken: string } }) => ({
+        id: `cl${++seq}`,
+        trackingToken: data.trackingToken,
+      }));
+      jest.spyOn(service, 'findOne').mockImplementation(async (id: string) => ({
+        id,
+        trackingToken: mockPrisma.klaim.create.mock.calls[Number(id.slice(2)) - 1][0].data.trackingToken,
+      }) as never);
+
+      const result = await service.createBulk({
+        claims: [
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com' },
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'b@test.com' },
+        ],
+        batchName: 'Batch ranting',
+      }, { rantingId: 'r1' });
+
+      expect(mockPrisma.klaim.create).toHaveBeenCalledTimes(2);
+      const tokens = mockPrisma.klaim.create.mock.calls.map(([args]: [{ data: { trackingToken: string } }]) => args.data.trackingToken);
+      expect(new Set(tokens).size).toBe(2);
+      expect(result).toEqual(expect.objectContaining({ success: true, batchName: 'Batch ranting', count: 2 }));
+    });
+  });
+
   describe('update', () => {
     it('should update a claim', async () => {
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', tipe: 'keanggotaan' });

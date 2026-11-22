@@ -13,7 +13,7 @@ import { RevisionService } from '../../common/services/revision.service';
 import { MailService } from '../../mail/mail.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { claimStatusEmail, credentialEmail } from '../../mail/email-templates';
-import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
+import { BulkClaimDto, CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { NraService } from '../../common/services/nra.service';
 import { normalizePhone } from '../../common/utils/phone.util';
@@ -156,8 +156,9 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
       dokumenPendukungFiles?: Express.Multer.File[] 
     },
     buktiTipe: 'sertifikat' | 'kartu_anggota' = 'kartu_anggota',
+    options?: { skipEvidenceValidation?: boolean },
   ) {
-    this.validateClaimEvidence(dto, files);
+    if (!options?.skipEvidenceValidation) this.validateClaimEvidence(dto, files);
 
     // Filter out undefined values from dto
     const dtoData = Object.fromEntries(
@@ -191,7 +192,37 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     this.invalidateCache();
     this.audit('CLAIM_CREATE', 'Klaim', claim.id);
     
-    return this.findOne(claim.id);
+      return this.findOne(claim.id);
+  }
+
+  async createBulk(dto: BulkClaimDto, scope?: UserScope) {
+    const claims = dto?.claims;
+    if (!Array.isArray(claims) || claims.length === 0) {
+      throw new BadRequestException('Minimal satu klaim diperlukan');
+    }
+    if (claims.length > 100) {
+      throw new BadRequestException('Maksimal 100 klaim per batch');
+    }
+    if (scope?.rantingId && claims.some((claim) => claim.rantingId !== scope.rantingId)) {
+      throw new ForbiddenException('Klaim harus berada di ranting yang sama dengan admin ranting');
+    }
+
+    const created = [];
+    for (const claim of claims) {
+      created.push(await this.create(
+        { ...claim, rantingId: scope?.rantingId || claim.rantingId },
+        undefined,
+        'kartu_anggota',
+        { skipEvidenceValidation: true },
+      ));
+    }
+
+    this.invalidateCache();
+    this.audit('CLAIM_BULK_CREATE', 'Klaim', dto.batchName || 'batch', undefined, {
+      batchName: dto.batchName,
+      count: created.length,
+    });
+    return { success: true, batchName: dto.batchName, count: created.length, data: created };
   }
 
   async update(id: string, dto: UpdateClaimDto, scope?: UserScope, userId?: string) {

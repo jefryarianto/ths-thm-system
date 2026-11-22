@@ -4,7 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ClaimsService } from './claims.service';
-import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto, RejectClaimDto } from './dto/claim.dto';
+import { BulkClaimDto, CreateClaimDto, UpdateClaimDto, ClaimFilterDto, RejectClaimDto } from './dto/claim.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
@@ -85,6 +85,15 @@ export class ClaimsController {
     }
   ) {
     return this.service.create(dto, files, dto.buktiTipe as 'sertifikat' | 'kartu_anggota' || 'kartu_anggota');
+  }
+
+  @Post('bulk')
+  @CrudAuth('superadmin', 'admin_nasional', 'admin_ranting', {
+    summary: 'Buat klaim massal oleh admin ranting (bukti dapat menyusul)',
+  })
+  @ApiOperation({ summary: 'Buat hingga 100 klaim sekaligus dalam satu ranting' })
+  createBulk(@Body() dto: BulkClaimDto, @Req() req: ScopedRequest) {
+    return this.service.createBulk(dto, req.scope);
   }
 
   @Patch(':id')
