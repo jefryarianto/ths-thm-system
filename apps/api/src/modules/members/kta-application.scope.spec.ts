@@ -94,6 +94,72 @@ it('submitBulk menolak anggota di luar scope', async () => {
   expect(prisma.ktaBatch.create).not.toHaveBeenCalled();
 });
 
+function makeBatchService(scopeLevel: string, scopeId: string) {
+  const batch = { id: 'b1', name: 'Batch A', scopeLevel, scopeId, applications: [] };
+  const prisma = {
+    ktaBatch: { findUnique: jest.fn().mockResolvedValue(batch) },
+    ranting: {
+      findUnique: jest.fn(async ({ where }: { where: { id: string } }) =>
+        where.id === 'r1'
+          ? { id: 'r1', wilayahId: 'w1', wilayah: { distrikId: 'd1' } }
+          : null,
+      ),
+    },
+  };
+  const service = new KtaApplicationService(prisma as any, new ScopeHelper(), {} as any);
+  return { service, prisma, batch };
+}
+
+it('getBatchDetail mengizinkan admin_wilayah pada batch scope wilayah sendiri', async () => {
+  const { service, prisma, batch } = makeBatchService('wilayah', 'w1');
+
+  await expect(
+    service.getBatchDetail('b1', { role: 'admin_wilayah', wilayahId: 'w1' }),
+  ).resolves.toEqual(batch);
+  expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+});
+
+it('exportBatch mengizinkan admin_wilayah pada batch scope wilayah sendiri', async () => {
+  const { service, batch } = makeBatchService('wilayah', 'w1');
+
+  await expect(
+    service.exportBatch('b1', 'csv', { role: 'admin_wilayah', wilayahId: 'w1' }),
+  ).resolves.toEqual({ batchId: 'b1', format: 'csv', data: batch });
+});
+
+it('getBatchDetail mengizinkan admin_distrik pada batch scope distrik sendiri', async () => {
+  const { service, prisma, batch } = makeBatchService('distrik', 'd1');
+
+  await expect(
+    service.getBatchDetail('b1', { role: 'admin_distrik', distrikId: 'd1' }),
+  ).resolves.toEqual(batch);
+  expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+});
+
+it('exportBatch mengizinkan admin_distrik pada batch scope distrik sendiri', async () => {
+  const { service, batch } = makeBatchService('distrik', 'd1');
+
+  await expect(
+    service.exportBatch('b1', 'excel', { role: 'admin_distrik', distrikId: 'd1' }),
+  ).resolves.toEqual({ batchId: 'b1', format: 'excel', data: batch });
+});
+
+it('getBatchDetail menolak admin_wilayah dari wilayah lain', async () => {
+  const { service } = makeBatchService('wilayah', 'w1');
+
+  await expect(
+    service.getBatchDetail('b1', { role: 'admin_wilayah', wilayahId: 'w2' }),
+  ).rejects.toThrow('Akses ditolak: diluar cakupan wilayah Anda');
+});
+
+it('getBatchDetail menolak batch dengan level berbeda dari scope admin', async () => {
+  const { service } = makeBatchService('ranting', 'w1');
+
+  await expect(
+    service.getBatchDetail('b1', { role: 'admin_wilayah', wilayahId: 'w1' }),
+  ).rejects.toThrow('Akses ditolak: diluar cakupan wilayah Anda');
+});
+
 it('handler history dan mutasi meneruskan req.scope', async () => {
   const approve = jest.fn().mockResolvedValue({ success: true });
   const reject = jest.fn().mockResolvedValue({ success: true });

@@ -66,7 +66,11 @@ describe('halaman bulk KTA', () => {
       data: {
         success: true,
         message: 'OK',
-        data: { batchId: 'b1', totalSubmitted: 7, ineligible: ['m2'] },
+        data: {
+          batchId: 'b1',
+          totalSubmitted: 7,
+          ineligible: [{ anggotaId: 'm2', errors: ['Data tidak lengkap'] }],
+        },
       },
     });
 
@@ -76,7 +80,7 @@ describe('halaman bulk KTA', () => {
       expect(toastMock).toHaveBeenCalledWith('success', expect.stringContaining('7 KTA berhasil diajukan'));
     });
     expect(toastMock).toHaveBeenCalledWith(
-      'success',
+      'warning',
       expect.stringContaining('1 anggota tidak memenuhi syarat'),
     );
     expect(pushMock).toHaveBeenCalledWith('/kta/batches/b1');

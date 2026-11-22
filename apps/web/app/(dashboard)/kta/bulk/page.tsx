@@ -88,11 +88,11 @@ export default function KtaBulkPage() {
       const result = unwrap<{
         batchId?: string;
         totalSubmitted: number;
-        ineligible?: string[];
+        ineligible?: { anggotaId: string; errors: string[] }[];
       }>(response);
       toast('success', `${result.totalSubmitted} KTA berhasil diajukan`);
       if (result.ineligible?.length) {
-        toast('success', `${result.ineligible.length} anggota tidak memenuhi syarat`);
+        toast('warning', `${result.ineligible.length} anggota tidak memenuhi syarat`);
       }
       router.push(result.batchId ? `/kta/batches/${result.batchId}` : '/kta/queue');
     } catch (err) {

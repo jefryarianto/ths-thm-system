@@ -1036,7 +1036,7 @@ export class KtaApplicationService {
       },
     });
     if (!batch) throw new NotFoundException('Batch tidak ditemukan');
-    if (scope) await this.verifyScope(batch.scopeId, scope);
+    if (scope) this.verifyBatchScope(batch, scope);
     return batch;
   }
 
@@ -1137,6 +1137,25 @@ export class KtaApplicationService {
 
   private async verifyScope(rantingId: string, scope: UserScope) {
     if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+  }
+
+  private verifyBatchScope(batch: { scopeLevel: string; scopeId: string }, scope: UserScope) {
+    if (scope.role === 'admin_nasional' || scope.role === 'superadmin') return;
+
+    const allowed =
+      (scope.role === 'admin_ranting' &&
+        batch.scopeLevel === 'ranting' &&
+        scope.rantingId === batch.scopeId) ||
+      (scope.role === 'admin_wilayah' &&
+        batch.scopeLevel === 'wilayah' &&
+        scope.wilayahId === batch.scopeId) ||
+      (scope.role === 'admin_distrik' &&
+        batch.scopeLevel === 'distrik' &&
+        scope.distrikId === batch.scopeId);
+
+    if (!allowed) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
   }
