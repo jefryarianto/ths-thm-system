@@ -153,6 +153,9 @@ export class ScopeHelper {
     if (isSelfScope(scope)) {
       return !!scope.rantingId && scope.rantingId === resourceRantingId;
     }
+    if (scope?.role === 'admin_ranting' || scope?.role === 'admin_kegiatan') {
+      if (!scope.rantingId) return false;
+    }
     if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) {
       return true; // National level — full access
     }
@@ -191,6 +194,9 @@ export class ScopeHelper {
     // must additionally enforce row-level ownership (assertSelfMember).
     if (isSelfScope(scope)) {
       return !!scope.rantingId && scope.rantingId === resourceRantingId;
+    }
+    if (scope?.role === 'admin_ranting' || scope?.role === 'admin_kegiatan') {
+      if (!scope.rantingId) return false;
     }
 
     // Admin nasional: akses tingkat nasional penuh (setara superadmin) untuk

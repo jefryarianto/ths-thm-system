@@ -200,23 +200,49 @@ export class KtaApplicationController {
 
   @Get(':id/history')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get KTA application history' })
-  async getHistory(@Param('id') id: string) {
-    return this.ktaApplicationService.getHistory(id);
+  async getHistory(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.ktaApplicationService.getHistory(id, req.scope);
   }
 
   @Patch(':id/approve')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Approve KTA application (per level)' })
-  async approve(@Param('id') id: string, @Body() dto: ApproveKtaDto, @CurrentUser() user: any) {
-    return this.ktaApplicationService.approve(id, { id: user.id, role: user.role }, dto?.catatan);
+  async approve(
+    @Param('id') id: string,
+    @Body() dto: ApproveKtaDto,
+    @CurrentUser() user: any,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.ktaApplicationService.approve(
+      id,
+      { id: user.id, role: user.role },
+      dto?.catatan,
+      req.scope,
+    );
   }
 
   @Patch(':id/reject')
   @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Reject KTA application' })
-  async reject(@Param('id') id: string, @Body() dto: RejectKtaDto, @CurrentUser() user: any) {
-    return this.ktaApplicationService.reject(id, { id: user.id, role: user.role }, dto.reason);
+  async reject(
+    @Param('id') id: string,
+    @Body() dto: RejectKtaDto,
+    @CurrentUser() user: any,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.ktaApplicationService.reject(
+      id,
+      { id: user.id, role: user.role },
+      dto.reason,
+      req.scope,
+    );
   }
 
   @Post(':id/setup-fee')

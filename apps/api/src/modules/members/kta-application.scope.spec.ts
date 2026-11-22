@@ -1,4 +1,5 @@
 import { SCOPE_KEY } from '../../common/decorators/scope.decorator';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { KtaApplicationController } from './kta-application.controller';
 import { KtaApplicationService } from './kta-application.service';
 
@@ -31,6 +32,9 @@ it('semua handler baca scoped punya metadata branch', () => {
     'exportBatch',
     'findAll',
     'findOne',
+    'getHistory',
+    'approve',
+    'reject',
   ] as const) {
     expect(Reflect.getMetadata(SCOPE_KEY, KtaApplicationController.prototype[name])).toBe('branch');
   }
@@ -88,4 +92,79 @@ it('submitBulk menolak anggota di luar scope', async () => {
     service.submitBulk(['m1'], user, 'Batch A', scope),
   ).rejects.toThrow('Tidak ada anggota yang memenuhi syarat');
   expect(prisma.ktaBatch.create).not.toHaveBeenCalled();
+});
+
+it('handler history dan mutasi meneruskan req.scope', async () => {
+  const approve = jest.fn().mockResolvedValue({ success: true });
+  const reject = jest.fn().mockResolvedValue({ success: true });
+  const getHistory = jest.fn().mockResolvedValue([]);
+  const service = { approve, reject, getHistory };
+  const controller = new KtaApplicationController(service as any, {} as any, {} as any);
+
+  await (controller as any).approve('a1', { catatan: 'catatan' }, user, req);
+  await (controller as any).reject('a1', { reason: 'alasan' }, user, req);
+  await (controller as any).getHistory('a1', req);
+
+  expect(getHistory).toHaveBeenCalledWith('a1', scope);
+  expect(approve).toHaveBeenCalledWith('a1', { id: 'u1', role: 'admin_ranting' }, 'catatan', scope);
+  expect(reject).toHaveBeenCalledWith('a1', { id: 'u1', role: 'admin_ranting' }, 'alasan', scope);
+});
+
+function makeKtaService(rantingId = 'r2') {
+  const tx = {
+    ktaApplication: { update: jest.fn().mockResolvedValue({ id: 'a1' }) },
+    ktaAppHistory: {
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      create: jest.fn().mockResolvedValue({ id: 'h2' }),
+    },
+    ktaBatch: { update: jest.fn() },
+  };
+  const prisma = {
+    ktaApplication: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'a1',
+        status: 'RANTING_REVIEW',
+        batchId: null,
+        anggota: { id: 'm1', rantingId, email: 'budi@test.com' },
+      }),
+      update: tx.ktaApplication.update,
+    },
+    ktaAppHistory: {
+      findMany: jest.fn().mockResolvedValue([{ id: 'h1', ktaApplicationId: 'a1' }]),
+      updateMany: tx.ktaAppHistory.updateMany,
+      create: tx.ktaAppHistory.create,
+    },
+    ktaBatch: tx.ktaBatch,
+    user: { findUnique: jest.fn() },
+    $transaction: jest.fn(async (callback: (txArg: unknown) => Promise<unknown>) => callback(tx)),
+  };
+  const service = new KtaApplicationService(prisma as any, new ScopeHelper(), {} as any);
+  return { service, prisma };
+}
+
+it('approve menolak aplikasi di luar scope sebelum mutasi', async () => {
+  const { service, prisma } = makeKtaService();
+
+  await expect(
+    (service as any).approve('a1', { id: 'u1', role: 'admin_ranting' }, undefined, scope),
+  ).rejects.toThrow('Akses ditolak: diluar cakupan wilayah Anda');
+  expect(prisma.$transaction).not.toHaveBeenCalled();
+});
+
+it('reject menolak aplikasi di luar scope sebelum mutasi', async () => {
+  const { service, prisma } = makeKtaService();
+
+  await expect(
+    (service as any).reject('a1', { id: 'u1', role: 'admin_ranting' }, 'alasan', scope),
+  ).rejects.toThrow('Akses ditolak: diluar cakupan wilayah Anda');
+  expect(prisma.$transaction).not.toHaveBeenCalled();
+});
+
+it('getHistory menolak aplikasi di luar scope sebelum mengembalikan riwayat', async () => {
+  const { service, prisma } = makeKtaService();
+
+  await expect((service as any).getHistory('a1', scope)).rejects.toThrow(
+    'Akses ditolak: diluar cakupan wilayah Anda',
+  );
+  expect(prisma.ktaAppHistory.findMany).not.toHaveBeenCalled();
 });

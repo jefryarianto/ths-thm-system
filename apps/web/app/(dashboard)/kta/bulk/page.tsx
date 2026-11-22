@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Search } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage, unwrap } from '@/lib/api-client';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -24,7 +24,9 @@ export default function KtaBulkPage() {
   const toast = useToast();
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MemberResult[]>([]);
+  const [searchError, setSearchError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<MemberResult[]>([]);
   const [batchName, setBatchName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -33,28 +35,40 @@ export default function KtaBulkPage() {
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setSearchResults([]);
+      setSearchError('');
       return;
     }
     let cancelled = false;
     apiClient
       .get('/members', { params: { search: debouncedQuery, limit: 20 } })
       .then((response) => {
-        if (!cancelled) setSearchResults(response.data?.data ?? response.data ?? []);
+        if (!cancelled) {
+          setSearchResults(unwrap<MemberResult[]>(response));
+          setSearchError('');
+        }
       })
-      .catch(() => {
-        if (!cancelled) setSearchResults([]);
+      .catch((err) => {
+        if (!cancelled) {
+          setSearchResults([]);
+          const detail = extractErrorMessage(err, '');
+          setSearchError(detail ? `Gagal mencari anggota: ${detail}` : 'Gagal mencari anggota');
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [debouncedQuery]);
 
-  const toggleMember = (id: string) => {
-    setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((selectedId) => selectedId !== id);
-      if (prev.length >= MAX_BULK_KTA) return prev;
-      return [...prev, id];
-    });
+  const toggleMember = (member: MemberResult) => {
+    const id = member.id;
+    if (selectedIds.includes(id)) {
+      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
+      setSelectedMembers((prev) => prev.filter((selected) => selected.id !== id));
+      return;
+    }
+    if (selectedIds.length >= MAX_BULK_KTA) return;
+    setSelectedIds((prev) => [...prev, id]);
+    setSelectedMembers((prev) => [...prev, member]);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -71,12 +85,18 @@ export default function KtaBulkPage() {
     setSaving(true);
     try {
       const response = await apiClient.post('/kta-applications/bulk', body);
-      toast('success', `${response.data?.totalSubmitted ?? selectedIds.length} KTA berhasil diajukan`);
-      const batchId = response.data?.batchId ?? response.data?.data?.batchId;
-      router.push(batchId ? `/kta/batches/${batchId}` : '/kta/queue');
+      const result = unwrap<{
+        batchId?: string;
+        totalSubmitted: number;
+        ineligible?: string[];
+      }>(response);
+      toast('success', `${result.totalSubmitted} KTA berhasil diajukan`);
+      if (result.ineligible?.length) {
+        toast('success', `${result.ineligible.length} anggota tidak memenuhi syarat`);
+      }
+      router.push(result.batchId ? `/kta/batches/${result.batchId}` : '/kta/queue');
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast('error', message || 'Gagal mengajukan KTA massal');
+      toast('error', extractErrorMessage(err, 'Gagal mengajukan KTA massal'));
     } finally {
       setSaving(false);
     }
@@ -126,7 +146,9 @@ export default function KtaBulkPage() {
             <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Hasil Pencarian
             </p>
-            {searchResults.length === 0 ? (
+            {searchError ? (
+              <p className="text-sm text-red-600 dark:text-red-400">{searchError}</p>
+            ) : searchResults.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {debouncedQuery.length < 2 ? 'Ketik minimal 2 karakter untuk mencari.' : 'Tidak ada anggota yang cocok.'}
               </p>
@@ -141,7 +163,7 @@ export default function KtaBulkPage() {
                       type="checkbox"
                       checked={selectedIds.includes(member.id)}
                       disabled={!selectedIds.includes(member.id) && selectedIds.length >= MAX_BULK_KTA}
-                      onChange={() => toggleMember(member.id)}
+                      onChange={() => toggleMember(member)}
                       className="h-4 w-4 accent-blue-600"
                     />
                     <span className="text-sm text-gray-900 dark:text-white">{member.namaLengkap}</span>
@@ -158,19 +180,16 @@ export default function KtaBulkPage() {
             </p>
             {selectedIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {selectedIds.map((id) => {
-                  const member = searchResults.find((result) => result.id === id);
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => toggleMember(id)}
-                      className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-xs text-blue-700 dark:text-blue-300"
-                    >
-                      {member?.namaLengkap ?? id} ×
-                    </button>
-                  );
-                })}
+                {selectedMembers.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => toggleMember(member)}
+                    className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-xs text-blue-700 dark:text-blue-300"
+                  >
+                    {member.namaLengkap} ×
+                  </button>
+                ))}
               </div>
             )}
           </div>

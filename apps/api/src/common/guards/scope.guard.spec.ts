@@ -187,6 +187,18 @@ describe('ScopeGuard', () => {
       expect(req.scope).toEqual({ role: 'admin_ranting', rantingId: 'r1' });
     });
 
+    it.each(['admin_ranting', 'admin_kegiatan'])(
+      'should deny branch-level endpoints when %s has no rantingId',
+      async (role) => {
+        const req = mockRequest({ id: 'u1', email: `${role}@test.com`, role });
+        expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
+        expect(req.scope).toBeUndefined();
+        expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
+          expect.objectContaining({ userRole: role, requiredScope: 'branch' }),
+        );
+      },
+    );
+
     it('should deny access to region-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')

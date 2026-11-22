@@ -377,12 +377,18 @@ export class KtaApplicationService {
   // ============================================================
   // APPROVE (Per Level)
   // ============================================================
-  async approve(applicationId: string, approver: { id: string; role: string }, catatan?: string) {
+  async approve(
+    applicationId: string,
+    approver: { id: string; role: string },
+    catatan?: string,
+    scope?: UserScope,
+  ) {
     const app = await this.prisma.ktaApplication.findUnique({
       where: { id: applicationId },
       include: { anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } } },
     });
     if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
 
     const currentLevel = getLevelFromStatus(app.status);
     const expectedRole = LEVEL_TO_ROLE[currentLevel];
@@ -429,7 +435,12 @@ export class KtaApplicationService {
   // ============================================================
   // REJECT
   // ============================================================
-  async reject(applicationId: string, rejector: { id: string; role: string }, reason: string) {
+  async reject(
+    applicationId: string,
+    rejector: { id: string; role: string },
+    reason: string,
+    scope?: UserScope,
+  ) {
     if (!reason || !reason.trim()) throw new BadRequestException('Alasan penolakan wajib diisi');
 
     const app = await this.prisma.ktaApplication.findUnique({
@@ -437,6 +448,7 @@ export class KtaApplicationService {
       include: { anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } } },
     });
     if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
 
     const currentLevel = getLevelFromStatus(app.status);
     const expectedRole = LEVEL_TO_ROLE[currentLevel];
@@ -977,7 +989,14 @@ export class KtaApplicationService {
     return app;
   }
 
-  async getHistory(applicationId: string) {
+  async getHistory(applicationId: string, scope?: UserScope) {
+    const app = await this.prisma.ktaApplication.findUnique({
+      where: { id: applicationId },
+      select: { anggota: { select: { rantingId: true } } },
+    });
+    if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
+
     return this.prisma.ktaAppHistory.findMany({
       where: { ktaApplicationId: applicationId },
       orderBy: { createdAt: 'asc' },
