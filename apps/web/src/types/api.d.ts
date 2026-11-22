@@ -2287,6 +2287,23 @@ export interface paths {
         patch: operations["ClaimsController_update"];
         trace?: never;
     };
+    "/claims/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat klaim massal oleh admin ranting (bukti dapat menyusul) */
+        post: operations["ClaimsController_createBulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/claims/{id}/approve": {
         parameters: {
             query?: never;
@@ -6564,6 +6581,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/claims/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lacak status klaim anggota berdasarkan token (public) */
+        get: operations["PublicController_getClaimTracking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/mobile-app-info": {
         parameters: {
             query?: never;
@@ -7770,6 +7804,12 @@ export interface components {
             /** @enum {string} */
             tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
             data?: Record<string, never>;
+            /** @description Batasi notifikasi ke admin ranting tertentu */
+            rantingId?: string;
+            /** @description Batasi notifikasi ke admin wilayah tertentu */
+            wilayahId?: string;
+            /** @description Batasi notifikasi ke admin distrik tertentu */
+            distrikId?: string;
         };
         RegisterDeviceTokenDto: {
             token: string;
@@ -7957,6 +7997,61 @@ export interface components {
         };
         RejectRegistrationDto: {
             reason?: string;
+        };
+        CreateClaimDto: {
+            /** @description ID anggota (opsional, ada jika klaim dokumen) */
+            anggotaId?: string;
+            /**
+             * @description Tipe klaim
+             * @enum {string}
+             */
+            tipe: "keanggotaan" | "dokumen";
+            catatan?: string;
+            /** @description Nama lengkap pelapor */
+            namaLengkap?: string;
+            /**
+             * @description Jenis kelamin
+             * @enum {string}
+             */
+            jenisKelamin?: "L" | "P";
+            /** @description Tempat lahir */
+            tempatLahir?: string;
+            /** @description Tanggal lahir (ISO string) */
+            tanggalLahir?: string;
+            /** @description Tempat pendadaran (dadar) */
+            tempatDadar: string;
+            /** @description Tahun pendadaran (dadar) */
+            tahunDadar: string;
+            /** @description alamat lengkap */
+            alamat?: string;
+            /** @description Nomor HP */
+            noHp?: string;
+            /** @description Email */
+            email: string;
+            /** @description ID ranting asal keanggotaan */
+            rantingId?: string;
+            /**
+             * @description Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan
+             * @enum {string}
+             */
+            modeBukti?: "unggah" | "cerita";
+            /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
+            ceritaHistori?: string;
+            /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
+            buktiFiles?: string[];
+            /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
+            dokumenPendukungFiles?: string[];
+            /**
+             * @description Tipe bukti keanggotaan
+             * @enum {string}
+             */
+            buktiTipe?: "sertifikat" | "kartu_anggota";
+        };
+        BulkClaimDto: {
+            /** @description Daftar klaim yang dibuat sekaligus (maksimal 100 baris) */
+            claims: components["schemas"]["CreateClaimDto"][];
+            /** @description Nama batch untuk pelacakan admin */
+            batchName?: string;
         };
         UpdateClaimDto: {
             catatan?: string;
@@ -11477,6 +11572,8 @@ export interface operations {
                 limit?: number;
                 status?: "pending" | "diproses" | "disetujui" | "ditolak";
                 tipe?: "keanggotaan" | "dokumen";
+                /** @description Tahap persetujuan klaim */
+                currentStage?: string;
             };
             header?: never;
             path?: never;
@@ -11518,6 +11615,18 @@ export interface operations {
                     email?: string;
                     catatan?: string;
                     rantingId?: string;
+                    /**
+                     * @description Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan
+                     * @enum {string}
+                     */
+                    modeBukti?: "unggah" | "cerita";
+                    /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
+                    ceritaHistori?: string;
+                    /**
+                     * @description Tipe bukti keanggotaan
+                     * @enum {string}
+                     */
+                    buktiTipe?: "sertifikat" | "kartu_anggota";
                     /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
                     buktiFiles?: string[];
                     /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
@@ -11588,6 +11697,27 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_createBulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkClaimDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18256,6 +18386,25 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicController_getClaimTracking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

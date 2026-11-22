@@ -64,6 +64,22 @@ export class ClaimsController {
         email: { type: 'string', format: 'email' },
         catatan: { type: 'string' },
         rantingId: { type: 'string' },
+        modeBukti: {
+          type: 'string',
+          enum: ['unggah', 'cerita'],
+          description:
+            'Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan',
+        },
+        ceritaHistori: {
+          type: 'string',
+          description: 'Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter)',
+          maxLength: 1000,
+        },
+        buktiTipe: {
+          type: 'string',
+          enum: ['sertifikat', 'kartu_anggota'],
+          description: 'Tipe bukti keanggotaan',
+        },
         buktiFiles: {
           type: 'array',
           items: { type: 'string', format: 'binary' },

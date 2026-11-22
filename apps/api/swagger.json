@@ -4791,6 +4791,15 @@
                 "dokumen"
               ]
             }
+          },
+          {
+            "name": "currentStage",
+            "required": false,
+            "in": "query",
+            "description": "Tahap persetujuan klaim",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4863,6 +4872,27 @@
                   },
                   "rantingId": {
                     "type": "string"
+                  },
+                  "modeBukti": {
+                    "type": "string",
+                    "enum": [
+                      "unggah",
+                      "cerita"
+                    ],
+                    "description": "Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan"
+                  },
+                  "ceritaHistori": {
+                    "type": "string",
+                    "description": "Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter)",
+                    "maxLength": 1000
+                  },
+                  "buktiTipe": {
+                    "type": "string",
+                    "enum": [
+                      "sertifikat",
+                      "kartu_anggota"
+                    ],
+                    "description": "Tipe bukti keanggotaan"
                   },
                   "buktiFiles": {
                     "type": "array",
@@ -4989,6 +5019,36 @@
           }
         ],
         "summary": "Hapus klaim",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/claims/bulk": {
+      "post": {
+        "operationId": "ClaimsController_createBulk",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buat klaim massal oleh admin ranting (bukti dapat menyusul)",
         "tags": [
           "Claims"
         ]
@@ -15134,6 +15194,30 @@
         ]
       }
     },
+    "/public/claims/{token}": {
+      "get": {
+        "operationId": "PublicController_getClaimTracking",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Lacak status klaim anggota berdasarkan token (public)",
+        "tags": [
+          "Public"
+        ]
+      }
+    },
     "/public/mobile-app-info": {
       "get": {
         "operationId": "PublicController_getMobileAppInfo",
@@ -17750,6 +17834,18 @@
           },
           "data": {
             "type": "object"
+          },
+          "rantingId": {
+            "type": "string",
+            "description": "Batasi notifikasi ke admin ranting tertentu"
+          },
+          "wilayahId": {
+            "type": "string",
+            "description": "Batasi notifikasi ke admin wilayah tertentu"
+          },
+          "distrikId": {
+            "type": "string",
+            "description": "Batasi notifikasi ke admin distrik tertentu"
           }
         },
         "required": [
@@ -18326,6 +18422,132 @@
             "type": "string"
           }
         }
+      },
+      "CreateClaimDto": {
+        "type": "object",
+        "properties": {
+          "anggotaId": {
+            "type": "string",
+            "description": "ID anggota (opsional, ada jika klaim dokumen)"
+          },
+          "tipe": {
+            "type": "string",
+            "enum": [
+              "keanggotaan",
+              "dokumen"
+            ],
+            "description": "Tipe klaim"
+          },
+          "catatan": {
+            "type": "string"
+          },
+          "namaLengkap": {
+            "type": "string",
+            "description": "Nama lengkap pelapor"
+          },
+          "jenisKelamin": {
+            "type": "string",
+            "enum": [
+              "L",
+              "P"
+            ],
+            "description": "Jenis kelamin"
+          },
+          "tempatLahir": {
+            "type": "string",
+            "description": "Tempat lahir"
+          },
+          "tanggalLahir": {
+            "type": "string",
+            "description": "Tanggal lahir (ISO string)"
+          },
+          "tempatDadar": {
+            "type": "string",
+            "description": "Tempat pendadaran (dadar)"
+          },
+          "tahunDadar": {
+            "type": "string",
+            "description": "Tahun pendadaran (dadar)"
+          },
+          "alamat": {
+            "type": "string",
+            "description": "alamat lengkap"
+          },
+          "noHp": {
+            "type": "string",
+            "description": "Nomor HP"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email"
+          },
+          "rantingId": {
+            "type": "string",
+            "description": "ID ranting asal keanggotaan"
+          },
+          "modeBukti": {
+            "type": "string",
+            "enum": [
+              "unggah",
+              "cerita"
+            ],
+            "description": "Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan"
+          },
+          "ceritaHistori": {
+            "type": "string",
+            "description": "Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter)",
+            "maxLength": 1000
+          },
+          "buktiFiles": {
+            "type": "array",
+            "description": "Bukti keanggotaan (max 3 files, image/PDF, 5MB each)",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "dokumenPendukungFiles": {
+            "type": "array",
+            "description": "Dokumen pendukung lain (max 3 files, image/PDF, 5MB each)",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "buktiTipe": {
+            "type": "string",
+            "enum": [
+              "sertifikat",
+              "kartu_anggota"
+            ],
+            "description": "Tipe bukti keanggotaan"
+          }
+        },
+        "required": [
+          "tipe",
+          "tempatDadar",
+          "tahunDadar",
+          "email"
+        ]
+      },
+      "BulkClaimDto": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "description": "Daftar klaim yang dibuat sekaligus (maksimal 100 baris)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateClaimDto"
+            }
+          },
+          "batchName": {
+            "type": "string",
+            "description": "Nama batch untuk pelacakan admin"
+          }
+        },
+        "required": [
+          "claims"
+        ]
       },
       "UpdateClaimDto": {
         "type": "object",
