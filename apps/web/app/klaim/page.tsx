@@ -65,7 +65,10 @@ export default function KlaimPage() {
     noHp: '',
     email: '',
     catatan: '',
+    modeBukti: 'unggah',
+    ceritaHistori: '',
   });
+  const [trackingToken, setTrackingToken] = useState('');
   const [buktiFiles, setBuktiFiles] = useState<FileWithPreview[]>([]);
 
   // Loading states for each dropdown
@@ -254,6 +257,13 @@ export default function KlaimPage() {
       errs.email = 'Format email tidak valid';
     if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
       errs.noHp = 'Format No. HP tidak valid (mulai 0 atau +62, 9-14 digit)';
+    if (form.modeBukti === 'unggah' && buktiFiles.length === 0)
+      errs.buktiFiles = 'Unggah minimal satu berkas bukti';
+    if (form.modeBukti === 'cerita') {
+      const panjang = form.ceritaHistori.trim().length;
+      if (panjang < 20 || panjang > 1000)
+        errs.ceritaHistori = 'Cerita histori harus antara 20 sampai 1000 karakter';
+    }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -276,9 +286,13 @@ export default function KlaimPage() {
       });
       formData.append('rantingId', rantingId);
       formData.append('tipe', 'keanggotaan');
+      formData.append('modeBukti', form.modeBukti);
+      if (form.modeBukti === 'cerita') formData.append('ceritaHistori', form.ceritaHistori.trim());
 
       // Files
-      buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
+      if (form.modeBukti === 'unggah') {
+        buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
+      }
 
       const res = await fetch(`${PUBLIC_API_URL}/api/claims`, {
         method: 'POST',
@@ -290,6 +304,7 @@ export default function KlaimPage() {
         throw new Error(data.message || 'Klaim gagal diajukan. Silakan coba lagi.');
       }
 
+      setTrackingToken(data?.data?.trackingToken || '');
       setStep('success');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
@@ -329,6 +344,17 @@ export default function KlaimPage() {
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={36} className="text-green-600 dark:text-green-400" />
             </div>
+            {trackingToken && (
+              <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+                Simpan tautan ini untuk memantau klaim Anda:{' '}
+                <Link
+                  href={`/klaim/${trackingToken}`}
+                  className="font-medium text-navy-600 dark:text-navy-400 hover:underline"
+                >
+                  Lacak status klaim
+                </Link>
+              </p>
+            )}
             <Link
               href="/login"
               className="inline-flex items-center gap-2 px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700 transition font-medium"
@@ -740,17 +766,96 @@ export default function KlaimPage() {
               </div>
             </div>
 
-            {/* Bukti Keanggotaan & Dokumen Pendukung */}
-            <FileUploadZone
-              label="Bukti Keanggotaan & Dokumen Pendukung (Sertifikat, Kartu Anggota, KTP, Surat Keterangan, dll)"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              maxFiles={6}
-              maxSizeMB={5}
-              onFilesChange={handleBuktiChange}
-              files={buktiFiles}
-              onRemoveFile={handleBuktiRemove}
-              uploading={submitting}
-            />
+            {/* Mode Pembuktian */}
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Cara Pembuktian Keanggotaan <span className="text-red-500">*</span>
+              </legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(['unggah', 'cerita'] as const).map((mode) => (
+                  <label
+                    key={mode}
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                      form.modeBukti === mode
+                        ? 'border-navy-500 bg-navy-50 dark:bg-navy-900/30'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="modeBukti"
+                      value={mode}
+                      checked={form.modeBukti === mode}
+                      onChange={() => {
+                        updateField('modeBukti', mode);
+                        setFieldErrors((x) => ({ ...x, buktiFiles: '', ceritaHistori: '' }));
+                      }}
+                      className="mt-0.5 h-4 w-4 accent-navy-600"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                        {mode === 'unggah' ? 'Unggah bukti' : 'Ceritakan histori'}
+                      </span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                        {mode === 'unggah'
+                          ? 'Sertifikat, kartu anggota, KTP, atau surat keterangan'
+                          : 'Tulis riwayat keanggotaan Anda (20–1000 karakter)'}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            {form.modeBukti === 'unggah' ? (
+              <div>
+                <FileUploadZone
+                  label="Bukti Keanggotaan & Dokumen Pendukung (Sertifikat, Kartu Anggota, KTP, Surat Keterangan, dll)"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  maxFiles={6}
+                  maxSizeMB={5}
+                  onFilesChange={handleBuktiChange}
+                  files={buktiFiles}
+                  onRemoveFile={handleBuktiRemove}
+                  uploading={submitting}
+                />
+                {fieldErrors.buktiFiles && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.buktiFiles}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label
+                  htmlFor="ceritaHistori"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Cerita Histori Keanggotaan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="ceritaHistori"
+                  value={form.ceritaHistori}
+                  onChange={(e) => {
+                    updateField('ceritaHistori', e.target.value.slice(0, 1000));
+                    if (fieldErrors.ceritaHistori)
+                      setFieldErrors((x) => ({ ...x, ceritaHistori: '' }));
+                  }}
+                  rows={5}
+                  maxLength={1000}
+                  className={`${INPUT_CLASS} resize-none ${
+                    fieldErrors.ceritaHistori ? 'border-red-400 dark:border-red-600' : ''
+                  }`}
+                  placeholder="Ceritakan secara singkat mulai awal berlatih hingga di dadar dan informasi minimal 2 orang yang mendadarnya"
+                />
+                <div className="mt-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <span>
+                    {fieldErrors.ceritaHistori || 'Minimal 20 karakter, maksimal 1000 karakter'}
+                  </span>
+                  <span>{form.ceritaHistori.length}/1000</span>
+                </div>
+              </div>
+            )}
 
             {/* Catatan */}
             <div>

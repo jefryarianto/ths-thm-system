@@ -6,7 +6,7 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, CheckCircle, XCircle, Clock, ExternalLink, Trash2 } from 'lucide-react';
+import { Plus, FileText, CheckCircle, XCircle, Clock, ExternalLink, Trash2, Layers } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -99,6 +99,14 @@ export default function ClaimsPage() {
     <PermissionGuard module="claims" action="view">
       <PageContainer>
         <PageHeader title="Manajemen Klaim" onRefresh={refetch}>
+          {(currentRole === 'admin_ranting' || currentRole === 'superadmin' || currentRole === 'admin_nasional') && (
+            <button
+              onClick={() => router.push('/claims/bulk')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 text-navy-700 dark:text-navy-300 border border-gray-300 dark:border-gray-600 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Layers size={14} /> Bulk
+            </button>
+          )}
           <button
             onClick={() => router.push('/claims/new')}
             className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
