@@ -13,6 +13,7 @@ import { ForumController } from '../../modules/forum/forum.controller';
 import { GaleriController } from '../../modules/galeri/galeri.controller';
 import { JabatanController } from '../../modules/jabatan/jabatan.controller';
 import { KepengurusanController } from '../../modules/kepengurusan/kepengurusan.controller';
+import { KtaApplicationController } from '../../modules/members/kta-application.controller';
 import { MembersController } from '../../modules/members/members.controller';
 import { OrgStructureController } from '../../modules/org-structure/org-structure.controller';
 import { PaymentsController } from '../../modules/payments/payments.controller';
@@ -36,6 +37,7 @@ const CONTROLLERS: Array<[string, Type<unknown>]> = [
   ['GaleriController', GaleriController],
   ['JabatanController', JabatanController],
   ['KepengurusanController', KepengurusanController],
+  ['KtaApplicationController', KtaApplicationController],
   ['MembersController', MembersController],
   ['OrgStructureController', OrgStructureController],
   ['PaymentsController', PaymentsController],
@@ -175,6 +177,24 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'remove',
     'reparent',
     'update',
+  ],
+  KtaApplicationController: [
+    'approve',
+    'distrikQueue',
+    'exportBatch',
+    'findAll',
+    'findOne',
+    'getBatch',
+    'getBottlenecks',
+    'getEscalationSla',
+    'getFunnel',
+    'getHistory',
+    'getProcessingTime',
+    'getTrend',
+    'listBatches',
+    'manualEscalation',
+    'reject',
+    'resetMemberKta',
   ],
   MembersController: [
     'activateCard',
@@ -325,6 +345,10 @@ describe('Role contract — admin_nasional', () => {
 
   it('should discover role metadata on the decorated endpoints', () => {
     expect(endpoints.length).toBeGreaterThan(100);
+  });
+
+  it('KTA application controller terdaftar dalam kontrak peran', () => {
+    expect(CONTROLLERS.map(([name]) => name)).toContain('KtaApplicationController');
   });
 
   it('should only use known role names', () => {

@@ -1021,8 +1021,8 @@ export class KtaApplicationService {
     return batch;
   }
 
-  async exportBatch(batchId: string, format: 'csv' | 'excel' | 'pdf') {
-    const batch = await this.getBatchDetail(batchId);
+  async exportBatch(batchId: string, format: 'csv' | 'excel' | 'pdf', scope?: UserScope) {
+    const batch = await this.getBatchDetail(batchId, scope);
     return { batchId, format, data: batch };
   }
 
