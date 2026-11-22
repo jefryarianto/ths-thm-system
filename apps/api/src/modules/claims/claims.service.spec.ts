@@ -50,6 +50,7 @@ describe('ClaimsService', () => {
     },
     ranting: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     $transaction: jest.fn(),
   };
@@ -172,7 +173,13 @@ describe('ClaimsService', () => {
       mockPrisma.klaim.create.mockResolvedValue(mockClaim);
       // Spy on the service's findOne method
       jest.spyOn(service, 'findOne').mockResolvedValue(mockClaim);
-      const result = await service.create({ tipe: 'keanggotaan', anggotaId: 'a1' });
+      const result = await service.create({
+        tipe: 'keanggotaan',
+        anggotaId: 'a1',
+        email: 'klaimer@test.com',
+        modeBukti: 'cerita',
+        ceritaHistori: 'Saya berlatih sejak 2010 dan didadar oleh Andi serta Budi pada 2012.',
+      });
       expect(result.status).toBe('pending');
     });
 
@@ -213,6 +220,30 @@ describe('ClaimsService', () => {
         }),
       }));
     });
+
+    it('does not pass buktiTipe to prisma.klaim.create', async () => {
+      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', status: 'pending' });
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1', status: 'pending' } as never);
+      await service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        modeBukti: 'cerita',
+        ceritaHistori: 'Saya berlatih sejak 2010 dan didadar oleh Andi serta Budi pada 2012.',
+        buktiTipe: 'kartu_anggota',
+      });
+      const payload = mockPrisma.klaim.create.mock.calls[0][0].data;
+      expect(payload).not.toHaveProperty('buktiTipe');
+      expect(payload).not.toHaveProperty('buktiFiles');
+      expect(payload).not.toHaveProperty('dokumenPendukungFiles');
+    });
+
+    it('requires evidence for keanggotaan claims even when anggotaId is supplied', async () => {
+      await expect(service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        anggotaId: 'a1',
+      })).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('createBulk', () => {
@@ -229,29 +260,84 @@ describe('ClaimsService', () => {
       expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
     });
 
-    it('creates every claim with a unique tracking token', async () => {
+    it('creates every claim with a unique tracking token in one transaction', async () => {
       let seq = 0;
+      mockPrisma.ranting.findMany.mockResolvedValue([{ id: 'r1' }]);
       mockPrisma.klaim.create.mockImplementation(async ({ data }: { data: { trackingToken: string } }) => ({
         id: `cl${++seq}`,
         trackingToken: data.trackingToken,
       }));
-      jest.spyOn(service, 'findOne').mockImplementation(async (id: string) => ({
-        id,
-        trackingToken: mockPrisma.klaim.create.mock.calls[Number(id.slice(2)) - 1][0].data.trackingToken,
-      }) as never);
+      mockPrisma.klaim.findMany.mockResolvedValue([
+        { id: 'cl2', trackingToken: 'token-2' },
+        { id: 'cl1', trackingToken: 'token-1' },
+      ]);
 
       const result = await service.createBulk({
         claims: [
-          { tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com' },
-          { tipe: 'keanggotaan', rantingId: 'r1', email: 'b@test.com' },
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', jenisKelamin: 'L', tempatDadar: 'T', tahunDadar: '2012' },
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'b@test.com', namaLengkap: 'B', jenisKelamin: 'P', tempatDadar: 'T', tahunDadar: '2012' },
         ],
         batchName: 'Batch ranting',
       }, { rantingId: 'r1' });
 
+      expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
       expect(mockPrisma.klaim.create).toHaveBeenCalledTimes(2);
       const tokens = mockPrisma.klaim.create.mock.calls.map(([args]: [{ data: { trackingToken: string } }]) => args.data.trackingToken);
       expect(new Set(tokens).size).toBe(2);
+      expect(result.data.map((item: { id: string }) => item.id)).toEqual(['cl1', 'cl2']);
       expect(result).toEqual(expect.objectContaining({ success: true, batchName: 'Batch ranting', count: 2 }));
+    });
+
+    it('aborts the batch when one insert fails', async () => {
+      mockPrisma.ranting.findMany.mockResolvedValue([{ id: 'r1' }]);
+      mockPrisma.klaim.create
+        .mockResolvedValueOnce({ id: 'cl1', trackingToken: 'token-1' })
+        .mockRejectedValueOnce(new Error('insert failed'));
+
+      await expect(service.createBulk({
+        claims: [
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', jenisKelamin: 'L', tempatDadar: 'T', tahunDadar: '2012' },
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'b@test.com', namaLengkap: 'B', jenisKelamin: 'P', tempatDadar: 'T', tahunDadar: '2012' },
+        ],
+      }, { rantingId: 'r1' })).rejects.toThrow('insert failed');
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.klaim.findMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects admin ranting without an active ranting', async () => {
+      await expect(service.createBulk({
+        claims: [{ tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', jenisKelamin: 'L', tempatDadar: 'T', tahunDadar: '2012' }],
+      }, { role: 'admin_ranting' })).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects bulk rows that link an existing anggota', async () => {
+      await expect(service.createBulk({
+        claims: [{ tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', jenisKelamin: 'L', tempatDadar: 'T', tahunDadar: '2012', anggotaId: 'a-other' }],
+      }, { rantingId: 'r1' })).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects bulk rows without jenisKelamin', async () => {
+      await expect(service.createBulk({
+        claims: [{ tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', tempatDadar: 'T', tahunDadar: '2012' }],
+      }, { rantingId: 'r1' })).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
+    });
+
+    it('validates all ranting ids before creating any claim', async () => {
+      mockPrisma.ranting.findMany.mockResolvedValue([{ id: 'r1' }]);
+      await expect(service.createBulk({
+        claims: [
+          { tipe: 'keanggotaan', rantingId: 'r1', email: 'a@test.com', namaLengkap: 'A', jenisKelamin: 'L', tempatDadar: 'T', tahunDadar: '2012' },
+          { tipe: 'keanggotaan', rantingId: 'r-missing', email: 'b@test.com', namaLengkap: 'B', jenisKelamin: 'P', tempatDadar: 'T', tahunDadar: '2012' },
+        ],
+      })).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.ranting.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: { in: ['r1', 'r-missing'] } },
+      }));
+      expect(mockPrisma.klaim.create).not.toHaveBeenCalled();
     });
   });
 

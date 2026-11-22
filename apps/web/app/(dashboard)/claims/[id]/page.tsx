@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
+import { CeritaHistoriPanel } from '@/components/claims/CeritaHistoriPanel';
 
 interface ClaimDetail {
   id: string;
@@ -32,6 +33,8 @@ interface ClaimDetail {
   alasanPenolakan: string | null;
   namaLengkap?: string | null;
   jenisKelamin?: string | null;
+  modeBukti?: string | null;
+  ceritaHistori?: string | null;
   tempatLahir?: string | null;
   tanggalLahir?: string | null;
   tempatDadar?: string | null;
@@ -552,6 +555,11 @@ export default function ClaimDetailPage() {
             </div>
           </div>
         </div>
+
+        <CeritaHistoriPanel
+          modeBukti={claim.modeBukti}
+          ceritaHistori={claim.ceritaHistori}
+        />
 
         {/* Dokumen Bukti & Pendukung */}
         {((claim.buktiKeanggotaan && claim.buktiKeanggotaan.length > 0) ||

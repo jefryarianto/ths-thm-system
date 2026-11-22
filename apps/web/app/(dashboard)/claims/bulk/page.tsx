@@ -8,22 +8,15 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { SmallLogoSpinner } from '@/components/ui/logo-spinner';
 import { useToast } from '@/components/ui/toast';
+import { buildBulkPayload, validateBulkRows, type BulkClaimRow } from '@/components/claims/bulk';
 
 const INPUT_CLASS =
   'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm';
 
-interface BulkRow {
-  namaLengkap: string;
-  email: string;
-  tempatDadar: string;
-  tahunDadar: string;
-  noHp: string;
-  catatan: string;
-}
-
-const emptyRow = (): BulkRow => ({
+const emptyRow = (): BulkClaimRow => ({
   namaLengkap: '',
   email: '',
+  jenisKelamin: '',
   tempatDadar: '',
   tahunDadar: '',
   noHp: '',
@@ -35,7 +28,7 @@ export default function BulkClaimPage() {
   const toast = useToast();
   const [rantingId, setRantingId] = useState('');
   const [batchName, setBatchName] = useState('');
-  const [rows, setRows] = useState<BulkRow[]>([emptyRow()]);
+  const [rows, setRows] = useState<BulkClaimRow[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,8 +38,10 @@ export default function BulkClaimPage() {
       .catch(() => setRantingId(''));
   }, []);
 
-  const updateRow = (index: number, field: keyof BulkRow, value: string) => {
-    setRows((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
+  const updateRow = (index: number, field: keyof BulkClaimRow, value: string) => {
+    setRows((prev) =>
+      prev.map((row, i) => (i === index ? ({ ...row, [field]: value } as BulkClaimRow) : row)),
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,22 +54,17 @@ export default function BulkClaimPage() {
       toast('error', 'Maksimal 100 klaim per batch');
       return;
     }
-    for (const [index, row] of rows.entries()) {
-      if (!row.namaLengkap.trim() || !row.email.trim() || !row.tempatDadar.trim() || !row.tahunDadar.trim()) {
-        toast('error', `Baris ${index + 1}: nama, email, tempat dadar, dan tahun dadar wajib diisi`);
-        return;
-      }
+    const validationError = validateBulkRows(rows);
+    if (validationError) {
+      toast('error', validationError);
+      return;
     }
     setSaving(true);
     try {
-      const response = await apiClient.post('/claims/bulk', {
-        batchName: batchName.trim() || `Batch ${new Date().toLocaleDateString('id-ID')}`,
-        claims: rows.map((row) => ({
-          ...row,
-          tipe: 'keanggotaan',
-          rantingId,
-        })),
-      });
+      const response = await apiClient.post(
+        '/claims/bulk',
+        buildBulkPayload(rows, rantingId, batchName.trim() || `Batch ${new Date().toLocaleDateString('id-ID')}`),
+      );
       toast('success', `${response.data?.count || rows.length} klaim berhasil dibuat`);
       router.push('/claims');
     } catch (err) {
@@ -178,16 +168,31 @@ export default function BulkClaimPage() {
                       <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                         Email *
                       </label>
-                      <input
-                        type="email"
-                        value={row.email}
-                        onChange={(e) => updateRow(index, 'email', e.target.value)}
-                        className={INPUT_CLASS}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                        Tempat Dadar *
+                       <input
+                         type="email"
+                         value={row.email}
+                         onChange={(e) => updateRow(index, 'email', e.target.value)}
+                         className={INPUT_CLASS}
+                       />
+                     </div>
+                     <div>
+                       <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                         Jenis Kelamin *
+                       </label>
+                       <select
+                         aria-label={`Jenis kelamin klaim ${index + 1}`}
+                         value={row.jenisKelamin}
+                         onChange={(e) => updateRow(index, 'jenisKelamin', e.target.value as BulkClaimRow['jenisKelamin'])}
+                         className={INPUT_CLASS}
+                       >
+                         <option value="">Pilih jenis kelamin</option>
+                         <option value="L">Laki-laki</option>
+                         <option value="P">Perempuan</option>
+                       </select>
+                     </div>
+                     <div>
+                       <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                         Tempat Dadar *
                       </label>
                       <input
                         value={row.tempatDadar}

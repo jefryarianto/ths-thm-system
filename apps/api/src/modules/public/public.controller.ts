@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { Controller, Get, Header, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { Public } from '../../common/decorators/public.decorator';
@@ -151,6 +151,7 @@ export class PublicController {
 
   @Public()
   @Get('claims/:token')
+  @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Lacak status klaim anggota berdasarkan token (public)' })
   async getClaimTracking(@Param('token') token: string) {
     return { success: true, data: await this.publicService.getClaimTracking(token) };

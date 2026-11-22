@@ -194,13 +194,15 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
     variables: [
       { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap anggota' },
       { name: 'status', sample: 'disetujui', description: 'Status klaim' },
-      { name: 'reason', sample: 'Berkas lengkap', description: 'Alasan (opsional)' },
+      { name: 'alasan', sample: 'Berkas lengkap', description: 'Alasan (opsional)' },
+      { name: 'trackingUrl', sample: 'https://ths-thm.cloud/klaim/token', description: 'Tautan lacak klaim' },
     ],
     renderDefault: (o) =>
       claimStatusEmail(
         o?.nama ?? 'Budi Santoso',
         o?.status ?? 'disetujui',
-        o?.reason ?? 'Berkas lengkap',
+        o?.alasan ?? o?.reason ?? 'Berkas lengkap',
+        o?.trackingUrl,
       ),
   },
   graduationResultEmail: {

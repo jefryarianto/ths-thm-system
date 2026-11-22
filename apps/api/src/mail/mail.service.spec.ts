@@ -29,6 +29,9 @@ describe('MailService', () => {
     emailTemplate: {
       findUnique: jest.fn(),
     },
+    klaim: {
+      findUnique: jest.fn(),
+    },
   };
 
   const originalResendKey = process.env.RESEND_API_KEY;
@@ -91,6 +94,35 @@ describe('MailService', () => {
           }),
         }),
       );
+    });
+
+    it('should redact claim tracking tokens from email logs', async () => {
+      const token = 'a4b0a3f2-8f5f-4e0a-9d33-4c4d4c8ba123';
+      const userId = 'c2d3e4f5-6a7b-4c8d-9e0f-1a2b3c4d5e6f';
+      const trackingUrl = `https://ths-thm.cloud/klaim/${token}`;
+      mockPrisma.emailLog.create.mockResolvedValue({ id: 'log1' });
+
+      await service.sendMail({
+        to: 'user@test.com',
+        subject: 'Status klaim',
+        html: `<a href="${trackingUrl}">Lacak status klaim Anda</a>`,
+        metadata: {
+          module: 'claims',
+          template: 'claimStatusEmail',
+          trackingToken: token,
+          trackingUrl,
+          userId,
+          context: { payload: { trackingToken: token } },
+        },
+      });
+
+      const logArg = mockPrisma.emailLog.create.mock.calls[0][0] as {
+        data: { content?: string; metadata?: Record<string, unknown> };
+      };
+      expect(logArg.data.content).not.toContain(token);
+      expect(logArg.data.content).toContain('[REDACTED]');
+      expect(JSON.stringify(logArg.data.metadata)).not.toContain(token);
+      expect(JSON.stringify(logArg.data.metadata)).toContain(userId);
     });
 
     it('should skip sending to suppressed (bounced) recipients', async () => {
@@ -270,6 +302,40 @@ describe('MailService', () => {
         data: expect.objectContaining({ status: 'skipped' }),
       });
       expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('re-renders claim status emails with a usable tracking link on retry', async () => {
+      const token = 'b4f1c2d3-5e6a-4b7c-8d9e-0f1a2b3c4d5e';
+      process.env.RESEND_API_KEY = 'test-key';
+      process.env.RESEND_DOMAIN = 'test.com';
+      process.env.FRONTEND_URL = 'https://ths-thm.cloud';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'resend-123' }),
+      }) as jest.Mock;
+      mockPrisma.emailLog.findMany.mockResolvedValue([
+        baseLog({
+          subject: 'Status klaim',
+          content: '<a href="https://ths-thm.cloud/klaim/[REDACTED]">Lacak</a>',
+          metadata: {
+            module: 'claims',
+            template: 'claimStatusEmail',
+            claimId: 'claim-1',
+            nama: 'Budi',
+            status: 'disetujui',
+            alasan: 'Berkas lengkap',
+          },
+        }),
+      ]);
+      mockPrisma.klaim.findUnique.mockResolvedValue({ trackingToken: token });
+      mockPrisma.emailLog.update.mockResolvedValue({ id: 'log1' });
+
+      const result = await service.retryFailedEmails();
+
+      expect(result.succeeded).toBe(1);
+      const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+      expect(body.html).toContain(`https://ths-thm.cloud/klaim/${token}`);
+      expect(body.html).not.toContain('[REDACTED]');
     });
 
     it('should continue the batch when one update fails', async () => {

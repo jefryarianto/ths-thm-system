@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { env } from '../config/env.validation';
 import { escapeHtml, escapeRegex } from './html-utils';
 import { getTemplateDefinition, listTemplateDefinitions } from './template-registry';
+import { claimStatusEmail } from './email-templates';
 
 export interface SendMailOptions {
   to: string;
@@ -48,6 +49,39 @@ const RETRY_SELECT = {
   metadata: true,
   retryCount: true,
 };
+
+const UUID_PATTERN = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const TRACKING_URL_PATTERN = /(\/klaim\/)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+function redactTrackingToken(value: string): string {
+  return value.replace(TRACKING_URL_PATTERN, '$1[REDACTED]');
+}
+
+function redactTrackingValue(key: string, value: unknown): unknown {
+  if (typeof value === 'string') {
+    return /tracking/i.test(key)
+      ? value.replace(UUID_PATTERN, '[REDACTED]')
+      : redactTrackingToken(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactTrackingValue(key, item));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([nestedKey, nestedValue]) => [
+        nestedKey,
+        redactTrackingValue(nestedKey, nestedValue),
+      ]),
+    );
+  }
+  return value;
+}
+
+function redactMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(metadata).map(([key, value]) => [key, redactTrackingValue(key, value)]),
+  );
+}
 
 @Injectable()
 export class MailService {
@@ -268,12 +302,8 @@ export class MailService {
           continue;
         }
 
-        const attempt = await this.deliver(
-          log.to,
-          log.subject,
-          undefined,
-          log.content || undefined,
-        );
+        const retryContent = await this.buildRetryContent(log);
+        const attempt = await this.deliver(log.to, log.subject, undefined, retryContent);
         // Counter di-update SETELAH update DB sukses — bila update gagal, hasil
         // tidak dihitung agar angka cron mencerminkan outcome yang benar-benar
         // tercatat (kegagalan update dicatat via logger di catch).
@@ -405,6 +435,33 @@ export class MailService {
     }));
   }
 
+  private async buildRetryContent(log: { id: string; content: string | null; metadata: unknown }): Promise<string | undefined> {
+    const metadata = (log.metadata || {}) as Record<string, unknown>;
+    if (metadata.template !== 'claimStatusEmail' || typeof metadata.claimId !== 'string') {
+      return log.content || undefined;
+    }
+
+    try {
+      const claim = await this.prisma.klaim.findUnique({
+        where: { id: metadata.claimId },
+        select: { trackingToken: true },
+      });
+      if (claim?.trackingToken) {
+        const base = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+        return claimStatusEmail(
+          String(metadata.nama || ''),
+          String(metadata.status || ''),
+          String(metadata.alasan || ''),
+          `${base}/klaim/${claim.trackingToken}`,
+        ).html;
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to re-render claim status email ${log.id}: ${(err as Error).message}`);
+    }
+
+    return log.content || undefined;
+  }
+
   /**
    * Maximum length of email content to store in the log.
    * Full content is truncated to protect PII (names, email bodies, etc.)
@@ -430,10 +487,12 @@ export class MailService {
     try {
       // Truncate content to protect PII — full HTML bodies often contain
       // names, addresses, phone numbers, and other personal data
+      const redactedContent = content ? redactTrackingToken(content) : undefined;
       const safeContent =
-        content && content.length > this.MAX_LOG_CONTENT_LENGTH
-          ? content.slice(0, this.MAX_LOG_CONTENT_LENGTH) + '...'
-          : content || undefined;
+        redactedContent && redactedContent.length > this.MAX_LOG_CONTENT_LENGTH
+          ? redactedContent.slice(0, this.MAX_LOG_CONTENT_LENGTH) + '...'
+          : redactedContent;
+      const safeMetadata = metadata ? redactMetadata(metadata) : undefined;
 
       await this.prisma.emailLog.create({
         data: {
@@ -443,7 +502,7 @@ export class MailService {
           provider,
           error,
           content: safeContent,
-          metadata: (metadata as never) || undefined,
+          metadata: (safeMetadata as never) || undefined,
         },
       });
     } catch (err) {

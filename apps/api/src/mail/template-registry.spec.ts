@@ -49,6 +49,20 @@ describe('template-registry', () => {
     }
   });
 
+  it('exposes claim tracking variables in the claim status preview', () => {
+    const definition = EMAIL_TEMPLATE_REGISTRY.claimStatusEmail;
+    expect(definition.variables.map((variable) => variable.name)).toContain('trackingUrl');
+
+    const trackingUrl = 'https://ths-thm.cloud/klaim/token-123';
+    const rendered = definition.renderDefault({
+      alasan: 'Berkas lengkap',
+      trackingUrl,
+    } as never);
+
+    expect(rendered.html).toContain(trackingUrl);
+    expect(rendered.html).toContain('Berkas lengkap');
+  });
+
   it('getTemplateDefinition should return undefined for unknown name', () => {
     expect(getTemplateDefinition('tidak-ada')).toBeUndefined();
   });

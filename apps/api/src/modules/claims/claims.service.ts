@@ -130,7 +130,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
       dokumenPendukungFiles?: Express.Multer.File[];
     },
   ) {
-    if (dto.tipe !== TipeKlaim.keanggotaan || dto.anggotaId) return;
+    if (dto.tipe !== TipeKlaim.keanggotaan) return;
 
     const hasBukti = Boolean(files?.buktiFiles?.length);
     const mode = dto.modeBukti ?? (hasBukti ? 'unggah' : undefined);
@@ -156,13 +156,13 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
       dokumenPendukungFiles?: Express.Multer.File[] 
     },
     buktiTipe: 'sertifikat' | 'kartu_anggota' = 'kartu_anggota',
-    options?: { skipEvidenceValidation?: boolean },
   ) {
-    if (!options?.skipEvidenceValidation) this.validateClaimEvidence(dto, files);
+    this.validateClaimEvidence(dto, files);
 
     // Filter out undefined values from dto
+    const uploadFields = new Set(['buktiFiles', 'dokumenPendukungFiles', 'buktiTipe']);
     const dtoData = Object.fromEntries(
-      Object.entries(dto).filter(([, value]) => value !== undefined)
+      Object.entries(dto).filter(([key, value]) => value !== undefined && !uploadFields.has(key))
     ) as Record<string, unknown>;
     
     // Ensure required fields are present
@@ -203,19 +203,60 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     if (claims.length > 100) {
       throw new BadRequestException('Maksimal 100 klaim per batch');
     }
+    if (scope?.role === 'admin_ranting' && !scope.rantingId) {
+      throw new ForbiddenException('Akun admin ranting tidak memiliki ranting aktif');
+    }
     if (scope?.rantingId && claims.some((claim) => claim.rantingId !== scope.rantingId)) {
       throw new ForbiddenException('Klaim harus berada di ranting yang sama dengan admin ranting');
     }
 
-    const created = [];
     for (const claim of claims) {
-      created.push(await this.create(
-        { ...claim, rantingId: scope?.rantingId || claim.rantingId },
-        undefined,
-        'kartu_anggota',
-        { skipEvidenceValidation: true },
-      ));
+      const rantingId = scope?.rantingId || claim.rantingId;
+      if (claim.anggotaId) {
+        throw new BadRequestException('Klaim bulk tidak boleh menautkan anggota');
+      }
+      if (!rantingId || !claim.namaLengkap || !claim.jenisKelamin || !claim.email || !claim.tempatDadar || !claim.tahunDadar) {
+        throw new BadRequestException('Data klaim bulk tidak lengkap: ranting, nama, jenis kelamin, email, tempat dadar, dan tahun dadar wajib diisi');
+      }
     }
+
+    const rantingIds = [...new Set(claims.map((claim) => (scope?.rantingId || claim.rantingId) as string))];
+    const rantingRows = await this.prisma.ranting.findMany({
+      where: { id: { in: rantingIds } },
+      select: { id: true },
+    });
+    if (rantingRows.length !== rantingIds.length) {
+      throw new BadRequestException('Salah satu ranting tidak ditemukan');
+    }
+
+    const uploadFields = new Set(['buktiFiles', 'dokumenPendukungFiles', 'buktiTipe', 'anggotaId']);
+    const createdIds = await this.prisma.$transaction(async (tx) => {
+      const ids: string[] = [];
+      for (const claim of claims) {
+        const data = Object.fromEntries(
+          Object.entries(claim).filter(([key, value]) => value !== undefined && !uploadFields.has(key))
+        ) as Record<string, unknown>;
+        const record = await tx.klaim.create({
+          data: {
+            ...data,
+            tipe: claim.tipe as TipeKlaim,
+            rantingId: scope?.rantingId || claim.rantingId,
+            tanggalLahir: normalizePrismaDate(claim.tanggalLahir) ?? null,
+            status: 'pending' as const,
+            trackingToken: randomUUID(),
+          },
+        });
+        ids.push(record.id);
+      }
+      return ids;
+    }, { timeout: 10000 });
+
+    const rows = await this.prisma.klaim.findMany({
+      where: { id: { in: createdIds } },
+      include: CLAIM_INCLUDE,
+    });
+    const byId = new Map(rows.map((row: { id: string }) => [row.id, row]));
+    const created = createdIds.map((id) => byId.get(id)).filter(Boolean);
 
     this.invalidateCache();
     this.audit('CLAIM_BULK_CREATE', 'Klaim', dto.batchName || 'batch', undefined, {
@@ -398,6 +439,7 @@ async addBuktiFiles(
         'diproses',
         `Klaim Anda kini ditinjau oleh ${nextStage}`,
         this.buildTrackingUrl(claim.trackingToken),
+        claim.id,
       );
       await this.sendNotificationToNextStageApprovers(
         claim.id,
@@ -437,26 +479,32 @@ async addBuktiFiles(
       const app = await tx.ktaApplication.create({
         data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: scope?.role || 'admin_distrik', status: 'APPROVED' },
       });
+      const wilayahApproved = Boolean(claim.wilayahApprovedBy);
+      const finalizingAtNational = claim.currentStage === 'nasional';
       const history = [
-        { level: 'RANTING', action: 'APPROVED', skipped: false, actorId: claim.rantingApprovedBy || userId || anggota.id, actorRole: 'admin_ranting' },
-        { level: 'WILAYAH', action: claim.ranting?.wilayahId ? 'APPROVED' : 'SKIPPED', skipped: !claim.ranting?.wilayahId, actorId: claim.ranting?.wilayahId ? (claim.wilayahApprovedBy || userId || anggota.id) : userId || anggota.id, actorRole: claim.ranting?.wilayahId ? 'admin_wilayah' : 'system' },
-        { level: 'DISTRIK', action: 'APPROVED', skipped: false, actorId: claim.distrikApprovedBy || userId || anggota.id, actorRole: 'admin_distrik' },
-        { level: 'NASIONAL', action: 'APPROVED', skipped: false, actorId: userId || anggota.id, actorRole: scope?.role || 'admin_nasional' },
+        { level: 'RANTING', action: 'APPROVED', skipped: false, actorId: claim.rantingApprovedBy || userId || anggota.id, actorRole: 'admin_ranting', skippedReason: null },
+        { level: 'WILAYAH', action: wilayahApproved ? 'APPROVED' : 'SKIPPED', skipped: !wilayahApproved, actorId: wilayahApproved ? claim.wilayahApprovedBy! : userId || anggota.id, actorRole: wilayahApproved ? 'admin_wilayah' : 'system', skippedReason: wilayahApproved ? null : 'Tahap wilayah dilewati' },
+        { level: 'DISTRIK', action: 'APPROVED', skipped: false, actorId: claim.distrikApprovedBy || userId || anggota.id, actorRole: 'admin_distrik', skippedReason: null },
+        { level: 'NASIONAL', action: finalizingAtNational ? 'APPROVED' : 'SKIPPED', skipped: !finalizingAtNational, actorId: userId || anggota.id, actorRole: finalizingAtNational ? (scope?.role || 'admin_nasional') : 'system', skippedReason: finalizingAtNational ? null : 'Finalisasi dilakukan di tingkat distrik' },
       ];
       for (const item of history) {
-        await tx.ktaAppHistory.create({ data: { ktaApplicationId: app.id, level: item.level as KtaAppLevel, action: item.action as KtaAppAction, actorId: item.actorId, actorRole: item.actorRole, isSkipped: item.skipped, skippedReason: item.skipped ? 'Ranting tidak terhubung dengan Wilayah' : null } });
+        await tx.ktaAppHistory.create({ data: { ktaApplicationId: app.id, level: item.level as KtaAppLevel, action: item.action as KtaAppAction, actorId: item.actorId, actorRole: item.actorRole, isSkipped: item.skipped, skippedReason: item.skippedReason } });
       }
       await tx.klaim.update({ where: { id }, data: { status: 'disetujui', currentStage: 'kta_processing', anggotaId: anggota.id, ktaApplicationId: app.id, approvedBy: userId || null, approvedAt: new Date() } });
       await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_distrik' } });
       return { anggotaId: anggota.id, ktaApplicationId: app.id };
     });
 
-    if (claim.email && !(await this.prisma.user.findUnique({ where: { email: claim.email }, select: { id: true } }))) {
-      const temporaryPassword = randomBytes(12).toString('base64url');
-      const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-      await this.prisma.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
-      this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
+    try {
+      if (claim.email && !(await this.prisma.user.findUnique({ where: { email: claim.email }, select: { id: true } }))) {
+        const temporaryPassword = randomBytes(12).toString('base64url');
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        await this.prisma.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
+        this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to provision credentials for claim ${id}: ${(err as Error).message}`);
     }
 
       this.invalidateCache();
@@ -466,6 +514,7 @@ async addBuktiFiles(
         'disetujui',
         undefined,
         this.buildTrackingUrl(claim.trackingToken),
+        claim.id,
       );
       // Send in-app notification to admin_nasional
       await this.sendNotificationToNationalApprovers(claim.id, claim.namaLengkap || 'Pelanggan', userId);
@@ -503,6 +552,7 @@ async addBuktiFiles(
       'ditolak',
       reason,
       this.buildTrackingUrl(claim.trackingToken),
+      claim.id,
     );
     this.invalidateCache();
     this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason, stage: claim.currentStage });
@@ -611,7 +661,6 @@ async addBuktiFiles(
     });
 
     const file = buktiFile || dokumenFile;
-    const isBukti = !!buktiFile;
 
     if (!file) {
       throw new NotFoundException('File tidak ditemukan');
@@ -672,6 +721,7 @@ async addBuktiFiles(
     status: string,
     reason?: string,
     trackingUrl?: string,
+    claimId?: string,
   ): void {
     if (!anggota || !anggota.email) return;
     const email = anggota.email;
@@ -683,11 +733,13 @@ async addBuktiFiles(
           () => claimStatusEmail(nama, status, reason, trackingUrl),
           { nama, status, alasan: reason || '', trackingUrl: trackingUrl || '' },
         );
+        const metadata: Record<string, string> = { module: 'claims', template: 'claimStatusEmail', nama, status, alasan: reason || '' };
+        if (claimId) metadata.claimId = claimId;
         await this.mailService.sendMail({
           to: email,
           subject: tpl.subject,
           html: tpl.html,
-          metadata: { module: 'claims', template: 'claimStatusEmail' },
+          metadata,
         });
       } catch (err) {
         this.logger.error(`Claim status email failed for ${email}: ${(err as Error).message}`);

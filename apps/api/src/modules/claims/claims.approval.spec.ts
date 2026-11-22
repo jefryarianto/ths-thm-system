@@ -190,6 +190,63 @@ describe('ClaimsService approval workflow', () => {
     expect(cryptoMock.randomBytes).toHaveBeenCalledWith(12);
   });
 
+  it('does not fail finalization when user provisioning fails after commit', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockRejectedValueOnce(new Error('duplicate email'));
+    prisma.ktaApplication.findFirst.mockResolvedValue(null);
+    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+
+    await expect(service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d'))
+      .resolves.toEqual(expect.objectContaining({ status: 'disetujui', ktaApplicationId: 'kta-1' }));
+  });
+
+  it('records skipped wilayah and nasional in KTA history when district finalizes', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({
+      status: 'pending',
+      currentStage: 'distrik',
+      wilayahApprovedBy: null,
+    }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'user-1' });
+    prisma.ktaApplication.findFirst.mockResolvedValue(null);
+    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+
+    const levels = Object.fromEntries(
+      prisma.ktaAppHistory.create.mock.calls.map(([args]: [{ data: { level: string } }]) => [args.data.level, args.data]),
+    ) as Record<string, { action: string; isSkipped: boolean }>;
+    expect(levels.WILAYAH).toMatchObject({ action: 'SKIPPED', isSkipped: true });
+    expect(levels.NASIONAL).toMatchObject({ action: 'SKIPPED', isSkipped: true });
+  });
+
+  it('records wilayah as approved when a wilayah approver is recorded', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({
+      status: 'pending',
+      currentStage: 'distrik',
+      wilayahApprovedBy: 'user-w',
+      ranting: { id: 'ranting-1', nama: 'Ranting A', wilayahId: null, wilayah: null },
+    }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'user-1' });
+    prisma.ktaApplication.findFirst.mockResolvedValue(null);
+    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+
+    const wilayah = prisma.ktaAppHistory.create.mock.calls
+      .map(([args]: [{ data: { level: string } }]) => args.data)
+      .find((item: { level: string }) => item.level === 'WILAYAH') as { action: string; actorId: string };
+    expect(wilayah).toMatchObject({ action: 'APPROVED', actorId: 'user-w' });
+  });
+
   it('allows national admin to finalize a legacy national claim', async () => {
     prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'nasional' }));
     prisma.anggota.findFirst.mockResolvedValue(null);
