@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Check, X, CreditCard, Settings, Truck, Eye } from 'lucide-react';
+import { Check, X, CreditCard, Settings, Truck, Eye, Plus } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
@@ -115,7 +115,15 @@ export default function KtaQueuePage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Antrian KTA" onRefresh={refetch} />
+      <PageHeader title="Antrian KTA" onRefresh={refetch}>
+        <Link
+          href="/kta/bulk"
+          className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <Plus size={14} />
+          Bulk KTA
+        </Link>
+      </PageHeader>
 
       <SearchBar
         search={search}
