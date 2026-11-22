@@ -150,6 +150,13 @@ export class PublicController {
   }
 
   @Public()
+  @Get('claims/:token')
+  @ApiOperation({ summary: 'Lacak status klaim anggota berdasarkan token (public)' })
+  async getClaimTracking(@Param('token') token: string) {
+    return { success: true, data: await this.publicService.getClaimTracking(token) };
+  }
+
+  @Public()
   @Get('mobile-app-info')
   @ApiOperation({ summary: 'Info versi mobile app (public, untuk pengecekan update)' })
   async getMobileAppInfo() {

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PeriodeService } from '../periode/periode.service';
 
@@ -447,6 +447,38 @@ export class PublicService {
 
     // Ranting has no children
     return { level: null, items: [] };
+  }
+
+  async getClaimTracking(token: string) {
+    const claim = await this.prisma.klaim.findUnique({
+      where: { trackingToken: token },
+      select: {
+        id: true,
+        namaLengkap: true,
+        status: true,
+        currentStage: true,
+        createdAt: true,
+        updatedAt: true,
+        ranting: { select: { nama: true } },
+        approvalHistories: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            stage: true,
+            action: true,
+            actorRole: true,
+            catatan: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!claim) {
+      throw new NotFoundException('Klaim tidak ditemukan');
+    }
+
+    return claim;
   }
 
   async getMobileAppInfo() {
