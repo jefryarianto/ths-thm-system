@@ -134,6 +134,15 @@ describe('ClaimsService', () => {
         'anggota',
       );
     });
+
+    it('filters claims by currentStage', async () => {
+      mockPrisma.klaim.findMany.mockResolvedValue([]);
+      mockPrisma.klaim.count.mockResolvedValue(0);
+      await service.findAll({ page: 1, limit: 10, currentStage: 'distrik' });
+      expect(mockPrisma.klaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ currentStage: 'distrik' }) }),
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -392,17 +401,19 @@ describe('ClaimsService', () => {
   });
 
   describe('reject', () => {
-    it('should reject a claim and send rejection email', async () => {
+    it('should reject a claim and send rejection email to the claimant email', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
         id: 'cl1',
         status: 'pending',
+        email: 'klaimer@test.com',
+        namaLengkap: 'Klaimer',
         anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
       });
       await service.reject('cl1', 'Tidak memenuhi syarat');
       expect(mockPrisma.klaim.update).toHaveBeenCalled();
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'budi@test.com' }),
+        expect.objectContaining({ to: 'klaimer@test.com' }),
       );
     });
   });

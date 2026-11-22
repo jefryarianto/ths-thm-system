@@ -20,7 +20,7 @@ import { normalizePhone } from '../../common/utils/phone.util';
 import { normalizePrismaDate } from '../../common/utils/date.util';
 import { deleteClaimFile } from '../../common/utils/claim-upload.util';
 import { Response } from 'express';
-import { randomUUID } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { KtaAppAction, KtaAppLevel, TipeKlaim } from '@prisma/client';
 import { KtaApplicationService } from '../members/kta-application.service';
 
@@ -87,6 +87,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         const where: Record<string, unknown> = {};
         if (query.status) where.status = query.status;
         if (query.tipe) where.tipe = query.tipe;
+        if (query.currentStage) where.currentStage = query.currentStage;
 
         if (scope?.rantingId) {
           where.OR = [
@@ -387,7 +388,11 @@ async addBuktiFiles(
     }
 
     const finalized = await this.prisma.$transaction(async (tx) => {
-      const nomorAnggota = await this.nraService.generateMemberNumber(claim.rantingId!);
+      const nomorAnggota = await this.nraService.generateMemberNumber(
+        claim.rantingId!,
+        claim.tahunDadar || undefined,
+        tx,
+      );
       const anggota = await tx.anggota.create({
         data: {
           namaLengkap: claim.namaLengkap!, jenisKelamin: claim.jenisKelamin as 'L' | 'P',
@@ -398,13 +403,6 @@ async addBuktiFiles(
           statusKeanggotaan: 'aktif', statusData: 'complete', statusValidasi: 'approved',
         },
       });
-      if (claim.email && !(await tx.user.findUnique({ where: { email: claim.email }, select: { id: true } }))) {
-        const temporaryPassword = Math.random().toString(36).slice(-8);
-        const bcrypt = await import('bcryptjs');
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-        await tx.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
-        this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
-      }
       const app = await tx.ktaApplication.create({
         data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: scope?.role || 'admin_distrik', status: 'APPROVED' },
       });
@@ -421,6 +419,15 @@ async addBuktiFiles(
       await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_distrik' } });
       return { anggotaId: anggota.id, ktaApplicationId: app.id };
     });
+
+    if (claim.email && !(await this.prisma.user.findUnique({ where: { email: claim.email }, select: { id: true } }))) {
+      const temporaryPassword = randomBytes(12).toString('base64url');
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+      await this.prisma.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
+      this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
+    }
+
       this.invalidateCache();
       this.audit('CLAIM_FINALIZE', 'Klaim', id, undefined, finalized);
       this.sendClaimStatusEmail(

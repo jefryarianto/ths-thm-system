@@ -8,6 +8,11 @@ import { MailService } from '../../mail/mail.service';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
+jest.mock('crypto', () => {
+  const actual = jest.requireActual('crypto');
+  return { ...actual, randomBytes: jest.fn(actual.randomBytes) };
+});
+
 const makeClaim = (overrides: Record<string, unknown> = {}) => ({
   id: 'claim-1',
   tipe: 'keanggotaan',
@@ -150,6 +155,39 @@ describe('ClaimsService approval workflow', () => {
       }),
     );
     expect(result).toEqual(expect.objectContaining({ status: 'disetujui', ktaApplicationId: 'kta-1' }));
+  });
+
+  it('passes the transaction client to the NRA generator', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.ktaApplication.findFirst.mockResolvedValue(null);
+    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+
+    expect(nraService.generateMemberNumber).toHaveBeenCalledWith('ranting-1', undefined, prisma);
+  });
+
+  it('generates the credential password with CSPRNG after the transaction commits', async () => {
+    const cryptoMock = require('crypto') as { randomBytes: jest.Mock };
+    cryptoMock.randomBytes.mockClear();
+    prisma.$transaction = jest.fn(async (callback: (tx: typeof prisma) => unknown) => {
+      const result = await callback(prisma);
+      expect(cryptoMock.randomBytes).not.toHaveBeenCalled();
+      return result;
+    });
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.ktaApplication.findFirst.mockResolvedValue(null);
+    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+
+    expect(cryptoMock.randomBytes).toHaveBeenCalledWith(12);
   });
 
   it('allows national admin to finalize a legacy national claim', async () => {
