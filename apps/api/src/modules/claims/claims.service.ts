@@ -301,11 +301,19 @@ async addBuktiFiles(
 
   private async nextApprovalStage(stage: string, rantingId: string): Promise<string> {
     if (stage === 'ranting') {
-      const ranting = await this.prisma.ranting.findUnique({ where: { id: rantingId }, select: { wilayahId: true } });
-      return ranting?.wilayahId ? 'wilayah' : 'distrik';
+      const ranting = await this.prisma.ranting.findUnique({
+        where: { id: rantingId },
+        select: { wilayahId: true },
+      });
+      if (!ranting?.wilayahId) return 'distrik';
+
+      const adminWilayah = await this.prisma.user.findFirst({
+        where: { role: 'admin_wilayah', wilayahId: ranting.wilayahId, isActive: true },
+        select: { id: true },
+      });
+      return adminWilayah ? 'wilayah' : 'distrik';
     }
     if (stage === 'wilayah') return 'distrik';
-    if (stage === 'distrik') return 'nasional';
     return 'kta_processing';
   }
 
@@ -341,20 +349,35 @@ async addBuktiFiles(
     if (claim.currentStage === 'kta_processing' || claim.status === 'disetujui') throw new BadRequestException('Tahap verifikasi klaim telah selesai');
     if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) throw new BadRequestException('Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi');
 
-    if (claim.currentStage !== 'nasional') {
+    if (claim.currentStage !== 'distrik' && claim.currentStage !== 'nasional') {
       const nextStage = await this.nextApprovalStage(claim.currentStage, claim.rantingId);
       const approverField: Record<string, string> = { ranting: 'rantingApprovedBy', wilayah: 'wilayahApprovedBy', distrik: 'distrikApprovedBy' };
       await this.prisma.$transaction(async (tx) => {
         await tx.klaim.update({ where: { id }, data: { currentStage: nextStage, status: 'pending', ...(approverField[claim.currentStage] ? { [approverField[claim.currentStage]]: userId || null } : {}) } });
         await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'superadmin' } });
         if (claim.currentStage === 'ranting' && nextStage === 'distrik') {
-          await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'WILAYAH', action: 'SKIPPED', actorId: userId || null, actorRole: scope?.role || 'superadmin', catatan: 'Ranting tidak terhubung dengan Wilayah' } });
+          await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'WILAYAH', action: 'SKIPPED', actorId: userId || null, actorRole: scope?.role || 'superadmin', catatan: 'Tahap wilayah dilewati' } });
         }
       });
       this.invalidateCache();
       this.audit('CLAIM_STAGE_APPROVE', 'Klaim', id, undefined, { stage: claim.currentStage, nextStage, actorId: userId });
-      // Send in-app notification to admin at the next stage
-      await this.sendNotificationToNextStageApprovers(claim.id, nextStage, claim.ranting?.nama || 'Tidak diketahui', userId);
+      this.sendClaimStatusEmail(
+        { namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined },
+        'diproses',
+        `Klaim Anda kini ditinjau oleh ${nextStage}`,
+        this.buildTrackingUrl(claim.trackingToken),
+      );
+      await this.sendNotificationToNextStageApprovers(
+        claim.id,
+        nextStage,
+        claim.ranting?.nama || 'Tidak diketahui',
+        userId,
+        {
+          rantingId: claim.rantingId || undefined,
+          wilayahId: claim.ranting?.wilayah?.id || undefined,
+          distrikId: claim.ranting?.wilayah?.distrik?.id || undefined,
+        },
+      );
       return { success: true, status: 'pending', nextStage };
     }
 
@@ -383,7 +406,7 @@ async addBuktiFiles(
         this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
       }
       const app = await tx.ktaApplication.create({
-        data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: 'admin_nasional', status: 'APPROVED' },
+        data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: scope?.role || 'admin_distrik', status: 'APPROVED' },
       });
       const history = [
         { level: 'RANTING', action: 'APPROVED', skipped: false, actorId: claim.rantingApprovedBy || userId || anggota.id, actorRole: 'admin_ranting' },
@@ -395,12 +418,17 @@ async addBuktiFiles(
         await tx.ktaAppHistory.create({ data: { ktaApplicationId: app.id, level: item.level as KtaAppLevel, action: item.action as KtaAppAction, actorId: item.actorId, actorRole: item.actorRole, isSkipped: item.skipped, skippedReason: item.skipped ? 'Ranting tidak terhubung dengan Wilayah' : null } });
       }
       await tx.klaim.update({ where: { id }, data: { status: 'disetujui', currentStage: 'kta_processing', anggotaId: anggota.id, ktaApplicationId: app.id, approvedBy: userId || null, approvedAt: new Date() } });
-      await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: 'NASIONAL', action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_nasional' } });
+      await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_distrik' } });
       return { anggotaId: anggota.id, ktaApplicationId: app.id };
     });
-this.invalidateCache();
-      this.audit('CLAIM_APPROVE_NATIONAL', 'Klaim', id, undefined, finalized);
-      this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, 'disetujui');
+      this.invalidateCache();
+      this.audit('CLAIM_FINALIZE', 'Klaim', id, undefined, finalized);
+      this.sendClaimStatusEmail(
+        { namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined },
+        'disetujui',
+        undefined,
+        this.buildTrackingUrl(claim.trackingToken),
+      );
       // Send in-app notification to admin_nasional
       await this.sendNotificationToNationalApprovers(claim.id, claim.namaLengkap || 'Pelanggan', userId);
       return { success: true, status: 'disetujui', ...finalized };
@@ -429,7 +457,15 @@ this.invalidateCache();
         });
       }
     });
-    if (claim.anggota?.email) this.sendClaimStatusEmail({ namaLengkap: claim.anggota.namaLengkap, email: claim.anggota.email }, 'ditolak', reason);
+    this.sendClaimStatusEmail(
+      {
+        namaLengkap: claim.namaLengkap || claim.anggota?.namaLengkap,
+        email: claim.email || claim.anggota?.email || undefined,
+      },
+      'ditolak',
+      reason,
+      this.buildTrackingUrl(claim.trackingToken),
+    );
     this.invalidateCache();
     this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason, stage: claim.currentStage });
     return { success: true, status: 'ditolak' };
@@ -587,10 +623,17 @@ this.invalidateCache();
     })();
   }
 
+  private buildTrackingUrl(token?: string | null): string | undefined {
+    if (!token) return undefined;
+    const base = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+    return `${base}/klaim/${token}`;
+  }
+
   private sendClaimStatusEmail(
     anggota: { namaLengkap?: string; email?: string } | null | undefined,
     status: string,
     reason?: string,
+    trackingUrl?: string,
   ): void {
     if (!anggota || !anggota.email) return;
     const email = anggota.email;
@@ -599,8 +642,8 @@ this.invalidateCache();
       try {
         const tpl = await this.mailService.renderWithOverride(
           'claimStatusEmail',
-          () => claimStatusEmail(nama, status, reason),
-          { nama, status, alasan: reason || '' },
+          () => claimStatusEmail(nama, status, reason, trackingUrl),
+          { nama, status, alasan: reason || '', trackingUrl: trackingUrl || '' },
         );
         await this.mailService.sendMail({
           to: email,
@@ -619,6 +662,7 @@ this.invalidateCache();
     nextStage: string,
     rantingNama: string,
     approvedById?: string,
+    unitIds?: { rantingId?: string; wilayahId?: string; distrikId?: string },
   ) {
     if (!this.notificationsService) return;
 
@@ -647,6 +691,9 @@ this.invalidateCache();
         isi: `Klaim anggota dari ${rantingNama} telah dinormalisasi ke ${stageLabel}. Silakan verifikasi.`,
         data: { claimId, actorId: approvedById },
         role,
+        ...(nextStage === 'ranting' && unitIds?.rantingId ? { rantingId: unitIds.rantingId } : {}),
+        ...(nextStage === 'wilayah' && unitIds?.wilayahId ? { wilayahId: unitIds.wilayahId } : {}),
+        ...(nextStage === 'distrik' && unitIds?.distrikId ? { distrikId: unitIds.distrikId } : {}),
       });
     } catch (err) {
       this.logger.error(`Failed to send notification to ${role}: ${(err as Error).message}`);

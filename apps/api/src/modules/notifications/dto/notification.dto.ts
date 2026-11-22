@@ -125,6 +125,21 @@ export class SendToRoleDto {
   @ApiPropertyOptional()
   @IsOptional()
   data?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Batasi notifikasi ke admin ranting tertentu' })
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
+
+  @ApiPropertyOptional({ description: 'Batasi notifikasi ke admin wilayah tertentu' })
+  @IsOptional()
+  @IsString()
+  wilayahId?: string;
+
+  @ApiPropertyOptional({ description: 'Batasi notifikasi ke admin distrik tertentu' })
+  @IsOptional()
+  @IsString()
+  distrikId?: string;
 }
 
 export class NotificationFilterDto {

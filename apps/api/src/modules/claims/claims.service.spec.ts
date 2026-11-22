@@ -34,6 +34,7 @@ describe('ClaimsService', () => {
       create: jest.fn(),
     },
     user: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'user-w', role: 'admin_wilayah', wilayahId: 'w1' }),
       findUnique: jest.fn(),
       create: jest.fn(),
     },
@@ -307,15 +308,20 @@ describe('ClaimsService', () => {
         .rejects.toThrow('Level ini hanya dapat diproses oleh Admin Wilayah');
     });
 
-    it('routes distrik approval to nasional without creating the member yet', async () => {
+    it('finalizes distrik approval by creating the member and KTA', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
-        ...baseClaim, status: 'pending', currentStage: 'distrik',
+        ...baseClaim, status: 'pending', currentStage: 'distrik', email: 'klaimer@test.com',
       });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+      mockPrisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
       await service.approve('cl1', { role: 'admin_distrik', distrikId: 'd1' }, 'user-d');
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ currentStage: 'nasional', status: 'pending' }),
+        data: expect.objectContaining({ currentStage: 'kta_processing', status: 'disetujui' }),
       }));
-      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+      expect(mockPrisma.anggota.create).toHaveBeenCalled();
     });
 
     it('creates member and KTA application after national approval', async () => {

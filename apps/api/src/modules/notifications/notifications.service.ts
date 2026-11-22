@@ -113,9 +113,12 @@ export class NotificationsService {
   }
 
   async sendToRole(dto: SendToRoleDto) {
-    const users = await this.prisma.user.findMany({
-      where: { role: dto.role as Role, isActive: true },
-    });
+    const where: Record<string, unknown> = { role: dto.role as Role, isActive: true };
+    if (dto.rantingId) where.rantingId = dto.rantingId;
+    if (dto.wilayahId) where.wilayahId = dto.wilayahId;
+    if (dto.distrikId) where.distrikId = dto.distrikId;
+
+    const users = await this.prisma.user.findMany({ where });
 
     const tipe = dto.tipe || 'umum';
     const allowedIds = await this.batchCheckPreference(

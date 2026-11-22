@@ -265,7 +265,12 @@ export function documentReadyEmail(nama: string, docType: string, nomorDokumen: 
 
 // ─── Klaim / Claim ───
 
-export function claimStatusEmail(nama: string, status: string, reason?: string) {
+export function claimStatusEmail(
+  nama: string,
+  status: string,
+  reason?: string,
+  trackingUrl?: string,
+) {
   const statusLabels: Record<
     string,
     { icon: string; color: string; title: string; message: string }
@@ -306,6 +311,7 @@ export function claimStatusEmail(nama: string, status: string, reason?: string) 
       <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
       <p>${info.message}</p>
       ${reason ? `<p>Alasan: <em>${escapeHtml(reason)}</em></p>` : ''}
+      ${trackingUrl ? `<p><a href="${escapeHtml(trackingUrl)}" style="color: #1a56db;">Lacak status klaim Anda</a></p>` : ''}
     `),
   };
 }
