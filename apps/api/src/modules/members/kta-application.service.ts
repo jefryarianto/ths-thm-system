@@ -89,6 +89,8 @@ const REVIEW_STATES: KtaAppStatus[] = [
   'NASIONAL_REVIEW',
 ];
 
+const ISSUABLE_STATUSES: KtaAppStatus[] = ['PAYMENT_VERIFIED', 'CARD_GENERATING', 'CARD_GENERATED'];
+
 function getInitialStatus(submittedByRole: string): KtaAppStatus {
   const skipped = SKIP_MAP[submittedByRole] || [];
   for (const level of LEVEL_ORDER) {
@@ -130,6 +132,23 @@ function formatRupiah(amount: number): string {
 
 @Injectable()
 export class KtaApplicationService {
+  static async assertKtaIssuable(prisma: PrismaService, anggotaId: string) {
+    const app = await prisma.ktaApplication.findFirst({
+      where: { anggotaId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true },
+    });
+    if (!app) throw new NotFoundException('Pengajuan KTA tidak ditemukan untuk anggota ini');
+    if (!ISSUABLE_STATUSES.includes(app.status)) {
+      throw new BadRequestException(`KTA tidak dapat diterbitkan (status: ${app.status})`);
+    }
+    return app;
+  }
+
+  async assertKtaIssuable(anggotaId: string) {
+    return KtaApplicationService.assertKtaIssuable(this.prisma, anggotaId);
+  }
+
   // Retrieve the latest KTA status for a member (used by mobile banner).
   async getStatus(memberId: string) {
     const latest = await this.prisma.ktaApplication.findFirst({
@@ -795,6 +814,7 @@ export class KtaApplicationService {
     if (app.status !== 'PAYMENT_VERIFIED') {
       throw new BadRequestException(`Pembayaran harus diverifikasi dulu sebelum generate kartu (sekarang: ${app.status})`);
     }
+    await this.assertKtaIssuable(app.anggotaId);
 
     await this.prisma.ktaApplication.update({ where: { id: applicationId }, data: { status: 'CARD_GENERATING' } });
 
@@ -1093,7 +1113,7 @@ export class KtaApplicationService {
           judul: '✅ Persetujuan KTA Dibutuhkan',
           isi: `${LEVEL_LABELS[level]}: Aplikasi KTA ${app.anggota.namaLengkap} (${app.nomorAnggota || 'belum ada nomor'}) menunggu review.`,
           tipe: 'kta_approval_request',
-          data: { applicationId, screen: 'kta-queue', screenId: applicationId },
+          data: { applicationId, screen: 'kta-queue', screenId: applicationId, url: '/kta/queue' },
         });
       } catch (error) {
         // Never abort the submit transaction because a notification failed.

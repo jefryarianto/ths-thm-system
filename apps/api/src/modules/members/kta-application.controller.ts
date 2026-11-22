@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -89,7 +90,7 @@ export class KtaApplicationController {
   }
 
   @Post('bulk')
-  @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik')
+  @Roles('admin_ranting')
   @UseGuards(ScopeGuard)
   @RequireScope('branch')
   @ApiOperation({ summary: 'Bulk submit KTA applications' })
@@ -98,6 +99,9 @@ export class KtaApplicationController {
     @CurrentUser() user: any,
     @Req() req: ScopedRequest,
   ) {
+    if (user?.role !== 'admin_ranting') {
+      throw new ForbiddenException('Hanya admin_ranting yang dapat submit bulk KTA');
+    }
     return this.ktaApplicationService.submitBulk(
       dto.anggotaIds,
       { id: user.id, role: user.role },

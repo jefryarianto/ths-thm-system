@@ -61,6 +61,9 @@ describe('MembersDigitalCardService', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
+    ktaApplication: {
+      findFirst: jest.fn(),
+    },
     qRValidation: {
       create: jest.fn().mockResolvedValue(undefined),
       update: jest.fn(),
@@ -119,6 +122,10 @@ describe('MembersDigitalCardService', () => {
     // Defaults
     mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
     mockPenandatanganService.resolveSigners.mockResolvedValue(mockSigners);
+    mockPrisma.ktaApplication.findFirst.mockResolvedValue({
+      id: 'a1',
+      status: 'CARD_GENERATED',
+    });
     mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] });
     mockPrisma.dokumen.create.mockImplementation(async ({ data }: any) => ({
       id: 'doc-1',
@@ -677,6 +684,90 @@ describe('MembersDigitalCardService', () => {
       const result = await service.getCardIssuances('m-lrt-1');
 
       expect(result.data.issuances).toEqual([]);
+    });
+  });
+
+  describe('KTA issuable gate', () => {
+    const validStatuses = ['PAYMENT_VERIFIED', 'CARD_GENERATING', 'CARD_GENERATED'];
+    const invalidStatuses = ['SUBMITTED', 'APPROVED', 'PAYMENT_PENDING', 'REJECTED'];
+
+    beforeEach(() => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+      mockPrisma.dokumen.create.mockResolvedValue({
+        id: 'doc-1',
+        status: 'generated',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'http://localhost:3000/verify/digital-token',
+      } as any);
+      mockPrisma.anggota.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.qRValidation.create.mockResolvedValue({
+        id: 'qr-p1',
+        source: 'printed',
+        reason: null,
+        isValid: true,
+        verificationUrl: 'http://localhost:3000/verify/printed-token',
+        createdAt: new Date('2026-03-01T00:00:00Z'),
+      } as any);
+    });
+
+    it.each(['generateDigitalCard', 'issuePrintedCard'])(
+      '%s menolak tanpa pengajuan KTA',
+      async (method) => {
+        mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+
+        await expect((service as any)[method]('m-lrt-1')).rejects.toThrow(/KTA/);
+        expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
+        expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['generateDigitalCard', 'issuePrintedCard'])(
+      '%s menolak status pengajuan tidak valid',
+      async (method) => {
+        for (const status of invalidStatuses) {
+          mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+
+          await expect((service as any)[method]('m-lrt-1')).rejects.toThrow(/KTA/);
+        }
+        expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
+        expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['generateDigitalCard', 'issuePrintedCard'])(
+      '%s mengizinkan status pengajuan valid',
+      async (method) => {
+        for (const status of validStatuses) {
+          mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+
+          await expect((service as any)[method]('m-lrt-1')).resolves.toBeDefined();
+        }
+      },
+    );
+
+    it('issueCardsBatch menolak tanpa pengajuan KTA', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+
+      await expect(service.issueCardsBatch(['m-lrt-1'])).rejects.toThrow(/KTA/);
+      expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+    });
+
+    it('issueCardsBatch menolak status pengajuan tidak valid', async () => {
+      for (const status of invalidStatuses) {
+        mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+
+        await expect(service.issueCardsBatch(['m-lrt-1'])).rejects.toThrow(/KTA/);
+      }
+      expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+    });
+
+    it.each(validStatuses)('issueCardsBatch mengizinkan status %s', async (status) => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+
+      await expect(service.issueCardsBatch(['m-lrt-1'])).resolves.toEqual(
+        expect.objectContaining({ success: true }),
+      );
     });
   });
 });

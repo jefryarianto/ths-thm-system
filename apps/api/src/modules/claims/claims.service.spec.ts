@@ -52,6 +52,9 @@ describe('ClaimsService', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
     },
+    setting: {
+      findUnique: jest.fn(),
+    },
     $transaction: jest.fn(),
   };
   mockPrisma.$transaction.mockImplementation(async (callback: (tx: typeof mockPrisma) => unknown) => callback(mockPrisma));
@@ -81,6 +84,14 @@ describe('ClaimsService', () => {
     generateMemberNumber: jest.fn().mockResolvedValue('NRA-001'),
   };
 
+  const mockNotificationsService = {
+    sendToRole: jest.fn().mockResolvedValue({ sentTo: 1 }),
+  };
+
+  const mockPersistentAudit = {
+    log: jest.fn(),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
@@ -103,8 +114,12 @@ describe('ClaimsService', () => {
           useValue: mockCache,
         },
         {
-          provide: require('../members/kta-application.service').KtaApplicationService,
-          useValue: {},
+          provide: require('../notifications/notifications.service').NotificationsService,
+          useValue: mockNotificationsService,
+        },
+        {
+          provide: require('../../common/services/persistent-audit.service').PersistentAuditService,
+          useValue: mockPersistentAudit,
         },
       ],
     }).compile();
@@ -243,6 +258,55 @@ describe('ClaimsService', () => {
         email: 'klaimer@test.com',
         anggotaId: 'a1',
       })).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('public claim submission notification', () => {
+    const publicClaimDto = {
+      tipe: 'keanggotaan',
+      rantingId: 'ranting-1',
+      namaLengkap: 'Pemohon Baru',
+      email: 'klaimer@test.com',
+      modeBukti: 'cerita',
+      ceritaHistori: 'Saya berlatih sejak 2010 dan didadar oleh Andi serta Budi pada 2012.',
+    };
+
+    it('notifies only the admin_ranting of the claim rantingId', async () => {
+      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', rantingId: 'ranting-1' });
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1' } as never);
+
+      await service.create(publicClaimDto);
+
+      expect(mockNotificationsService.sendToRole).toHaveBeenCalledTimes(1);
+      expect(mockNotificationsService.sendToRole).toHaveBeenCalledWith({
+        role: 'admin_ranting',
+        rantingId: 'ranting-1',
+        tipe: 'status_klaim',
+        judul: expect.any(String),
+        isi: expect.any(String),
+        data: {
+          claimId: 'cl1',
+          url: '/claims/cl1',
+          screen: 'admin/claims',
+          screenId: 'cl1',
+        },
+      });
+    });
+
+    it('skips the notification and records an audit when rantingId is missing', async () => {
+      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl2', rantingId: null });
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl2' } as never);
+      const warn = jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+
+      await service.create({ ...publicClaimDto, rantingId: undefined });
+
+      expect(mockNotificationsService.sendToRole).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cl2'));
+      expect(mockPersistentAudit.log).toHaveBeenCalledWith(expect.objectContaining({
+        entityId: 'cl2',
+        details: expect.objectContaining({ reason: 'missing rantingId' }),
+      }));
+      warn.mockRestore();
     });
   });
 
@@ -443,37 +507,35 @@ describe('ClaimsService', () => {
         .rejects.toThrow('Level ini hanya dapat diproses oleh Admin Wilayah');
     });
 
-    it('finalizes distrik approval by creating the member and KTA', async () => {
+    it('finalizes distrik approval without creating a KTA application', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
         ...baseClaim, status: 'pending', currentStage: 'distrik', email: 'klaimer@test.com',
       });
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
       mockPrisma.anggota.create.mockResolvedValue({ id: 'member-1' });
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
       mockPrisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
       await service.approve('cl1', { role: 'admin_distrik', distrikId: 'd1' }, 'user-d');
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ currentStage: 'kta_processing', status: 'disetujui' }),
       }));
       expect(mockPrisma.anggota.create).toHaveBeenCalled();
+      expect(mockPrisma.ktaApplication.create).not.toHaveBeenCalled();
     });
 
-    it('creates member and KTA application after national approval', async () => {
+    it('creates member without KTA application after national approval', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
         ...baseClaim, status: 'pending', currentStage: 'nasional',
       });
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
       mockPrisma.anggota.create.mockResolvedValue({ id: 'member-1' });
-      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
       mockPrisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
       await service.approve('cl1', { role: 'admin_nasional' }, 'user-n');
-      expect(mockPrisma.ktaApplication.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ anggotaId: 'member-1', status: 'APPROVED' }),
-      }));
+      expect(mockPrisma.ktaApplication.create).not.toHaveBeenCalled();
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ anggotaId: 'member-1', currentStage: 'kta_processing' }),
       }));
+      expect(mockPrisma.klaim.update.mock.calls.at(-1)[0].data).not.toHaveProperty('ktaApplicationId');
     });
   });
 

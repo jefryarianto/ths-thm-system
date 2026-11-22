@@ -18335,7 +18335,23 @@
               "kartu_dipindai",
               "anggota_disetujui",
               "pembayaran_terverifikasi",
-              "umum"
+              "badge_earned",
+              "approval_request",
+              "approval_result",
+              "forum_reply",
+              "forum_solution",
+              "forum_deleted",
+              "umum",
+              "kta_submitted",
+              "kta_rejected",
+              "kta_approved",
+              "kta_fee_notification",
+              "kta_payment_verified",
+              "kta_generated",
+              "kta_approval_request",
+              "kta_payment_setup",
+              "kta_escalation",
+              "kta_escalation_upper"
             ]
           },
           "skipEmail": {
@@ -18373,7 +18389,23 @@
               "kartu_dipindai",
               "anggota_disetujui",
               "pembayaran_terverifikasi",
-              "umum"
+              "badge_earned",
+              "approval_request",
+              "approval_result",
+              "forum_reply",
+              "forum_solution",
+              "forum_deleted",
+              "umum",
+              "kta_submitted",
+              "kta_rejected",
+              "kta_approved",
+              "kta_fee_notification",
+              "kta_payment_verified",
+              "kta_generated",
+              "kta_approval_request",
+              "kta_payment_setup",
+              "kta_escalation",
+              "kta_escalation_upper"
             ]
           },
           "data": {
@@ -18419,7 +18451,23 @@
               "kartu_dipindai",
               "anggota_disetujui",
               "pembayaran_terverifikasi",
-              "umum"
+              "badge_earned",
+              "approval_request",
+              "approval_result",
+              "forum_reply",
+              "forum_solution",
+              "forum_deleted",
+              "umum",
+              "kta_submitted",
+              "kta_rejected",
+              "kta_approved",
+              "kta_fee_notification",
+              "kta_payment_verified",
+              "kta_generated",
+              "kta_approval_request",
+              "kta_payment_setup",
+              "kta_escalation",
+              "kta_escalation_upper"
             ]
           },
           "data": {

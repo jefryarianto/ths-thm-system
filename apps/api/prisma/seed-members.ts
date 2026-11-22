@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { buildKtaSeedData } from '../src/common/utils/seed-kta-data';
 
 const prisma = new PrismaClient();
 
@@ -1102,6 +1103,67 @@ function buildNra(
   return `${d}-${w}${r}-${String(urut).padStart(3, '0')}-${tahunDadar}`;
 }
 
+interface SeedMemberRecord {
+  id: string;
+  nomorAnggota: string;
+  createdById: string | null;
+  createdAt: Date;
+  jenisKelamin: 'L' | 'P';
+}
+
+async function ensureKtaForAnggota(anggota: SeedMemberRecord) {
+  const nomorDokumen = buildKtaSeedData({
+    anggotaId: anggota.id,
+    nomorAnggota: anggota.nomorAnggota,
+    createdById: anggota.createdById,
+    dokumenCreatedAt: anggota.createdAt,
+  }).dokumen.nomorDokumen;
+
+  let dokumen = await prisma.dokumen.findUnique({ where: { nomorDokumen } });
+  let dokumenCreated = false;
+  if (!dokumen) {
+    const seeded = buildKtaSeedData({
+      anggotaId: anggota.id,
+      nomorAnggota: anggota.nomorAnggota,
+      createdById: anggota.createdById,
+      dokumenCreatedAt: anggota.createdAt,
+    });
+    dokumen = await prisma.dokumen.create({ data: seeded.dokumen });
+    dokumenCreated = true;
+  }
+
+  const fromDokumen = buildKtaSeedData({
+    anggotaId: anggota.id,
+    nomorAnggota: anggota.nomorAnggota,
+    createdById: anggota.createdById,
+    dokumenCreatedAt: dokumen.createdAt,
+    dokumenUpdatedAt: dokumen.updatedAt,
+  });
+
+  let ktaApplication = await prisma.ktaApplication.findFirst({
+    where: { anggotaId: anggota.id, nomorAnggota: anggota.nomorAnggota },
+  });
+  let ktaCreated = false;
+  if (!ktaApplication) {
+    ktaApplication = await prisma.ktaApplication.create({ data: fromDokumen.ktaApplication });
+    ktaCreated = true;
+  }
+
+  const historyCount = await prisma.ktaAppHistory.count({
+    where: { ktaApplicationId: ktaApplication.id },
+  });
+  if (historyCount === 0) {
+    await prisma.ktaAppHistory.createMany({
+      data: fromDokumen.histories.map((history) => ({
+        ...history,
+        ktaApplicationId: ktaApplication.id,
+      })),
+    });
+  }
+
+  return { dokumenCreated, ktaCreated };
+}
+
 async function main() {
   console.log('Memulai seed data anggota...');
 
@@ -1123,7 +1185,9 @@ async function main() {
   });
 
   const wilayah = await prisma.wilayah.upsert({
-    where: { kodeWilayah: 'WLY-0114-01' },
+    where: {
+      distrikId_kodeWilayah: { distrikId: distrik.id, kodeWilayah: 'WLY-0114-01' },
+    },
     update: {},
     create: {
       distrikId: distrik.id,
@@ -1133,7 +1197,9 @@ async function main() {
   });
 
   const ranting = await prisma.ranting.upsert({
-    where: { kodeRanting: 'RTG-0114-01' },
+    where: {
+      wilayahId_kodeRanting: { wilayahId: wilayah.id, kodeRanting: 'RTG-0114-01' },
+    },
     update: {},
     create: {
       wilayahId: wilayah.id,
@@ -1145,31 +1211,7 @@ async function main() {
 
   console.log(`Struktur organisasi: ${distrik.nama} › ${wilayah.nama} › ${ranting.nama}`);
 
-  // ── 2. Check if members already exist ──
-  const existingCount = await prisma.anggota.count({
-    where: { rantingId: ranting.id, deletedAt: null },
-  });
-  if (existingCount > 0) {
-    console.log(`Ranting "${ranting.nama}" sudah memiliki ${existingCount} anggota. Lewati seed.`);
-
-    // Still update gender for existing members
-    let updatedGender = 0;
-    for (const [nama, nra] of membersData) {
-      const gender = detectGender(nama);
-      const exists = await prisma.anggota.findUnique({ where: { nomorAnggota: nra } });
-      if (exists && exists.jenisKelamin !== gender) {
-        await prisma.anggota.update({
-          where: { nomorAnggota: nra },
-          data: { jenisKelamin: gender },
-        });
-        updatedGender++;
-      }
-    }
-    console.log(`   - Gender updated: ${updatedGender}`);
-    return;
-  }
-
-  // ── 3. Get max existing sequence per tahunDadar ──
+  // ── 2. Get max existing sequence per tahunDadar ──
   const existingMembers = await prisma.anggota.findMany({
     where: { rantingId: ranting.id, deletedAt: null },
     select: { nomorAnggota: true, tahunDadar: true },
@@ -1185,11 +1227,15 @@ async function main() {
     maxSeqPerTahun[tahun] = Math.max(maxSeqPerTahun[tahun] || 0, seq);
   }
 
-  // ── 4. Import anggota (hanya untuk fresh database — existing sudah skip di langkah 2) ──
+  // ── 3. Import anggota dan pastikan dokumen/KTA-nya ada ──
   let imported = 0;
+  let existing = 0;
   let incomplete = 0;
+  let genderUpdated = 0;
+  let dokumenCreated = 0;
+  let ktaCreated = 0;
 
-  for (const [nama, nra, ttl, dadar, _ranting, foto, tingkat] of membersData) {
+  for (const [nama, _nra, ttl, dadar, _ranting, foto, tingkat] of membersData) {
     const gender = detectGender(nama);
     const { tempat: tempatLahir, tanggal: tanggalLahir } = parseTtl(ttl);
     const { tempat: tempatDadar, tahun: tahunDadar } = parseDadar(dadar);
@@ -1201,46 +1247,77 @@ async function main() {
     if (!tahunDadar) missingFields.push('tahun_dadar');
     if (!tingkat) missingFields.push('tingkat');
 
-    // Generate NRA in new format
-    const tahun = tahunDadar || String(new Date().getFullYear());
-    const seq = (maxSeqPerTahun[tahun] || globalMaxSeq) + 1;
-    maxSeqPerTahun[tahun] = seq;
-    const newNra = buildNra(
-      distrik.kodeDistrik,
-      wilayah.kodeWilayah,
-      ranting.kodeRanting,
-      seq,
-      tahun,
-    );
-
-    await prisma.anggota.create({
-      data: {
-        nomorAnggota: newNra,
-        namaLengkap: nama,
-        jenisKelamin: detectGender(nama),
-        tempatLahir,
-        tanggalLahir,
-        tempatDadar,
-        tahunDadar,
-        fotoPath: foto || null,
-        tingkat,
-        rantingId: ranting.id,
-        statusKeanggotaan: 'aktif',
-        statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
-        statusValidasi: 'approved',
-        missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+    const found = await prisma.anggota.findFirst({
+      where: { rantingId: ranting.id, namaLengkap: nama, deletedAt: null },
+      select: {
+        id: true,
+        nomorAnggota: true,
+        createdById: true,
+        createdAt: true,
+        jenisKelamin: true,
       },
     });
 
+    let anggota: SeedMemberRecord;
+    if (found) {
+      existing++;
+      if (found.jenisKelamin !== gender) {
+        await prisma.anggota.update({
+          where: { id: found.id },
+          data: { jenisKelamin: gender },
+        });
+        genderUpdated++;
+      }
+      anggota = { ...found, jenisKelamin: gender };
+    } else {
+      const tahun = tahunDadar || String(new Date().getFullYear());
+      const seq = (maxSeqPerTahun[tahun] || globalMaxSeq) + 1;
+      maxSeqPerTahun[tahun] = seq;
+      const newNra = buildNra(
+        distrik.kodeDistrik,
+        wilayah.kodeWilayah,
+        ranting.kodeRanting,
+        seq,
+        tahun,
+      );
+
+      anggota = await prisma.anggota.create({
+        data: {
+          nomorAnggota: newNra,
+          namaLengkap: nama,
+          jenisKelamin: gender,
+          tempatLahir,
+          tanggalLahir,
+          tempatDadar,
+          tahunDadar,
+          fotoPath: foto || null,
+          tingkat,
+          rantingId: ranting.id,
+          statusKeanggotaan: 'aktif',
+          statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
+          statusValidasi: 'approved',
+          missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+        },
+      });
+      imported++;
+    }
+
     if (missingFields.length > 0) incomplete++;
-    imported++;
+
+    const kta = await ensureKtaForAnggota(anggota);
+    if (kta.dokumenCreated) dokumenCreated++;
+    if (kta.ktaCreated) ktaCreated++;
   }
 
   console.log(`\n✅ Import selesai:`);
   console.log(`   - Total: ${membersData.length} anggota`);
-  console.log(`   - Imported: ${imported}`);
+  console.log(`   - Anggota baru: ${imported}`);
+  console.log(`   - Anggota sudah ada: ${existing}`);
+  console.log(`   - Gender updated: ${genderUpdated}`);
+  console.log(`   - Dokumen kartu_anggota dibuat: ${dokumenCreated}`);
+  console.log(`   - KTA CARD_GENERATED dibuat: ${ktaCreated}`);
   console.log(`   - Data incomplete: ${incomplete}`);
-  console.log(`   - Data complete: ${imported - incomplete}`);
+  console.log(`   - Data complete: ${membersData.length - incomplete}`);
 }
 
 main()

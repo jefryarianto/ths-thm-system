@@ -28,6 +28,7 @@ import {
   normalizeVerificationUrl,
 } from '../../common/utils/qr-token.util';
 import { NotificationsService } from '../notifications/notifications.service';
+import { KtaApplicationService } from '../members/kta-application.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -226,6 +227,9 @@ export class DocumentsService {
   }
 
   async generate(dto: GenerateDocumentDto) {
+    if (dto.type === 'kartu_anggota') {
+      await KtaApplicationService.assertKtaIssuable(this.prisma, dto.memberId);
+    }
     const token = uuidv4();
     const verificationUrl = buildPublicVerifyUrl(token, { typ: dto.type, src: 'digital' });
     const nomorDokumen = `DOC-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;

@@ -2,6 +2,36 @@ import { IsString, IsOptional, IsInt, Min, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
+export const NOTIFICATION_TIPE_ENUM = [
+  'welcome',
+  'data_incomplete',
+  'reminder_latihan',
+  'reminder_pendadaran',
+  'reminder_iuran',
+  'status_klaim',
+  'dokumen_ready',
+  'kartu_dipindai',
+  'anggota_disetujui',
+  'pembayaran_terverifikasi',
+  'badge_earned',
+  'approval_request',
+  'approval_result',
+  'forum_reply',
+  'forum_solution',
+  'forum_deleted',
+  'umum',
+  'kta_submitted',
+  'kta_rejected',
+  'kta_approved',
+  'kta_fee_notification',
+  'kta_payment_verified',
+  'kta_generated',
+  'kta_approval_request',
+  'kta_payment_setup',
+  'kta_escalation',
+  'kta_escalation_upper',
+];
+
 export class SendNotificationDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -16,21 +46,7 @@ export class SendNotificationDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({
-    enum: [
-      'welcome',
-      'data_incomplete',
-      'reminder_latihan',
-      'reminder_pendadaran',
-      'reminder_iuran',
-      'status_klaim',
-      'dokumen_ready',
-      'kartu_dipindai',
-      'anggota_disetujui',
-      'pembayaran_terverifikasi',
-      'umum',
-    ],
-  })
+  @ApiPropertyOptional({ enum: NOTIFICATION_TIPE_ENUM })
   @IsOptional()
   @IsString()
   tipe?: string;
@@ -56,21 +72,7 @@ export class BroadcastNotificationDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({
-    enum: [
-      'welcome',
-      'data_incomplete',
-      'reminder_latihan',
-      'reminder_pendadaran',
-      'reminder_iuran',
-      'status_klaim',
-      'dokumen_ready',
-      'kartu_dipindai',
-      'anggota_disetujui',
-      'pembayaran_terverifikasi',
-      'umum',
-    ],
-  })
+  @ApiPropertyOptional({ enum: NOTIFICATION_TIPE_ENUM })
   @IsOptional()
   @IsString()
   tipe?: string;
@@ -103,21 +105,7 @@ export class SendToRoleDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({
-    enum: [
-      'welcome',
-      'data_incomplete',
-      'reminder_latihan',
-      'reminder_pendadaran',
-      'reminder_iuran',
-      'status_klaim',
-      'dokumen_ready',
-      'kartu_dipindai',
-      'anggota_disetujui',
-      'pembayaran_terverifikasi',
-      'umum',
-    ],
-  })
+  @ApiPropertyOptional({ enum: NOTIFICATION_TIPE_ENUM })
   @IsOptional()
   @IsString()
   tipe?: string;

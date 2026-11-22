@@ -1,6 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ClaimsService } from './claims.service';
-import { KtaApplicationService } from '../members/kta-application.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -34,6 +33,8 @@ const makeClaim = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const flushAsync = () => new Promise<void>((resolve) => setImmediate(resolve));
+
 describe('ClaimsService approval workflow', () => {
   let service: ClaimsService;
   let prisma: Record<string, any>;
@@ -51,15 +52,17 @@ describe('ClaimsService approval workflow', () => {
       ktaAppHistory: { create: jest.fn() },
       klaimApprovalHistory: { create: jest.fn() },
       ranting: { findUnique: jest.fn() },
+      setting: { findUnique: jest.fn() },
     };
     prisma.$transaction = jest.fn(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
     prisma.ranting.findUnique.mockResolvedValue(null);
+    prisma.setting.findUnique.mockResolvedValue({ value: { apkUrl: 'https://cdn.example.com/ths-thm.apk' } });
     prisma.user.findFirst.mockResolvedValue({ id: 'user-w', role: 'admin_wilayah', wilayahId: 'wilayah-1' });
     scopeHelper = { hasAccessToResourceAsync: jest.fn().mockResolvedValue(true) };
     nraService = { generateMemberNumber: jest.fn().mockResolvedValue('NRA-001') };
     mail = {
-      sendMail: jest.fn(),
-      renderWithOverride: jest.fn().mockResolvedValue({ subject: '', html: '' }),
+      sendMail: jest.fn().mockResolvedValue(true),
+      renderWithOverride: jest.fn(async (_template, factory) => factory()),
     };
     notifications = { sendToRole: jest.fn().mockResolvedValue({ sentTo: 1 }) };
     service = new (ClaimsService as new (...args: unknown[]) => ClaimsService)(
@@ -71,7 +74,6 @@ describe('ClaimsService approval workflow', () => {
       notifications as unknown as NotificationsService,
       undefined,
       undefined,
-      {} as unknown as KtaApplicationService,
     );
   });
 
@@ -125,36 +127,101 @@ describe('ClaimsService approval workflow', () => {
       .rejects.toThrow('Level ini hanya dapat diproses oleh Admin Wilayah');
   });
 
-  it('finalizes district approval by creating member and KTA', async () => {
+  it('finalizes district approval without creating a KTA application or sending a status email', async () => {
     prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
     prisma.anggota.findFirst.mockResolvedValue(null);
     prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: 'user-1' });
-    prisma.ktaApplication.findFirst.mockResolvedValue(null);
     prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
 
     const result = await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+    await flushAsync();
 
-    expect(prisma.ktaApplication.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ anggotaId: 'member-1', status: 'APPROVED' }),
-    }));
+    expect(prisma.ktaApplication.create).not.toHaveBeenCalled();
+    expect(prisma.ktaAppHistory.create).not.toHaveBeenCalled();
     expect(prisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         status: 'disetujui',
         currentStage: 'kta_processing',
         anggotaId: 'member-1',
-        ktaApplicationId: 'kta-1',
       }),
     }));
+    expect(prisma.klaim.update.mock.calls.at(-1)[0].data).not.toHaveProperty('ktaApplicationId');
+    expect(result).toEqual(expect.objectContaining({ success: true, status: 'disetujui', anggotaId: 'member-1' }));
+    expect(result).not.toHaveProperty('ktaApplicationId');
+    expect(mail.renderWithOverride).not.toHaveBeenCalledWith('claimStatusEmail', expect.any(Function), expect.anything());
+    expect(mail.sendMail).toHaveBeenCalledTimes(1);
+    expect(mail.sendMail).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({ template: 'credentialEmail' }),
+    }));
+  });
+
+  it('sends one credential email with username, password and configured appUrl', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'user-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+    await flushAsync();
+
     expect(mail.renderWithOverride).toHaveBeenCalledWith(
-      'claimStatusEmail',
+      'credentialEmail',
       expect.any(Function),
-      expect.objectContaining({
-        trackingUrl: expect.stringContaining('/klaim/tracking-token-1'),
-      }),
+      expect.objectContaining({ appUrl: 'https://cdn.example.com/ths-thm.apk' }),
     );
-    expect(result).toEqual(expect.objectContaining({ status: 'disetujui', ktaApplicationId: 'kta-1' }));
+    expect(mail.sendMail).toHaveBeenCalledTimes(1);
+    const dto = mail.sendMail.mock.calls[0][0];
+    expect(dto.to).toBe('pemohon@test.com');
+    expect(dto.html).toContain('pemohon@test.com');
+    expect(dto.html).toContain('Password:');
+    expect(dto.html).toContain('href="https://cdn.example.com/ths-thm.apk"');
+  });
+
+  it('uses the static APK fallback when mobile_update has no apkUrl', async () => {
+    prisma.setting.findUnique.mockResolvedValue({ value: {} });
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'user-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+    await flushAsync();
+
+    expect(mail.sendMail).toHaveBeenCalledTimes(1);
+    expect(mail.sendMail.mock.calls[0][0].html)
+      .toContain('href="https://ths-thm.cloud/api/app/ths-thm-mobile-latest.apk"');
+  });
+
+  it('includes the claim url in the staged approver notification payload', async () => {
+    prisma.ranting.findUnique.mockResolvedValue({ wilayahId: 'wilayah-1' });
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim());
+
+    await service.approve('claim-1', { role: 'admin_ranting', rantingId: 'ranting-1' }, 'user-r');
+
+    expect(notifications.sendToRole).toHaveBeenCalledTimes(1);
+    expect(notifications.sendToRole).toHaveBeenCalledWith(expect.objectContaining({
+      role: 'admin_wilayah',
+      data: expect.objectContaining({ claimId: 'claim-1', url: '/claims/claim-1' }),
+    }));
+  });
+
+  it('includes the claim url in the final national notification payload', async () => {
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.anggota.findFirst.mockResolvedValue(null);
+    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({ id: 'user-1' });
+
+    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
+
+    expect(notifications.sendToRole).toHaveBeenCalledWith(expect.objectContaining({
+      role: 'admin_nasional',
+      data: expect.objectContaining({ claimId: 'claim-1', url: '/claims/claim-1' }),
+    }));
   });
 
   it('passes the transaction client to the NRA generator', async () => {
@@ -200,68 +267,23 @@ describe('ClaimsService approval workflow', () => {
     prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
 
     await expect(service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d'))
-      .resolves.toEqual(expect.objectContaining({ status: 'disetujui', ktaApplicationId: 'kta-1' }));
+      .resolves.toEqual(expect.objectContaining({ status: 'disetujui', anggotaId: 'member-1' }));
   });
 
-  it('records skipped wilayah and nasional in KTA history when district finalizes', async () => {
-    prisma.klaim.findUnique.mockResolvedValue(makeClaim({
-      status: 'pending',
-      currentStage: 'distrik',
-      wilayahApprovedBy: null,
-    }));
-    prisma.anggota.findFirst.mockResolvedValue(null);
-    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
-    prisma.user.findUnique.mockResolvedValue(null);
-    prisma.user.create.mockResolvedValue({ id: 'user-1' });
-    prisma.ktaApplication.findFirst.mockResolvedValue(null);
-    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
-
-    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
-
-    const levels = Object.fromEntries(
-      prisma.ktaAppHistory.create.mock.calls.map(([args]: [{ data: { level: string } }]) => [args.data.level, args.data]),
-    ) as Record<string, { action: string; isSkipped: boolean }>;
-    expect(levels.WILAYAH).toMatchObject({ action: 'SKIPPED', isSkipped: true });
-    expect(levels.NASIONAL).toMatchObject({ action: 'SKIPPED', isSkipped: true });
-  });
-
-  it('records wilayah as approved when a wilayah approver is recorded', async () => {
-    prisma.klaim.findUnique.mockResolvedValue(makeClaim({
-      status: 'pending',
-      currentStage: 'distrik',
-      wilayahApprovedBy: 'user-w',
-      ranting: { id: 'ranting-1', nama: 'Ranting A', wilayahId: null, wilayah: null },
-    }));
-    prisma.anggota.findFirst.mockResolvedValue(null);
-    prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
-    prisma.user.findUnique.mockResolvedValue(null);
-    prisma.user.create.mockResolvedValue({ id: 'user-1' });
-    prisma.ktaApplication.findFirst.mockResolvedValue(null);
-    prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
-
-    await service.approve('claim-1', { role: 'admin_distrik', distrikId: 'distrik-1' }, 'user-d');
-
-    const wilayah = prisma.ktaAppHistory.create.mock.calls
-      .map(([args]: [{ data: { level: string } }]) => args.data)
-      .find((item: { level: string }) => item.level === 'WILAYAH') as { action: string; actorId: string };
-    expect(wilayah).toMatchObject({ action: 'APPROVED', actorId: 'user-w' });
-  });
-
-  it('allows national admin to finalize a legacy national claim', async () => {
+  it('allows national admin to finalize a legacy national claim without a KTA application', async () => {
     prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'nasional' }));
     prisma.anggota.findFirst.mockResolvedValue(null);
     prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
     prisma.user.findUnique.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: 'user-1' });
-    prisma.ktaApplication.findFirst.mockResolvedValue(null);
     prisma.ktaApplication.create.mockResolvedValue({ id: 'kta-1' });
 
     const result = await service.approve('claim-1', { role: 'admin_nasional' }, 'user-n');
 
-    expect(prisma.ktaApplication.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ anggotaId: 'member-1', status: 'APPROVED' }),
-    }));
-    expect(result).toEqual(expect.objectContaining({ status: 'disetujui', ktaApplicationId: 'kta-1' }));
+    expect(prisma.ktaApplication.create).not.toHaveBeenCalled();
+    expect(prisma.ktaAppHistory.create).not.toHaveBeenCalled();
+    expect(result).toEqual(expect.objectContaining({ success: true, status: 'disetujui', anggotaId: 'member-1' }));
+    expect(result).not.toHaveProperty('ktaApplicationId');
   });
 
   it('allows deleting only rejected claims', async () => {

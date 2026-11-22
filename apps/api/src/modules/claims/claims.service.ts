@@ -21,10 +21,11 @@ import { normalizePrismaDate } from '../../common/utils/date.util';
 import { deleteClaimFile } from '../../common/utils/claim-upload.util';
 import { Response } from 'express';
 import { randomBytes, randomUUID } from 'crypto';
-import { KtaAppAction, KtaAppLevel, TipeKlaim } from '@prisma/client';
-import { KtaApplicationService } from '../members/kta-application.service';
+import { TipeKlaim } from '@prisma/client';
 
 import { NotificationsService } from '../notifications/notifications.service';
+
+const DEFAULT_APK_URL = 'https://ths-thm.cloud/api/app/ths-thm-mobile-latest.apk';
 
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
@@ -44,7 +45,6 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
-    @Optional() private readonly ktaApplicationService?: KtaApplicationService,
   ) {
     super(
       prisma,
@@ -191,7 +191,8 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
 
     this.invalidateCache();
     this.audit('CLAIM_CREATE', 'Klaim', claim.id);
-    
+    await this.notifyAdminRantingForClaim(claim.id, claim.rantingId);
+
       return this.findOne(claim.id);
   }
 
@@ -455,7 +456,6 @@ async addBuktiFiles(
       return { success: true, status: 'pending', nextStage };
     }
 
-    if (!this.ktaApplicationService || typeof this.ktaApplicationService !== 'object') throw new BadRequestException('Layanan pengajuan KTA tidak tersedia');
     if (claim.email && await this.prisma.anggota.findFirst({ where: { email: claim.email, deletedAt: null }, select: { id: true } })) {
       throw new BadRequestException('Email sudah terdaftar sebagai anggota');
     }
@@ -476,23 +476,9 @@ async addBuktiFiles(
           statusKeanggotaan: 'aktif', statusData: 'complete', statusValidasi: 'approved',
         },
       });
-      const app = await tx.ktaApplication.create({
-        data: { anggotaId: anggota.id, submittedById: userId || anggota.id, submittedByRole: scope?.role || 'admin_distrik', status: 'APPROVED' },
-      });
-      const wilayahApproved = Boolean(claim.wilayahApprovedBy);
-      const finalizingAtNational = claim.currentStage === 'nasional';
-      const history = [
-        { level: 'RANTING', action: 'APPROVED', skipped: false, actorId: claim.rantingApprovedBy || userId || anggota.id, actorRole: 'admin_ranting', skippedReason: null },
-        { level: 'WILAYAH', action: wilayahApproved ? 'APPROVED' : 'SKIPPED', skipped: !wilayahApproved, actorId: wilayahApproved ? claim.wilayahApprovedBy! : userId || anggota.id, actorRole: wilayahApproved ? 'admin_wilayah' : 'system', skippedReason: wilayahApproved ? null : 'Tahap wilayah dilewati' },
-        { level: 'DISTRIK', action: 'APPROVED', skipped: false, actorId: claim.distrikApprovedBy || userId || anggota.id, actorRole: 'admin_distrik', skippedReason: null },
-        { level: 'NASIONAL', action: finalizingAtNational ? 'APPROVED' : 'SKIPPED', skipped: !finalizingAtNational, actorId: userId || anggota.id, actorRole: finalizingAtNational ? (scope?.role || 'admin_nasional') : 'system', skippedReason: finalizingAtNational ? null : 'Finalisasi dilakukan di tingkat distrik' },
-      ];
-      for (const item of history) {
-        await tx.ktaAppHistory.create({ data: { ktaApplicationId: app.id, level: item.level as KtaAppLevel, action: item.action as KtaAppAction, actorId: item.actorId, actorRole: item.actorRole, isSkipped: item.skipped, skippedReason: item.skippedReason } });
-      }
-      await tx.klaim.update({ where: { id }, data: { status: 'disetujui', currentStage: 'kta_processing', anggotaId: anggota.id, ktaApplicationId: app.id, approvedBy: userId || null, approvedAt: new Date() } });
+      await tx.klaim.update({ where: { id }, data: { status: 'disetujui', currentStage: 'kta_processing', anggotaId: anggota.id, approvedBy: userId || null, approvedAt: new Date() } });
       await tx.klaimApprovalHistory.create({ data: { klaimId: id, stage: claim.currentStage.toUpperCase(), action: 'APPROVED', actorId: userId || null, actorRole: scope?.role || 'admin_distrik' } });
-      return { anggotaId: anggota.id, ktaApplicationId: app.id };
+      return { anggotaId: anggota.id };
     });
 
     try {
@@ -501,7 +487,7 @@ async addBuktiFiles(
         const bcrypt = await import('bcryptjs');
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
         await this.prisma.user.create({ data: { email: claim.email, passwordHash: hashedPassword, namaLengkap: claim.namaLengkap!, role: 'anggota', isActive: true, mustChangePassword: true } });
-        this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword);
+        this.sendCredentialEmail({ namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined }, temporaryPassword, await this.getCredentialAppUrl());
       }
     } catch (err) {
       this.logger.error(`Failed to provision credentials for claim ${id}: ${(err as Error).message}`);
@@ -509,13 +495,6 @@ async addBuktiFiles(
 
       this.invalidateCache();
       this.audit('CLAIM_FINALIZE', 'Klaim', id, undefined, finalized);
-      this.sendClaimStatusEmail(
-        { namaLengkap: claim.namaLengkap || undefined, email: claim.email || undefined },
-        'disetujui',
-        undefined,
-        this.buildTrackingUrl(claim.trackingToken),
-        claim.id,
-      );
       // Send in-app notification to admin_nasional
       await this.sendNotificationToNationalApprovers(claim.id, claim.namaLengkap || 'Pelanggan', userId);
       return { success: true, status: 'disetujui', ...finalized };
@@ -684,9 +663,22 @@ async addBuktiFiles(
 
   // ── Email Helper ──────────────────────────────────────
 
+  private async getCredentialAppUrl(): Promise<string> {
+    try {
+      const setting = await this.prisma.setting.findUnique({ where: { key: 'mobile_update' } });
+      const value = setting?.value as Record<string, unknown> | null | undefined;
+      const apkUrl = typeof value?.apkUrl === 'string' ? value.apkUrl.trim() : '';
+      return apkUrl || DEFAULT_APK_URL;
+    } catch (err) {
+      this.logger.warn(`Failed to read mobile_update apkUrl: ${(err as Error).message}`);
+      return DEFAULT_APK_URL;
+    }
+  }
+
   private sendCredentialEmail(
     anggota: { namaLengkap?: string; email?: string } | null | undefined,
     password: string,
+    appUrl: string,
   ): void {
     if (!anggota || !anggota.email) return;
     const email = anggota.email;
@@ -695,8 +687,8 @@ async addBuktiFiles(
       try {
         const tpl = await this.mailService.renderWithOverride(
           'credentialEmail',
-          () => credentialEmail(nama, email, password),
-          { nama },
+          () => credentialEmail(nama, email, password, appUrl),
+          { nama, appUrl },
         );
         await this.mailService.sendMail({
           to: email,
@@ -747,6 +739,33 @@ async addBuktiFiles(
     })();
   }
 
+  private async notifyAdminRantingForClaim(claimId: string, rantingId?: string | null): Promise<void> {
+    if (!rantingId) {
+      this.logger.warn(`Skipping admin_ranting notification for claim ${claimId}: missing rantingId`);
+      this.audit('CLAIM_NOTIFY_SKIPPED', 'Klaim', claimId, undefined, { reason: 'missing rantingId' });
+      return;
+    }
+    if (!this.notificationsService) return;
+
+    try {
+      await this.notificationsService.sendToRole({
+        judul: 'Klaim Baru Menunggu Verifikasi',
+        isi: 'Ada klaim keanggotaan baru yang perlu diverifikasi oleh admin ranting.',
+        tipe: 'status_klaim',
+        data: {
+          claimId,
+          url: `/claims/${claimId}`,
+          screen: 'admin/claims',
+          screenId: claimId,
+        },
+        role: 'admin_ranting',
+        rantingId,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to notify admin_ranting for claim ${claimId}: ${(err as Error).message}`);
+    }
+  }
+
   private async sendNotificationToNextStageApprovers(
     claimId: string,
     nextStage: string,
@@ -779,7 +798,7 @@ async addBuktiFiles(
       await this.notificationsService.sendToRole({
         judul: 'Klaim Menunggu Verifikasi',
         isi: `Klaim anggota dari ${rantingNama} telah dinormalisasi ke ${stageLabel}. Silakan verifikasi.`,
-        data: { claimId, actorId: approvedById },
+        data: { claimId, actorId: approvedById, url: `/claims/${claimId}` },
         role,
         ...(nextStage === 'ranting' && unitIds?.rantingId ? { rantingId: unitIds.rantingId } : {}),
         ...(nextStage === 'wilayah' && unitIds?.wilayahId ? { wilayahId: unitIds.wilayahId } : {}),
@@ -801,7 +820,7 @@ async addBuktiFiles(
       await this.notificationsService.sendToRole({
         judul: 'Klaim Siap Diproses',
         isi: `Klaim pendaftaran ${namaLengkap} telah disetujui dan siap untuk proses KTA.`,
-        data: { claimId, actorId: approvedById },
+        data: { claimId, actorId: approvedById, url: `/claims/${claimId}` },
         role: 'admin_nasional',
       });
     } catch (err) {

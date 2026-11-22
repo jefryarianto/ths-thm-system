@@ -67,6 +67,11 @@ export class MembersDigitalCardService {
     private readonly cache: CacheService,
   ) {}
 
+  private async assertKtaIssuable(memberId: string) {
+    const { KtaApplicationService } = await import('./kta-application.service');
+    await KtaApplicationService.assertKtaIssuable(this.prisma, memberId);
+  }
+
   /**
    * Baca foto anggota dari disk sebagai data URL base64 untuk ditanam di PDF.
    * Fallback ke null bila file tidak ada / gagal dibaca (placeholder 'FOTO' dipakai).
@@ -500,6 +505,7 @@ export class MembersDigitalCardService {
    * terbit & masa berlaku 3 tahun, lalu mengembalikan kartu digital lengkap.
    */
   async generateDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    await this.assertKtaIssuable(memberId);
     const member = await this.loadMemberForScope(memberId, scope, user);
     await this.ensureKtaDokumen(member);
     return this.getDigitalCard(memberId, scope, user);
@@ -863,6 +869,7 @@ export class MembersDigitalCardService {
     scope?: UserScope,
     user?: SelfScopeUser,
   ) {
+    await this.assertKtaIssuable(memberId);
     const member = await this.loadMemberForScope(memberId, scope, user);
     let doc = await this.ensureKtaDokumen(member);
     if (doc.status === 'revoked') {
@@ -976,6 +983,9 @@ export class MembersDigitalCardService {
     scope?: UserScope,
     user?: SelfScopeUser,
   ) {
+    for (const memberId of memberIds) {
+      await this.assertKtaIssuable(memberId);
+    }
     const issued: Array<{ memberId: string; issuanceId: string }> = [];
     for (const memberId of memberIds) {
       try {

@@ -1641,6 +1641,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/members/{id}/digital-card/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate KTA manual dari member area */
+        post: operations["MembersController_generateDigitalCard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/members/{id}/digital-card/pdf": {
         parameters: {
             query?: never;
@@ -1686,6 +1703,23 @@ export interface paths {
         get: operations["MembersController_getCardSecurity"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/members/{id}/digital-card/security/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset riwayat pemindaian QR kartu digital */
+        post: operations["MembersController_resetCardSecurity"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1771,6 +1805,399 @@ export interface paths {
         get: operations["MembersController_getCardIssuances"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List KTA applications with filters */
+        get: operations["KtaApplicationController_findAll"];
+        put?: never;
+        /** Submit KTA application */
+        post: operations["KtaApplicationController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user's KTA application */
+        get: operations["KtaApplicationController_getMyApplication"];
+        put?: never;
+        /** Submit KTA application (member self-service) */
+        post: operations["KtaApplicationController_createMyApplication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/me/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Cancel KTA application */
+        patch: operations["KtaApplicationController_cancel"];
+        trace?: never;
+    };
+    "/kta-applications/members/{memberId}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset KTA: revoke card and delete all applications for a member */
+        post: operations["KtaApplicationController_resetMemberKta"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/distrik-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Antrian proses KTA untuk admin distrik */
+        get: operations["KtaApplicationController_distrikQueue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk submit KTA applications */
+        post: operations["KtaApplicationController_bulkSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List KTA batches */
+        get: operations["KtaApplicationController_listBatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/batches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get KTA batch details */
+        get: operations["KtaApplicationController_getBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/batches/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export batch data */
+        get: operations["KtaApplicationController_exportBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/escalation/sla": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get KTA auto-escalation SLA status */
+        get: operations["KtaApplicationController_getEscalationSla"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/escalate/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Manual escalation of KTA application */
+        post: operations["KtaApplicationController_manualEscalation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/analytics/funnel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get KTA funnel conversion data */
+        get: operations["KtaApplicationController_getFunnel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/analytics/processing-time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get average processing time per level */
+        get: operations["KtaApplicationController_getProcessingTime"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/analytics/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get monthly trend data */
+        get: operations["KtaApplicationController_getTrend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/analytics/bottlenecks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get bottleneck & SLA breach data */
+        get: operations["KtaApplicationController_getBottlenecks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get KTA application detail */
+        get: operations["KtaApplicationController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get KTA application history */
+        get: operations["KtaApplicationController_getHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Approve KTA application (per level) */
+        patch: operations["KtaApplicationController_approve"];
+        trace?: never;
+    };
+    "/kta-applications/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reject KTA application */
+        patch: operations["KtaApplicationController_reject"];
+        trace?: never;
+    };
+    "/kta-applications/{id}/setup-fee": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set biaya & rekening tujuan KTA */
+        post: operations["KtaApplicationController_setupFee"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}/verify-payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verifikasi pembayaran KTA */
+        post: operations["KtaApplicationController_verifyPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}/generate-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate KTA (manual oleh admin) */
+        post: operations["KtaApplicationController_generateCard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kta-applications/{id}/superadmin-bypass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** SuperAdmin bypass semua level approval */
+        post: operations["KtaApplicationController_superadminBypass"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2253,6 +2680,23 @@ export interface paths {
         patch: operations["ClaimsController_update"];
         trace?: never;
     };
+    "/claims/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat klaim massal oleh admin ranting (bukti dapat menyusul) */
+        post: operations["ClaimsController_createBulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/claims/{id}/approve": {
         parameters: {
             query?: never;
@@ -2299,6 +2743,58 @@ export interface paths {
         /** Proses klaim */
         post: operations["ClaimsController_process"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/bukti": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tambah bukti keanggotaan multi-dokumen ke klaim */
+        post: operations["ClaimsController_addBukti"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/dokumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tambah dokumen pendukung multi-dokumen ke klaim */
+        post: operations["ClaimsController_addDokumen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/claims/{id}/files/{fileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download file bukti klaim */
+        get: operations["ClaimsController_downloadFile"];
+        put?: never;
+        post?: never;
+        /** Hapus file bukti klaim */
+        delete: operations["ClaimsController_deleteFile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4580,6 +5076,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dues/{periode}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Kunci periode iuran (terapkan grace period standar) */
+        patch: operations["DuesController_lockDues"];
+        trace?: never;
+    };
+    "/dues/{periode}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Unlock periode iuran */
+        patch: operations["DuesController_unlockDues"];
+        trace?: never;
+    };
+    "/dues/lock-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Periksa status lock periode iuran */
+        get: operations["DuesController_getLockStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dues/{periode}/grace-override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke grace period override periode iuran */
+        delete: operations["DuesController_revokeGraceOverride"];
+        options?: never;
+        head?: never;
+        /** Override grace period periode iuran (kustom) */
+        patch: operations["DuesController_overrideGracePeriod"];
+        trace?: never;
+    };
+    "/dues/cron/cleanup-expired-locks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Expire locks yang sudah habis grace periodnya */
+        post: operations["DuesController_expireExpiredLocks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/payments/bank-info": {
         parameters: {
             query?: never;
@@ -5065,6 +5647,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/doc-template/{type}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload gambar latar template dokumen per tipe */
+        post: operations["SettingsController_uploadDocTemplateImage"];
+        /** Hapus gambar latar template dokumen per tipe */
+        delete: operations["SettingsController_removeDocTemplateImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/settings/{key}": {
         parameters: {
             query?: never;
@@ -5292,6 +5892,23 @@ export interface paths {
         patch: operations["ForumController_toggleLock"];
         trace?: never;
     };
+    "/forum/upload-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload gambar untuk forum thread/post */
+        post: operations["ForumController_uploadForumImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/forum/threads/{id}/posts": {
         parameters: {
             query?: never;
@@ -5303,6 +5920,23 @@ export interface paths {
         put?: never;
         /** Balas thread */
         post: operations["ForumController_createPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forum/posts/{id}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Membalas komentar tertentu (reply bersarang) */
+        post: operations["ForumController_replyToPost"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5342,6 +5976,57 @@ export interface paths {
         head?: never;
         /** Tandai sebagai solusi */
         patch: operations["ForumController_markAsSolution"];
+        trace?: never;
+    };
+    "/forum/threads/{id}/react": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Toggle reaksi pada thread */
+        post: operations["ForumController_reactToThread"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forum/posts/{id}/react": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Toggle reaksi pada post */
+        post: operations["ForumController_reactToPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forum/mentions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cari mention */
+        get: operations["ForumController_getMentions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/calendar/events": {
@@ -6289,6 +6974,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/claims/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lacak status klaim anggota berdasarkan token (public) */
+        get: operations["PublicController_getClaimTracking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/public/mobile-app-info": {
         parameters: {
             query?: never;
@@ -6404,7 +7106,7 @@ export interface paths {
         /** Daftar jabatan (superadmin: semua; lainnya: distriknya + global) */
         get: operations["JabatanController_findAll"];
         put?: never;
-        /** Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya) */
+        /** Tambah jabatan (superadmin: global/distrik; admin_distrik: distriknya; admin_nasional: nasional) */
         post: operations["JabatanController_create"];
         delete?: never;
         options?: never;
@@ -6423,11 +7125,11 @@ export interface paths {
         get: operations["JabatanController_findOne"];
         put?: never;
         post?: never;
-        /** Hapus jabatan (admin hanya milik distriknya) */
+        /** Hapus jabatan (admin hanya milik distriknya; admin_nasional: nasional) */
         delete: operations["JabatanController_remove"];
         options?: never;
         head?: never;
-        /** Update jabatan (admin hanya milik distriknya) */
+        /** Update jabatan (admin hanya milik distriknya; admin_nasional: nasional) */
         patch: operations["JabatanController_update"];
         trace?: never;
     };
@@ -7204,6 +7906,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Matriks izin semua role (khusus superadmin) */
         get: operations["PermissionsController_getMatrix"];
         put?: never;
         post?: never;
@@ -7226,6 +7929,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Ubah satu izin role (khusus superadmin) */
         patch: operations["PermissionsController_toggle"];
         trace?: never;
     };
@@ -7242,7 +7946,200 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Ubah banyak izin satu role (khusus superadmin) */
         patch: operations["PermissionsController_bulkToggle"];
+        trace?: never;
+    };
+    "/galeri/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["GaleriController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_adminList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/deletions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_deletionHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_adminImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/{id}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_adminThumbnail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/admin/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/review/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["GaleriController_reviewBulk"];
+        trace?: never;
+    };
+    "/galeri/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["GaleriController_review"];
+        trace?: never;
+    };
+    "/galeri/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["GaleriController_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_image"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/galeri/{id}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GaleriController_thumbnail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -7280,7 +8177,7 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             /** @description Lewati pengiriman email (untuk event tinggi frekuensi seperti scan kartu) */
             skipEmail?: boolean;
             data?: Record<string, never>;
@@ -7289,7 +8186,7 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             data?: Record<string, never>;
         };
         SendToRoleDto: {
@@ -7298,8 +8195,14 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             data?: Record<string, never>;
+            /** @description Batasi notifikasi ke admin ranting tertentu */
+            rantingId?: string;
+            /** @description Batasi notifikasi ke admin wilayah tertentu */
+            wilayahId?: string;
+            /** @description Batasi notifikasi ke admin distrik tertentu */
+            distrikId?: string;
         };
         RegisterDeviceTokenDto: {
             token: string;
@@ -7385,7 +8288,7 @@ export interface components {
             /** @example Ahmad Fauzi */
             namaLengkap: string;
             /** @enum {string} */
-            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7396,7 +8299,7 @@ export interface components {
             password?: string;
             namaLengkap?: string;
             /** @enum {string} */
-            role?: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role?: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             distrikId?: string;
             wilayahId?: string;
             rantingId?: string;
@@ -7432,6 +8335,27 @@ export interface components {
             fotoPath?: string;
             /** @description Versi data saat dibaca client (optimistic locking). Wajib dikirim bila ingin mencegah konflik update bersamaan. */
             version?: number;
+        };
+        CreateKtaDto: {
+            namaLengkap: string;
+            /** @enum {string} */
+            jenisKelamin: "L" | "P";
+            tempatLahir?: string;
+            tanggalLahir?: string;
+            alamat?: string;
+            noHp?: string;
+            email?: string;
+            isCompliant?: boolean;
+        };
+        SubmitBulkKtaDto: {
+            anggotaIds: string[];
+            batchName?: string;
+        };
+        ApproveKtaDto: {
+            catatan?: string;
+        };
+        RejectKtaDto: {
+            reason: string;
         };
         CreatePenandatanganDto: Record<string, never>;
         UpdatePenandatanganDto: Record<string, never>;
@@ -7509,19 +8433,39 @@ export interface components {
             /** @description Tanggal lahir (ISO string) */
             tanggalLahir?: string;
             /** @description Tempat pendadaran (dadar) */
-            tempatDadar?: string;
+            tempatDadar: string;
             /** @description Tahun pendadaran (dadar) */
-            tahunDadar?: string;
-            /** @description Alamat lengkap */
+            tahunDadar: string;
+            /** @description alamat lengkap */
             alamat?: string;
             /** @description Nomor HP */
             noHp?: string;
             /** @description Email */
-            email?: string;
+            email: string;
             /** @description ID ranting asal keanggotaan */
             rantingId?: string;
-            /** @description Bukti dokumen [{tipe: string, url: string}] */
-            buktiDokumen?: string[];
+            /**
+             * @description Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan
+             * @enum {string}
+             */
+            modeBukti?: "unggah" | "cerita";
+            /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
+            ceritaHistori?: string;
+            /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
+            buktiFiles?: string[];
+            /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
+            dokumenPendukungFiles?: string[];
+            /**
+             * @description Tipe bukti keanggotaan
+             * @enum {string}
+             */
+            buktiTipe?: "sertifikat" | "kartu_anggota";
+        };
+        BulkClaimDto: {
+            /** @description Daftar klaim yang dibuat sekaligus (maksimal 100 baris) */
+            claims: components["schemas"]["CreateClaimDto"][];
+            /** @description Nama batch untuk pelacakan admin */
+            batchName?: string;
         };
         UpdateClaimDto: {
             catatan?: string;
@@ -7638,7 +8582,7 @@ export interface components {
         GenerateDocumentDto: {
             memberId: string;
             /** @enum {string} */
-            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
             signatureId?: string;
             stampId?: string;
         };
@@ -7646,7 +8590,7 @@ export interface components {
             /** @description Daftar ID anggota (opsional jika range dipakai) */
             memberIds?: string[];
             /** @enum {string} */
-            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+            type: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
             /**
              * @description Rentang anggota untuk resolve memberIds otomatis
              * @enum {string}
@@ -7835,6 +8779,7 @@ export interface components {
             anggotaId: string;
             periode: string;
             jumlah: number;
+            dueDate?: string;
             tanggalBayar?: string;
             /** @enum {string} */
             metodeBayar?: "manual" | "transfer" | "online";
@@ -7858,8 +8803,12 @@ export interface components {
             jumlah: number;
         };
         PaymentConfirmationDto: {
+            buktiBayarPath?: string;
             catatan?: string;
         };
+        LockRequest: Record<string, never>;
+        UnlockRequest: Record<string, never>;
+        OverrideRequest: Record<string, never>;
         CreatePeriodDto: {
             nama: string;
             tglMulai: string;
@@ -7876,16 +8825,40 @@ export interface components {
             categoryId: string;
             judul: string;
             konten: string;
+            /** @description Daftar URL gambar lampiran */
+            images?: string[];
         };
         UpdateThreadDto: {
             judul?: string;
             konten?: string;
+            images?: string[];
         };
         CreatePostDto: {
             konten: string;
+            /** @description ID post induk untuk membalas komentar tertentu (reply bersarang). Kosongkan untuk post biasa. */
+            parentId?: string;
+            /** @description Daftar URL gambar lampiran */
+            images?: string[];
         };
         UpdatePostDto: {
             konten?: string;
+            images?: string[];
+        };
+        ReactDto: {
+            /** @description Emoji reaksi, mis. 👍, ❤️, 😂, 😮, 😢, 🙏 */
+            emoji: string;
+        };
+        ThreadReactionResponseDto: {
+            /** @description Jumlah reaksi per emoji */
+            reactions: Record<string, never>;
+            /** @description Emoji yang dipilih user saat ini */
+            currentUserEmoji: Record<string, never> | null;
+        };
+        PostReactionResponseDto: {
+            /** @description Jumlah reaksi per emoji */
+            reactions: Record<string, never>;
+            /** @description Emoji yang dipilih user saat ini */
+            currentUserEmoji: Record<string, never> | null;
         };
         CreateDistrikDto: Record<string, never>;
         UpdateDistrikDto: Record<string, never>;
@@ -7967,7 +8940,7 @@ export interface components {
              * @example admin_ranting
              * @enum {string}
              */
-            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "penguji" | "anggota";
+            role: "superadmin" | "admin_nasional" | "admin_distrik" | "admin_wilayah" | "admin_ranting" | "admin_kegiatan" | "admin_berita" | "penguji" | "anggota";
             /** @example members */
             menuKey: string;
             /** @example true */
@@ -7984,6 +8957,18 @@ export interface components {
             permissions: {
                 [key: string]: boolean;
             };
+        };
+        ReviewBulkGaleriDto: {
+            /** @enum {string} */
+            status: "APPROVED" | "REJECTED";
+            reason?: string;
+            /** @description Maksimal 100 id */
+            ids: string[];
+        };
+        ReviewGaleriDto: {
+            /** @enum {string} */
+            status: "APPROVED" | "REJECTED";
+            reason?: string;
         };
     };
     responses: never;
@@ -10072,6 +11057,25 @@ export interface operations {
             };
         };
     };
+    MembersController_generateDigitalCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     MembersController_getDigitalCardPdf: {
         parameters: {
             query?: never;
@@ -10124,6 +11128,25 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MembersController_resetCardSecurity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10221,6 +11244,482 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_findAll: {
+        parameters: {
+            query?: {
+                status?: "SUBMITTED" | "RANTING_REVIEW" | "WILAYAH_REVIEW" | "DISTRIK_REVIEW" | "NASIONAL_REVIEW" | "APPROVED" | "PAYMENT_SETUP" | "PAYMENT_PENDING" | "PAYMENT_VERIFIED" | "CARD_GENERATING" | "CARD_GENERATED" | "REJECTED" | "CANCELLED";
+                anggotaId?: string;
+                batchId?: string;
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateKtaDto"];
+            };
+        };
+        responses: {
+            /** @description KTA application submitted successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getMyApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_createMyApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description KTA application submitted successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_resetMemberKta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description KTA reset successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_distrikQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_bulkSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitBulkKtaDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_listBatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_exportBatch: {
+        parameters: {
+            query?: {
+                format?: "csv" | "excel" | "pdf";
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getEscalationSla: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_manualEscalation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getFunnel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getProcessingTime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getTrend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getBottlenecks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_getHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveKtaDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectKtaDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_setupFee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_verifyPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_generateCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_superadminBypass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10963,6 +12462,8 @@ export interface operations {
                 limit?: number;
                 status?: "pending" | "diproses" | "disetujui" | "ditolak";
                 tipe?: "keanggotaan" | "dokumen";
+                /** @description Tahap persetujuan klaim */
+                currentStage?: string;
             };
             header?: never;
             path?: never;
@@ -10987,7 +12488,40 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateClaimDto"];
+                "multipart/form-data": {
+                    /** @enum {string} */
+                    tipe?: "keanggotaan" | "dokumen";
+                    namaLengkap?: string;
+                    /** @enum {string} */
+                    jenisKelamin?: "L" | "P";
+                    tempatLahir?: string;
+                    /** Format: date */
+                    tanggalLahir?: string;
+                    tempatDadar?: string;
+                    tahunDadar?: string;
+                    alamat?: string;
+                    noHp?: string;
+                    /** Format: email */
+                    email?: string;
+                    catatan?: string;
+                    rantingId?: string;
+                    /**
+                     * @description Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan
+                     * @enum {string}
+                     */
+                    modeBukti?: "unggah" | "cerita";
+                    /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
+                    ceritaHistori?: string;
+                    /**
+                     * @description Tipe bukti keanggotaan
+                     * @enum {string}
+                     */
+                    buktiTipe?: "sertifikat" | "kartu_anggota";
+                    /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
+                    buktiFiles?: string[];
+                    /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
+                    dokumenPendukungFiles?: string[];
+                };
             };
         };
         responses: {
@@ -11060,6 +12594,27 @@ export interface operations {
             };
         };
     };
+    ClaimsController_createBulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ClaimsController_approve: {
         parameters: {
             query?: never;
@@ -11114,6 +12669,84 @@ export interface operations {
         requestBody?: never;
         responses: {
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_addBukti: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_addDokumen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_downloadFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ClaimsController_deleteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12726,7 +14359,7 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
-                tipe?: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
+                tipe?: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi" | "sertifikat_tingkatan" | "sertifikat_pelatih" | "sertifikat_wasit_dan_juri" | "sertifikat_penguji" | "piagam_seroja" | "piagam_melati" | "piagam_mawar";
                 anggotaId?: string;
             };
             header?: never;
@@ -14750,6 +16383,128 @@ export interface operations {
             };
         };
     };
+    DuesController_lockDues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LockRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_unlockDues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlockRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_getLockStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_revokeGraceOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_overrideGracePeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverrideRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    DuesController_expireExpiredLocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PaymentsController_getBankInfo: {
         parameters: {
             query?: never;
@@ -15456,6 +17211,44 @@ export interface operations {
             };
         };
     };
+    SettingsController_uploadDocTemplateImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SettingsController_removeDocTemplateImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     SettingsController_getSetting: {
         parameters: {
             query?: never;
@@ -15882,6 +17675,24 @@ export interface operations {
             };
         };
     };
+    ForumController_uploadForumImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gambar berhasil diupload */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ForumController_createPost: {
         parameters: {
             query?: never;
@@ -15900,6 +17711,32 @@ export interface operations {
         };
         responses: {
             /** @description Balasan berhasil dikirim */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ForumController_replyToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Post induk yang dibalas */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Konten balasan */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Balasan bersarang berhasil dikirim */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -15971,6 +17808,83 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Post ditandai sebagai solusi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ForumController_reactToThread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Thread */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Emoji reaksi */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactDto"];
+            };
+        };
+        responses: {
+            /** @description Reaksi berhasil ditambahkan/dihapus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadReactionResponseDto"];
+                };
+            };
+        };
+    };
+    ForumController_reactToPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID Post/Balasan */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Emoji reaksi */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactDto"];
+            };
+        };
+        responses: {
+            /** @description Reaksi berhasil ditambahkan/dihapus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostReactionResponseDto"];
+                };
+            };
+        };
+    };
+    ForumController_getMentions: {
+        parameters: {
+            query?: {
+                /** @description Nama anggota untuk dicari */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar mention hasil pencarian */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -17362,6 +19276,25 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PublicController_getClaimTracking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -18785,6 +20718,244 @@ export interface operations {
             header?: never;
             path: {
                 role: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_adminList: {
+        parameters: {
+            query: {
+                status: string;
+                page: string;
+                limit: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_deletionHistory: {
+        parameters: {
+            query: {
+                page: string;
+                limit: string;
+                actorId: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_adminImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_adminThumbnail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_reviewBulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewBulkGaleriDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_review: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewGaleriDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_delete: {
+        parameters: {
+            query: {
+                reason: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GaleriController_thumbnail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };

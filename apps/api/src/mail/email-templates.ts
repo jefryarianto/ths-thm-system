@@ -472,7 +472,7 @@ export function userWelcomeEmail(
 
 // ─── Kredensial / Credentials ───
 
-export function credentialEmail(nama: string, username: string, password: string) {
+export function credentialEmail(nama: string, username: string, password: string, appUrl?: string) {
   return {
     subject: 'Kredensial Login THS-THM',
     html: wrap(`
@@ -485,6 +485,18 @@ export function credentialEmail(nama: string, username: string, password: string
         <p style="margin: 4px 0; font-size: 14px;"><strong>Password:</strong> <code style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${escapeHtml(password)}</code></p>
       </div>
       <p style="color: #dc2626; font-size: 13px;">⚠️ Setelah login, Anda akan diminta mengubah password.</p>
+      ${
+        appUrl
+          ? `
+      <p style="text-align: center; margin: 24px 0;">
+        <a href="${escapeHtml(appUrl)}" style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Unduh Aplikasi THS-THM
+        </a>
+      </p>
+      <p style="color: #6b7280; font-size: 12px; text-align: center;">Atau salin tautan berikut ke browser:<br />${escapeHtml(appUrl)}</p>
+      `
+          : ''
+      }
     `),
   };
 }

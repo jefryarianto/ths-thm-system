@@ -226,10 +226,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     });
   }, [pathname]);
 
-  // Unread notification count (socket + polling fallback)
+  // Unread notification count: polling is always active; socket events only
+  // add immediate updates on top of it (getSocket may be a noop socket).
   useEffect(() => {
-    let socketSubscribed = false;
-
     const fetchCount = async () => {
       try {
         const { data } = await apiClient.get('/notifications/count');
@@ -240,33 +239,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     };
 
     fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    let unsubscribeSocket: (() => void) | undefined;
 
     try {
       const token = localStorage.getItem('accessToken');
       if (token) {
         const socket = getSocket(token);
-        socket.on('notification:new', () => {
-          setUnreadCount((prev) => prev + 1);
-        });
-        socket.on('notification:count', (data: { count: number }) => {
-          setUnreadCount(data.count);
-        });
-        socketSubscribed = true;
-
-        return () => {
-          socket.off('notification:new');
-          socket.off('notification:count');
+        const onNew = () => setUnreadCount((prev) => prev + 1);
+        const onCount = (data: { count: number }) => setUnreadCount(data.count);
+        socket.on('notification:new', onNew);
+        socket.on('notification:count', onCount);
+        unsubscribeSocket = () => {
+          socket.off('notification:new', onNew);
+          socket.off('notification:count', onCount);
         };
       }
     } catch {
-      /* fallback to polling below - only set up interval when socket fails */
+      /* socket unavailable - polling remains active */
     }
 
-    // Only poll when socket subscription didn't succeed
-    if (!socketSubscribed) {
-      const interval = setInterval(fetchCount, 30000);
-      return () => clearInterval(interval);
-    }
+    return () => {
+      clearInterval(interval);
+      unsubscribeSocket?.();
+    };
   }, []);
 
   // Queue Stats Polling - only superadmin sees the Antrean menu, so poll only for them

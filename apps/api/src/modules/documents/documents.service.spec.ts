@@ -60,6 +60,9 @@ describe('DocumentsService', () => {
     anggota: {
       findUnique: jest.fn(),
     },
+    ktaApplication: {
+      findFirst: jest.fn(),
+    },
     setting: {
       findMany: jest.fn().mockResolvedValue([]),
     },
@@ -134,6 +137,10 @@ describe('DocumentsService', () => {
 
     service = module.get<DocumentsService>(DocumentsService);
     jest.clearAllMocks();
+    mockPrisma.ktaApplication.findFirst.mockResolvedValue({
+      id: 'a1',
+      status: 'CARD_GENERATED',
+    });
     mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({});
     mockPrisma.setting.findMany.mockResolvedValue([]);
     mockPenandatanganService.findActive.mockResolvedValue({
@@ -292,6 +299,49 @@ describe('DocumentsService', () => {
         if (prevFrontend === undefined) delete process.env.FRONTEND_URL;
         else process.env.FRONTEND_URL = prevFrontend;
       }
+    });
+
+    it('kartu_anggota menolak tanpa pengajuan KTA', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+
+      await expect(service.generate({ memberId: 'm1', type: 'kartu_anggota' })).rejects.toThrow(
+        /KTA/,
+      );
+      expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
+    });
+
+    it.each(['SUBMITTED', 'APPROVED', 'PAYMENT_PENDING', 'REJECTED'])(
+      'kartu_anggota menolak status %s',
+      async (status) => {
+        mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+
+        await expect(service.generate({ memberId: 'm1', type: 'kartu_anggota' })).rejects.toThrow(
+          /KTA/,
+        );
+        expect(mockPrisma.dokumen.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['PAYMENT_VERIFIED', 'CARD_GENERATING', 'CARD_GENERATED'])(
+      'kartu_anggota mengizinkan status %s',
+      async (status) => {
+        mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status });
+        mockPrisma.dokumen.create.mockResolvedValue({ id: 'd1', nomorDokumen: 'DOC-1' });
+
+        await expect(
+          service.generate({ memberId: 'm1', type: 'kartu_anggota' }),
+        ).resolves.toBeDefined();
+      },
+    );
+
+    it('dokumen bukan KTA tidak memerlukan pengajuan KTA', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);
+      mockPrisma.dokumen.create.mockResolvedValue({ id: 'd1', nomorDokumen: 'DOC-1' });
+
+      await expect(
+        service.generate({ memberId: 'm1', type: 'sertifikat_pelatihan' }),
+      ).resolves.toBeDefined();
+      expect(mockPrisma.ktaApplication.findFirst).not.toHaveBeenCalled();
     });
   });
 

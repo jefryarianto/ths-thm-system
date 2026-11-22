@@ -1,8 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, Bell } from 'lucide-react';
+import Link from 'next/link';
+import { X, Bell, ExternalLink } from 'lucide-react';
 import { TIPE_OPTIONS, tipeColors } from './constants';
+
+export function getSafeInternalUrl(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const url = (data as Record<string, unknown>).url;
+  if (typeof url !== 'string') return null;
+  if (!url.startsWith('/') || url.startsWith('//') || url.startsWith('/\\')) return null;
+  for (let i = 0; i < url.length; i += 1) {
+    const code = url.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) return null;
+  }
+  return url;
+}
 
 export interface NotificationDetail {
   id: string;
@@ -35,6 +48,7 @@ export default function NotificationDetailModal({
 
   if (!notification) return null;
 
+  const detailUrl = getSafeInternalUrl(notification.data);
   const tipeLabel =
     TIPE_OPTIONS.find((t) => t.value === notification.tipe)?.label || notification.tipe;
 
@@ -93,6 +107,17 @@ export default function NotificationDetailModal({
               <p className="text-sm text-gray-400 dark:text-gray-500">
                 Notifikasi ini tidak memiliki isi pesan.
               </p>
+            </div>
+          )}
+
+          {detailUrl && (
+            <div className="mt-5">
+              <Link
+                href={detailUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+              >
+                Buka <ExternalLink size={14} />
+              </Link>
             </div>
           )}
 

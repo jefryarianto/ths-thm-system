@@ -2208,6 +2208,16 @@ enum TipeNotifikasi {
   kartu_dipindai
   anggota_disetujui
   pembayaran_terverifikasi
+  kta_submitted
+  kta_rejected
+  kta_approved
+  kta_fee_notification
+  kta_payment_verified
+  kta_generated
+  kta_approval_request
+  kta_payment_setup
+  kta_escalation
+  kta_escalation_upper
 }
 
 enum KategoriMateri {

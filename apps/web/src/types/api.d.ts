@@ -8177,7 +8177,7 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             /** @description Lewati pengiriman email (untuk event tinggi frekuensi seperti scan kartu) */
             skipEmail?: boolean;
             data?: Record<string, never>;
@@ -8186,7 +8186,7 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             data?: Record<string, never>;
         };
         SendToRoleDto: {
@@ -8195,7 +8195,7 @@ export interface components {
             judul: string;
             isi: string;
             /** @enum {string} */
-            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "umum";
+            tipe?: "welcome" | "data_incomplete" | "reminder_latihan" | "reminder_pendadaran" | "reminder_iuran" | "status_klaim" | "dokumen_ready" | "kartu_dipindai" | "anggota_disetujui" | "pembayaran_terverifikasi" | "badge_earned" | "approval_request" | "approval_result" | "forum_reply" | "forum_solution" | "forum_deleted" | "umum" | "kta_submitted" | "kta_rejected" | "kta_approved" | "kta_fee_notification" | "kta_payment_verified" | "kta_generated" | "kta_approval_request" | "kta_payment_setup" | "kta_escalation" | "kta_escalation_upper";
             data?: Record<string, never>;
             /** @description Batasi notifikasi ke admin ranting tertentu */
             rantingId?: string;

@@ -359,12 +359,18 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
       { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap anggota' },
       { name: 'username', sample: 'budi@example.com', description: 'Username / email login' },
       { name: 'password', sample: 'thsthm123456', description: 'Password default' },
+      {
+        name: 'appUrl',
+        sample: 'https://ths-thm.cloud/api/app/ths-thm-mobile-latest.apk',
+        description: 'Tautan unduh aplikasi mobile (absolute URL)',
+      },
     ],
     renderDefault: (o) =>
       credentialEmail(
         o?.nama ?? 'Budi Santoso',
         o?.username ?? 'budi@example.com',
         o?.password ?? 'thsthm123456',
+        o?.appUrl,
       ),
   },
   dataIncompleteEmail: {

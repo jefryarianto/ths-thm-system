@@ -370,6 +370,66 @@ export class NotificationsService {
       description: 'Notifikasi saat balasan ditandai sebagai solusi',
     },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
+    {
+      key: 'approval_result',
+      label: 'Hasil Persetujuan',
+      description: 'Notifikasi hasil persetujuan pengajuan',
+    },
+    {
+      key: 'forum_deleted',
+      label: 'Thread Forum Dihapus',
+      description: 'Notifikasi saat thread forum yang diikuti dihapus',
+    },
+    {
+      key: 'kta_submitted',
+      label: 'KTA Diajukan',
+      description: 'Notifikasi saat pengajuan KTA berhasil dikirim',
+    },
+    {
+      key: 'kta_rejected',
+      label: 'KTA Ditolak',
+      description: 'Notifikasi saat pengajuan KTA ditolak',
+    },
+    {
+      key: 'kta_approved',
+      label: 'KTA Disetujui',
+      description: 'Notifikasi saat pengajuan KTA disetujui',
+    },
+    {
+      key: 'kta_fee_notification',
+      label: 'Notifikasi Biaya KTA',
+      description: 'Notifikasi biaya penerbitan KTA',
+    },
+    {
+      key: 'kta_payment_verified',
+      label: 'Pembayaran KTA Terverifikasi',
+      description: 'Notifikasi saat pembayaran KTA terverifikasi',
+    },
+    {
+      key: 'kta_generated',
+      label: 'KTA Diterbitkan',
+      description: 'Notifikasi saat kartu KTA berhasil diterbitkan',
+    },
+    {
+      key: 'kta_approval_request',
+      label: 'Persetujuan KTA',
+      description: 'Notifikasi permintaan persetujuan pengajuan KTA',
+    },
+    {
+      key: 'kta_payment_setup',
+      label: 'Pengaturan Pembayaran KTA',
+      description: 'Notifikasi pengaturan pembayaran KTA',
+    },
+    {
+      key: 'kta_escalation',
+      label: 'Eskalasi KTA',
+      description: 'Notifikasi eskalasi pengajuan KTA',
+    },
+    {
+      key: 'kta_escalation_upper',
+      label: 'Eskalasi KTA Atasan',
+      description: 'Notifikasi eskalasi pengajuan KTA ke level atasan',
+    },
   ];
 
   private prefKey(userId: string) {

@@ -63,6 +63,16 @@ describe('template-registry', () => {
     expect(rendered.html).toContain('Berkas lengkap');
   });
 
+  it('forwards appUrl in the credential email preview', () => {
+    const definition = EMAIL_TEMPLATE_REGISTRY.credentialEmail;
+    expect(definition.variables.map((variable) => variable.name)).toContain('appUrl');
+
+    const appUrl = 'https://ths-thm.cloud/api/app/ths-thm-mobile-latest.apk';
+    const rendered = definition.renderDefault({ appUrl } as never);
+
+    expect(rendered.html).toContain(`href="${appUrl}"`);
+  });
+
   it('getTemplateDefinition should return undefined for unknown name', () => {
     expect(getTemplateDefinition('tidak-ada')).toBeUndefined();
   });
