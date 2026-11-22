@@ -13,6 +13,7 @@ import {
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { FileUploadZone, FileWithPreview } from '@/components/claims/FileUploadZone';
+import { buildPublicClaimFormData } from '@/components/claims/public-claim-payload';
 
 const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -278,21 +279,7 @@ export default function KlaimPage() {
     setErrorMsg('');
 
     try {
-      const formData = new FormData();
-
-      // Text fields
-      Object.entries(form).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      formData.append('rantingId', rantingId);
-      formData.append('tipe', 'keanggotaan');
-      formData.append('modeBukti', form.modeBukti);
-      if (form.modeBukti === 'cerita') formData.append('ceritaHistori', form.ceritaHistori.trim());
-
-      // Files
-      if (form.modeBukti === 'unggah') {
-        buktiFiles.forEach((f) => formData.append('buktiFiles', f.file));
-      }
+      const formData = buildPublicClaimFormData(form, rantingId, buktiFiles);
 
       const res = await fetch(`${PUBLIC_API_URL}/api/claims`, {
         method: 'POST',
