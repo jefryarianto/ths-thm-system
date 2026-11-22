@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ClaimsService } from './claims.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -164,6 +164,44 @@ describe('ClaimsService', () => {
       jest.spyOn(service, 'findOne').mockResolvedValue(mockClaim);
       const result = await service.create({ tipe: 'keanggotaan', anggotaId: 'a1' });
       expect(result.status).toBe('pending');
+    });
+
+    it('rejects unggah mode without buktiFiles', async () => {
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1', status: 'pending' } as never);
+      await expect(service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        modeBukti: 'unggah',
+      })).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects ceritaHistori shorter than 20 characters', async () => {
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1', status: 'pending' } as never);
+      await expect(service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        modeBukti: 'cerita',
+        ceritaHistori: 'Terlalu pendek',
+      })).rejects.toThrow(BadRequestException);
+    });
+
+    it('stores trackingToken, modeBukti and ceritaHistori', async () => {
+      const ceritaHistori = 'Saya berlatih sejak 2010 dan didadar oleh Andi serta Budi pada 2012.';
+      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', status: 'pending' });
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1', status: 'pending' } as never);
+      await service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        modeBukti: 'cerita',
+        ceritaHistori,
+      });
+      expect(mockPrisma.klaim.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          trackingToken: expect.any(String),
+          modeBukti: 'cerita',
+          ceritaHistori,
+        }),
+      }));
     });
   });
 

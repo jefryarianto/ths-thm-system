@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, MaxLength, ArrayMaxSize, IsEmail, IsIn, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { StatusKlaim, TipeKlaim } from '@prisma/client';
@@ -115,6 +115,23 @@ export class CreateClaimDto {
   @IsString()
   rantingId?: string;
 
+  @ApiPropertyOptional({
+    enum: ['unggah', 'cerita'],
+    description: 'Cara pembuktian klaim keanggotaan: unggah bukti atau cerita singkat riwayat keanggotaan',
+  })
+  @IsOptional()
+  @IsIn(['unggah', 'cerita'])
+  modeBukti?: 'unggah' | 'cerita';
+
+  @ApiPropertyOptional({
+    description: 'Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter)',
+    maxLength: 1000,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  ceritaHistori?: string;
+
   // File upload fields (handled via multipart/form-data)
   @ApiPropertyOptional({ 
     description: 'Bukti keanggotaan (max 3 files, image/PDF, 5MB each)',
@@ -179,6 +196,26 @@ export class ClaimFilterDto {
   @IsOptional()
   @IsEnum(TipeKlaim)
   tipe?: TipeKlaim;
+
+  @ApiPropertyOptional({ description: 'Tahap persetujuan klaim' })
+  @IsOptional()
+  @IsString()
+  currentStage?: string;
+}
+
+export class BulkClaimDto {
+  @ApiProperty({ description: 'Daftar klaim yang dibuat sekaligus (maksimal 100 baris)', type: [CreateClaimDto] })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => CreateClaimDto)
+  claims: CreateClaimDto[];
+
+  @ApiPropertyOptional({ description: 'Nama batch untuk pelacakan admin' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  batchName?: string;
 }
 
 export class RejectClaimDto {

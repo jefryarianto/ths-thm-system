@@ -448,6 +448,9 @@ model Klaim {
   email             String?
   rantingId         String?     @map("ranting_id")
   currentStage      String      @default("ranting") @map("current_stage")
+  trackingToken     String?     @unique @map("tracking_token")
+  modeBukti         String?     @map("mode_bukti")
+  ceritaHistori     String?     @map("cerita_histori")
   ktaApplicationId  String?     @map("kta_application_id")
   rantingApprovedBy String?     @map("ranting_approved_by")
   wilayahApprovedBy String?     @map("wilayah_approved_by")

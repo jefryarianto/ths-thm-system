@@ -20,6 +20,7 @@ import { normalizePhone } from '../../common/utils/phone.util';
 import { normalizePrismaDate } from '../../common/utils/date.util';
 import { deleteClaimFile } from '../../common/utils/claim-upload.util';
 import { Response } from 'express';
+import { randomUUID } from 'crypto';
 import { KtaAppAction, KtaAppLevel, TipeKlaim } from '@prisma/client';
 import { KtaApplicationService } from '../members/kta-application.service';
 
@@ -121,6 +122,32 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     return this.baseFindOne(id, scope, CLAIM_INCLUDE);
   }
 
+  private validateClaimEvidence(
+    dto: CreateClaimDto,
+    files?: {
+      buktiFiles?: Express.Multer.File[];
+      dokumenPendukungFiles?: Express.Multer.File[];
+    },
+  ) {
+    if (dto.tipe !== TipeKlaim.keanggotaan || dto.anggotaId) return;
+
+    const hasBukti = Boolean(files?.buktiFiles?.length);
+    const mode = dto.modeBukti ?? (hasBukti ? 'unggah' : undefined);
+
+    if (!mode) {
+      throw new BadRequestException('Pilih mode pembuktian: unggah atau cerita');
+    }
+    if (mode === 'unggah' && !hasBukti) {
+      throw new BadRequestException('Mode unggah memerlukan minimal satu berkas bukti');
+    }
+    if (mode === 'cerita') {
+      const cerita = dto.ceritaHistori?.trim() || '';
+      if (cerita.length < 20 || cerita.length > 1000) {
+        throw new BadRequestException('Cerita histori harus antara 20 sampai 1000 karakter');
+      }
+    }
+  }
+
   async create(
     dto: CreateClaimDto,
     files?: { 
@@ -129,6 +156,8 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     },
     buktiTipe: 'sertifikat' | 'kartu_anggota' = 'kartu_anggota',
   ) {
+    this.validateClaimEvidence(dto, files);
+
     // Filter out undefined values from dto
     const dtoData = Object.fromEntries(
       Object.entries(dto).filter(([, value]) => value !== undefined)
@@ -140,6 +169,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
       tipe: dto.tipe as TipeKlaim,
       tanggalLahir: normalizePrismaDate(dto.tanggalLahir) ?? null,
       status: 'pending' as const,
+      trackingToken: randomUUID(),
     };
     
     // Create claim record first
