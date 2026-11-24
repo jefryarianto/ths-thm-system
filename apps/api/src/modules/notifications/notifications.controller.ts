@@ -65,6 +65,7 @@ export class NotificationsController {
     'admin_wilayah',
     'admin_ranting',
     'admin_kegiatan',
+    'admin_berita',
     'penguji',
     'anggota',
   )
