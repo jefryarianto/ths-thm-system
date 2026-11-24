@@ -1,7 +1,8 @@
 import { ConflictException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import {
   assertEmailAvailable,
+  mapUserEmailConflict,
   normalizeEmail,
   normalizeUserEmailData,
 } from './email.util';
@@ -30,6 +31,26 @@ describe('normalizeUserEmailData', () => {
       create: { email: 'a@b.com' },
       update: { email: 'c@d.com' },
     });
+  });
+});
+
+describe('mapUserEmailConflict', () => {
+  const p2002 = (target: unknown) =>
+    new Prisma.PrismaClientKnownRequestError('duplicate', {
+      code: 'P2002',
+      clientVersion: 'test',
+      meta: { target },
+    });
+
+  it('maps email uniqueness errors to a friendly conflict', () => {
+    const mapped = mapUserEmailConflict(p2002(['email'])) as ConflictException;
+    expect(mapped).toBeInstanceOf(ConflictException);
+    expect(mapped.message).toBe('Email sudah terdaftar');
+  });
+
+  it('leaves non-email uniqueness errors untouched', () => {
+    const error = p2002(['phone']);
+    expect(mapUserEmailConflict(error)).toBe(error);
   });
 });
 

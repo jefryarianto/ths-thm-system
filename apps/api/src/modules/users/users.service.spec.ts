@@ -1,11 +1,14 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -103,6 +106,26 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('email DTO validation', () => {
+    it('trims padded create email before validation', async () => {
+      const dto = plainToInstance(CreateUserDto, {
+        email: '  NEW@TEST.COM ',
+        namaLengkap: 'New User',
+        role: 'anggota',
+      });
+
+      expect(await validate(dto)).toEqual([]);
+      expect(dto.email).toBe('NEW@TEST.COM');
+    });
+
+    it('trims padded update email before validation', async () => {
+      const dto = plainToInstance(UpdateUserDto, { email: '  NEW@TEST.COM ' });
+
+      expect(await validate(dto)).toEqual([]);
+      expect(dto.email).toBe('NEW@TEST.COM');
+    });
   });
 
   describe('findAll', () => {

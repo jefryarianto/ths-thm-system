@@ -1,4 +1,5 @@
 import { IsEmail, IsString, IsOptional, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
@@ -35,6 +36,7 @@ export class TotpCodeDto {
 
 export class RegisterDto {
   @ApiProperty({ example: 'admin@ths-thm.org' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsEmail()
   email: string;
 
@@ -93,6 +95,7 @@ export class UpdateProfileDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsEmail()
   email?: string;
 

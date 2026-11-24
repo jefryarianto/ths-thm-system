@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { RegisterDto, UpdateProfileDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -122,6 +125,26 @@ describe('AuthService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('email DTO validation', () => {
+    it('trims padded register email before validation', async () => {
+      const dto = plainToInstance(RegisterDto, {
+        email: '  User@Example.COM ',
+        password: 'password123',
+        namaLengkap: 'New User',
+      });
+
+      expect(await validate(dto)).toEqual([]);
+      expect(dto.email).toBe('User@Example.COM');
+    });
+
+    it('trims padded profile email before validation', async () => {
+      const dto = plainToInstance(UpdateProfileDto, { email: '  User@Example.COM ' });
+
+      expect(await validate(dto)).toEqual([]);
+      expect(dto.email).toBe('User@Example.COM');
+    });
   });
 
   describe('login', () => {

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { Role } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -109,7 +110,7 @@ describe('THS-THM API (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/api/auth/register')
-        .send({ email, password: 'test1234', namaLengkap: 'Case User' })
+        .send({ email: `  ${email}  `, password: 'test1234', namaLengkap: 'Case User' })
         .expect(201)
         .expect((res: any) => {
           expect(res.body.data.user.email).toBe(email.toLowerCase());
@@ -122,7 +123,21 @@ describe('THS-THM API (e2e)', () => {
           password: 'test1234',
           namaLengkap: 'Case User Duplicate',
         })
-        .expect(409);
+        .expect(409)
+        .expect((res: any) => {
+          expect(res.body.message).toBe('Email sudah terdaftar');
+        });
+
+      await expect(
+        app.get(PrismaService).user.create({
+          data: {
+            email: email.toUpperCase(),
+            passwordHash: 'direct-duplicate',
+            namaLengkap: 'Direct Duplicate',
+            role: Role.anggota,
+          },
+        }),
+      ).rejects.toThrow('Email sudah terdaftar');
     });
 
     it('POST /api/auth/login — should return tokens', () => {

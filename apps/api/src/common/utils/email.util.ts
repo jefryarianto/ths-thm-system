@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 export function normalizeEmail(raw?: string | null): string {
   return typeof raw === 'string' ? raw.trim().toLowerCase() : '';
@@ -32,6 +32,22 @@ function normalizeRecord(value: unknown): unknown {
 
 export function normalizeUserEmailData<T>(data: T): T {
   return normalizeRecord(data) as T;
+}
+
+export function isUserEmailConflict(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
+  }
+
+  const target = error.meta?.target;
+  const targets = Array.isArray(target) ? target : [target];
+  return targets.some(
+    (item) => typeof item === 'string' && item.toLowerCase().includes('email'),
+  );
+}
+
+export function mapUserEmailConflict(error: unknown): unknown {
+  return isUserEmailConflict(error) ? new ConflictException('Email sudah terdaftar') : error;
 }
 
 export async function assertEmailAvailable(

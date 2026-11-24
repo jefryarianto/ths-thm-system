@@ -9,11 +9,12 @@ import {
   IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ROLE_VALUES } from '@ths-thm/shared-types';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'admin@ths-thm.org' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsEmail()
   email: string;
 
@@ -56,6 +57,7 @@ export class CreateUserDto {
 export class UpdateUserDto {
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsEmail()
   email?: string;
 

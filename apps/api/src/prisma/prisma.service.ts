@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { getRequestContext } from '../common/utils/request-context';
-import { normalizeUserEmailData } from '../common/utils/email.util';
+import { mapUserEmailConflict, normalizeUserEmailData } from '../common/utils/email.util';
 import { applyMiddlewares } from './prisma-middleware';
 
 /**
@@ -92,33 +92,41 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       },
     });
 
+    const runUserWrite = async <T>(write: () => PromiseLike<T>): Promise<T> => {
+      try {
+        return await write();
+      } catch (error) {
+        throw mapUserEmailConflict(error);
+      }
+    };
+
     const emailExtension = auditExtension.$extends({
       query: {
         user: {
           create({ args, query }) {
             args.data = normalizeUserEmailData(args.data);
-            return query(args);
+            return runUserWrite(() => query(args));
           },
 
           createMany({ args, query }) {
             args.data = normalizeUserEmailData(args.data);
-            return query(args);
+            return runUserWrite(() => query(args));
           },
 
           update({ args, query }) {
             args.data = normalizeUserEmailData(args.data);
-            return query(args);
+            return runUserWrite(() => query(args));
           },
 
           updateMany({ args, query }) {
             args.data = normalizeUserEmailData(args.data);
-            return query(args);
+            return runUserWrite(() => query(args));
           },
 
           upsert({ args, query }) {
             args.create = normalizeUserEmailData(args.create);
             args.update = normalizeUserEmailData(args.update);
-            return query(args);
+            return runUserWrite(() => query(args));
           },
         },
       },
