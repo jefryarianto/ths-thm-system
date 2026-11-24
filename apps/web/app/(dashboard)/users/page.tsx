@@ -1,6 +1,8 @@
 'use client';
 
 import apiClient from '@/lib/api-client';
+import { useAuth } from '@/hooks/use-auth';
+import { canAccessPathForRole } from '@/lib/module-access';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
@@ -22,6 +24,8 @@ import CreateUserModal from '@/components/users/CreateUserModal';
 import EditUserModal from '@/components/users/EditUserModal';
 
 export default function UsersPage() {
+  const { role } = useAuth();
+  const canViewUsers = canAccessPathForRole(role, '/users');
   const toast = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
@@ -65,7 +69,7 @@ export default function UsersPage() {
     if (filters.active === 'active') params.isActive = true;
     else if (filters.active === 'inactive') params.isActive = false;
     return apiClient.get('/users', { params }).then((r) => r.data);
-  }, [page, debouncedSearch, filters.role, filters.active]);
+  }, [page, debouncedSearch, filters.role, filters.active], canViewUsers);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);

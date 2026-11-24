@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { hasMinRoleForRole, hasRoleForRole } from '@/lib/role-permissions';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import { MODULE_PERMISSIONS } from './can';
 import type { ModuleAction } from './can';
@@ -32,7 +33,7 @@ export function PermissionGuard({
   negate = false,
   fallback,
 }: PermissionGuardProps) {
-  const { hasMinRole, hasRole, role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -63,17 +64,17 @@ export function PermissionGuard({
   let allowed = false;
 
   if (requiredRole) {
-    allowed = hasMinRole(requiredRole);
+    allowed = hasMinRoleForRole(role, requiredRole);
   }
 
   // Role fungsional allowlist (mis. admin_berita untuk modul berita).
-  if (!allowed && perms?.allowedRoles && hasRole(perms.allowedRoles)) {
+  if (!allowed && perms?.allowedRoles && hasRoleForRole(role, perms.allowedRoles)) {
     allowed = true;
   }
 
   // Gerbang tambahan (mis. halaman import yang butuh role lebih tinggi dari
   // aksi `create` modulnya). Tidak bisa menaikkan hak di atas module.
-  if (minRole && !hasMinRole(minRole)) allowed = false;
+  if (minRole && !hasMinRoleForRole(role, minRole)) allowed = false;
 
   if (negate) allowed = !allowed;
 

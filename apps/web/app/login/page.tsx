@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
-import { getHomePathForRole } from '@/lib/role-redirect';
+import { getHomePathForRole, getSafeReturnPath } from '@/lib/role-redirect';
 import { sessionManager } from '@/lib/session-manager';
 import { LogoSpinner } from '@/components/ui/logo-spinner';
 import { LoginSteps, SuccessCheck } from '@/components/login/login-progress';
@@ -172,7 +172,9 @@ function LoginPageContent() {
   const sessionInvalidParam = searchParams.get('session_invalid') === '1';
   const isSessionInvalid = mounted && sessionInvalidParam;
 
-  const resolvedNext = mounted ? safeNextParam(searchParams.get('next')) : null;
+  const resolvedNext = mounted
+    ? getSafeReturnPath(user?.role, safeNextParam(searchParams.get('next')))
+    : null;
 
   useEffect(() => {
     if (!mounted || !sessionInvalidParam) return;
@@ -289,7 +291,7 @@ function LoginPageContent() {
         // AUTH-010: return to the origin the user was sent from, when present
         // and safe. Falls back to the existing role-based home path otherwise.
         const next = safeNextParam(new URLSearchParams(window.location.search).get('next'));
-        const targetPath = next ?? getHomePathForRole(data.data.user.role);
+        const targetPath = getSafeReturnPath(data.data.user.role, next);
 
         finishSuccess(() => router.replace(targetPath));
       }

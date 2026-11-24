@@ -4,6 +4,7 @@ import {
   DASHBOARD_ROLES,
   getHomePathForRole,
   getAdminDashboardRedirect,
+  getSafeReturnPath,
 } from '@/lib/role-redirect';
 
 const MEMBER_ROLES: Role[] = ['anggota'];
@@ -103,6 +104,29 @@ describe('getAdminDashboardRedirect', () => {
       expect(getAdminDashboardRedirect('/dashboard-2', 'anggota')).toBeNull();
       expect(getAdminDashboardRedirect('/my-dashboard', 'anggota')).toBeNull();
     });
+  });
+});
+
+describe('getSafeReturnPath', () => {
+  it('mengganti next /users dengan home admin_berita', () => {
+    expect(getSafeReturnPath('admin_berita', '/users')).toBe('/content/berita');
+  });
+
+  it('mempertahankan next yang diizinkan untuk admin_berita', () => {
+    expect(getSafeReturnPath('admin_berita', '/galeri/manage')).toBe('/galeri/manage');
+    expect(getSafeReturnPath('admin_berita', '/content/berita')).toBe('/content/berita');
+  });
+
+  it('mempertahankan next /users untuk superadmin', () => {
+    expect(getSafeReturnPath('superadmin', '/users')).toBe('/users');
+  });
+
+  it('mengganti next /dashboard untuk anggota', () => {
+    expect(getSafeReturnPath('anggota', '/dashboard')).toBe('/forum');
+  });
+
+  it('memakai home saat next tidak ada', () => {
+    expect(getSafeReturnPath('admin_berita', null)).toBe('/content/berita');
   });
 });
 

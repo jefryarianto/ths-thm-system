@@ -3,23 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Role, User } from '@/types';
 import { sessionManager } from '@/lib/session-manager';
+import {
+  ROLE_HIERARCHY,
+  hasMinRoleForRole,
+  hasRoleForRole,
+} from '@/lib/role-permissions';
 
-/**
- * Role hierarchy index - higher = more privilege.
- * superadmin (7) > admin_distrik (6) > admin_wilayah (5) > admin_ranting (4) >
- * admin_kegiatan (3) > penguji (2) > anggota (1)
- */
-const ROLE_HIERARCHY: Record<Role, number> = {
-  superadmin: 8,
-  admin_nasional: 7,
-  admin_distrik: 6,
-  admin_wilayah: 5,
-  admin_ranting: 4,
-  admin_kegiatan: 3,
-  admin_berita: 0,
-  penguji: 2,
-  anggota: 1,
-};
+export { ROLE_HIERARCHY } from '@/lib/role-permissions';
 
 /**
  * Roles that are considered "admin" level.
@@ -78,15 +68,12 @@ function createAuthState(user: User | null): AuthState {
     /**
      * Check if the current user has exactly one of the given roles.
      */
-    hasRole: (roles: Role[]) => (role ? roles.includes(role) : false),
+    hasRole: (roles: Role[]) => hasRoleForRole(role, roles),
     /**
      * Check if the current user's role level is at least `minRole`.
      * e.g. hasMinRole('admin_ranting') → true for superadmin, admin_distrik, admin_wilayah, admin_ranting
      */
-    hasMinRole: (minRole: Role) => {
-      const minLevel = ROLE_HIERARCHY[minRole] ?? 0;
-      return roleLevel >= minLevel;
-    },
+    hasMinRole: (minRole: Role) => hasMinRoleForRole(role, minRole),
   };
 }
 

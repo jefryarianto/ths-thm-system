@@ -1,14 +1,8 @@
 import type { Role } from '@/types';
+import { canAccessPathForRole } from '@/lib/module-access';
+import { DASHBOARD_ROLES } from '@/lib/role-permissions';
 
-/** Roles that land on the admin dashboard after login. */
-export const DASHBOARD_ROLES: Role[] = [
-  'superadmin',
-  'admin_distrik',
-  'admin_wilayah',
-  'admin_ranting',
-  'admin_kegiatan',
-  'penguji',
-];
+export { DASHBOARD_ROLES } from '@/lib/role-permissions';
 
 /**
  * Roles that are activity-scoped (only see kegiatan they're assigned to).
@@ -37,6 +31,17 @@ export function getHomePathForRole(role: Role | string | null | undefined): stri
   }
 
   return '/forum';
+}
+
+export function getSafeReturnPath(
+  role: Role | string | null | undefined,
+  nextPath: string | null | undefined,
+): string {
+  if (!nextPath || !nextPath.startsWith('/') || nextPath.startsWith('//')) {
+    return getHomePathForRole(role);
+  }
+
+  return canAccessPathForRole(role, nextPath) ? nextPath : getHomePathForRole(role);
 }
 
 /**
