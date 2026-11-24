@@ -61,11 +61,10 @@ overrides:
   # di-override; hanya baris >=9 (kini @nestjs/cli glob 13) yang didorong ke 14.0.2.
   # Override lama glob@>=10.2.0 <10.5.0 dihapus: baris 10.x sudah tak ada di lockfile.
   'glob@>=9.0.0': 14.0.2
-  # minimatch MED GHSA-g3hv-75wg-m249 (globparts amplification) — TIDAK di-override ke 11.0.1:
-  # fix hanya ada di 11.0.1 (tanpa backport), tapi glob7 (jest29/eslint8) menembak internal
-  # Minimatch v3 (part RegExp + `_glob`) yang sudah tak ada di v11 → eslint gagal ekspansi
-  # pola. Perbaikan menuntut migrasi toolchain (eslint9 flat config + jest30) — alert #168
-  # di-dismiss sebagai fix_incomplete.
+  # minimatch MED GHSA-g3hv-75wg-m249 (globparts amplification) — fix 11.0.1.
+  # Override hanya baris >=9; minimatch 3.x (glob7/jest29/eslint8) dan 5.x
+  # (openapi-typescript) dibiarkan agar API internal v3 tidak rusak.
+  'minimatch@>=9.0.0': 11.0.1
   # browserslist HIGH ×2 (GHSA-73wf-gq98-2v4g / GHSA-c83g-rgw3-j3cx, ReDoS)
   browserslist: 4.29.3
   # webpack HIGH+LOW (GHSA-8/×2, ReDoS di chunk-parser)
