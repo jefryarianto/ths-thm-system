@@ -57,7 +57,7 @@ export function PermissionGuard({
     }
   }, [mounted, isAuthenticated, router]);
 
-  if (!mounted) return <PageLoadingPlaceholder />;
+  if (!mounted || !isAuthenticated) return <PageLoadingPlaceholder />;
 
   const perms = MODULE_PERMISSIONS[module];
   const requiredRole = perms?.[action];

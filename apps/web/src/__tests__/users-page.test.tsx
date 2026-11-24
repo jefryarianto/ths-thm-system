@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     Promise.resolve({ data: { data: [], meta: { total: 0, totalPages: 0 } } }),
   ),
   auth: { role: null as string | null },
+  replace: vi.fn(),
 }));
 
 vi.mock('@/lib/api-client', () => ({
@@ -31,7 +32,7 @@ vi.mock('@/hooks/use-auth', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ replace: mocks.replace, push: vi.fn() }),
   usePathname: () => '/users',
 }));
 
@@ -51,7 +52,9 @@ import UsersPage from '@/app/(dashboard)/users/page';
 describe('UsersPage role-gated fetch', () => {
   beforeEach(() => {
     mocks.apiGet.mockClear();
+    mocks.replace.mockClear();
     mocks.auth.role = null;
+    window.history.replaceState({}, '', '/users');
   });
 
   it('tidak memanggil /users untuk admin_berita', async () => {
@@ -68,9 +71,9 @@ describe('UsersPage role-gated fetch', () => {
   it('memanggil /users setelah role superadmin tersedia', async () => {
     const { rerender } = render(<UsersPage />);
 
-    expect(
-      await screen.findByText('Silakan login untuk mengakses halaman ini.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Memuat halaman' })).toBeInTheDocument();
+    expect(screen.queryByText('Akses Ditolak')).not.toBeInTheDocument();
+    expect(mocks.replace).toHaveBeenCalledWith('/login?next=%2Fusers');
     expect(mocks.apiGet).not.toHaveBeenCalledWith(
       '/users',
       expect.anything(),
