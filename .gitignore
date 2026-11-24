@@ -90,6 +90,7 @@ raw-logs2.txt
 # Local tooling configs (not meant to be shared)
 opencode.json
 .kilo/plans/
+.worktrees/
 
 # Data sumber mentah impor historis (bukan bagian repo)
 /Data Anggota.csv
