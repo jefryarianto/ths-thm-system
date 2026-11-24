@@ -198,6 +198,15 @@ describe('api-client', () => {
 
       expect(result.headers.Authorization).toBeUndefined();
     });
+
+    it('attaches Authorization header for logout without attempting refresh', async () => {
+      localStorage.setItem('accessToken', 'logout-token');
+      const config = { url: '/auth/logout', headers: {} as Record<string, string> };
+      const result = await getRequestInterceptor()(config);
+
+      expect(result.headers.Authorization).toBe('Bearer logout-token');
+      expect(axios.post).not.toHaveBeenCalled();
+    });
   });
 
   // ─── Request Interceptor: self-healing saat flag expired ───

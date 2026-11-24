@@ -337,6 +337,12 @@ apiClient.interceptors.request.use(async (config) => {
   // Auth endpoints must always pass through — even when the session is
   // flagged expired — otherwise re-login deadlocks until a manual reload.
   if (isAuthEndpoint(config.url)) {
+    if (config.url?.includes('/auth/logout')) {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   }
 
