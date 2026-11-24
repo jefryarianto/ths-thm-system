@@ -1,6 +1,11 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -18,6 +23,7 @@ describe('UsersService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -92,6 +98,7 @@ describe('UsersService', () => {
     });
     mockPrisma.wilayah.findUnique.mockResolvedValue({ id: 'w1', distrikId: 'd1' });
     mockPrisma.distrik.findUnique.mockResolvedValue({ id: 'd1' });
+    mockPrisma.user.findFirst.mockResolvedValue(null);
   });
 
   it('should be defined', () => {
@@ -190,6 +197,41 @@ describe('UsersService', () => {
         expect.objectContaining({ data: expect.objectContaining({ rantingId: 'r1' }) }),
       );
     });
+
+    it('should normalize email before create', async () => {
+      mockPrisma.user.create.mockResolvedValue({
+        id: '1',
+        email: 'new@test.com',
+        passwordHash: 'hashed-password',
+      });
+
+      await service.create({
+        email: ' NEW@TEST.COM ',
+        namaLengkap: 'New User',
+        role: 'anggota',
+        rantingId: 'r1',
+      });
+
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ email: 'new@test.com' }),
+        }),
+      );
+    });
+
+    it('should reject email used by another user', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'other' });
+
+      await expect(
+        service.create({
+          email: ' NEW@TEST.COM ',
+          namaLengkap: 'New User',
+          role: 'anggota',
+          rantingId: 'r1',
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('update', () => {
@@ -208,6 +250,26 @@ describe('UsersService', () => {
       await expect(
         service.update('1', { namaLengkap: 'Test' }, { rantingId: 'r1' }),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should normalize email and exclude current user on update', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      mockPrisma.user.update.mockResolvedValue({ id: '1', email: 'new@test.com' });
+
+      await service.update('1', { email: ' NEW@TEST.COM ' });
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: { equals: 'new@test.com', mode: 'insensitive' },
+          id: { not: '1' },
+        },
+        select: { id: true },
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ email: 'new@test.com' }),
+        }),
+      );
     });
   });
 

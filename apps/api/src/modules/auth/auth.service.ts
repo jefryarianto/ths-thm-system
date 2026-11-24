@@ -17,6 +17,7 @@ import { MailService } from '../../mail/mail.service';
 import { resetPasswordEmail, escapeHtml } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
 import { normalizePhone } from '../../common/utils/phone.util';
+import { assertEmailAvailable, normalizeEmail } from '../../common/utils/email.util';
 import { parseDurationToMs } from '../../common/utils/duration.util';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import {
@@ -330,14 +331,13 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto, response?: Response) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email sudah terdaftar');
+    await assertEmailAvailable(this.prisma, dto.email);
     const passwordHash = await bcrypt.hash(dto.password, 12);
     // Security: force role to 'anggota' for public registration — never trust user-supplied role
     const role: Role = 'anggota';
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email: normalizeEmail(dto.email),
         passwordHash,
         namaLengkap: dto.namaLengkap,
         role,
@@ -865,7 +865,10 @@ export class AuthService {
     // Update User model (only fields that exist on the User schema)
     const userData: Record<string, unknown> = {};
     if (dto.namaLengkap) userData.namaLengkap = dto.namaLengkap;
-    if (dto.email) userData.email = dto.email;
+    if (dto.email) {
+      await assertEmailAvailable(this.prisma, dto.email, userId);
+      userData.email = normalizeEmail(dto.email);
+    }
 
     const user = await this.prisma.user.update({ where: { id: userId }, data: userData });
 
@@ -888,7 +891,7 @@ export class AuthService {
       if (dto.alamat !== undefined) anggotaData.alamat = dto.alamat;
       if (dto.tempatLahir) anggotaData.tempatLahir = dto.tempatLahir;
       if (dto.tanggalLahir) anggotaData.tanggalLahir = new Date(dto.tanggalLahir);
-      if (dto.email !== undefined) anggotaData.email = dto.email;
+      if (dto.email !== undefined) anggotaData.email = normalizeEmail(dto.email);
 
       // Cocokkan via email; fallback via nama lengkap untuk anggota yang email-nya
       // kosong (hasil import CSV) dan unik — supaya profil tetap tersinkron.

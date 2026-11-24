@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { assertEmailAvailable, normalizeEmail } from '../../common/utils/email.util';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
@@ -273,10 +274,11 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   ): Promise<Record<string, unknown>> {
     const role = this.resolveAssignableRole(dto.role, scope);
     const org = await this.resolveOrgScope(role, dto, scope);
+    await assertEmailAvailable(this.prisma, dto.email);
     const passwordHash = await bcrypt.hash(dto.password || 'password123', 12);
 
     return {
-      email: dto.email,
+      email: normalizeEmail(dto.email),
       namaLengkap: dto.namaLengkap,
       role,
       ...org,
@@ -307,7 +309,10 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     scope?: UserScope,
   ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
-    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.email !== undefined) {
+      await assertEmailAvailable(this.prisma, dto.email, id);
+      data.email = normalizeEmail(dto.email);
+    }
     if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
     if (dto.role !== undefined) data.role = dto.role;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;

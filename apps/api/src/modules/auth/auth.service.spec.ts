@@ -117,6 +117,7 @@ describe('AuthService', () => {
     mockJwt.verify.mockReset();
     // Default: fallback nama tidak menemukan anggota (agar test lama tetap pass)
     mockPrisma.anggota.findMany.mockResolvedValue([]);
+    mockPrisma.user.findFirst.mockResolvedValue(null);
   });
 
   it('should be defined', () => {
@@ -427,32 +428,36 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should create a new user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'rt' });
 
       const result = await service.register({
-        email: 'new@ths-thm.org',
+        email: ' NEW@THS-THM.ORG ',
         password: 'password123',
         namaLengkap: 'New User',
       });
       expect(result.user).toBeDefined();
       expect(result.accessToken).toBe('mock-jwt-token');
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ email: 'new@ths-thm.org' }),
+        }),
+      );
     });
 
     it('should throw ConflictException for existing email', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       await expect(
         service.register({
-          email: 'test@ths-thm.org',
+          email: ' TEST@THS-THM.ORG ',
           password: 'password123',
           namaLengkap: 'Duplicate',
         }),
       ).rejects.toThrow(ConflictException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
 
     it('should default role to anggota when not provided', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'rt' });
 
@@ -503,7 +508,35 @@ describe('AuthService', () => {
         email: 'updated@ths-thm.org',
       });
 
-      const result = await service.updateProfile('u1', { email: 'updated@ths-thm.org' });
+      const result = await service.updateProfile('u1', { email: ' UPDATED@THS-THM.ORG ' });
+      expect(result.email).toBe('updated@ths-thm.org');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: expect.objectContaining({ email: 'updated@ths-thm.org' }),
+      });
+    });
+
+    it('should reject email used by another user', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'u2' });
+
+      await expect(
+        service.updateProfile('u1', { email: 'TEST@THS-THM.ORG' }),
+      ).rejects.toThrow(ConflictException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should exclude the current user when checking email availability', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser });
+
+      await service.updateProfile('u1', { email: 'test@ths-thm.org' });
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: { equals: 'test@ths-thm.org', mode: 'insensitive' },
+          id: { not: 'u1' },
+        },
+        select: { id: true },
+      });
     });
 
     it('should sync profile fields to Anggota model when noHp is provided', async () => {
