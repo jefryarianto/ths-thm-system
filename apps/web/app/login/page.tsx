@@ -151,6 +151,7 @@ export default function LoginPage() {
   }, []);
 
   const { user, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
 
   // AUTH-011: move focus to the error banner when a NEW error appears (e.g.
   // after a failed submit) so keyboard/AT users are notified immediately. The
@@ -168,14 +169,19 @@ export default function LoginPage() {
   // just bounced this user to /login because their server session was missing
   // or rejected, client-side localStorage state is STALE. Pushing back to
   // the dashboard would create an infinite redirect loop.
-  const isSessionInvalid =
-    mounted &&
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('session_invalid') === '1';
+  const sessionInvalidParam = searchParams.get('session_invalid') === '1';
+  const isSessionInvalid = mounted && sessionInvalidParam;
 
-  const resolvedNext = mounted
-    ? safeNextParam(new URLSearchParams(window.location.search).get('next'))
-    : null;
+  const resolvedNext = mounted ? safeNextParam(searchParams.get('next')) : null;
+
+  useEffect(() => {
+    if (!mounted || !sessionInvalidParam) return;
+    sessionManager.logout();
+    setSessionExpiredNotice(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('session_invalid');
+    window.history.replaceState({}, '', url.toString());
+  }, [mounted, sessionInvalidParam]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -195,17 +201,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
-
-    // If redirected here by proxy due to an invalid/expired server session,
-    // clear the stale client auth state immediately so useAuth becomes anonymous
-    // and the AUTH-005 redirect loop is broken.
-    if (typeof window !== 'undefined' && window.location.search.includes('session_invalid=1')) {
-      sessionManager.logout();
-      setSessionExpiredNotice(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('session_invalid');
-      window.history.replaceState({}, '', url.toString());
-    }
 
     apiClient
       .get('/auth/providers')
