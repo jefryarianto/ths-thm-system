@@ -574,7 +574,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|:------|:-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| api:${{ env.IMAGE_TAG }} | ${{ steps.trivy-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| web:${{ env.IMAGE_TAG }} | ${{ steps.trivy-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| api:${{ env.IMAGE_TAG }} | ${{ steps.trivy-api.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| web:${{ env.IMAGE_TAG }} | ${{ steps.trivy-web.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "SARIF diunggah ke **GitHub Security tab** → https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY
