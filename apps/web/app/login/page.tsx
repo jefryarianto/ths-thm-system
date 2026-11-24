@@ -116,7 +116,7 @@ function BrandFeatureItem({ icon: Icon, text }: { icon: React.ElementType; text:
   );
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -736,5 +736,13 @@ export default function LoginPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
