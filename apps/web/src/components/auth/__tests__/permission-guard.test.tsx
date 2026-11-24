@@ -38,6 +38,20 @@ describe('PermissionGuard anonymous redirect', () => {
     window.history.replaceState({}, '', '/content/berita');
   });
 
+  it('mengizinkan admin_berita pada modul berita', () => {
+    mocks.auth.role = 'admin_berita';
+    mocks.auth.isAuthenticated = true;
+
+    render(
+      <PermissionGuard module="berita" action="view">
+        <div>content</div>
+      </PermissionGuard>,
+    );
+
+    expect(screen.getByText('content')).toBeInTheDocument();
+    expect(screen.queryByText('Akses Ditolak')).not.toBeInTheDocument();
+  });
+
   it('tidak menampilkan Akses Ditolak saat mengalihkan user anonim ke login', async () => {
     render(
       <PermissionGuard module="berita" action="view">
