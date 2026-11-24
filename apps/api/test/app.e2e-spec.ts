@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 
 describe('THS-THM API (e2e)', () => {
   let app: INestApplication;
@@ -18,6 +19,7 @@ describe('THS-THM API (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalFilters(new AllExceptionsFilter());
     app.setGlobalPrefix('api');
     await app.init();
 
@@ -100,6 +102,27 @@ describe('THS-THM API (e2e)', () => {
         .expect((res: any) => {
           expect([201, 409]).toContain(res.status);
         });
+    });
+
+    it('POST /api/auth/register — stores normalized email and rejects case variant', async () => {
+      const email = `case-${Date.now()}@example.com`;
+
+      await request(app.getHttpServer())
+        .post('/api/auth/register')
+        .send({ email, password: 'test1234', namaLengkap: 'Case User' })
+        .expect(201)
+        .expect((res: any) => {
+          expect(res.body.data.user.email).toBe(email.toLowerCase());
+        });
+
+      await request(app.getHttpServer())
+        .post('/api/auth/register')
+        .send({
+          email: email.toUpperCase(),
+          password: 'test1234',
+          namaLengkap: 'Case User Duplicate',
+        })
+        .expect(409);
     });
 
     it('POST /api/auth/login — should return tokens', () => {
