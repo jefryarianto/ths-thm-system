@@ -8224,7 +8224,7 @@ export interface components {
             apkUrl?: string;
         };
         LoginDto: {
-            /** @example admin@ths-thm.org atau 081234567890 */
+            /** @example admin@ths-thm.org, 081234567890, atau LTK-0101-001-2026 */
             identifier: string;
             /** @example password123 */
             password: string;
