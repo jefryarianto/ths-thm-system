@@ -1099,7 +1099,12 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    let user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user) {
+      user = await this.prisma.user.findFirst({
+        where: { email: { equals: dto.email, mode: 'insensitive' } },
+      });
+    }
     if (!user) {
       return;
     }

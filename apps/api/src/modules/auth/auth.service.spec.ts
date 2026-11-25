@@ -661,18 +661,42 @@ describe('AuthService', () => {
 
   describe('forgotPassword', () => {
     it('should return success message when user not found (prevent enumeration)', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
       await service.forgotPassword({ email: 'unknown@test.com' });
     });
 
     it('should send email when user exists', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
       await service.forgotPassword({ email: 'test@ths-thm.org' });
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'test@ths-thm.org',
           subject: expect.stringContaining('Reset'),
         }),
+      );
+    });
+
+    it('should prefer exact stored email when available', async () => {
+      const exactUser = { ...mockUser, email: 'User@Example.com' };
+      mockPrisma.user.findUnique.mockResolvedValue(exactUser);
+      await service.forgotPassword({ email: 'User@Example.com' });
+      expect(mockPrisma.user.findFirst).not.toHaveBeenCalled();
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'User@Example.com' }),
+      );
+    });
+
+    it('should match stored email case-insensitively', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(mockUser);
+      await service.forgotPassword({ email: 'TEST@THS-THM.ORG' });
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          email: { equals: 'TEST@THS-THM.ORG', mode: 'insensitive' },
+        },
+      });
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'test@ths-thm.org' }),
       );
     });
   });
