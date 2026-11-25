@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:mobile_flutter/core/utils/kta_layout.dart';
 import 'package:mobile_flutter/logic/auth/auth_bloc.dart';
 import 'package:mobile_flutter/logic/dues/dues_bloc.dart';
 import 'package:mobile_flutter/logic/gamification/gamification_bloc.dart';
@@ -25,10 +26,12 @@ class MockDuesBloc extends MockBloc<DuesEvent, DuesState> implements DuesBloc {}
 class MockHomeFeedBloc extends MockBloc<HomeFeedEvent, HomeFeedState>
     implements HomeFeedBloc {}
 
-class MockNotificationBloc extends MockBloc<NotificationEvent, NotificationState>
+class MockNotificationBloc
+    extends MockBloc<NotificationEvent, NotificationState>
     implements NotificationBloc {}
 
-class MockGamificationBloc extends MockBloc<GamificationEvent, GamificationState>
+class MockGamificationBloc
+    extends MockBloc<GamificationEvent, GamificationState>
     implements GamificationBloc {}
 
 class MockKtaApplicationBloc
@@ -43,6 +46,10 @@ void main() {
   late MockNotificationBloc notificationBloc;
   late MockGamificationBloc gamificationBloc;
   late MockKtaApplicationBloc ktaBloc;
+
+  setUpAll(() async {
+    await KtaLayoutCalculator.ensureFonts();
+  });
 
   setUp(() {
     authBloc = MockAuthBloc();
@@ -101,7 +108,7 @@ void main() {
     when(() => memberBloc.state).thenReturn(memberLoaded(generated: true));
 
     await tester.pumpWidget(buildSubject());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Ajukan KTA'), findsNothing);
   });
