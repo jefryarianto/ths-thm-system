@@ -192,7 +192,7 @@ export class AuthService {
     }
 
     if (!user) {
-      // Jangan bocorkan keberadaan akun — pesan tetap sama untuk email/HP salah.
+      // Jangan bocorkan keberadaan akun — pesan tetap sama untuk email/HP/NRA salah.
       throw new UnauthorizedException('Email/HP/NRA atau password salah');
     }
 

@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 36),
                             // ── FORM LOGIN ───────────────────────────────
-                            _EmailField(
+                            _IdentifierField(
                               controller: _identifier,
                               theme: theme,
                             ),
@@ -325,11 +325,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _EmailField extends StatelessWidget {
+class _IdentifierField extends StatelessWidget {
   final TextEditingController controller;
   final ThemeData theme;
 
-  const _EmailField({required this.controller, required this.theme});
+  const _IdentifierField({required this.controller, required this.theme});
 
   @override
   Widget build(BuildContext context) {
