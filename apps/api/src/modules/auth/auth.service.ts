@@ -126,12 +126,29 @@ export class AuthService {
     const cleaned = rawIdentifier.replace(/[\s\-().]/g, '');
     const isEmail = /^[^@\s]+@[^@\s]+$/.test(rawIdentifier);
     const nra = isEmail ? null : this.normalizeNra(rawIdentifier);
-    const isPhone = !isEmail && !nra && /^\+?[0-9]{10,15}$/.test(cleaned);
+    const isPhone = !isEmail && /^\+?[0-9]{10,15}$/.test(cleaned);
     let user: User | null = null;
+    let resolvedByNra = false;
 
-    if (!nra && !isPhone) {
+    if (nra) {
+      const anggota = await this.prisma.anggota.findFirst({
+        where: {
+          nomorAnggota: { equals: nra, mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+      if (anggota) {
+        const mapped = await this.findUserByMember(anggota);
+        if (mapped) {
+          user = mapped;
+          resolvedByNra = true;
+        }
+      }
+    }
+
+    if (!user && !nra && !isPhone) {
       user = await this.prisma.user.findUnique({ where: { email: rawIdentifier } });
-    } else if (isPhone) {
+    } else if (!user && isPhone) {
       user = await this.prisma.user.findUnique({ where: { phone: cleaned } });
     }
 
@@ -150,18 +167,6 @@ export class AuthService {
       user = await this.prisma.user.findFirst({
         where: { email: { equals: rawIdentifier, mode: 'insensitive' } },
       });
-    }
-
-    if (!user && nra) {
-      const anggota = await this.prisma.anggota.findFirst({
-        where: {
-          nomorAnggota: { equals: nra, mode: 'insensitive' },
-          deletedAt: null,
-        },
-      });
-      if (anggota) {
-        user = await this.findUserByMember(anggota);
-      }
     }
 
     // Fallback #2: nomor HP tersimpan di tabel `anggota.no_hp` (bukan `users.phone`,
@@ -232,7 +237,7 @@ export class AuthService {
       this.logAuthAudit('TOTP_SUCCESS', user.id, {}, meta);
     }
 
-    const method = nra ? 'nra' : isPhone ? 'phone' : 'email';
+    const method = resolvedByNra ? 'nra' : isPhone ? 'phone' : 'email';
     this.logAuthAudit(
       'LOGIN',
       user.id,

@@ -345,6 +345,36 @@ describe('AuthService', () => {
         }),
       );
     });
+
+    it('should resolve NRA-shaped phone identifier by phone when no member matches', async () => {
+      mockPrisma.user.findUnique.mockReset().mockResolvedValue(mockUser);
+      mockPrisma.user.findFirst.mockReset().mockResolvedValue(null);
+      mockPrisma.anggota.findFirst.mockReset().mockResolvedValue(null);
+      mockPrisma.user.update.mockReset().mockResolvedValue(mockUser);
+
+      const result = await service.login({
+        identifier: '081234562019',
+        password: 'password123',
+      });
+
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: {
+          nomorAnggota: { equals: '081-23-456-2019', mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { phone: '081234562019' },
+      });
+      expect(result.user.email).toBe('test@ths-thm.org');
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'LOGIN',
+          entityId: 'u1',
+          details: expect.objectContaining({ method: 'phone' }),
+        }),
+      );
+    });
   });
 
   describe('login with 2FA', () => {
