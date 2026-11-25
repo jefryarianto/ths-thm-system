@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/email_normalizer.dart';
 import '../../data/models/registration.dart';
 
 part 'registration_event.dart';
@@ -79,7 +80,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       if (event.tanggalLahir != null) body['tanggalLahir'] = event.tanggalLahir;
       if (event.alamat != null) body['alamat'] = event.alamat;
       if (event.noHp != null) body['noHp'] = event.noHp;
-      if (event.email != null) body['email'] = event.email;
+      if (event.email != null) {
+        body['email'] = normalizeEmail(event.email!);
+      }
       if (event.sumberInfo != null) body['sumberInfo'] = event.sumberInfo;
 
       await _api.dio.post(AppConstants.registrations, data: body);

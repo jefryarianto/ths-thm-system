@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/email_normalizer.dart';
 import '../../data/models/claim.dart';
 
 part 'claim_event.dart';
@@ -86,7 +87,9 @@ class ClaimBloc extends Bloc<ClaimEvent, ClaimState> {
         if (event.tahunDadar != null) body['tahunDadar'] = event.tahunDadar;
         if (event.alamat != null) body['alamat'] = event.alamat;
         if (event.noHp != null) body['noHp'] = event.noHp;
-        if (event.email != null) body['email'] = event.email;
+        if (event.email != null) {
+          body['email'] = normalizeEmail(event.email!);
+        }
         if (event.rantingId != null) body['rantingId'] = event.rantingId;
       }
       if (event.anggotaId != null) body['anggotaId'] = event.anggotaId;

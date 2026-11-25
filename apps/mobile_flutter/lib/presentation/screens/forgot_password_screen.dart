@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/email_normalizer.dart';
 import '../../core/utils/snack_bar_helper.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -23,7 +24,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _submit() async {
-    final email = _email.text.trim();
+    final email = normalizeEmail(_email.text);
     if (email.isEmpty) {
       showCenteredSnackBar(context, 'Masukkan email terlebih dahulu');
       return;
