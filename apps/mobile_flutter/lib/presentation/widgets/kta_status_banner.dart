@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/models/kta_application.dart';
 import '../../logic/kta_application/kta_application_bloc.dart';
+import '../../logic/kta_application/kta_apply_eligibility.dart';
+import '../../logic/member/member_bloc.dart';
 
 /// Banner persisten di halaman utama yang mengingatkan anggota tentang status KTA.
 ///
@@ -98,33 +101,32 @@ class _KtaStatusBannerState extends State<KtaStatusBanner> {
   Widget build(BuildContext context) {
     return BlocBuilder<KtaApplicationBloc, KtaApplicationState>(
       builder: (context, state) {
-        if (state is KtaApplicationLoading) {
+        final memberState = context.read<MemberBloc>().state;
+        final cardGenerated = memberState is MemberLoaded
+            ? memberState.cardData?.generated
+            : null;
+        final visibility = resolveKtaApplyVisibility(state, cardGenerated);
+
+        if (visibility == KtaApplyVisibility.hidden) {
           return const SizedBox.shrink();
         }
 
         KtaAppStatus? status;
-        var hasApplication = false;
         if (state is KtaApplicationLoaded) {
           status = state.application.status;
-          hasApplication = true;
         } else if (state is KtaApplicationSubmitted) {
           status = state.application.status;
-          hasApplication = true;
-        }
-
-        if (status == KtaAppStatus.approved ||
-            status == KtaAppStatus.cardGenerated) {
-          return const SizedBox.shrink();
         }
 
         final color = _color(status);
-        final actionLabel = hasApplication ? 'Lihat Status' : 'Ajukan KTA';
-        final route = hasApplication ? '/kta/status' : '/kta/apply';
+        final isApply = visibility == KtaApplyVisibility.apply;
+        final actionLabel = isApply ? 'Ajukan KTA' : 'Lihat Status';
+        final route = isApply ? '/kta/apply' : '/kta/status';
 
         return Material(
           color: color,
           child: InkWell(
-            onTap: () => Navigator.pushNamed(context, route),
+            onTap: () => context.push(route),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
