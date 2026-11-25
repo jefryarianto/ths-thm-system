@@ -400,7 +400,7 @@ describe('THS-THM API (e2e)', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.namaLengkap).toBe('E2E Test Member');
-      expect(res.body.data.nomorAnggota).toMatch(/^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/);
+      expect(res.body.data.nomorAnggota).toMatch(/^[A-Z0-9]{3,4}-[A-Z0-9]{2,4}-\d{3}-\d{4}$/);
       createdMemberId = res.body.data.id;
       createdMemberNRA = res.body.data.nomorAnggota;
     });

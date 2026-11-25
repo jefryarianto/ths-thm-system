@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
-import { Role } from '@prisma/client';
+import { Role, type User } from '@prisma/client';
 import { Response } from 'express'; // Tambahkan import ini
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -122,13 +122,18 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, response?: Response, meta?: AuthMeta) {
-    // Identifier bisa berupa email ATAU nomor HP
     const rawIdentifier = dto.identifier.trim();
     const cleaned = rawIdentifier.replace(/[\s\-().]/g, '');
-    const isPhone = /^\+?[0-9]{10,15}$/.test(cleaned);
-    let user = isPhone
-      ? await this.prisma.user.findUnique({ where: { phone: cleaned } })
-      : await this.prisma.user.findUnique({ where: { email: rawIdentifier } });
+    const isEmail = /^[^@\s]+@[^@\s]+$/.test(rawIdentifier);
+    const nra = isEmail ? null : this.normalizeNra(rawIdentifier);
+    const isPhone = !isEmail && !nra && /^\+?[0-9]{10,15}$/.test(cleaned);
+    let user: User | null = null;
+
+    if (!nra && !isPhone) {
+      user = await this.prisma.user.findUnique({ where: { email: rawIdentifier } });
+    } else if (isPhone) {
+      user = await this.prisma.user.findUnique({ where: { phone: cleaned } });
+    }
 
     // Fallback #0: user.phone mungkin tersimpan dalam format berbeda
     // (mentah '0812...' vs '+62812...'). Normalisasi identitas supaya cocok
@@ -141,10 +146,22 @@ export class AuthService {
     }
 
     // Fallback #1: email case-insensitive (Postgres findUnique bersifat case-sensitive)
-    if (!user && !isPhone) {
+    if (!user && !isPhone && !nra) {
       user = await this.prisma.user.findFirst({
         where: { email: { equals: rawIdentifier, mode: 'insensitive' } },
       });
+    }
+
+    if (!user && nra) {
+      const anggota = await this.prisma.anggota.findFirst({
+        where: {
+          nomorAnggota: { equals: nra, mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+      if (anggota) {
+        user = await this.findUserByMember(anggota);
+      }
     }
 
     // Fallback #2: nomor HP tersimpan di tabel `anggota.no_hp` (bukan `users.phone`,
@@ -153,22 +170,13 @@ export class AuthService {
     if (!user && isPhone) {
       const anggota = await this.findUserByMemberPhone(cleaned);
       if (anggota) {
-        let byEmail = anggota.email
-          ? await this.prisma.user.findFirst({
-              where: { email: { equals: anggota.email, mode: 'insensitive' } },
-            })
-          : null;
-        if (!byEmail && anggota.namaLengkap) {
-          byEmail = await this.prisma.user.findFirst({
-            where: { namaLengkap: { equals: anggota.namaLengkap.trim(), mode: 'insensitive' } },
-          });
-        }
-        if (byEmail) {
-          user = byEmail;
+        const mapped = await this.findUserByMember(anggota);
+        if (mapped) {
+          user = mapped;
           // Self-healing: salin nomor HP ke tabel users agar lookup berikutnya cepat
           try {
             await this.prisma.user.update({
-              where: { id: byEmail.id },
+              where: { id: mapped.id },
               data: { phone: anggota.noHp },
             });
           } catch {
@@ -180,7 +188,7 @@ export class AuthService {
 
     if (!user) {
       // Jangan bocorkan keberadaan akun — pesan tetap sama untuk email/HP salah.
-      throw new UnauthorizedException('Email/HP atau password salah');
+      throw new UnauthorizedException('Email/HP/NRA atau password salah');
     }
 
     // Anti brute-force: akun yang sedang terkunci ditolak sebelum verifikasi password.
@@ -199,7 +207,7 @@ export class AuthService {
     const passwordOk = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordOk) {
       await this.recordFailedLogin(user, meta);
-      throw new UnauthorizedException('Email/HP atau password salah');
+      throw new UnauthorizedException('Email/HP/NRA atau password salah');
     }
 
     // Sukses — reset penghitung gagal login & kunci akun.
@@ -224,10 +232,11 @@ export class AuthService {
       this.logAuthAudit('TOTP_SUCCESS', user.id, {}, meta);
     }
 
+    const method = nra ? 'nra' : isPhone ? 'phone' : 'email';
     this.logAuthAudit(
       'LOGIN',
       user.id,
-      { method: isPhone ? 'phone' : 'email', mustChangePassword: user.mustChangePassword },
+      { method, mustChangePassword: user.mustChangePassword },
       meta,
     );
 
@@ -304,6 +313,33 @@ export class AuthService {
     });
     this.logAuthAudit('ACCOUNT_UNLOCKED', userId, null, meta);
     return { success: true, message: 'Akun dibuka' };
+  }
+
+  private normalizeNra(raw: string): string | null {
+    const cleaned = raw.toUpperCase().replace(/[\s\-().]/g, '');
+    const match = cleaned.match(
+      /^((?:[A-Z]{3,4}|\d{3,4}|[A-Z]\d{2}))([A-Z0-9]{2,4})(\d{3})((?:19|20)\d{2})$/,
+    );
+    if (!match) return null;
+    return `${match[1]}-${match[2]}-${match[3]}-${match[4]}`;
+  }
+
+  private async findUserByMember(member: {
+    email?: string | null;
+    namaLengkap?: string | null;
+  }): Promise<User | null> {
+    if (member.email) {
+      const byEmail = await this.prisma.user.findFirst({
+        where: { email: { equals: member.email, mode: 'insensitive' } },
+      });
+      if (byEmail) return byEmail;
+    }
+    if (member.namaLengkap?.trim()) {
+      return this.prisma.user.findFirst({
+        where: { namaLengkap: { equals: member.namaLengkap.trim(), mode: 'insensitive' } },
+      });
+    }
+    return null;
   }
 
   /**

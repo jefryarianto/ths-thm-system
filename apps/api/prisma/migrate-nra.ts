@@ -8,7 +8,7 @@
  * Usage:
  *   npx ts-node prisma/migrate-nra.ts
  *
- * The new format regex pattern: /^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/
+ * The new format regex pattern: /^[A-Z0-9]{3,4}-[A-Z0-9]{2,4}-\d{3}-\d{4}$/
  *   (e.g., "0114-0101-001-1993")
  *
  * Old format (will be migrated):
@@ -23,7 +23,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const NEW_NRA_PATTERN = /^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/;
+const NEW_NRA_PATTERN = /^[A-Z0-9]{3,4}-[A-Z0-9]{2,4}-\d{3}-\d{4}$/;
 
 async function main() {
   console.log('=== NRA Migration Script ===\n');

@@ -77,7 +77,7 @@ describe('NraService', () => {
       // Format: DST-0114 → 0114, WLY-0114-01 → 01, RTG-0114-01 → 01
       // Sequence: max from latest (003) + 1 = 004
       // Default tahun: current year (2026)
-      expect(nra).toMatch(/^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/);
+      expect(nra).toMatch(/^[A-Z0-9]{3,4}-[A-Z0-9]{2,4}-\d{3}-\d{4}$/);
       expect(nra).toBe('0114-0101-004-2026');
     });
 

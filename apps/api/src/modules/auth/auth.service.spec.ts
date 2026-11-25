@@ -222,6 +222,131 @@ describe('AuthService', () => {
     });
   });
 
+  describe('login with NRA', () => {
+    const nraMember = {
+      id: 'a1',
+      nomorAnggota: 'LTK-0101-001-2026',
+      email: 'nra@ths-thm.org',
+      namaLengkap: 'NRA User',
+      noHp: '081234567890',
+    };
+
+    const mockNraLookup = (member: unknown = nraMember) => {
+      mockPrisma.user.findUnique.mockReset().mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockReset().mockResolvedValue(mockUser);
+      mockPrisma.anggota.findFirst.mockReset().mockResolvedValue(member);
+      mockPrisma.user.update.mockReset().mockResolvedValue(mockUser);
+    };
+
+    it('should look up member by NRA with separators', async () => {
+      mockNraLookup();
+
+      const result = await service.login({
+        identifier: '0114-0101-001-2026',
+        password: 'password123',
+      });
+
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: {
+          nomorAnggota: { equals: '0114-0101-001-2026', mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+      expect(result.user.email).toBe('test@ths-thm.org');
+    });
+
+    it('should normalize NRA without separators', async () => {
+      mockNraLookup();
+
+      await service.login({ identifier: 'LTK01010012026', password: 'password123' });
+
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: {
+          nomorAnggota: { equals: 'LTK-0101-001-2026', mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should accept alphabetic district NRA', async () => {
+      mockNraLookup();
+
+      await service.login({ identifier: 'LTK-0101-001-2026', password: 'password123' });
+
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: {
+          nomorAnggota: { equals: 'LTK-0101-001-2026', mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should accept lowercase NRA', async () => {
+      mockNraLookup();
+
+      await service.login({ identifier: 'ltk-0101-001-2026', password: 'password123' });
+
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: {
+          nomorAnggota: { equals: 'LTK-0101-001-2026', mode: 'insensitive' },
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should map NRA member to user by email', async () => {
+      mockNraLookup();
+
+      await service.login({ identifier: 'LTK-0101-001-2026', password: 'password123' });
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: { equals: 'nra@ths-thm.org', mode: 'insensitive' } },
+      });
+    });
+
+    it('should fall back to namaLengkap when NRA member email match fails', async () => {
+      mockNraLookup({ ...nraMember, email: 'missing@ths-thm.org' });
+      mockPrisma.user.findFirst.mockReset().mockResolvedValueOnce(null).mockResolvedValue(mockUser);
+
+      const result = await service.login({
+        identifier: 'LTK-0101-001-2026',
+        password: 'password123',
+      });
+
+      expect(mockPrisma.user.findFirst).toHaveBeenNthCalledWith(1, {
+        where: { email: { equals: 'missing@ths-thm.org', mode: 'insensitive' } },
+      });
+      expect(mockPrisma.user.findFirst).toHaveBeenNthCalledWith(2, {
+        where: { namaLengkap: { equals: 'NRA User', mode: 'insensitive' } },
+      });
+      expect(result.user.email).toBe('test@ths-thm.org');
+    });
+
+    it('should reject unknown NRA with the generic message', async () => {
+      mockPrisma.user.findUnique.mockReset().mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockReset().mockResolvedValue(null);
+      mockPrisma.anggota.findFirst.mockReset().mockResolvedValue(null);
+
+      await expect(
+        service.login({ identifier: '0114-0101-999-2026', password: 'password123' }),
+      ).rejects.toThrow('Email/HP/NRA atau password salah');
+    });
+
+    it('should write LOGIN audit with method nra', async () => {
+      mockNraLookup();
+
+      await service.login({ identifier: 'LTK-0101-001-2026', password: 'password123' });
+
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'LOGIN',
+          entityId: 'u1',
+          details: expect.objectContaining({ method: 'nra' }),
+        }),
+      );
+    });
+  });
+
   describe('login with 2FA', () => {
     beforeEach(() => {
       mockPrisma.user.update.mockResolvedValue(mockUser);
