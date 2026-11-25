@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     final id = _identifier.text.trim();
     if (id.isEmpty || _password.text.isEmpty) {
-      showCenteredSnackBar(context, 'Masukkan email/nomor anggota & password');
+      showCenteredSnackBar(context, 'Masukkan email/nomor HP/NRA & password');
       return;
     }
     context.read<AuthBloc>().add(
@@ -149,7 +149,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               textAlign: TextAlign.center,
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? colorScheme.onSurface : AppTheme.navy,
+                                color: isDark
+                                    ? colorScheme.onSurface
+                                    : AppTheme.navy,
                                 height: 1.3,
                               ),
                             ),
@@ -163,7 +165,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             _PasswordField(
                               controller: _password,
                               obscure: _obscure,
-                              onToggle: () => setState(() => _obscure = !_obscure),
+                              onToggle: () =>
+                                  setState(() => _obscure = !_obscure),
                               onSubmitted: (_) => _submit(),
                               theme: theme,
                             ),
@@ -174,14 +177,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 _RememberMeCheckbox(
                                   value: _rememberMe,
-                                  onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                                  onChanged: (v) =>
+                                      setState(() => _rememberMe = v ?? false),
                                   theme: theme,
                                 ),
                                 TextButton(
-                                  onPressed: () => context.go('/forgot-password'),
+                                  onPressed: () =>
+                                      context.go('/forgot-password'),
                                   style: TextButton.styleFrom(
                                     foregroundColor: colorScheme.primary,
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 8),
                                     minimumSize: const Size(0, 48),
                                     textStyle: const TextStyle(
                                       fontSize: 15,
@@ -210,7 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontSize: 17,
                                       fontWeight: FontWeight.w700,
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                   ),
                                   child: loading
                                       ? const AppLoadingSpinner.small(
@@ -225,7 +232,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Tooltip(
-                                  message: 'Daftar menjadi calon anggota THS-THM',
+                                  message:
+                                      'Daftar menjadi calon anggota THS-THM',
                                   child: TextButton.icon(
                                     onPressed: () => context.push('/register'),
                                     icon: Icon(
@@ -247,7 +255,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Tooltip(
                                   message: 'Buka halaman Klaim keanggotaan',
                                   child: TextButton.icon(
-                                    onPressed: () => context.push('/claim-account'),
+                                    onPressed: () =>
+                                        context.push('/claim-account'),
                                     icon: Icon(
                                       Icons.how_to_reg_outlined,
                                       size: 18,
@@ -327,11 +336,13 @@ class _EmailField extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.emailAddress,
+      keyboardType: TextInputType.text,
       textInputAction: TextInputAction.next,
       style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
-        labelText: 'Email / Nomor Anggota',
+        labelText: 'Email / Nomor HP / NRA',
+        helperText:
+            'NRA boleh dengan atau tanpa tanda hubung, cth. LTK-0101-001-2026',
         prefixIcon: Icon(
           Icons.person_outline,
           size: 22,

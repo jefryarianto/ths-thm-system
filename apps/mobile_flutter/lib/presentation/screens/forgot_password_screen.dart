@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
@@ -59,7 +60,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lupa Password')),
+      appBar: AppBar(
+        title: const Text('Lupa Password'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Kembali',
+          onPressed: () => context.go('/login'),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.space24),
         child: Column(
