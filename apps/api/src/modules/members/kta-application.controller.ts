@@ -240,7 +240,15 @@ export class KtaApplicationController {
     const proof = await this.ktaApplicationService.getProof(id, req.scope);
     res.setHeader('Content-Type', proof.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${proof.fileName}"`);
-    createReadStream(proof.absolutePath).pipe(res);
+    const stream = createReadStream(proof.absolutePath);
+    stream.on('error', () => {
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
+      res.status(404).json({ message: 'Bukti pembayaran tidak ditemukan' });
+    });
+    stream.pipe(res);
   }
 
   // ── DYNAMIC ROUTES ──────────────────────────────────────

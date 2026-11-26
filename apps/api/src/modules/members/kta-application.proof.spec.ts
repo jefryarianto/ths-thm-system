@@ -102,6 +102,44 @@ describe('KtaApplicationService.getProof', () => {
   });
 });
 
+async function waitUntil(predicate: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
+
+function makeStreamResponse(headersSent = false) {
+  const res = new PassThrough() as PassThrough & {
+    headersSent: boolean;
+    statusCode: number;
+    status: jest.Mock;
+    json: jest.Mock;
+    setHeader: jest.Mock;
+  };
+  res.headersSent = headersSent;
+  res.statusCode = 200;
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn();
+  res.resume();
+  return res;
+}
+
+function makeProofController(absolutePath: string) {
+  const getProof = jest.fn().mockResolvedValue({
+    absolutePath,
+    fileName: proofFileName,
+    mimeType: 'image/png',
+  });
+  const controller = new KtaApplicationController(
+    { getProof } as any,
+    {} as any,
+    {} as any,
+  );
+  return { controller, getProof };
+}
+
 describe('KtaApplicationController.getProof', () => {
   it('memakai role admin, ScopeGuard, dan scope branch', () => {
     const method = KtaApplicationController.prototype.getProof;
@@ -141,5 +179,33 @@ describe('KtaApplicationController.getProof', () => {
       `inline; filename="${proofFileName}"`,
     );
     expect(Buffer.concat(chunks).toString()).toBe('proof');
+  });
+
+  it('mengembalikan 404 saat stream gagal sebelum header terkirim', async () => {
+    const { controller } = makeProofController(
+      join(uploadDir, 'kta-proofs', 'kta-proof-missing.png'),
+    );
+    const res = makeStreamResponse();
+
+    await controller.getProof('a1', req, res as any);
+    await waitUntil(() => (res.json as jest.Mock).mock.calls.length > 0);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Bukti pembayaran tidak ditemukan' });
+  });
+
+  it('menghancurkan respons saat stream gagal setelah header terkirim', async () => {
+    const { controller } = makeProofController(
+      join(uploadDir, 'kta-proofs', 'kta-proof-missing.png'),
+    );
+    const res = makeStreamResponse(true);
+    const destroy = jest.fn();
+    res.destroy = destroy as any;
+
+    await controller.getProof('a1', req, res as any);
+    await waitUntil(() => destroy.mock.calls.length > 0);
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
   });
 });
