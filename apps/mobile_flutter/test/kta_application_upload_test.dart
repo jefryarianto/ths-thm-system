@@ -63,6 +63,26 @@ void main() {
     );
   });
 
+  test('parses Decimal biaya serialized as string', () {
+    final app = KtaApplication.fromJson({
+      ...applicationJson,
+      'biaya': '250000.00',
+    });
+
+    expect(app.biaya, 250000.0);
+  });
+
+  test('keeps numeric and null biaya', () {
+    final numeric = KtaApplication.fromJson(applicationJson);
+    final nullable = KtaApplication.fromJson({
+      ...applicationJson,
+      'biaya': null,
+    });
+
+    expect(numeric.biaya, 250000.0);
+    expect(nullable.biaya, isNull);
+  });
+
   blocTest<KtaApplicationBloc, KtaApplicationState>(
     'mengirim bukti ke field bukti lalu me-reload pengajuan',
     build: () => KtaApplicationBloc(apiClient: api),

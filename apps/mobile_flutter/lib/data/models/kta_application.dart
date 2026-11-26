@@ -80,7 +80,7 @@ class KtaApplication {
       anggotaId: json['anggotaId']?.toString() ?? '',
       nomorAnggota: json['nomorAnggota']?.toString(),
       status: _parseStatus(json['status']?.toString() ?? ''),
-      biaya: (json['biaya'] as num?)?.toDouble(),
+      biaya: _parseNullableDouble(json['biaya']),
       rekeningTujuan: json['rekeningTujuan']?.toString(),
       buktiBayarPath: json['buktiBayarPath']?.toString(),
       statusPembayaran: json['statusPembayaran']?.toString() ?? '',
@@ -95,6 +95,12 @@ class KtaApplication {
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
       histories: histories,
     );
+  }
+
+  static double? _parseNullableDouble(Object? value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 
   static KtaAppStatus _parseStatus(String status) {
