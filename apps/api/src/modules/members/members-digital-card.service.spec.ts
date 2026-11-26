@@ -152,6 +152,30 @@ describe('MembersDigitalCardService', () => {
       expect(result.data.member.distrik).toBe('Keuskupan Larantuka');
     });
 
+    it('returns adminIssued=false when latest KTA has no admin issuer', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue({
+        id: 'a1',
+        status: 'CARD_GENERATED',
+        diterbitkanOleh: null,
+      });
+
+      const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(result.data.adminIssued).toBe(false);
+    });
+
+    it('returns adminIssued=true when latest KTA was issued by admin', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue({
+        id: 'a1',
+        status: 'CARD_GENERATED',
+        diterbitkanOleh: 'admin-1',
+      });
+
+      const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(result.data.adminIssued).toBe(true);
+    });
+
     it('should include signer dari tabel penandatangan (multi-signer)', async () => {
       const existing = {
         id: 'doc-signer',

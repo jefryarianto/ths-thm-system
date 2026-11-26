@@ -458,18 +458,20 @@ export class MembersDigitalCardService {
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { card, memberData, verificationUrl, levelVisual, distrikId } =
       await this.prepareDigitalCardData(memberId, scope, user);
+    const adminIssued = await this.resolveAdminIssued(memberId);
     // Foto disematkan sebagai data URL: aset `member-photo-*` di /api/uploads
     // bersifat privat (butuh Bearer), sehingga `<img>`/Image.network tidak bisa
     // memuatnya. Data URL aman dikirim lewat JSON terautentikasi ini.
     const fotoDataUrl = await this.resolvePhotoDataUrl(memberData.fotoPath, false, 700);
     if (!card) {
       return {
-        success: true,
-        data: {
-          generated: false,
-          card: null,
-          member: memberData,
-          fotoDataUrl,
+          success: true,
+          data: {
+            generated: false,
+            adminIssued,
+            card: null,
+            member: memberData,
+            fotoDataUrl,
           qrCode: null,
           levelVisual,
           signatureImage: null,
@@ -486,6 +488,7 @@ export class MembersDigitalCardService {
       success: true,
       data: {
         generated: true,
+        adminIssued,
         card,
         member: memberData,
         fotoDataUrl,
@@ -497,6 +500,15 @@ export class MembersDigitalCardService {
         template,
       },
     };
+  }
+
+  private async resolveAdminIssued(memberId: string): Promise<boolean> {
+    const application = await this.prisma.ktaApplication.findFirst({
+      where: { anggotaId: memberId },
+      orderBy: { createdAt: 'desc' },
+      select: { status: true, diterbitkanOleh: true },
+    });
+    return application?.status === 'CARD_GENERATED' && Boolean(application.diterbitkanOleh);
   }
 
   /**
