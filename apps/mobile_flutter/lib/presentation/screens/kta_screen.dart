@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/card_data.dart';
-import '../../data/models/kta_application.dart';
 import '../../data/models/member.dart';
 import '../../logic/kta_application/kta_application_bloc.dart';
 import '../../logic/member/member_bloc.dart';

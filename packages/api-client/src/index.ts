@@ -1650,7 +1650,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Generate KTA manual dari member area */
+        /** Generate KTA manual oleh admin */
         post: operations["MembersController_generateDigitalCard"];
         delete?: never;
         options?: never;

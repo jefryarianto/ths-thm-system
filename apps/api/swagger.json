@@ -3285,7 +3285,7 @@
             "bearer": []
           }
         ],
-        "summary": "Generate KTA manual dari member area",
+        "summary": "Generate KTA manual oleh admin",
         "tags": [
           "Members"
         ]
