@@ -338,6 +338,7 @@ model Anggota {
   tahunDadar                String?                  @map("tahun_dadar")
   tempatDadar               String?                  @map("tempat_dadar")
   pekerjaan                 String?
+  pelantikan                String?
   tanggalTerbit             DateTime?                @map("tanggal_terbit")
   tanggalBerlakuSampai      DateTime?                @map("tanggal_berlaku_sampai")
   isImported                Boolean                  @default(false) @map("is_imported")
@@ -451,6 +452,8 @@ model Klaim {
   trackingToken     String?     @unique @map("tracking_token")
   modeBukti         String?     @map("mode_bukti")
   ceritaHistori     String?     @map("cerita_histori")
+  pekerjaan         String?
+  pelantikan        String?
   ktaApplicationId  String?     @map("kta_application_id")
   rantingApprovedBy String?     @map("ranting_approved_by")
   wilayahApprovedBy String?     @map("wilayah_approved_by")
