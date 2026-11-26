@@ -198,6 +198,106 @@ test.describe('Admin KTA Flow', () => {
       .toBe(true);
   });
 
+  test('district admin reviews proof and verifies payment with a note', async ({ page }) => {
+    await mockAuth(page, { role: 'admin_distrik' });
+
+    const application = {
+      id: 'app-review-1',
+      status: 'PAYMENT_PENDING',
+      biaya: '50000.00',
+      rekeningTujuan: 'BRI 12345',
+      statusPembayaran: 'MENUNGGU_VERIFIKASI',
+      catatanAdmin: null,
+      createdAt: '2026-11-20T10:30:00.000Z',
+      buktiBayarPath: '/api/uploads/kta-proofs/kta-proof-e2e.png',
+      submittedSnapshot: {
+        version: 1,
+        submittedAt: '2026-11-20T10:30:00.000Z',
+        submittedBy: { id: 'user-1', role: 'anggota' },
+        payload: null,
+        anggota: {
+          id: 'member-1',
+          nomorAnggota: 'NRA-LAMA',
+          namaLengkap: 'Nama Saat Submit',
+          jenisKelamin: null,
+          tempatLahir: null,
+          tanggalLahir: null,
+          alamat: null,
+          noHp: null,
+          email: null,
+          fotoPath: null,
+          statusKeanggotaan: null,
+          tingkat: null,
+          tempatDadar: null,
+          tahunDadar: null,
+          pekerjaan: null,
+          ranting: { id: 'r1', nama: 'Ranting Lama' },
+          wilayah: null,
+          distrik: null,
+          alamatDistrik: null,
+        },
+        missingFields: [],
+      },
+      anggota: {
+        id: 'member-1',
+        namaLengkap: 'Nama Terbaru',
+        nomorAnggota: 'NRA-BARU',
+        ranting: { id: 'r1', nama: 'Ranting Terbaru' },
+      },
+      histories: [],
+    };
+
+    await page.route(/\/api\/kta-applications\/distrik-queue$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [application] }),
+      });
+    });
+    await page.route(/\/api\/kta-applications\/app-review-1$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: application }),
+      });
+    });
+    await page.route(/\/api\/kta-applications\/app-review-1\/proof$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l8sAAAAASUVORK5CYII=',
+          'base64',
+        ),
+      });
+    });
+    await page.route(/\/api\/kta-applications\/app-review-1\/verify-payment$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: application }),
+      });
+    });
+
+    await page.goto('/kta/distrik-process');
+    await page.getByRole('button', { name: 'Tinjau & Verifikasi' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByText('Nama Saat Submit')).toBeVisible();
+    await page.getByLabel('Catatan verifikasi').fill('Bukti cocok');
+
+    const verifyRequest = page.waitForRequest(
+      (request) => request.url().includes('/verify-payment') && request.method() === 'POST',
+    );
+    await page.getByRole('button', { name: /Verifikasi Pembayaran/i }).click();
+
+    const request = await verifyRequest;
+    expect(JSON.parse(request.postData() || '{}')).toMatchObject({
+      buktiPath: '',
+      catatan: 'Bukti cocok',
+    });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
   test('redirects unauthenticated users to login', async ({ page }) => {
     await page.goto('/admin/kta');
     await expect(page).toHaveURL(/\/login/);

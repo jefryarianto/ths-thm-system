@@ -3,37 +3,35 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { Check, X, CreditCard, Settings, RefreshCw } from 'lucide-react';
+import { X, CreditCard, Settings, RefreshCw } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
+import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { KtaStatusBadge } from '@/components/kta/KtaStatusBadge';
+import KtaReviewPanel from '@/components/kta/KtaReviewPanel';
 import { KTA_STATUS_LABELS } from '@/components/kta/constants';
+import type { KtaReviewApplication } from '@/components/kta/types';
+import { formatRupiah } from '@/lib/format';
 
-interface KtaApplication {
-  id: string;
-  anggotaId: string;
-  nomorAnggota: string | null;
-  status: string;
-  biaya: number | null;
-  rekeningTujuan: string | null;
-  statusPembayaran: string;
-  diterbitkanAt: string | null;
-  catatanAdmin: string | null;
-  createdAt: string;
-  updatedAt: string;
-  anggota: {
-    id: string;
-    namaLengkap: string;
-    nomorAnggota: string;
-    ranting: { id: string; nama: string };
-  };
+const PROOF_PATH_PREFIX = '/api/uploads/kta-proofs/';
+const PROOF_EXTENSION_PATTERN = /\.(jpg|jpeg|png|webp|pdf)$/i;
+
+function hasValidProof(path: string | null | undefined): boolean {
+  if (!path) return false;
+  const normalized = path.replace(/\\/g, '/');
+  if (!normalized.startsWith(PROOF_PATH_PREFIX)) return false;
+  const fileName = normalized.slice(PROOF_PATH_PREFIX.length);
+  return fileName.startsWith('kta-proof-') && !fileName.includes('/') && PROOF_EXTENSION_PATTERN.test(fileName);
 }
 
 export default function KtaDistrikProcessPage() {
   const toast = useToast();
-  const [applications, setApplications] = useState<KtaApplication[]>([]);
+  const [applications, setApplications] = useState<KtaReviewApplication[]>([]);
+  const [reviewApplication, setReviewApplication] = useState<KtaReviewApplication | null>(null);
+  const [catatan, setCatatan] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +40,7 @@ export default function KtaDistrikProcessPage() {
     setError(null);
     try {
       const res = await apiClient.get('/kta-applications/distrik-queue');
-      setApplications((res.data?.data as KtaApplication[]) || []);
+      setApplications((res.data?.data as KtaReviewApplication[]) || []);
     } catch {
       setError('Gagal memuat antrian distrik');
     } finally {
@@ -73,14 +71,26 @@ export default function KtaDistrikProcessPage() {
     }
   };
 
-  const handleVerifyPayment = async (id: string) => {
-    if (!window.confirm('Verifikasi pembayaran KTA ini?')) return;
+  const openReview = (application: KtaReviewApplication) => {
+    setCatatan('');
+    setReviewApplication(application);
+  };
+
+  const handleVerifyPayment = async (note: string) => {
+    if (!reviewApplication || !hasValidProof(reviewApplication.buktiBayarPath)) return;
+    setVerifying(true);
     try {
-      await apiClient.post(`/kta-applications/${id}/verify-payment`, { buktiPath: '' });
+      await apiClient.post(`/kta-applications/${reviewApplication.id}/verify-payment`, {
+        buktiPath: '',
+        catatan: note,
+      });
       toast('success', 'Pembayaran diverifikasi');
-      fetchQueue();
+      setReviewApplication(null);
+      await fetchQueue();
     } catch {
       toast('error', 'Gagal verifikasi pembayaran');
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -113,7 +123,7 @@ export default function KtaDistrikProcessPage() {
           {
             key: 'anggota.namaLengkap',
             label: 'Nama Anggota',
-            render: (app: KtaApplication) => (
+            render: (app: KtaReviewApplication) => (
               <Link href={`/kta/${app.id}`} className="font-medium hover:underline">
                 {app.anggota.namaLengkap}
               </Link>
@@ -122,22 +132,21 @@ export default function KtaDistrikProcessPage() {
           {
             key: 'anggota.nomorAnggota',
             label: 'NRA',
-            render: (app: KtaApplication) => (
+            render: (app: KtaReviewApplication) => (
               <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{app.anggota.nomorAnggota || '-'}</span>
             ),
           },
-          { key: 'status', label: 'Status', render: (app: KtaApplication) => <KtaStatusBadge status={app.status} /> },
+          { key: 'status', label: 'Status', render: (app: KtaReviewApplication) => <KtaStatusBadge status={app.status} /> },
           {
             key: 'biaya',
             label: 'Biaya',
-            render: (app: KtaApplication) =>
-              app.biaya ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(app.biaya) : '-',
+            render: (app: KtaReviewApplication) => (app.biaya === null ? '-' : formatRupiah(app.biaya)),
           },
-          { key: 'rekeningTujuan', label: 'Rekening', render: (app: KtaApplication) => app.rekeningTujuan || '-' },
+          { key: 'rekeningTujuan', label: 'Rekening', render: (app: KtaReviewApplication) => app.rekeningTujuan || '-' },
           {
             key: 'statusPembayaran',
             label: 'Status Bayar',
-            render: (app: KtaApplication) => (
+            render: (app: KtaReviewApplication) => (
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   app.statusPembayaran === 'LUNAS'
@@ -158,7 +167,7 @@ export default function KtaDistrikProcessPage() {
         page={1}
         totalPages={1}
         total={applications.length}
-        actions={(app: KtaApplication) => (
+        actions={(app: KtaReviewApplication) => (
           <div className="flex items-center gap-1">
             {app.status === 'APPROVED' && (
               <button
@@ -180,11 +189,11 @@ export default function KtaDistrikProcessPage() {
             )}
             {app.status === 'PAYMENT_PENDING' && (
               <button
-                onClick={() => handleVerifyPayment(app.id)}
-                className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition"
-                title="Verifikasi Pembayaran"
+                onClick={() => openReview(app)}
+                className="px-2 py-1.5 text-xs font-medium text-green-700 hover:text-green-900 hover:bg-green-50 rounded-lg transition"
+                title="Tinjau & Verifikasi"
               >
-                <Check size={14} />
+                Tinjau &amp; Verifikasi
               </button>
             )}
             {app.status === 'PAYMENT_VERIFIED' && (
@@ -224,6 +233,36 @@ export default function KtaDistrikProcessPage() {
           </div>
         )}
       />
+
+      <Modal
+        open={reviewApplication !== null}
+        onClose={() => setReviewApplication(null)}
+        title="Tinjau & Verifikasi"
+        size="lg"
+      >
+        {reviewApplication && (
+          <>
+            <KtaReviewPanel
+              application={reviewApplication}
+              canVerify={hasValidProof(reviewApplication.buktiBayarPath)}
+              catatan={catatan}
+              onCatatanChange={setCatatan}
+              onVerify={handleVerifyPayment}
+              verifying={verifying}
+            />
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setReviewApplication(null)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-text hover:bg-surface-variant transition"
+              >
+                Batal
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
+
       <p className="text-xs text-muted mt-2">
         Status: {KTA_STATUS_LABELS.APPROVED} → {KTA_STATUS_LABELS.PAYMENT_SETUP} → {KTA_STATUS_LABELS.PAYMENT_VERIFIED} →{' '}
         {KTA_STATUS_LABELS.CARD_GENERATED}
