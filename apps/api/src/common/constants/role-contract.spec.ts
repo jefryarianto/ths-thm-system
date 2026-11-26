@@ -190,6 +190,7 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'getFunnel',
     'getHistory',
     'getProcessingTime',
+    'getProof',
     'getTrend',
     'listBatches',
     'manualEscalation',

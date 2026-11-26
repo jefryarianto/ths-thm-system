@@ -18,7 +18,10 @@ import { CacheService } from '../../common/services/cache.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { PkiService } from '../../common/services/pki.service';
 import { calculateMissingFields } from '../../common/utils/member-completeness';
-import { deleteKtaProofFile } from '../../common/utils/kta-proof-upload.util';
+import {
+  deleteKtaProofFile,
+  resolveKtaProofFile,
+} from '../../common/utils/kta-proof-upload.util';
 import { buildKtaSnapshot, KtaSnapshotPayload } from '../../common/utils/kta-snapshot.util';
 
 const LEVEL_ORDER: KtaAppLevel[] = ['RANTING', 'WILAYAH', 'DISTRIK', 'NASIONAL'];
@@ -1073,6 +1076,22 @@ export class KtaApplicationService {
     if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
     if (scope) await this.verifyScope(app.anggota.rantingId, scope);
     return app;
+  }
+
+  async getProof(applicationId: string, scope?: UserScope) {
+    const app = await this.prisma.ktaApplication.findUnique({
+      where: { id: applicationId },
+      select: {
+        buktiBayarPath: true,
+        anggota: { select: { rantingId: true } },
+      },
+    });
+    if (!app) throw new NotFoundException('Aplikasi tidak ditemukan');
+    if (scope) await this.verifyScope(app.anggota.rantingId, scope);
+
+    const proof = resolveKtaProofFile(app.buktiBayarPath);
+    if (!proof) throw new NotFoundException('Bukti pembayaran tidak ditemukan');
+    return proof;
   }
 
   async getHistory(applicationId: string, scope?: UserScope) {

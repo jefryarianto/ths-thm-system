@@ -10,8 +10,11 @@ import {
   UseInterceptors,
   UploadedFile,
   Req,
+  Res,
   ForbiddenException,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { createReadStream } from 'fs';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import {
   ApiTags,
@@ -222,6 +225,22 @@ export class KtaApplicationController {
   @ApiOperation({ summary: 'Get bottleneck & SLA breach data' })
   async getBottlenecks() {
     return this.ktaAnalyticsService.getBottlenecks();
+  }
+
+  @Get(':id/proof')
+  @Roles('admin_ranting', 'admin_wilayah', 'admin_distrik', 'admin_nasional', 'superadmin')
+  @UseGuards(ScopeGuard)
+  @RequireScope('branch')
+  @ApiOperation({ summary: 'Stream KTA payment proof' })
+  async getProof(
+    @Param('id') id: string,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+  ): Promise<void> {
+    const proof = await this.ktaApplicationService.getProof(id, req.scope);
+    res.setHeader('Content-Type', proof.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${proof.fileName}"`);
+    createReadStream(proof.absolutePath).pipe(res);
   }
 
   // ── DYNAMIC ROUTES ──────────────────────────────────────

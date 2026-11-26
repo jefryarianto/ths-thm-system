@@ -1,11 +1,42 @@
 import { BadRequestException } from '@nestjs/common';
 import { diskStorage } from 'multer';
-import { extname, resolve } from 'path';
+import { basename, extname, resolve, sep } from 'path';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const PROOF_URL_PREFIX = '/api/uploads/kta-proofs/';
+const MIME_BY_EXTENSION: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.pdf': 'application/pdf',
+};
+
+export function resolveKtaProofFile(
+  path: string | null | undefined,
+): { absolutePath: string; fileName: string; mimeType: string } | null {
+  if (!path) return null;
+
+  const normalized = path.replace(/\\/g, '/');
+  if (!normalized.startsWith(PROOF_URL_PREFIX)) return null;
+
+  const fileName = basename(normalized);
+  if (!fileName.startsWith('kta-proof-')) return null;
+
+  const ext = extname(fileName).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) return null;
+  if (normalized !== `${PROOF_URL_PREFIX}${fileName}`) return null;
+
+  const proofDir = resolve(process.env.UPLOAD_DIR || './uploads', 'kta-proofs');
+  const absolutePath = resolve(proofDir, fileName);
+  if (!absolutePath.startsWith(`${proofDir}${sep}`)) return null;
+  if (!existsSync(absolutePath)) return null;
+
+  return { absolutePath, fileName, mimeType: MIME_BY_EXTENSION[ext] };
+}
 
 export function validateKtaProofFile(
   _req: unknown,
