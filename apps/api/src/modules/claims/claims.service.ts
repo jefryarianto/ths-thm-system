@@ -472,6 +472,8 @@ async addBuktiFiles(
           tempatLahir: claim.tempatLahir, tanggalLahir: claim.tanggalLahir,
           tempatDadar: claim.tempatDadar, tahunDadar: claim.tahunDadar, alamat: claim.alamat,
           noHp: claim.noHp, noHpNormalized: normalizePhone(claim.noHp), email: claim.email,
+          pekerjaan: claim.pekerjaan,
+          pelantikan: claim.pelantikan,
           rantingId: claim.rantingId!, nomorAnggota,
           statusKeanggotaan: 'aktif', statusData: 'complete', statusValidasi: 'approved',
         },

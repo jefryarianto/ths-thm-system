@@ -252,6 +252,27 @@ describe('ClaimsService', () => {
       expect(payload).not.toHaveProperty('dokumenPendukungFiles');
     });
 
+    it('persists pekerjaan and pelantikan on claim create', async () => {
+      mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', status: 'pending' });
+      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'cl1', status: 'pending' } as never);
+
+      await service.create({
+        tipe: 'keanggotaan',
+        email: 'klaimer@test.com',
+        modeBukti: 'cerita',
+        ceritaHistori: 'Saya berlatih sejak 2010 dan didadar oleh Andi serta Budi pada 2012.',
+        pekerjaan: 'Guru',
+        pelantikan: '12 JULI 2020',
+      } as any);
+
+      expect(mockPrisma.klaim.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          pekerjaan: 'Guru',
+          pelantikan: '12 JULI 2020',
+        }),
+      }));
+    });
+
     it('requires evidence for keanggotaan claims even when anggotaId is supplied', async () => {
       await expect(service.create({
         tipe: 'keanggotaan',

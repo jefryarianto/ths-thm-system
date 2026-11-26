@@ -132,6 +132,18 @@ export class CreateClaimDto {
   @MaxLength(1000)
   ceritaHistori?: string;
 
+  @ApiPropertyOptional({ description: 'Pekerjaan anggota', maxLength: 120 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  pekerjaan?: string;
+
+  @ApiPropertyOptional({ description: 'Pelantikan anggota', maxLength: 160 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  pelantikan?: string;
+
   // File upload fields (handled via multipart/form-data)
   @ApiPropertyOptional({ 
     description: 'Bukti keanggotaan (max 3 files, image/PDF, 5MB each)',

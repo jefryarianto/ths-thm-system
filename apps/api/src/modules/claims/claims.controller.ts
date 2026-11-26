@@ -75,6 +75,16 @@ export class ClaimsController {
           description: 'Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter)',
           maxLength: 1000,
         },
+        pekerjaan: {
+          type: 'string',
+          description: 'Pekerjaan anggota',
+          maxLength: 120,
+        },
+        pelantikan: {
+          type: 'string',
+          description: 'Pelantikan anggota',
+          maxLength: 160,
+        },
         buktiTipe: {
           type: 'string',
           enum: ['sertifikat', 'kartu_anggota'],

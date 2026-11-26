@@ -128,7 +128,12 @@ describe('ClaimsService approval workflow', () => {
   });
 
   it('finalizes district approval without creating a KTA application or sending a status email', async () => {
-    prisma.klaim.findUnique.mockResolvedValue(makeClaim({ status: 'pending', currentStage: 'distrik' }));
+    prisma.klaim.findUnique.mockResolvedValue(makeClaim({
+      status: 'pending',
+      currentStage: 'distrik',
+      pekerjaan: 'Guru',
+      pelantikan: '12 JULI 2020',
+    }));
     prisma.anggota.findFirst.mockResolvedValue(null);
     prisma.anggota.create.mockResolvedValue({ id: 'member-1' });
     prisma.user.findUnique.mockResolvedValue(null);
@@ -140,6 +145,12 @@ describe('ClaimsService approval workflow', () => {
 
     expect(prisma.ktaApplication.create).not.toHaveBeenCalled();
     expect(prisma.ktaAppHistory.create).not.toHaveBeenCalled();
+    expect(prisma.anggota.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        pekerjaan: 'Guru',
+        pelantikan: '12 JULI 2020',
+      }),
+    }));
     expect(prisma.klaim.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         status: 'disetujui',
