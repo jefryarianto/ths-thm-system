@@ -839,15 +839,40 @@ export class MembersDigitalCardService {
     const existing = await this.prisma.dokumen.findFirst({
       where: { anggotaId: member.id, tipe: 'kartu_anggota' },
       orderBy: { createdAt: 'desc' },
+      include: { qrValidations: true },
     });
     if (existing) {
-      return {
-        ...existing,
-        verificationUrl: normalizeVerificationUrl(existing.verificationUrl, {
-          typ: 'kta',
-          src: 'digital',
+      const hasValidDigitalQr = (existing.qrValidations ?? []).some(
+        (qr) => qr.source === 'digital' && qr.isValid,
+      );
+      if (existing.status !== 'revoked' && hasValidDigitalQr) {
+        return {
+          ...existing,
+          verificationUrl: normalizeVerificationUrl(existing.verificationUrl, {
+            typ: 'kta',
+            src: 'digital',
+          }),
+        };
+      }
+
+      const token = uuidv4();
+      const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'digital' });
+      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${signedToken}`;
+      await this.prisma.$transaction([
+        this.prisma.dokumen.update({
+          where: { id: existing.id },
+          data: { status: 'generated', verificationUrl },
         }),
-      };
+        this.prisma.qRValidation.updateMany({
+          where: { dokumenId: existing.id, isValid: true },
+          data: { isValid: false, reason: 'QR diganti saat penerbitan ulang admin' },
+        }),
+        this.prisma.qRValidation.create({
+          data: { dokumenId: existing.id, token, isValid: true, source: 'digital', verificationUrl },
+        }),
+      ]);
+      await this.initKtaDates(member.id);
+      return { ...existing, status: 'generated', verificationUrl };
     }
 
     const token = uuidv4();

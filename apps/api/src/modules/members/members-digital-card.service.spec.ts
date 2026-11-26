@@ -661,6 +661,60 @@ describe('MembersDigitalCardService', () => {
         expect.objectContaining({ data: expect.objectContaining({ status: 'generated' }) }),
       );
     });
+
+    it('rotates revoked digital QR during admin issuance', async () => {
+      const oldUrl = 'http://localhost:3000/verify/old-token';
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        status: 'revoked',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: oldUrl,
+        qrValidations: [
+          {
+            id: 'qr-old',
+            source: 'digital',
+            isValid: true,
+            verificationUrl: oldUrl,
+          },
+        ],
+      } as any);
+      mockPrisma.dokumen.update.mockImplementation(async ({ data }: any) => ({
+        id: 'doc-1',
+        ...data,
+      }));
+      let createCount = 0;
+      mockPrisma.qRValidation.create.mockImplementation(async ({ data }: any) => {
+        createCount += 1;
+        return {
+          id: `qr-${createCount}`,
+          ...data,
+          reason: data.reason ?? null,
+          createdAt: new Date('2026-03-01T00:00:00Z'),
+        };
+      });
+
+      const result = await service.issuePrintedCard('m-lrt-1', { reason: 'baru' });
+
+      expect(result.data.issuance.source).toBe('printed');
+      expect(mockPrisma.qRValidation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ dokumenId: 'doc-1', isValid: true }),
+          data: expect.objectContaining({ isValid: false }),
+        }),
+      );
+      const updateArgs = mockPrisma.dokumen.update.mock.calls[0][0];
+      expect(updateArgs.data.status).toBe('generated');
+      expect(updateArgs.data.verificationUrl).not.toBe(oldUrl);
+      expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            source: 'digital',
+            isValid: true,
+            verificationUrl: updateArgs.data.verificationUrl,
+          }),
+        }),
+      );
+    });
   });
 
   describe('getCardIssuances', () => {
