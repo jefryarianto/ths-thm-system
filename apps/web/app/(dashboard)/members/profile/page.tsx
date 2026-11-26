@@ -25,6 +25,8 @@ interface MemberProfile {
   tanggalLahir?: string;
   tempatDadar?: string;
   tahunDadar?: string;
+  pekerjaan?: string;
+  pelantikan?: string;
   alamat?: string;
   noHp?: string;
   ranting?: {
@@ -57,6 +59,8 @@ export default function ProfilePage() {
     tanggalLahir: '',
     tempatDadar: '',
     tahunDadar: '',
+    pekerjaan: '',
+    pelantikan: '',
     alamat: '',
     noHp: '',
     email: '',
@@ -74,6 +78,8 @@ export default function ProfilePage() {
           tanggalLahir: res.data.tanggalLahir || '',
           tempatDadar: res.data.tempatDadar || '',
           tahunDadar: res.data.tahunDadar || '',
+          pekerjaan: res.data.pekerjaan || '',
+          pelantikan: res.data.pelantikan || '',
           alamat: res.data.alamat || '',
           noHp: res.data.noHp || '',
           email: res.data.email || '',
@@ -102,8 +108,8 @@ export default function ProfilePage() {
       if (form.tempatLahir !== (member.tempatLahir || '')) payload.tempatLahir = form.tempatLahir;
       if (form.tanggalLahir !== (member.tanggalLahir || ''))
         payload.tanggalLahir = form.tanggalLahir;
-      if (form.tempatDadar !== (member.tempatDadar || '')) payload.tempatDadar = form.tempatDadar;
-      if (form.tahunDadar !== (member.tahunDadar || '')) payload.tahunDadar = form.tahunDadar;
+      if (form.pekerjaan !== (member.pekerjaan || '')) payload.pekerjaan = form.pekerjaan;
+      if (form.pelantikan !== (member.pelantikan || '')) payload.pelantikan = form.pelantikan;
       if (form.alamat !== (member.alamat || '')) payload.alamat = form.alamat;
       if (form.noHp !== (member.noHp || '')) payload.noHp = form.noHp;
       if (form.email !== (member.email || '')) payload.email = form.email;
@@ -114,7 +120,7 @@ export default function ProfilePage() {
         return;
       }
 
-      await apiClient.patch(`/members/${member.id}`, payload);
+      await apiClient.patch('/auth/me', payload);
       setSaveSuccess(true);
       await fetchProfile();
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -316,6 +322,30 @@ export default function ProfilePage() {
                   type="text"
                   value={form.tahunDadar}
                   onChange={(e) => setForm({ ...form, tahunDadar: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Pekerjaan
+                </label>
+                <input
+                  type="text"
+                  value={form.pekerjaan}
+                  onChange={(e) => setForm({ ...form, pekerjaan: e.target.value })}
+                  placeholder="Contoh: Guru"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Pelantikan
+                </label>
+                <input
+                  type="text"
+                  value={form.pelantikan}
+                  onChange={(e) => setForm({ ...form, pelantikan: e.target.value })}
+                  placeholder="Contoh: 12 JULI 2020"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                 />
               </div>

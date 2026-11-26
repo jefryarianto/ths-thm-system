@@ -73,6 +73,16 @@ export class CreateMemberDto {
   @IsOptional()
   @IsString()
   fotoPath?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pekerjaan?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pelantikan?: string;
 }
 
 export class UpdateMemberDto {
@@ -135,6 +145,16 @@ export class UpdateMemberDto {
   @IsOptional()
   @IsString()
   fotoPath?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pekerjaan?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pelantikan?: string;
 
   @ApiPropertyOptional({
     description:

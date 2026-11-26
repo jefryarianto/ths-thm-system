@@ -1,3 +1,5 @@
+import { MembersService } from './members.service';
+
 type RecordMap = Record<string, any>;
 
 function createInMemoryDelegate(seed: RecordMap = {}) {
@@ -27,6 +29,21 @@ function createInMemoryDelegate(seed: RecordMap = {}) {
 }
 
 describe('KTA pekerjaan/pelantikan field persistence', () => {
+  it('maps admin edit fields into the Anggota update payload', async () => {
+    const service = Object.create(MembersService.prototype) as MembersService & {
+      beforeUpdate: (id: string, dto: RecordMap) => Promise<RecordMap>;
+    };
+
+    const data = await service.beforeUpdate('a1', {
+      pekerjaan: 'Guru',
+      pelantikan: '12 JULI 2020',
+    });
+
+    expect(data).toEqual(
+      expect.objectContaining({ pekerjaan: 'Guru', pelantikan: '12 JULI 2020' }),
+    );
+  });
+
   it('persists pekerjaan and pelantikan on Anggota create/update read-back', async () => {
     const anggota = createInMemoryDelegate();
 

@@ -916,7 +916,9 @@ export class AuthService {
       dto.noHp !== undefined ||
       dto.alamat !== undefined ||
       dto.tempatLahir !== undefined ||
-      dto.tanggalLahir !== undefined;
+      dto.tanggalLahir !== undefined ||
+      dto.pekerjaan !== undefined ||
+      dto.pelantikan !== undefined;
     // hasUserFields not needed here — handled by hasAnggotaFields logic
 
     if (hasAnggotaFields) {
@@ -930,6 +932,8 @@ export class AuthService {
       if (dto.tempatLahir) anggotaData.tempatLahir = dto.tempatLahir;
       if (dto.tanggalLahir) anggotaData.tanggalLahir = new Date(dto.tanggalLahir);
       if (dto.email !== undefined) anggotaData.email = dto.email;
+      if (dto.pekerjaan !== undefined) anggotaData.pekerjaan = dto.pekerjaan;
+      if (dto.pelantikan !== undefined) anggotaData.pelantikan = dto.pelantikan;
 
       // Cocokkan via email; fallback via nama lengkap untuk anggota yang email-nya
       // kosong (hasil import CSV) dan unik — supaya profil tetap tersinkron.

@@ -110,6 +110,16 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   tanggalLahir?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pekerjaan?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pelantikan?: string;
 }
 
 export class ChangePasswordDto {

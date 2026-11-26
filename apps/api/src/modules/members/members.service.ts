@@ -165,6 +165,8 @@ export class MembersService
     if (dto.tingkat !== undefined) data.tingkat = dto.tingkat;
     if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
     if (dto.fotoPath !== undefined) data.fotoPath = dto.fotoPath;
+    if (dto.pekerjaan !== undefined) data.pekerjaan = dto.pekerjaan;
+    if (dto.pelantikan !== undefined) data.pelantikan = dto.pelantikan;
     return data;
   }
 

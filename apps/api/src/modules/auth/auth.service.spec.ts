@@ -5,6 +5,8 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { ApprovalService } from '../approvals/approval.service';
+import { UpdateProfileDto } from './dto/auth.dto';
 
 // Mock bcryptjs at module level so all tests can use it
 jest.mock('bcryptjs', () => ({
@@ -57,6 +59,7 @@ describe('AuthService', () => {
     anggota: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
     },
     userSession: {
@@ -69,10 +72,19 @@ describe('AuthService', () => {
     auditLog: {
       create: jest.fn().mockResolvedValue({ id: 'a1' }),
     },
+    notifikasi: {
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      findFirst: jest.fn().mockResolvedValue(null),
+      update: jest.fn(),
+    },
   };
 
   const mockAudit = {
     log: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockApproval = {
+    submit: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockMailService = {
@@ -105,6 +117,7 @@ describe('AuthService', () => {
           },
         },
         { provide: PersistentAuditService, useValue: mockAudit },
+        { provide: ApprovalService, useValue: mockApproval },
       ],
     }).compile();
 
@@ -115,6 +128,8 @@ describe('AuthService', () => {
     (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
     mockJwt.sign.mockReturnValue('mock-jwt-token');
     mockJwt.verify.mockReset();
+    mockApproval.submit.mockResolvedValue(undefined);
+    mockPrisma.notifikasi.deleteMany.mockResolvedValue({ count: 0 });
     // Default: fallback nama tidak menemukan anggota (agar test lama tetap pass)
     mockPrisma.anggota.findMany.mockResolvedValue([]);
   });
@@ -659,6 +674,37 @@ describe('AuthService', () => {
       });
 
       const result = await service.updateProfile('u1', { email: 'updated@ths-thm.org' });
+    });
+
+    it('syncs pekerjaan and pelantikan to Anggota and submits profile approval', async () => {
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1', email: 'test@ths-thm.org' });
+      mockPrisma.anggota.update.mockResolvedValue({});
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        namaLengkap: 'Test User',
+        tempatLahir: 'Jakarta',
+        tanggalLahir: new Date('2000-01-15'),
+        alamat: 'Jl. Test',
+        noHp: '081234567890',
+        email: 'test@ths-thm.org',
+      });
+
+      await service.updateProfile('u1', {
+        pekerjaan: 'Guru',
+        pelantikan: '12 JULI 2020',
+      } as UpdateProfileDto & { pekerjaan: string; pelantikan: string });
+
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: expect.objectContaining({
+          pekerjaan: 'Guru',
+          pelantikan: '12 JULI 2020',
+        }),
+      });
+      expect(mockApproval.submit).toHaveBeenCalledWith(
+        { requestType: 'member_update', itemId: 'a1' },
+        'u1',
+      );
     });
 
     it('should sync profile fields to Anggota model when noHp is provided', async () => {

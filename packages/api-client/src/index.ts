@@ -8299,6 +8299,8 @@ export interface components {
             alamat?: string;
             tempatLahir?: string;
             tanggalLahir?: string;
+            pekerjaan?: string;
+            pelantikan?: string;
         };
         TotpCodeDto: {
             /** @example 123456 */
@@ -8353,6 +8355,8 @@ export interface components {
             rantingId?: string;
             tingkat?: string;
             fotoPath?: string;
+            pekerjaan?: string;
+            pelantikan?: string;
         };
         UpdateMemberDto: {
             namaLengkap?: string;
@@ -8367,6 +8371,8 @@ export interface components {
             tingkat?: string;
             rantingId?: string;
             fotoPath?: string;
+            pekerjaan?: string;
+            pelantikan?: string;
             /** @description Versi data saat dibaca client (optimistic locking). Wajib dikirim bila ingin mencegah konflik update bersamaan. */
             version?: number;
         };

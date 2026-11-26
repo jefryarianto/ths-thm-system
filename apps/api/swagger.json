@@ -18734,6 +18734,12 @@
           },
           "tanggalLahir": {
             "type": "string"
+          },
+          "pekerjaan": {
+            "type": "string"
+          },
+          "pelantikan": {
+            "type": "string"
           }
         }
       },
@@ -18916,6 +18922,12 @@
           },
           "fotoPath": {
             "type": "string"
+          },
+          "pekerjaan": {
+            "type": "string"
+          },
+          "pelantikan": {
+            "type": "string"
           }
         },
         "required": [
@@ -18960,6 +18972,12 @@
             "type": "string"
           },
           "fotoPath": {
+            "type": "string"
+          },
+          "pekerjaan": {
+            "type": "string"
+          },
+          "pelantikan": {
             "type": "string"
           },
           "version": {

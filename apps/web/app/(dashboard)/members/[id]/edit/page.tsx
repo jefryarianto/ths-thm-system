@@ -26,6 +26,8 @@ interface MemberDetail {
   tanggalLahir: string | null;
   tempatDadar: string | null;
   tahunDadar: string | null;
+  pekerjaan: string | null;
+  pelantikan: string | null;
   alamat: string | null;
   noHp: string | null;
   email: string | null;
@@ -56,6 +58,8 @@ export default function EditMemberPage() {
     tanggalLahir: '',
     tempatDadar: '',
     tahunDadar: '',
+    pekerjaan: '',
+    pelantikan: '',
     alamat: '',
     noHp: '',
     email: '',
@@ -102,6 +106,8 @@ export default function EditMemberPage() {
           tanggalLahir: m.tanggalLahir || '',
           tempatDadar: m.tempatDadar || '',
           tahunDadar: m.tahunDadar || '',
+          pekerjaan: m.pekerjaan || '',
+          pelantikan: m.pelantikan || '',
           alamat: m.alamat || '',
           noHp: m.noHp || '',
           email: m.email || '',
@@ -204,6 +210,8 @@ export default function EditMemberPage() {
         payload.tanggalLahir = form.tanggalLahir;
       if (form.tempatDadar !== (original.tempatDadar || '')) payload.tempatDadar = form.tempatDadar;
       if (form.tahunDadar !== (original.tahunDadar || '')) payload.tahunDadar = form.tahunDadar;
+      if (form.pekerjaan !== (original.pekerjaan || '')) payload.pekerjaan = form.pekerjaan;
+      if (form.pelantikan !== (original.pelantikan || '')) payload.pelantikan = form.pelantikan;
       if (form.alamat !== (original.alamat || '')) payload.alamat = form.alamat;
       if (form.noHp !== (original.noHp || '')) payload.noHp = form.noHp;
       if (form.email !== (original.email || '')) payload.email = form.email;
@@ -372,6 +380,24 @@ export default function EditMemberPage() {
                     value={form.tahunDadar}
                     onChange={(e) => setForm({ ...form, tahunDadar: e.target.value })}
                     placeholder="2024"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </FormField>
+                <FormField label="Pekerjaan">
+                  <input
+                    type="text"
+                    value={form.pekerjaan}
+                    onChange={(e) => setForm({ ...form, pekerjaan: e.target.value })}
+                    placeholder="Contoh: Guru"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </FormField>
+                <FormField label="Pelantikan">
+                  <input
+                    type="text"
+                    value={form.pelantikan}
+                    onChange={(e) => setForm({ ...form, pelantikan: e.target.value })}
+                    placeholder="Contoh: 12 JULI 2020"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </FormField>
