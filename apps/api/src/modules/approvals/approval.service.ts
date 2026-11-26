@@ -10,6 +10,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { EventBusService } from '../../common/services/event-bus.service';
 
 export interface SubmitApprovalDto {
   requestType: 'member_create' | 'member_update' | 'claim' | 'letter' | 'certificate' | 'berita';
@@ -26,6 +27,7 @@ export class ApprovalService {
     private readonly scopeHelper: ScopeHelper,
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly persistentAudit?: PersistentAuditService,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
 
   private audit(
@@ -137,7 +139,7 @@ export class ApprovalService {
 
     if (remainingLevels.length === 0) {
       // All approved — finalize
-      await this.finalizeApproval(request);
+      await this.finalizeApproval(request, userId);
       this.logger.log(`Approval completed: ${requestId}`);
       this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: true, note });
       // Notify submitter for berita approval
@@ -308,7 +310,7 @@ export class ApprovalService {
     return labels[type] || type;
   }
 
-  private async finalizeApproval(request: { requestType: string; itemId: string }) {
+  private async finalizeApproval(request: { requestType: string; itemId: string }, userId: string) {
     // Auto-execute based on request type
     switch (request.requestType) {
       case 'member_create':
@@ -327,6 +329,10 @@ export class ApprovalService {
         });
         // Notify the member that their data has been approved
         await this.notifyMemberApproved(request.itemId);
+        this.eventBus?.emit('approval:member_update:approved', {
+          anggotaId: request.itemId,
+          userId,
+        });
         break;
       case 'claim':
         await this.prisma.klaim.update({

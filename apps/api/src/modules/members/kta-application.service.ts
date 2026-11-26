@@ -5,6 +5,8 @@ import {
   BadRequestException,
   Logger,
   Optional,
+  OnModuleInit,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { Prisma, KtaAppStatus, KtaAppLevel, KtaAppAction, PaymentStatus } from '@prisma/client';
@@ -15,6 +17,7 @@ import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { CacheService } from '../../common/services/cache.service';
+import { EventBusService } from '../../common/services/event-bus.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { PkiService } from '../../common/services/pki.service';
 import { calculateMissingFields } from '../../common/utils/member-completeness';
@@ -137,7 +140,20 @@ function formatRupiah(amount: number): string {
 }
 
 @Injectable()
-export class KtaApplicationService {
+export class KtaApplicationService implements OnModuleInit, OnModuleDestroy {
+  private readonly onMemberUpdateApproved = (...args: unknown[]) => {
+    const payload = args[0] as { anggotaId: string; userId: string } | undefined;
+    if (!payload?.anggotaId || !payload?.userId) return;
+    void this.regenerateGeneratedKtaForMember(payload.anggotaId, {
+      id: payload.userId,
+      role: 'superadmin',
+    }).catch((error) => {
+      this.logger.error(
+        `Failed to auto-regenerate KTA for ${payload.anggotaId}: ${(error as Error).message}`,
+      );
+    });
+  };
+
   static async assertKtaIssuable(prisma: PrismaService, anggotaId: string) {
     const app = await prisma.ktaApplication.findFirst({
       where: { anggotaId },
@@ -243,7 +259,16 @@ export class KtaApplicationService {
     private readonly cache?: CacheService,
     private readonly digitalCardService?: MembersDigitalCardService,
     private readonly pkiService?: PkiService,
+    @Optional() private readonly eventBus?: EventBusService,
   ) {}
+
+  onModuleInit() {
+    this.eventBus?.on('approval:member_update:approved', this.onMemberUpdateApproved);
+  }
+
+  onModuleDestroy() {
+    this.eventBus?.off('approval:member_update:approved', this.onMemberUpdateApproved);
+  }
 
   private audit(action: string, entityId: string, userId?: string, details?: Record<string, unknown>) {
     void this.persistentAudit?.log({
@@ -1005,6 +1030,57 @@ export class KtaApplicationService {
     // oleh layanan PKI terpisah saat QR discan. Di sini kita kembalikan info kartu.
     const cert = this.pkiService?.getCertificateInfo();
     return { valid: !!cert, certificate: cert ?? null };
+  }
+
+  async regenerateGeneratedKtaForMember(
+    anggotaId: string,
+    actor: { id: string; role: string },
+  ): Promise<{ regenerated: number; applicationIds: string[] }> {
+    const apps = await this.prisma.ktaApplication.findMany({
+      where: { anggotaId, status: 'CARD_GENERATED' },
+      select: {
+        id: true,
+        anggotaId: true,
+        status: true,
+        batchId: true,
+        submittedSnapshot: true,
+        statusPembayaran: true,
+        biaya: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (apps.length === 0) {
+      return { regenerated: 0, applicationIds: [] };
+    }
+
+    const applicationIds: string[] = [];
+    for (const app of apps) {
+      if (this.digitalCardService) {
+        await this.digitalCardService.issuePrintedCard(
+          anggotaId,
+          { reason: 'member_update_approved' },
+          undefined,
+          { id: actor.id } as any,
+        );
+      }
+
+      await this.prisma.ktaAppHistory.create({
+        data: {
+          ktaApplicationId: app.id,
+          level: 'DISTRIK',
+          action: 'CARD_GENERATED',
+          actorId: actor.id,
+          actorRole: actor.role,
+          catatan: 'Auto-regenerate after approved member_update',
+        },
+      });
+
+      applicationIds.push(app.id);
+      this.audit('KTA_AUTO_REGENERATE', app.id, actor.id, { anggotaId, reason: 'member_update_approved' });
+    }
+
+    return { regenerated: applicationIds.length, applicationIds };
   }
 
   // ============================================================
