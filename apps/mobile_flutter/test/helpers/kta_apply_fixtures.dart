@@ -25,7 +25,7 @@ KtaApplication ktaApplication({
   );
 }
 
-MemberLoaded memberLoaded({bool? generated}) {
+MemberLoaded memberLoaded({bool? generated, bool adminIssued = false}) {
   return MemberLoaded(
     member: const Member(
       id: 'member-1',
@@ -58,6 +58,7 @@ MemberLoaded memberLoaded({bool? generated}) {
             signatureImage: '',
             stampImage: '',
             generated: generated,
+            adminIssued: adminIssued,
           ),
   );
 }

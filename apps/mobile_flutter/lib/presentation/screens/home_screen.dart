@@ -279,8 +279,9 @@ class _KtaSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Kartu digambar persis seperti layar /kta: tanpa frame, gutter total 20
     // (16 sliver + 4) agar ukuran kartu identik dengan halaman KTA Digital.
-    final generated = cardData?.generated ?? false;
-    if (!generated) {
+    final data = cardData;
+    final ready = data != null && data.generated && data.adminIssued;
+    if (!ready) {
       return const SizedBox.shrink();
     }
     return Padding(

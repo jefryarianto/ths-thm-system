@@ -25,12 +25,6 @@ class KtaScreen extends StatefulWidget {
   State<KtaScreen> createState() => _KtaScreenState();
 }
 
-const _issuableKtaStatuses = <KtaAppStatus>{
-  KtaAppStatus.paymentVerified,
-  KtaAppStatus.cardGenerating,
-  KtaAppStatus.cardGenerated,
-};
-
 class _KtaScreenState extends State<KtaScreen> {
   MemberLoaded? _lastLoaded;
 
@@ -81,8 +75,6 @@ class _KtaScreenState extends State<KtaScreen> {
                       .add(const KtaApplicationLoadRequested()),
                 );
               }
-              final canGenerate = ktaState is KtaApplicationLoaded &&
-                  _issuableKtaStatuses.contains(ktaState.application.status);
               return BlocBuilder<MemberBloc, MemberState>(
                 builder: (context, state) {
                   if (state is MemberLoading) {
@@ -95,7 +87,6 @@ class _KtaScreenState extends State<KtaScreen> {
                       return _KtaCard(
                         member: lastLoaded.member,
                         cardData: lastLoaded.cardData,
-                        canGenerate: canGenerate,
                       );
                     }
                     return _Error(message: state.message);
@@ -119,7 +110,6 @@ class _KtaScreenState extends State<KtaScreen> {
                   return _KtaCard(
                     member: state.member,
                     cardData: state.cardData,
-                    canGenerate: canGenerate,
                   );
                 },
               );
@@ -134,29 +124,23 @@ class _KtaScreenState extends State<KtaScreen> {
 class _KtaCard extends StatelessWidget {
   final Member member;
   final CardData? cardData;
-  final bool canGenerate;
   const _KtaCard({
     required this.member,
     this.cardData,
-    required this.canGenerate,
   });
 
   @override
   Widget build(BuildContext context) {
     final status = member.statusKeanggotaan;
     final validasi = member.statusValidasi;
-    final generated = cardData?.generated ?? false;
+    final data = cardData;
+    final ready = data != null && data.generated && data.adminIssued;
 
     return ListView(
       padding: const EdgeInsets.all(AppTheme.space20),
       children: [
-        // KTA belum dibuat → ajak anggota generate manual (sistem dilarang
-        // membuat otomatis). Setelah generate, kartu tampil normal.
-        if (!generated) ...[
-          if (canGenerate)
-            _GenerateKtaCard(member: member)
-          else
-            const _KtaNotReadyCard(),
+        if (!ready) ...[
+          const _KtaNotReadyCard(),
           const SizedBox(height: AppTheme.space12),
         ] else ...[
           // Kartu digital — desain Expo
@@ -303,61 +287,14 @@ class _KtaNotReadyCard extends StatelessWidget {
             Icon(Icons.hourglass_empty, size: 48, color: scheme.primary),
             const SizedBox(height: 12),
             const Text(
-              'KTA belum dapat diterbitkan',
+              'Menunggu penerbitan admin',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              'Lunasi biaya KTA dan tunggu verifikasi admin sebelum generate kartu.',
+              'Setelah pembayaran terverifikasi, kartu digital diterbitkan oleh admin.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Kartu ajakan "Generate KTA" saat anggota belum pernah membuat kartu.
-/// Sistem dilarang membuat KTA otomatis — anggota harus menekan tombol ini.
-class _GenerateKtaCard extends StatelessWidget {
-  final Member member;
-  const _GenerateKtaCard({required this.member});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 0,
-      color: scheme.primaryContainer.withValues(alpha: 0.4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.space20),
-        child: Column(
-          children: [
-            Icon(Icons.badge_outlined, size: 48, color: scheme.primary),
-            const SizedBox(height: 12),
-            const Text(
-              'KTA Belum Dibuat',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Kartu Tanda Anggota dibuat secara manual oleh Anda. '
-              'Setelah digenerate, kartu berlaku 3 tahun sejak tanggal terbit '
-              'dengan kewajiban re-aktivasi setiap 3 bulan.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 12, color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => context
-                  .read<MemberBloc>()
-                  .add(const MemberCardGenerateRequested()),
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Generate KTA'),
             ),
           ],
         ),

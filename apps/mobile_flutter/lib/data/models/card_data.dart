@@ -24,6 +24,8 @@ class CardData {
   /// Untuk kompatibilitas server lama, default true.
   final bool generated;
 
+  final bool adminIssued;
+
   /// Data anggota lengkap dari respons kartu (field data KTA baru).
   final String pekerjaan;
   final String tanggalTerbit;
@@ -43,6 +45,7 @@ class CardData {
     this.qrCode = '',
     this.fotoDataUrl = '',
     this.generated = true,
+    this.adminIssued = false,
     this.pekerjaan = '',
     this.tanggalTerbit = '',
     this.tanggalBerlakuSampai = '',
@@ -81,6 +84,7 @@ class CardData {
       qrCode: _str(json, 'qrCode'),
       fotoDataUrl: _str(json, 'fotoDataUrl'),
       generated: json['generated'] as bool? ?? true,
+      adminIssued: json['adminIssued'] as bool? ?? false,
       pekerjaan: _str(member, 'pekerjaan'),
       tanggalTerbit: _str(member, 'tanggalTerbit'),
       tanggalBerlakuSampai: _str(member, 'tanggalBerlakuSampai'),

@@ -26,6 +26,21 @@ void main() {
     expect(cd.pelantikanTahun, '1994');
   });
 
+  test('falls closed when adminIssued is missing', () {
+    final cd = CardData.fromJson({'generated': true});
+
+    expect(cd.adminIssued, isFalse);
+  });
+
+  test('CardData.fromJson parses adminIssued=true', () {
+    final cd = CardData.fromJson({
+      'generated': true,
+      'adminIssued': true,
+    });
+
+    expect(cd.adminIssued, isTrue);
+  });
+
   test('CardData.fromJson kompatibel dengan respons lama (tanpa generated)', () {
     final json = {
       'card': {

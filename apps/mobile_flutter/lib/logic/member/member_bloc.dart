@@ -18,7 +18,6 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     on<MemberLoadRequested>(_onMemberLoadRequested);
     on<MemberCardImageRequested>(_onMemberCardImageRequested);
     on<MemberCardDataRequested>(_onMemberCardDataRequested);
-    on<MemberCardGenerateRequested>(_onMemberCardGenerateRequested);
     on<MemberUpdateRequested>(_onMemberUpdateRequested);
     on<MemberPhotoUploadRequested>(_onMemberPhotoUploadRequested);
     on<MemberLogoutRequested>(_onMemberLogoutRequested);
@@ -135,28 +134,6 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     final current = state;
     if (current is! MemberLoaded) return;
     await _fetchCardData(current, emit);
-  }
-
-  /// Generate KTA manual (`POST /members/:id/digital-card/generate`) lalu
-  /// muat ulang data kartu. Sistem tidak lagi membuat KTA otomatis.
-  Future<void> _onMemberCardGenerateRequested(
-    MemberCardGenerateRequested event,
-    Emitter<MemberState> emit,
-  ) async {
-    final current = state;
-    if (current is! MemberLoaded) return;
-    final token = await _apiClient.getAccessToken();
-    if (token == null || token.isEmpty) return;
-    try {
-      await _apiClient.dio.post('/members/${current.member.id}/digital-card/generate');
-    } on DioException catch (e) {
-      emit(MemberError(message: _messageFromError(e)));
-      return;
-    } catch (e) {
-      emit(MemberError(message: e.toString()));
-      return;
-    }
-    await _fetchCardData(current, emit, force: true);
   }
 
   /// Muat data kartu digital dari `GET /members/:id/digital-card`.

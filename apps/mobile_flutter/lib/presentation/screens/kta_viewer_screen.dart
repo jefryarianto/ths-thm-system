@@ -244,7 +244,8 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
                 message: 'Data anggota Anda akan muncul setelah dimuat.',
               );
             }
-            if (state.cardData == null) {
+            final cardData = state.cardData;
+            if (cardData == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   context
@@ -252,15 +253,27 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
                       .add(const MemberCardDataRequested());
                 }
               });
+              return const EmptyStateView(
+                icon: Icons.hourglass_empty,
+                title: 'Menunggu penerbitan admin',
+                message: 'Data kartu sedang dimuat.',
+              );
             }
-            return _buildViewer(state.member, state.cardData);
+            if (!cardData.generated || !cardData.adminIssued) {
+              return const EmptyStateView(
+                icon: Icons.hourglass_empty,
+                title: 'Menunggu penerbitan admin',
+                message: 'Kartu digital akan tampil setelah diterbitkan admin.',
+              );
+            }
+            return _buildViewer(state.member, cardData);
           },
         ),
       ),
     );
   }
 
-  Widget _buildViewer(Member member, CardData? cardData) {
+  Widget _buildViewer(Member member, CardData cardData) {
     final card = KtaCardFullSize(
       member: member,
       cardData: cardData,
@@ -333,8 +346,12 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
 
   bool _hasVerificationUrl(BuildContext context) {
     final state = context.read<MemberBloc>().state;
-    return state is MemberLoaded &&
-        (state.cardData?.verificationUrl.isNotEmpty ?? false);
+    if (state is! MemberLoaded) return false;
+    final cardData = state.cardData;
+    if (cardData == null || !cardData.generated || !cardData.adminIssued) {
+      return false;
+    }
+    return cardData.verificationUrl.isNotEmpty;
   }
 
   Widget _zoomButton(IconData icon, VoidCallback onTap) {

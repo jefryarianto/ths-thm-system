@@ -14,6 +14,7 @@ import 'package:mobile_flutter/logic/kta_application/kta_application_bloc.dart';
 import 'package:mobile_flutter/logic/member/member_bloc.dart';
 import 'package:mobile_flutter/logic/notification/notification_bloc.dart';
 import 'package:mobile_flutter/presentation/screens/home_screen.dart';
+import 'package:mobile_flutter/presentation/widgets/kta_card_widget.dart';
 import 'helpers/kta_apply_fixtures.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
@@ -105,11 +106,26 @@ void main() {
   });
 
   testWidgets('kartu terbit menyembunyikan Ajukan KTA', (tester) async {
-    when(() => memberBloc.state).thenReturn(memberLoaded(generated: true));
+    when(() => memberBloc.state).thenReturn(
+      memberLoaded(generated: true, adminIssued: true),
+    );
 
     await tester.pumpWidget(buildSubject());
     await tester.pumpAndSettle();
 
     expect(find.text('Ajukan KTA'), findsNothing);
+    expect(find.byType(KtaFlipCard), findsOneWidget);
+  });
+
+  testWidgets('generated tanpa adminIssued tidak menampilkan kartu',
+      (tester) async {
+    when(() => memberBloc.state).thenReturn(
+      memberLoaded(generated: true, adminIssued: false),
+    );
+
+    await tester.pumpWidget(buildSubject());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KtaFlipCard), findsNothing);
   });
 }
