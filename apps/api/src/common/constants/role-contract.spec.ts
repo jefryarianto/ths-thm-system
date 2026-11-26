@@ -203,7 +203,6 @@ const ADMIN_NASIONAL_CONTRACT: Record<string, string[]> = {
     'exportCsv',
     'findAll',
     'findOne',
-    'generateDigitalCard',
     'getCardIssuances',
     'getCardSecurity',
     'getDigitalCard',
@@ -399,6 +398,16 @@ describe('Role contract — admin_nasional', () => {
     }
 
     expect(violations).toEqual([]);
+  });
+});
+
+describe('Role contract — generate KTA', () => {
+  it('generateDigitalCard hanya mengizinkan superadmin dan admin_distrik', () => {
+    const roles = Reflect.getMetadata(
+      ROLES_KEY,
+      MembersController.prototype.generateDigitalCard,
+    );
+    expect(roles).toEqual(['superadmin', 'admin_distrik']);
   });
 });
 
