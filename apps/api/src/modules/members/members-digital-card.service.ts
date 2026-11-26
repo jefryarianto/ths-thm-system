@@ -291,7 +291,7 @@ export class MembersDigitalCardService {
       where: { anggotaId: memberId, tipe: 'kartu_anggota' },
       orderBy: { createdAt: 'desc' },
       include: {
-        qrValidations: { orderBy: { createdAt: 'desc' }, take: 1 },
+        qrValidations: { orderBy: { createdAt: 'desc' } },
       },
     });
     if (!doc) throw new NotFoundException('Kartu anggota belum dibuat');
@@ -303,6 +303,9 @@ export class MembersDigitalCardService {
   /** Ringkasan keamanan QR & riwayat pemindaian untuk dashboard admin/anggota. */
   async getCardSecurity(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { doc, qr } = await this.findKtaDocument(memberId, scope, user);
+    if (user?.role === 'anggota' && !doc.qrValidations.some((item) => item.isValid)) {
+      throw new NotFoundException('Kartu anggota tidak aktif');
+    }
     const scans = await this.prisma.qrScan.findMany({
       where: { qrValidationId: qr.id },
       orderBy: { scannedAt: 'desc' },
@@ -428,7 +431,11 @@ export class MembersDigitalCardService {
         qrValidations: { orderBy: { createdAt: 'desc' } },
       },
     });
-    const issuances = (doc?.qrValidations ?? []).map((qr, idx, all) => ({
+    const visibleQrs =
+      user?.role === 'anggota'
+        ? (doc?.qrValidations ?? []).filter((qr) => qr.isValid)
+        : (doc?.qrValidations ?? []);
+    const issuances = visibleQrs.map((qr, idx, all) => ({
       id: qr.id,
       source: qr.source,
       reason: qr.reason,

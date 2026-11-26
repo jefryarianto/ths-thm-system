@@ -533,6 +533,32 @@ describe('MembersDigitalCardService', () => {
       mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc({ qrValidations: [] }));
       await expect(service.getCardSecurity('m-lrt-1')).rejects.toThrow(NotFoundException);
     });
+
+    it('hides revoked card security from member', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm-lrt-1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(
+        ktaDoc({
+          status: 'revoked',
+          qrValidations: [
+            {
+              id: 'qr-1',
+              isValid: false,
+              scanCount: 0,
+              scannedAt: null,
+              createdAt: new Date('2026-01-01T00:00:00Z'),
+            },
+          ],
+        }),
+      );
+
+      await expect(
+        service.getCardSecurity('m-lrt-1', undefined, {
+          email: 'jefry@gmail.com',
+          role: 'anggota',
+        } as any),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 
   describe('setCardActive', () => {
@@ -763,6 +789,60 @@ describe('MembersDigitalCardService', () => {
       const result = await service.getCardIssuances('m-lrt-1');
 
       expect(result.data.issuances).toEqual([]);
+    });
+
+    it('returns no issuances to member when all QRs are revoked', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm-lrt-1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        qrValidations: [
+          {
+            id: 'qr-old',
+            source: 'digital',
+            reason: 'QR diganti saat penerbitan ulang admin',
+            isValid: false,
+            scanCount: 0,
+            scannedAt: null,
+            verificationUrl: 'http://localhost:3000/verify/old',
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+          },
+        ],
+      } as any);
+
+      const result = await service.getCardIssuances('m-lrt-1', undefined, {
+        email: 'jefry@gmail.com',
+        role: 'anggota',
+      } as any);
+
+      expect(result.data.issuances).toEqual([]);
+    });
+
+    it('admin tetap melihat QR revoked sebagai audit', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        qrValidations: [
+          {
+            id: 'qr-old',
+            source: 'digital',
+            reason: 'QR diganti saat penerbitan ulang admin',
+            isValid: false,
+            scanCount: 0,
+            scannedAt: null,
+            verificationUrl: 'http://localhost:3000/verify/old',
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+          },
+        ],
+      } as any);
+
+      const result = await service.getCardIssuances('m-lrt-1', undefined, {
+        role: 'superadmin',
+      } as any);
+
+      expect(result.data.issuances).toHaveLength(1);
+      expect(result.data.issuances[0].isValid).toBe(false);
     });
   });
 
