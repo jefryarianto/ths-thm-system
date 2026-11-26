@@ -241,6 +241,7 @@ export class KtaApplicationController {
     const proof = await this.ktaApplicationService.getProof(id, req.scope);
     res.setHeader('Content-Type', proof.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${proof.fileName}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
     const stream = createReadStream(proof.absolutePath);
     stream.on('error', () => {
       if (res.headersSent) {
@@ -337,7 +338,7 @@ export class KtaApplicationController {
     @Body() dto: VerifyPaymentKtaDto,
     @CurrentUser() user: any,
   ) {
-    return this.ktaApplicationService.verifyPayment(id, user.id, dto);
+    return this.ktaApplicationService.verifyPayment(id, user.id, dto, user.role);
   }
 
   @Post(':id/generate-card')

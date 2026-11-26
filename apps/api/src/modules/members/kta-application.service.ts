@@ -830,6 +830,7 @@ export class KtaApplicationService {
     applicationId: string,
     distrikAdminId: string,
     dto: VerifyPaymentKtaDto = {},
+    actorRole?: string,
   ) {
     const app = await this.prisma.ktaApplication.findUnique({
       where: { id: applicationId },
@@ -858,7 +859,7 @@ export class KtaApplicationService {
           level: 'DISTRIK',
           action: 'PAYMENT_VERIFIED',
           actorId: distrikAdminId,
-          actorRole: 'admin_distrik',
+          actorRole: actorRole ?? 'admin_distrik',
           catatan: dto.catatan,
         },
       });

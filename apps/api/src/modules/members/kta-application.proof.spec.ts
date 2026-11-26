@@ -178,6 +178,7 @@ describe('KtaApplicationController.getProof', () => {
       'Content-Disposition',
       `inline; filename="${proofFileName}"`,
     );
+    expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store');
     expect(Buffer.concat(chunks).toString()).toBe('proof');
   });
 

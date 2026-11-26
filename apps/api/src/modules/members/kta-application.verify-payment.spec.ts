@@ -78,22 +78,33 @@ describe('KtaApplicationService.verifyPayment', () => {
     });
   });
 
-  it('menyimpan catatan ke riwayat PAYMENT_VERIFIED', async () => {
-    const { service, createHistory } = makeService();
+  it.each([
+    ['admin_distrik', undefined],
+    ['superadmin', 'superadmin'],
+  ])(
+    'menyimpan catatan dengan actorRole %s ke riwayat PAYMENT_VERIFIED',
+    async (expectedRole, actorRole) => {
+      const { service, createHistory } = makeService();
 
-    await service.verifyPayment('a1', 'admin1', { buktiPath: '', catatan: 'Transfer sesuai' });
+      await service.verifyPayment(
+        'a1',
+        'admin1',
+        { buktiPath: '', catatan: 'Transfer sesuai' },
+        actorRole,
+      );
 
-    expect(createHistory).toHaveBeenCalledWith({
-      data: {
-        ktaApplicationId: 'a1',
-        level: 'DISTRIK',
-        action: 'PAYMENT_VERIFIED',
-        actorId: 'admin1',
-        actorRole: 'admin_distrik',
-        catatan: 'Transfer sesuai',
-      },
-    });
-  });
+      expect(createHistory).toHaveBeenCalledWith({
+        data: {
+          ktaApplicationId: 'a1',
+          level: 'DISTRIK',
+          action: 'PAYMENT_VERIFIED',
+          actorId: 'admin1',
+          actorRole: expectedRole,
+          catatan: 'Transfer sesuai',
+        },
+      });
+    },
+  );
 
   it('mengizinkan body tanpa catatan dan menulis catatan undefined', async () => {
     const { service, createHistory } = makeService();
@@ -116,8 +127,8 @@ describe('KtaApplicationController.verifyPayment', () => {
     );
     const body = { buktiPath: '', catatan: 'Transfer sesuai' };
 
-    await controller.verifyPayment('a1', body, { id: 'admin1' });
+    await controller.verifyPayment('a1', body, { id: 'admin1', role: 'superadmin' });
 
-    expect(verifyPayment).toHaveBeenCalledWith('a1', 'admin1', body);
+    expect(verifyPayment).toHaveBeenCalledWith('a1', 'admin1', body, 'superadmin');
   });
 });
