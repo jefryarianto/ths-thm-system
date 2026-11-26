@@ -198,7 +198,7 @@ export default function KtaProofPreview({
           <iframe
             src={preview.url}
             title="Pratinjau Bukti PDF"
-            sandbox=""
+            sandbox="allow-same-origin"
             className="w-full h-96 rounded-lg border border-border"
           />
           <a

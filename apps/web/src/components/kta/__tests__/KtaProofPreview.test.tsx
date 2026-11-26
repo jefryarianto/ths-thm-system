@@ -129,7 +129,8 @@ describe('KtaProofPreview', () => {
 
     expect(iframe).toHaveAttribute('src', 'blob:proof-url');
     expect(iframe).toHaveAttribute('sandbox');
-    expect(iframe.getAttribute('sandbox') || '').not.toContain('allow-same-origin');
+    expect(iframe.getAttribute('sandbox') || '').toContain('allow-same-origin');
+    expect(iframe.getAttribute('sandbox') || '').not.toContain('allow-scripts');
     expect(screen.getByRole('link', { name: /Unduh PDF/i })).toHaveAttribute('download', 'kta-proof-123.pdf');
     expect(container.querySelector('img')).toBeNull();
   });
