@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +32,9 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   final _noHpCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   String? _selectedRantingId;
+  String _modeBukti = 'unggah';
+  final _ceritaCtrl = TextEditingController();
+  List<String> _buktiPaths = const [];
 
   @override
   void dispose() {
@@ -41,6 +47,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
     _alamatCtrl.dispose();
     _noHpCtrl.dispose();
     _emailCtrl.dispose();
+    _ceritaCtrl.dispose();
     super.dispose();
   }
 
@@ -60,6 +67,29 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
     if (p != null) setState(() => _tanggalLahir = p);
   }
 
+  Future<void> _pickBukti() async {
+    final pickedFiles = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+    );
+    if (!mounted) return;
+    final picked = pickedFiles.map((f) => f.path).whereType<String>().toList();
+    if (picked.isEmpty) return;
+    if (picked.any((path) => File(path).lengthSync() > 5 * 1024 * 1024)) {
+      showCenteredSnackBar(context, 'Setiap berkas maksimal 5MB');
+      return;
+    }
+    final merged = <String>[..._buktiPaths];
+    for (final path in picked) {
+      if (!merged.contains(path)) merged.add(path);
+    }
+    if (merged.length > 3) {
+      showCenteredSnackBar(context, 'Maksimal 3 berkas bukti');
+      return;
+    }
+    setState(() => _buktiPaths = merged);
+  }
+
   void _submit() {
     if (_tipe == 'keanggotaan') {
       if (_namaCtrl.text.trim().isEmpty) {
@@ -77,6 +107,19 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
       if (_emailCtrl.text.trim().isEmpty) {
         showCenteredSnackBar(context, 'Email wajib diisi');
         return;
+      }
+      if (_modeBukti == 'unggah' && _buktiPaths.isEmpty) {
+        showCenteredSnackBar(
+            context, 'Mode unggah memerlukan minimal satu berkas bukti');
+        return;
+      }
+      if (_modeBukti == 'cerita') {
+        final cerita = _ceritaCtrl.text.trim();
+        if (cerita.length < 20 || cerita.length > 1000) {
+          showCenteredSnackBar(
+              context, 'Cerita histori harus antara 20 sampai 1000 karakter');
+          return;
+        }
       }
     }
     context.read<ClaimBloc>().add(ClaimCreateRequested(
@@ -105,6 +148,12 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
           noHp: _noHpCtrl.text.trim().isEmpty ? null : _noHpCtrl.text.trim(),
           email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
           rantingId: _tipe == 'keanggotaan' ? _selectedRantingId : null,
+          modeBukti: _modeBukti,
+          ceritaHistori:
+              _modeBukti == 'cerita' ? _ceritaCtrl.text.trim() : null,
+          buktiFilePaths: _modeBukti == 'unggah'
+              ? List<String>.from(_buktiPaths)
+              : const [],
         ));
   }
 
@@ -117,38 +166,42 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
         child: BlocBuilder<ClaimBloc, ClaimState>(
           builder: (ctx, state) {
             final busy = state is ClaimSubmitting;
-            return ListView(padding: const EdgeInsets.all(AppTheme.space20), children: [
-              Icon(Icons.verified_user,
-                  size: 56, color: Theme.of(ctx).colorScheme.primary),
-              const SizedBox(height: AppTheme.space12),
-              const Text('Klaim Akun Anggota',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: AppTheme.space24),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                      value: 'keanggotaan',
-                      label: Text('Keanggotaan'),
-                      icon: Icon(Icons.badge_outlined)),
-                  ButtonSegment(
-                      value: 'dokumen',
-                      label: Text('Dokumen'),
-                      icon: Icon(Icons.description_outlined)),
-                ],
-                selected: {_tipe},
-                onSelectionChanged: (s) => setState(() => _tipe = s.first),
-              ),
-              const SizedBox(height: AppTheme.space20),
-              if (_tipe == 'dokumen') ..._dokumenFields(),
-              if (_tipe == 'keanggotaan') ..._keanggotaanFields(),
-              const SizedBox(height: 28),
-              FilledButton(
-                  onPressed: busy ? null : _submit,
-                  child: busy
-                      ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
-                      : const Text('Kirim Klaim')),
-            ]);
+            return ListView(
+                padding: const EdgeInsets.all(AppTheme.space20),
+                children: [
+                  Icon(Icons.verified_user,
+                      size: 56, color: Theme.of(ctx).colorScheme.primary),
+                  const SizedBox(height: AppTheme.space12),
+                  const Text('Klaim Akun Anggota',
+                      style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: AppTheme.space24),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                          value: 'keanggotaan',
+                          label: Text('Keanggotaan'),
+                          icon: Icon(Icons.badge_outlined)),
+                      ButtonSegment(
+                          value: 'dokumen',
+                          label: Text('Dokumen'),
+                          icon: Icon(Icons.description_outlined)),
+                    ],
+                    selected: {_tipe},
+                    onSelectionChanged: (s) => setState(() => _tipe = s.first),
+                  ),
+                  const SizedBox(height: AppTheme.space20),
+                  if (_tipe == 'dokumen') ..._dokumenFields(),
+                  if (_tipe == 'keanggotaan') ..._keanggotaanFields(),
+                  const SizedBox(height: 28),
+                  FilledButton(
+                      onPressed: busy ? null : _submit,
+                      child: busy
+                          ? const AppLoadingSpinner.small(
+                              color: AppTheme.onPrimary)
+                          : const Text('Kirim Klaim')),
+                ]);
           },
         ),
       ),
@@ -214,7 +267,9 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
                     style: TextStyle(
                         color: _tanggalLahir != null
                             ? null
-                            : Theme.of(context).colorScheme.onSurfaceVariant)))),
+                            : Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant)))),
         const SizedBox(height: 14),
         TextFormField(
             controller: _tempatDadarCtrl,
@@ -248,6 +303,59 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
                 labelText: 'Email *', prefixIcon: Icon(Icons.email_outlined))),
+        const SizedBox(height: 14),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Cara Pembuktian Keanggotaan *',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            RadioGroup<String>(
+              groupValue: _modeBukti,
+              onChanged: (v) {
+                if (v != null) setState(() => _modeBukti = v);
+              },
+              child: const Column(
+                children: [
+                  RadioListTile<String>(
+                    title: Text('Unggah bukti'),
+                    value: 'unggah',
+                  ),
+                  RadioListTile<String>(
+                    title: Text('Ceritakan histori'),
+                    value: 'cerita',
+                  ),
+                ],
+              ),
+            ),
+            if (_modeBukti == 'unggah') ...[
+              const Text(
+                  'Sertifikat, kartu anggota, KTP, atau surat keterangan'),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _pickBukti,
+                icon: const Icon(Icons.attach_file),
+                label: const Text('Pilih Berkas Bukti'),
+              ),
+              ..._buktiPaths.map(
+                (path) => Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(path.split(Platform.pathSeparator).last),
+                ),
+              ),
+            ],
+            if (_modeBukti == 'cerita')
+              TextFormField(
+                controller: _ceritaCtrl,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText:
+                      'Tulis riwayat keanggotaan Anda (20–1000 karakter)',
+                  prefixIcon: Icon(Icons.history),
+                  alignLabelWithHint: true,
+                ),
+              ),
+          ],
+        ),
       ];
 
   void _onStateChanged(BuildContext context, ClaimState state) {
