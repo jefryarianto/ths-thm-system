@@ -2353,6 +2353,7 @@ model KtaApplication {
   diterbitkanAt    DateTime?    @map("diterbitkan_at")
   submittedById    String       @map("submitted_by_id")
   submittedByRole  String       @map("submitted_by_role")
+  submittedSnapshot Json?      @map("submitted_snapshot")
   batchId          String?      @map("batch_id")
   catatanAdmin     String?      @map("catatan_admin")
   createdAt        DateTime     @default(now()) @map("created_at")

@@ -52,8 +52,12 @@ export class KtaApplicationController {
   @Roles('anggota')
   @ApiOperation({ summary: 'Submit KTA application' })
   @ApiResponse({ status: 201, description: 'KTA application submitted successfully' })
-  async create(@CurrentUser() user: any, @Body() _dto: CreateKtaDto) {
-    return this.ktaApplicationService.submitSelf(user.email, { id: user.id, role: user.role });
+  async create(@CurrentUser() user: any, @Body() dto: CreateKtaDto) {
+    return this.ktaApplicationService.submitSelf(
+      user.email,
+      { id: user.id, role: user.role },
+      dto,
+    );
   }
 
   // Body-less self-submit for the mobile app (POST /kta-applications/me).

@@ -19,6 +19,7 @@ import { MembersDigitalCardService } from './members-digital-card.service';
 import { PkiService } from '../../common/services/pki.service';
 import { calculateMissingFields } from '../../common/utils/member-completeness';
 import { deleteKtaProofFile } from '../../common/utils/kta-proof-upload.util';
+import { buildKtaSnapshot, KtaSnapshotPayload } from '../../common/utils/kta-snapshot.util';
 
 const LEVEL_ORDER: KtaAppLevel[] = ['RANTING', 'WILAYAH', 'DISTRIK', 'NASIONAL'];
 
@@ -255,13 +256,17 @@ export class KtaApplicationService {
   // ============================================================
   // SUBMIT (Self, by email)
   // ============================================================
-  async submitSelf(userEmail: string, submitter: { id: string; role: string }) {
+  async submitSelf(
+    userEmail: string,
+    submitter: { id: string; role: string },
+    payload?: KtaSnapshotPayload,
+  ) {
     const member = await this.prisma.anggota.findFirst({
       where: { email: userEmail, deletedAt: null },
       select: { id: true },
     });
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-    return this.submit(member.id, submitter, undefined);
+    return this.submit(member.id, submitter, undefined, payload);
   }
 
   // ============================================================
@@ -271,6 +276,7 @@ export class KtaApplicationService {
     anggotaId: string,
     submitter: { id: string; role: string },
     scope?: UserScope,
+    payload?: KtaSnapshotPayload,
   ) {
     const member = await this.prisma.anggota.findUnique({
       where: { id: anggotaId, deletedAt: null },
@@ -286,6 +292,7 @@ export class KtaApplicationService {
     if (missing.length > 0) {
       throw new BadRequestException(`Data anggota belum lengkap: ${missing.join(', ')}`);
     }
+    const snapshot = buildKtaSnapshot(member, submitter, payload, missing);
 
     const activeApp = await this.prisma.ktaApplication.findFirst({
       where: { anggotaId, status: { in: [...REVIEW_STATES, 'APPROVED', 'PAYMENT_SETUP', 'PAYMENT_PENDING', 'PAYMENT_VERIFIED', 'CARD_GENERATING'] } },
@@ -306,6 +313,7 @@ export class KtaApplicationService {
           anggotaId,
           submittedById: submitter.id,
           submittedByRole: submitter.role,
+          submittedSnapshot: snapshot,
           status: initialStatus,
         },
       });
@@ -355,7 +363,7 @@ export class KtaApplicationService {
     if (anggotaIds.length === 0) throw new BadRequestException('Tidak ada anggota dipilih');
     if (anggotaIds.length > 100) throw new BadRequestException('Maksimal 100 anggota per bulk submit');
 
-    const eligible: string[] = [];
+    const eligible: { anggotaId: string; snapshot: Prisma.InputJsonValue }[] = [];
     const ineligible: { anggotaId: string; errors: string[] }[] = [];
 
     for (const anggotaId of anggotaIds) {
@@ -380,9 +388,14 @@ export class KtaApplicationService {
           where: { anggotaId, tipe: 'kartu_anggota', status: { not: 'revoked' } },
         });
         if (existingCard) errors.push('Sudah memiliki KTA aktif');
+        if (errors.length === 0) {
+          eligible.push({
+            anggotaId,
+            snapshot: buildKtaSnapshot(member, submitter, null, missing),
+          });
+        }
       }
-      if (errors.length === 0) eligible.push(anggotaId);
-      else ineligible.push({ anggotaId, errors });
+      if (errors.length > 0) ineligible.push({ anggotaId, errors });
     }
 
     if (eligible.length === 0) throw new BadRequestException('Tidak ada anggota yang memenuhi syarat');
@@ -404,13 +417,14 @@ export class KtaApplicationService {
 
     const createdIds: string[] = [];
     await this.prisma.$transaction(async (tx) => {
-      for (const anggotaId of eligible) {
+      for (const { anggotaId, snapshot } of eligible) {
         const created = await tx.ktaApplication.create({
           data: {
             anggotaId,
             batchId: batch.id,
             submittedById: submitter.id,
             submittedByRole: submitter.role,
+            submittedSnapshot: snapshot,
             status: initialStatus,
           },
         });
