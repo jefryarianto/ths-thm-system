@@ -2085,6 +2085,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/kta-applications/{id}/proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream KTA payment proof */
+        get: operations["KtaApplicationController_getProof"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/kta-applications/{id}": {
         parameters: {
             query?: never;
@@ -8374,6 +8391,10 @@ export interface components {
         RejectKtaDto: {
             reason: string;
         };
+        VerifyPaymentKtaDto: {
+            buktiPath?: string;
+            catatan?: string;
+        };
         CreatePenandatanganDto: Record<string, never>;
         UpdatePenandatanganDto: Record<string, never>;
         CreateTingkatanDto: Record<string, never>;
@@ -11611,6 +11632,25 @@ export interface operations {
             };
         };
     };
+    KtaApplicationController_getProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     KtaApplicationController_findOne: {
         parameters: {
             query?: never;
@@ -11723,7 +11763,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyPaymentKtaDto"];
+            };
+        };
         responses: {
             201: {
                 headers: {

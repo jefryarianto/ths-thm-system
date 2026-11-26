@@ -3981,6 +3981,30 @@
         ]
       }
     },
+    "/kta-applications/{id}/proof": {
+      "get": {
+        "operationId": "KtaApplicationController_getProof",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Stream KTA payment proof",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
     "/kta-applications/{id}": {
       "get": {
         "operationId": "KtaApplicationController_findOne",
@@ -4134,6 +4158,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPaymentKtaDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": ""
@@ -18996,6 +19030,17 @@
         "required": [
           "reason"
         ]
+      },
+      "VerifyPaymentKtaDto": {
+        "type": "object",
+        "properties": {
+          "buktiPath": {
+            "type": "string"
+          },
+          "catatan": {
+            "type": "string"
+          }
+        }
       },
       "CreatePenandatanganDto": {
         "type": "object",
