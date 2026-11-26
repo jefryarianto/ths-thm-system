@@ -6,8 +6,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/card_data.dart';
+import '../../data/models/kta_application.dart';
 import '../../data/models/member.dart';
+import '../../logic/kta_application/kta_application_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -22,10 +25,19 @@ class KtaScreen extends StatefulWidget {
   State<KtaScreen> createState() => _KtaScreenState();
 }
 
+const _issuableKtaStatuses = <KtaAppStatus>{
+  KtaAppStatus.paymentVerified,
+  KtaAppStatus.cardGenerating,
+  KtaAppStatus.cardGenerated,
+};
+
 class _KtaScreenState extends State<KtaScreen> {
+  MemberLoaded? _lastLoaded;
+
   @override
   void initState() {
     super.initState();
+    context.read<KtaApplicationBloc>().add(const KtaApplicationLoadRequested());
     final state = context.read<MemberBloc>().state;
     if (state is! MemberLoaded) {
       context.read<MemberBloc>().add(const MemberLoadRequested());
@@ -49,37 +61,70 @@ class _KtaScreenState extends State<KtaScreen> {
           title: 'KTA Digital',
         ),
       ),
-      body: SecureKtaContainer(
-        // ── TEMPATKAN widget KTA lama Anda di parameter childKtaExisting ──
-        // Desain internal `KtaFlipCard` / kartu TIDAK diubah/dirombak.
-        // Yang dilakukan hanya membungkus dengan keamanan + jam verifikasi.
-        childKtaExisting: BlocBuilder<MemberBloc, MemberState>(
-          builder: (context, state) {
-            if (state is MemberLoading) {
-              return const AppLoadingSpinner();
-            }
-            if (state is MemberError) {
-              return _Error(message: state.message);
-            }
-            if (state is! MemberLoaded) {
-              return const EmptyStateView(
-                icon: Icons.badge_outlined,
-                title: 'Belum ada data anggota',
-                message: 'Data anggota Anda akan muncul setelah dimuat.',
+      body: BlocListener<MemberBloc, MemberState>(
+        listenWhen: (previous, current) =>
+            current is MemberLoaded || current is MemberError,
+        listener: (context, state) {
+          if (state is MemberLoaded) _lastLoaded = state;
+          if (state is MemberError && _lastLoaded != null) {
+            showCenteredSnackBar(context, state.message);
+          }
+        },
+        child: SecureKtaContainer(
+          childKtaExisting: BlocBuilder<KtaApplicationBloc, KtaApplicationState>(
+            builder: (context, ktaState) {
+              if (ktaState is KtaApplicationError) {
+                return ErrorStateView(
+                  message: ktaState.message,
+                  onRetry: () => context
+                      .read<KtaApplicationBloc>()
+                      .add(const KtaApplicationLoadRequested()),
+                );
+              }
+              final canGenerate = ktaState is KtaApplicationLoaded &&
+                  _issuableKtaStatuses.contains(ktaState.application.status);
+              return BlocBuilder<MemberBloc, MemberState>(
+                builder: (context, state) {
+                  if (state is MemberLoading) {
+                    return const AppLoadingSpinner();
+                  }
+                  if (state is MemberLoaded) _lastLoaded = state;
+                  if (state is MemberError) {
+                    final lastLoaded = _lastLoaded;
+                    if (lastLoaded != null) {
+                      return _KtaCard(
+                        member: lastLoaded.member,
+                        cardData: lastLoaded.cardData,
+                        canGenerate: canGenerate,
+                      );
+                    }
+                    return _Error(message: state.message);
+                  }
+                  if (state is! MemberLoaded) {
+                    return const EmptyStateView(
+                      icon: Icons.badge_outlined,
+                      title: 'Belum ada data anggota',
+                      message: 'Data anggota Anda akan muncul setelah dimuat.',
+                    );
+                  }
+                  if (state.cardData == null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        context
+                            .read<MemberBloc>()
+                            .add(const MemberCardDataRequested());
+                      }
+                    });
+                  }
+                  return _KtaCard(
+                    member: state.member,
+                    cardData: state.cardData,
+                    canGenerate: canGenerate,
+                  );
+                },
               );
-            }
-            // Fetch card data if not loaded yet
-            if (state.cardData == null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  context
-                      .read<MemberBloc>()
-                      .add(const MemberCardDataRequested());
-                }
-              });
-            }
-            return _KtaCard(member: state.member, cardData: state.cardData);
-          },
+            },
+          ),
         ),
       ),
     );
@@ -89,7 +134,12 @@ class _KtaScreenState extends State<KtaScreen> {
 class _KtaCard extends StatelessWidget {
   final Member member;
   final CardData? cardData;
-  const _KtaCard({required this.member, this.cardData});
+  final bool canGenerate;
+  const _KtaCard({
+    required this.member,
+    this.cardData,
+    required this.canGenerate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +153,10 @@ class _KtaCard extends StatelessWidget {
         // KTA belum dibuat → ajak anggota generate manual (sistem dilarang
         // membuat otomatis). Setelah generate, kartu tampil normal.
         if (!generated) ...[
-          _GenerateKtaCard(member: member),
+          if (canGenerate)
+            _GenerateKtaCard(member: member)
+          else
+            const _KtaNotReadyCard(),
           const SizedBox(height: AppTheme.space12),
         ] else ...[
           // Kartu digital — desain Expo
@@ -229,6 +282,39 @@ class _Error extends StatelessWidget {
       message: message,
       onRetry: () =>
           context.read<MemberBloc>().add(const MemberLoadRequested()),
+    );
+  }
+}
+
+class _KtaNotReadyCard extends StatelessWidget {
+  const _KtaNotReadyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.space20),
+        child: Column(
+          children: [
+            Icon(Icons.hourglass_empty, size: 48, color: scheme.primary),
+            const SizedBox(height: 12),
+            const Text(
+              'KTA belum dapat diterbitkan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Lunasi biaya KTA dan tunggu verifikasi admin sebelum generate kartu.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

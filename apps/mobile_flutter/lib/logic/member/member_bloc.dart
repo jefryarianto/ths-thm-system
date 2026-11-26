@@ -12,7 +12,9 @@ part 'member_event.dart';
 part 'member_state.dart';
 
 class MemberBloc extends Bloc<MemberEvent, MemberState> {
-  MemberBloc() : super(MemberInitial()) {
+  MemberBloc({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient(),
+        super(MemberInitial()) {
     on<MemberLoadRequested>(_onMemberLoadRequested);
     on<MemberCardImageRequested>(_onMemberCardImageRequested);
     on<MemberCardDataRequested>(_onMemberCardDataRequested);
@@ -22,7 +24,7 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     on<MemberLogoutRequested>(_onMemberLogoutRequested);
   }
 
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
 
   Future<void> _onMemberLoadRequested(
     MemberLoadRequested event,
@@ -147,8 +149,12 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     if (token == null || token.isEmpty) return;
     try {
       await _apiClient.dio.post('/members/${current.member.id}/digital-card/generate');
-    } catch (_) {
-      // Gagal generate — biarkan UI menampilkan ulang tombol generate
+    } on DioException catch (e) {
+      emit(MemberError(message: _messageFromError(e)));
+      return;
+    } catch (e) {
+      emit(MemberError(message: e.toString()));
+      return;
     }
     await _fetchCardData(current, emit, force: true);
   }

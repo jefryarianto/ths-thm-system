@@ -7,10 +7,20 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Req,
   ForbiddenException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express/multer';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -25,6 +35,7 @@ import { ApproveKtaDto } from './dto/approve-kta.dto';
 import { RejectKtaDto } from './dto/reject-kta.dto';
 import { SubmitBulkKtaDto } from './dto/submit-bulk-kta.dto';
 import { KtaAppFilterDto } from './dto/kta-filter.dto';
+import { buildKtaProofUploadOptions } from '../../common/utils/kta-proof-upload.util';
 
 @ApiTags('kta-applications')
 @Controller('kta-applications')
@@ -68,6 +79,31 @@ export class KtaApplicationController {
   @ApiOperation({ summary: 'Cancel KTA application' })
   async cancel(@CurrentUser() user: any, @Body() body: { reason?: string }) {
     return this.ktaApplicationService.cancelMyApplication(user.email, body?.reason || '');
+  }
+
+  @Post('me/upload-proof')
+  @Roles('anggota')
+  @ApiOperation({ summary: 'Upload KTA payment proof (member self-service)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        bukti: {
+          type: 'string',
+          format: 'binary',
+          description: 'Bukti pembayaran KTA (JPG, PNG, WebP, atau PDF, maksimal 5MB)',
+        },
+      },
+      required: ['bukti'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('bukti', buildKtaProofUploadOptions()))
+  async uploadProof(
+    @CurrentUser() user: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.ktaApplicationService.uploadProof(user.email, file);
   }
 
   // ── ADMIN RESET (hard reset so member can re-submit) ──

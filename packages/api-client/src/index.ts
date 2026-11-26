@@ -1864,6 +1864,23 @@ export interface paths {
         patch: operations["KtaApplicationController_cancel"];
         trace?: never;
     };
+    "/kta-applications/me/upload-proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload KTA payment proof (member self-service) */
+        post: operations["KtaApplicationController_uploadProof"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/kta-applications/members/{memberId}/reset": {
         parameters: {
             query?: never;
@@ -8224,7 +8241,7 @@ export interface components {
             apkUrl?: string;
         };
         LoginDto: {
-            /** @example admin@ths-thm.org atau 081234567890 */
+            /** @example admin@ths-thm.org, 081234567890, atau LTK-0101-001-2026 */
             identifier: string;
             /** @example password123 */
             password: string;
@@ -11341,6 +11358,33 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KtaApplicationController_uploadProof: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Bukti pembayaran KTA (JPG, PNG, WebP, atau PDF, maksimal 5MB)
+                     */
+                    bukti: string;
+                };
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

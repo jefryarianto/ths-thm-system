@@ -10,6 +10,15 @@ KtaApplication ktaApplication({
     id: 'kta-1',
     anggotaId: 'member-1',
     status: status,
+    biaya: 250000,
+    rekeningTujuan: 'BCA 1234567890 a.n. THS THM',
+    buktiBayarPath: status == KtaAppStatus.paymentPending
+        ? '/api/uploads/kta-proofs/bukti.png'
+        : null,
+    statusPembayaran: status == KtaAppStatus.paymentPending
+        ? 'MENUNGGU_VERIFIKASI'
+        : 'BELUM_BAYAR',
+    catatanAdmin: 'Transfer sebelum batas waktu',
     submittedByRole: 'member',
     createdAt: DateTime.utc(2026, 11, 25),
     updatedAt: DateTime.utc(2026, 11, 25),

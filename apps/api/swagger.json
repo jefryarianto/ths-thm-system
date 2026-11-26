@@ -3707,6 +3707,41 @@
         ]
       }
     },
+    "/kta-applications/me/upload-proof": {
+      "post": {
+        "operationId": "KtaApplicationController_uploadProof",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bukti": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Bukti pembayaran KTA (JPG, PNG, WebP, atau PDF, maksimal 5MB)"
+                  }
+                },
+                "required": [
+                  "bukti"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Upload KTA payment proof (member self-service)",
+        "tags": [
+          "kta-applications"
+        ]
+      }
+    },
     "/kta-applications/members/{memberId}/reset": {
       "post": {
         "operationId": "KtaApplicationController_resetMemberKta",

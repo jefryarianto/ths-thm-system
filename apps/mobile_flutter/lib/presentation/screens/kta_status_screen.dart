@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/kta_application.dart';
 import '../../logic/kta_application/kta_application_bloc.dart';
@@ -51,31 +53,38 @@ class _KtaStatusScreenState extends State<KtaStatusScreen> {
           title: 'Status Pengajuan KTA',
         ),
       ),
-      body: BlocBuilder<KtaApplicationBloc, KtaApplicationState>(
-        builder: (context, state) {
-          if (state is KtaApplicationLoading) {
-            return const Center(child: AppLoadingSpinner());
+      body: BlocListener<KtaApplicationBloc, KtaApplicationState>(
+        listener: (context, state) {
+          if (state is KtaApplicationActionSuccess) {
+            showCenteredSnackBar(context, state.message);
           }
-          if (state is KtaApplicationError) {
-            return ErrorStateView(
-              message: state.message,
-              onRetry: () => context.read<KtaApplicationBloc>().add(const KtaApplicationLoadRequested()),
-            );
-          }
-          if (state is KtaApplicationLoaded) {
-            return _StatusView(application: state.application);
-          }
-          if (state is KtaApplicationSubmitted) {
-            return _StatusView(application: state.application);
-          }
-          return EmptyStateView(
-            icon: Icons.timeline,
-            title: 'Belum Ada Pengajuan',
-            message: 'Ajukan KTA terlebih dahulu untuk melihat status proses.',
-            actionLabel: 'Ajukan KTA',
-            onAction: () => context.read<KtaApplicationBloc>().add(const KtaApplicationSubmitRequested()),
-          );
         },
+        child: BlocBuilder<KtaApplicationBloc, KtaApplicationState>(
+          builder: (context, state) {
+            if (state is KtaApplicationLoading || state is KtaApplicationActionSuccess) {
+              return const Center(child: AppLoadingSpinner());
+            }
+            if (state is KtaApplicationError) {
+              return ErrorStateView(
+                message: state.message,
+                onRetry: () => context.read<KtaApplicationBloc>().add(const KtaApplicationLoadRequested()),
+              );
+            }
+            if (state is KtaApplicationLoaded) {
+              return _StatusView(application: state.application);
+            }
+            if (state is KtaApplicationSubmitted) {
+              return _StatusView(application: state.application);
+            }
+            return EmptyStateView(
+              icon: Icons.timeline,
+              title: 'Belum Ada Pengajuan',
+              message: 'Ajukan KTA terlebih dahulu untuk melihat status proses.',
+              actionLabel: 'Ajukan KTA',
+              onAction: () => context.read<KtaApplicationBloc>().add(const KtaApplicationSubmitRequested()),
+            );
+          },
+        ),
       ),
     );
   }
@@ -227,8 +236,79 @@ class _StatusView extends StatelessWidget {
           )
         else if (application.status == KtaAppStatus.paymentPending ||
             application.status == KtaAppStatus.paymentSetup)
-          const SizedBox.shrink(),
+          _PaymentSection(application: application),
       ],
+    );
+  }
+}
+
+class _PaymentSection extends StatelessWidget {
+  final KtaApplication application;
+
+  const _PaymentSection({required this.application});
+
+  Future<void> _pickAndUpload(BuildContext context) async {
+    final files = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+    );
+    if (files.isEmpty || files.first.path == null) return;
+    final file = files.first;
+    final extension = file.path!.split('.').last.toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'webp', 'pdf'].contains(extension)) {
+      if (context.mounted) {
+        showCenteredSnackBar(context, 'Hanya file JPG, PNG, WebP, dan PDF yang diizinkan');
+      }
+      return;
+    }
+    final size = file.lengthSync() ?? await file.length();
+    if (size != null && size > 5 * 1024 * 1024) {
+      if (context.mounted) showCenteredSnackBar(context, 'Ukuran bukti maksimal 5MB');
+      return;
+    }
+    if (!context.mounted) return;
+    context.read<KtaApplicationBloc>().add(
+          KtaApplicationProofUploadRequested(filePath: file.path!),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = application.status == KtaAppStatus.paymentPending;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.space16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Pembayaran KTA', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(height: AppTheme.space12),
+            const Text('Biaya penerbitan'),
+            Text(
+              application.biaya != null ? Formatters.rupiah(application.biaya!) : '-',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppTheme.space12),
+            const Text('Rekening tujuan'),
+            Text(application.rekeningTujuan ?? '-'),
+            if (application.catatanAdmin != null && application.catatanAdmin!.isNotEmpty) ...[
+              const SizedBox(height: AppTheme.space12),
+              const Text('Catatan admin'),
+              Text(application.catatanAdmin!),
+            ],
+            if (pending) ...[
+              const SizedBox(height: AppTheme.space12),
+              const Text('Menunggu verifikasi pembayaran'),
+            ],
+            const SizedBox(height: AppTheme.space16),
+            FilledButton.icon(
+              onPressed: () => _pickAndUpload(context),
+              icon: const Icon(Icons.upload_file),
+              label: Text(pending ? 'Unggah ulang bukti' : 'Unggah bukti pelunasan'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -24,6 +24,15 @@ class KtaApplicationCancelRequested extends KtaApplicationEvent {
   List<Object> get props => [reason];
 }
 
+class KtaApplicationProofUploadRequested extends KtaApplicationEvent {
+  final String filePath;
+
+  const KtaApplicationProofUploadRequested({required this.filePath});
+
+  @override
+  List<Object> get props => [filePath];
+}
+
 class KtaApplicationBulkSubmitRequested extends KtaApplicationEvent {
   final List<String> anggotaIds;
   final String? batchName;

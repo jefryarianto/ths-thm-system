@@ -9,10 +9,13 @@ part 'kta_application_event.dart';
 part 'kta_application_state.dart';
 
 class KtaApplicationBloc extends Bloc<KtaApplicationEvent, KtaApplicationState> {
-  KtaApplicationBloc() : super(KtaApplicationInitial()) {
+  KtaApplicationBloc({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient(),
+        super(KtaApplicationInitial()) {
     on<KtaApplicationLoadRequested>(_onLoadRequested);
     on<KtaApplicationSubmitRequested>(_onSubmitRequested);
     on<KtaApplicationCancelRequested>(_onCancelRequested);
+    on<KtaApplicationProofUploadRequested>(_onProofUploadRequested);
     on<KtaApplicationBulkSubmitRequested>(_onBulkSubmitRequested);
     on<KtaApplicationApproveRequested>(_onApproveRequested);
     on<KtaApplicationRejectRequested>(_onRejectRequested);
@@ -27,7 +30,7 @@ class KtaApplicationBloc extends Bloc<KtaApplicationEvent, KtaApplicationState> 
     on<KtaApplicationFetchSlaStatusRequested>(_onFetchSlaRequested);
   }
 
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
 
   Future<String?> _token() => _apiClient.getAccessToken();
 
@@ -103,6 +106,42 @@ class KtaApplicationBloc extends Bloc<KtaApplicationEvent, KtaApplicationState> 
       add(const KtaApplicationLoadRequested());
     } on DioException catch (e) {
       emit(KtaApplicationError(message: _apiClient.messageFromError(e)));
+    } catch (e) {
+      emit(KtaApplicationError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onProofUploadRequested(
+    KtaApplicationProofUploadRequested event,
+    Emitter<KtaApplicationState> emit,
+  ) async {
+    final token = await _token();
+    if (token == null || token.isEmpty) {
+      emit(KtaApplicationInitial());
+      return;
+    }
+
+    emit(KtaApplicationLoading());
+    try {
+      final fileName = event.filePath.split(RegExp(r'[\/]')).last;
+      final formData = FormData.fromMap({
+        'bukti': await MultipartFile.fromFile(event.filePath, filename: fileName),
+      });
+      await _apiClient.dio.post(
+        '/kta-applications/me/upload-proof',
+        data: formData,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+      emit(const KtaApplicationActionSuccess(
+        message: 'Bukti pembayaran terkirim, menunggu verifikasi admin.',
+      ));
+      add(const KtaApplicationLoadRequested());
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        emit(KtaApplicationInitial());
+      } else {
+        emit(KtaApplicationError(message: _apiClient.messageFromError(e)));
+      }
     } catch (e) {
       emit(KtaApplicationError(message: e.toString()));
     }

@@ -18,6 +18,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { PkiService } from '../../common/services/pki.service';
 import { calculateMissingFields } from '../../common/utils/member-completeness';
+import { deleteKtaProofFile } from '../../common/utils/kta-proof-upload.util';
 
 const LEVEL_ORDER: KtaAppLevel[] = ['RANTING', 'WILAYAH', 'DISTRIK', 'NASIONAL'];
 
@@ -147,6 +148,53 @@ export class KtaApplicationService {
 
   async assertKtaIssuable(anggotaId: string) {
     return KtaApplicationService.assertKtaIssuable(this.prisma, anggotaId);
+  }
+
+  async uploadProof(userEmail: string, file?: { filename: string }) {
+    if (!file?.filename) throw new BadRequestException('Bukti pembayaran wajib diunggah');
+    try {
+      const member = await this.prisma.anggota.findFirst({
+        where: { email: userEmail, deletedAt: null },
+        select: { id: true },
+      });
+      if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+      const application = await this.prisma.ktaApplication.findFirst({
+        where: { anggotaId: member.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!application) {
+        throw new NotFoundException('Pengajuan KTA tidak ditemukan untuk anggota ini');
+      }
+      if (application.status !== 'PAYMENT_SETUP' && application.status !== 'PAYMENT_PENDING') {
+        throw new BadRequestException(
+          `Bukti hanya dapat diunggah pada status pembayaran (sekarang: ${application.status})`,
+        );
+      }
+      const result = await this.prisma.ktaApplication.updateMany({
+        where: {
+          id: application.id,
+          status: { in: ['PAYMENT_SETUP', 'PAYMENT_PENDING'] },
+        },
+        data: {
+          buktiBayarPath: `/api/uploads/kta-proofs/${file.filename}`,
+          status: 'PAYMENT_PENDING',
+          statusPembayaran: 'MENUNGGU_VERIFIKASI',
+        },
+      });
+      if (result.count !== 1) {
+        throw new BadRequestException('Status pengajuan berubah saat bukti diunggah');
+      }
+      const updated = await this.prisma.ktaApplication.findUnique({
+        where: { id: application.id },
+      });
+      const oldFilename = application.buktiBayarPath?.split('/').pop();
+      if (oldFilename && oldFilename !== file.filename) deleteKtaProofFile(oldFilename);
+      this.audit('KTA_UPLOAD_BUKTI', application.id, member.id);
+      return updated;
+    } catch (error) {
+      deleteKtaProofFile(file.filename);
+      throw error;
+    }
   }
 
   // Retrieve the latest KTA status for a member (used by mobile banner).
@@ -777,7 +825,11 @@ export class KtaApplicationService {
     await this.prisma.$transaction(async (tx) => {
       await tx.ktaApplication.update({
         where: { id: applicationId },
-        data: { status: 'PAYMENT_VERIFIED', buktiBayarPath: buktiPath || null, statusPembayaran: 'LUNAS' },
+        data: {
+          status: 'PAYMENT_VERIFIED',
+          buktiBayarPath: buktiPath || app.buktiBayarPath || null,
+          statusPembayaran: 'LUNAS',
+        },
       });
       await tx.ktaAppHistory.create({
         data: {
