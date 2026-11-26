@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { readFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { join } from 'path';
 import { ROLES_KEY } from '../../common/decorators/roles.decorator';
 import { deleteKtaProofFile } from '../../common/utils/kta-proof-upload.util';
@@ -123,11 +124,28 @@ describe('uploadProof', () => {
 });
 
 describe('verifyPayment fallback', () => {
+  const fileName = 'kta-proof-old.png';
+  const oldPath = `/api/uploads/kta-proofs/${fileName}`;
+  const originalUploadDir = process.env.UPLOAD_DIR;
+  let uploadDir: string;
+
+  beforeAll(() => {
+    uploadDir = mkdtempSync(join(tmpdir(), 'kta-upload-proof-verify-'));
+    mkdirSync(join(uploadDir, 'kta-proofs'));
+    writeFileSync(join(uploadDir, 'kta-proofs', fileName), 'proof');
+    process.env.UPLOAD_DIR = uploadDir;
+  });
+
+  afterAll(() => {
+    if (originalUploadDir === undefined) delete process.env.UPLOAD_DIR;
+    else process.env.UPLOAD_DIR = originalUploadDir;
+    rmSync(uploadDir, { recursive: true, force: true });
+  });
+
   it('mempertahankan bukti yang sudah diupload', async () => {
-    const oldPath = '/api/uploads/kta-proofs/old.png';
     const { service, prisma } = makeService('PAYMENT_PENDING', oldPath);
 
-    await service.verifyPayment('a1', 'admin1');
+    await service.verifyPayment('a1', 'admin1', { buktiPath: '' });
 
     expect(prisma.ktaApplication.update).toHaveBeenCalledWith({
       where: { id: 'a1' },

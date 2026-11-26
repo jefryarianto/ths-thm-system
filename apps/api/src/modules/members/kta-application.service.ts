@@ -23,6 +23,7 @@ import {
   resolveKtaProofFile,
 } from '../../common/utils/kta-proof-upload.util';
 import { buildKtaSnapshot, KtaSnapshotPayload } from '../../common/utils/kta-snapshot.util';
+import { VerifyPaymentKtaDto } from './dto/verify-payment-kta.dto';
 
 const LEVEL_ORDER: KtaAppLevel[] = ['RANTING', 'WILAYAH', 'DISTRIK', 'NASIONAL'];
 
@@ -828,7 +829,7 @@ export class KtaApplicationService {
   async verifyPayment(
     applicationId: string,
     distrikAdminId: string,
-    buktiPath?: string,
+    dto: VerifyPaymentKtaDto = {},
   ) {
     const app = await this.prisma.ktaApplication.findUnique({
       where: { id: applicationId },
@@ -838,13 +839,16 @@ export class KtaApplicationService {
     if (app.status !== 'PAYMENT_SETUP' && app.status !== 'PAYMENT_PENDING') {
       throw new BadRequestException(`Status tidak valid untuk verifikasi pembayaran (sekarang: ${app.status})`);
     }
+    if (!resolveKtaProofFile(app.buktiBayarPath)) {
+      throw new BadRequestException('Bukti pembayaran belum tersedia atau tidak valid');
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.ktaApplication.update({
         where: { id: applicationId },
         data: {
           status: 'PAYMENT_VERIFIED',
-          buktiBayarPath: buktiPath || app.buktiBayarPath || null,
+          buktiBayarPath: app.buktiBayarPath,
           statusPembayaran: 'LUNAS',
         },
       });
@@ -855,6 +859,7 @@ export class KtaApplicationService {
           action: 'PAYMENT_VERIFIED',
           actorId: distrikAdminId,
           actorRole: 'admin_distrik',
+          catatan: dto.catatan,
         },
       });
     });

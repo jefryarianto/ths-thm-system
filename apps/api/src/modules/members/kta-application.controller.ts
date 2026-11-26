@@ -36,6 +36,7 @@ import { KtaAnalyticsService } from './kta-analytics.service';
 import { CreateKtaDto } from './dto/create-kta.dto';
 import { ApproveKtaDto } from './dto/approve-kta.dto';
 import { RejectKtaDto } from './dto/reject-kta.dto';
+import { VerifyPaymentKtaDto } from './dto/verify-payment-kta.dto';
 import { SubmitBulkKtaDto } from './dto/submit-bulk-kta.dto';
 import { KtaAppFilterDto } from './dto/kta-filter.dto';
 import { buildKtaProofUploadOptions } from '../../common/utils/kta-proof-upload.util';
@@ -333,10 +334,10 @@ export class KtaApplicationController {
   @ApiOperation({ summary: 'Verifikasi pembayaran KTA' })
   async verifyPayment(
     @Param('id') id: string,
-    @Body() body: { buktiPath?: string },
+    @Body() dto: VerifyPaymentKtaDto,
     @CurrentUser() user: any,
   ) {
-    return this.ktaApplicationService.verifyPayment(id, user.id, body?.buktiPath);
+    return this.ktaApplicationService.verifyPayment(id, user.id, dto);
   }
 
   @Post(':id/generate-card')
