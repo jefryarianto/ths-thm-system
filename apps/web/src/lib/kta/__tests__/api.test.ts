@@ -85,8 +85,8 @@ describe('Anggota API Service', () => {
   describe('fetchAnggota', () => {
     it('maps member + digital card into Anggota (foto & EXP terisi)', async () => {
       mockFetch({
-        member: { ok: true, body: { data: memberRow } },
-        card: { ok: true, body: { data: cardData } },
+        member: { ok: true, body: { data: { ...memberRow, pekerjaan: 'Petani', pelantikan: '01 JANUARI 2010' } } },
+        card: { ok: true, body: { data: { ...cardData, member: { ...cardData.member, pekerjaan: 'Guru', pelantikan: '12 JULI 2020' } } } },
       });
 
       const member = await fetchAnggota('member-1');
@@ -102,6 +102,33 @@ describe('Anggota API Service', () => {
       expect(member.distrik).toBe('Keuskupan Larantuka');
       expect(member.pekerjaan).toBe('Guru');
       expect(member.tanggalPelantikan).toBe('12 JULI 2020');
+    });
+
+    it('falls back to current member data when card values are blank', async () => {
+      mockFetch({
+        member: { ok: true, body: { data: { ...memberRow, pekerjaan: 'Petani', pelantikan: '01 JANUARI 2010' } } },
+        card: { ok: true, body: { data: { ...cardData, member: { pekerjaan: '', pelantikan: '' } } } },
+      });
+
+      const member = await fetchAnggota('member-1');
+
+      expect(member.pekerjaan).toBe('Petani');
+      expect(member.tanggalPelantikan).toBe('01 JANUARI 2010');
+    });
+
+    it('falls back to Dadar for legacy members without pelantikan', async () => {
+      const legacy = { ...memberRow };
+      delete (legacy as any).pelantikan;
+      delete (legacy as any).pekerjaan;
+      mockFetch({
+        member: { ok: true, body: { data: legacy } },
+        card: { ok: false, body: {} },
+      });
+
+      const member = await fetchAnggota('member-1');
+
+      expect(member.pekerjaan).toBe('');
+      expect(member.tanggalPelantikan).toBe('Malang, 2015');
     });
 
     it('uses the real /members endpoint and attaches the bearer token', async () => {

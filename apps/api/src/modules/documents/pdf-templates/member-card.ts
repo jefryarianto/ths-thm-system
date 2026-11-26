@@ -36,6 +36,11 @@ const SLATE_800 = COLORS.value; // #111827 — teks data
 
 // Crop foto wajah ala SIM (kepala + bahu) — kalkulasi sama di semua renderer
 
+const truncate = (s: string, max: number): string => {
+  const chars = Array.from(String(s || ''));
+  return chars.length > max ? `${chars.slice(0, Math.max(0, max - 1)).join('')}…` : String(s || '');
+};
+
 function getInitialsLocal(name: string): string {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -952,7 +957,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
         View,
         { key: 'r6', style: styles.infoRow },
         h(Text, { style: styles.infoLabel }, 'Pekerjaan'),
-        h(Text, { style: styles.infoValue }, (member.pekerjaan || '-').toUpperCase()),
+        h(Text, { style: styles.infoValue }, truncate((member.pekerjaan || '-').toUpperCase(), 42)),
       ),
     ),
     // Bottom left — masa berlaku
@@ -1138,13 +1143,13 @@ function buildBackSide(props: MemberCardPdfProps) {
         View,
         { key: 'r3', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Pelantikan'),
-        h(Text, { style: styles.backValue }, `: ${pelantikan}`),
+        h(Text, { style: styles.backValue }, `: ${truncate(pelantikan, 34)}`),
       ),
       h(
         View,
         { key: 'r4', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Pekerjaan'),
-        h(Text, { style: styles.backValue }, `: ${fmt.proper(member.pekerjaan || '-')}`),
+        h(Text, { style: styles.backValue }, `: ${truncate(fmt.proper(member.pekerjaan || '-'), 34)}`),
       ),
       h(
         View,

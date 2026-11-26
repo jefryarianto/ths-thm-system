@@ -89,6 +89,11 @@ const esc = (s: unknown): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+const truncate = (s: string, max: number): string => {
+  const chars = Array.from(String(s || ''));
+  return chars.length > max ? `${chars.slice(0, Math.max(0, max - 1)).join('')}…` : String(s || '');
+};
+
 /** Ambil isi luar <svg>…</svg> agar bisa disisipkan sebagai <g> di dalam dokumen besar. */
 function svgInner(str: string): string {
   return str.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
@@ -567,13 +572,13 @@ function backSide(d: CardSvgData): string {
   );
   y += info.desc.lineHeight + info.desc.marginBottom + info.row.label.fontSize;
   const rowsBack: Array<[string, string]> = [
-    ['TTL', fmt.proper(ttl)],
-    ['DADAR', fmt.proper(dadar)],
-    ['Pelantikan', pelantikan],
-    ['Pekerjaan', fmt.proper(member.pekerjaan || '-')],
+    ['TTL', truncate(fmt.proper(ttl), 34)],
+    ['DADAR', truncate(fmt.proper(dadar), 34)],
+    ['Pelantikan', truncate(pelantikan, 34)],
+    ['Pekerjaan', truncate(fmt.proper(member.pekerjaan || '-'), 34)],
     ['Status', fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')],
     ['Valid s/d', fmt.proper(validUntilStr)],
-    ['Alamat', `THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`],
+    ['Alamat', truncate(`THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`, 34)],
   ];
   rowsBack.forEach(([label, value]) => {
     s += `<g>`;

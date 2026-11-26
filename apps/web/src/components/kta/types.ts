@@ -57,7 +57,7 @@ export interface KtaSnapshotV1 {
     tempatDadar: string | null;
     tahunDadar: string | null;
     pekerjaan: string | null;
-    pelantikan: string | null;
+    pelantikan?: string | null;
     ranting: KtaSnapshotNamedRef | null;
     wilayah: KtaSnapshotNamedRef | null;
     distrik: KtaSnapshotNamedRef | null;

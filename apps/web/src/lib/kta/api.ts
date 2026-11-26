@@ -85,15 +85,15 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
   const fotoDataUrl = card?.fotoDataUrl?.trim();
   const tandaTangan = card?.signatureImage?.trim();
 
+  const pick = (...values: Array<string | null | undefined>) =>
+    values.find((value) => typeof value === 'string' && value.trim() !== '') ?? '';
   const pelantikanDadarFallback =
     member.tempatDadar && member.tahunDadar
       ? `${member.tempatDadar}, ${member.tahunDadar}`
       : member.tahunDadar ?? '';
-  const pelantikanTahun = card?.member?.pelantikanTahun ?? member.tahunDadar ?? '';
+  const pelantikanTahun = card?.member?.pelantikanTahun || member.tahunDadar || '';
   const tanggalPelantikan =
-    card?.member?.pelantikan ??
-    card?.member?.tanggalPelantikan ??
-    member.pelantikan ??
+    pick(card?.member?.pelantikan, card?.member?.tanggalPelantikan, member.pelantikan) ||
     pelantikanDadarFallback;
 
   return {
@@ -113,7 +113,7 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
     qrImageUrl: card?.qrCode ?? undefined,
     verifyUrl: card?.card?.verificationUrl ?? undefined,
     tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
-    pekerjaan: card?.member?.pekerjaan ?? member.pekerjaan ?? '',
+    pekerjaan: pick(card?.member?.pekerjaan, member.pekerjaan),
     status: member.statusKeanggotaan || 'AKTIF',
     alamat: member.alamat ?? '',
     koordinator: card?.card?.signerName ?? undefined,

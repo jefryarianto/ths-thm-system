@@ -23,7 +23,7 @@ export type KtaSnapshotV1 = {
     tempatDadar: string | null;
     tahunDadar: string | null;
     pekerjaan: string | null;
-    pelantikan: string | null;
+    pelantikan?: string | null;
     ranting: { id: string; nama: string } | null;
     wilayah: { id: string; nama: string } | null;
     distrik: { id: string; nama: string } | null;
