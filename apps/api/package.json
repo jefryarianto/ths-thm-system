@@ -29,6 +29,7 @@
     "db:reset:sample": "ts-node prisma/reset-sample-data.ts",
     "db:reset:members-claims": "node prisma/reset-members-claims.js",
     "db:reset:users": "node prisma/reset-users.js",
+    "db:revoke:member-kta": "ts-node prisma/revoke-member-kta-cards.ts",
     "swagger:export": "ts-node scripts/generate-swagger.ts",
     "generate:client": "npx openapi-typescript ./swagger.json --output ../web/src/types/api.d.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",

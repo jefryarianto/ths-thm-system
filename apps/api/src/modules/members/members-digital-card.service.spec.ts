@@ -6,6 +6,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { TingkatanService } from '../tingkatan/tingkatan.service';
 import { CacheService } from '../../common/services/cache.service';
+import { revokeLegacyMemberKtaCards } from './kta-card-revocation';
 
 // Mock QRCode — hindari generate PNG asli saat test
 jest.mock('qrcode', () => ({
@@ -792,6 +793,199 @@ describe('MembersDigitalCardService', () => {
       await expect(service.issueCardsBatch(['m-lrt-1'])).resolves.toEqual(
         expect.objectContaining({ success: true }),
       );
+    });
+  });
+
+  describe('revokeLegacyMemberKtaCards', () => {
+    type Qr = { id: string; dokumenId: string; source: 'digital' | 'printed'; isValid: boolean };
+    type Doc = {
+      id: string;
+      anggotaId: string;
+      status: 'generated' | 'downloaded' | 'revoked';
+      qrValidations: Qr[];
+    };
+    type MemberDates = { tanggalTerbit: Date | null; tanggalBerlakuSampai: Date | null };
+
+    const createFakePrisma = (docs: Doc[], members: Record<string, MemberDates>) => {
+      const state = {
+        docs: docs.map((doc) => ({
+          ...doc,
+          qrValidations: doc.qrValidations.map((qr) => ({ ...qr })),
+        })),
+        members: Object.fromEntries(
+          Object.entries(members).map(([id, dates]) => [id, { ...dates }]),
+        ),
+        qrScanDeleteMany: jest.fn(),
+      };
+
+      const prisma: any = {
+        dokumen: {
+          findMany: jest.fn(async () => state.docs),
+          updateMany: jest.fn(async ({ where, data }: any) => {
+            const ids = new Set<string>(where.id?.in ?? []);
+            let count = 0;
+            for (const doc of state.docs) {
+              if (ids.has(doc.id) && doc.status !== where.status?.not) {
+                Object.assign(doc, data);
+                count += 1;
+              }
+            }
+            return { count };
+          }),
+        },
+        qRValidation: {
+          updateMany: jest.fn(async ({ where, data }: any) => {
+            const ids = new Set<string>(where.id?.in ?? []);
+            let count = 0;
+            for (const doc of state.docs) {
+              for (const qr of doc.qrValidations) {
+                if (ids.has(qr.id) && qr.isValid) {
+                  Object.assign(qr, data);
+                  count += 1;
+                }
+              }
+            }
+            return { count };
+          }),
+        },
+        anggota: {
+          updateMany: jest.fn(async ({ where, data }: any) => {
+            const ids = new Set<string>(where.id?.in ?? []);
+            let count = 0;
+            for (const [id, dates] of Object.entries(state.members)) {
+              if (ids.has(id) && (dates.tanggalTerbit || dates.tanggalBerlakuSampai)) {
+                Object.assign(dates, data);
+                count += 1;
+              }
+            }
+            return { count };
+          }),
+        },
+        qrScan: { deleteMany: state.qrScanDeleteMany },
+        $transaction: jest.fn(async (fn: any) => fn(prisma)),
+      };
+
+      return { prisma, state };
+    };
+
+    it('revokes digital-only KTA without deleting audit scans', async () => {
+      const { prisma, state } = createFakePrisma(
+        [
+          {
+            id: 'doc-digital',
+            anggotaId: 'm-digital',
+            status: 'generated',
+            qrValidations: [
+              {
+                id: 'qr-digital',
+                dokumenId: 'doc-digital',
+                source: 'digital',
+                isValid: true,
+              },
+            ],
+          },
+        ],
+        {
+          'm-digital': {
+            tanggalTerbit: new Date('2026-01-01'),
+            tanggalBerlakuSampai: new Date('2029-01-01'),
+          },
+        },
+      );
+
+      const result = await revokeLegacyMemberKtaCards(prisma);
+
+      expect(result).toEqual({ documentsRevoked: 1, digitalQrsRevoked: 1, datesCleared: 1 });
+      expect(state.docs.find((doc) => doc.id === 'doc-digital')).toMatchObject({
+        status: 'revoked',
+      });
+      expect(state.docs[0].qrValidations[0]).toMatchObject({ isValid: false });
+      expect(state.members['m-digital']).toEqual({
+        tanggalTerbit: null,
+        tanggalBerlakuSampai: null,
+      });
+      expect(state.qrScanDeleteMany).not.toHaveBeenCalled();
+    });
+
+    it('keeps documents that still have a valid printed QR', async () => {
+      const { prisma, state } = createFakePrisma(
+        [
+          {
+            id: 'doc-digital',
+            anggotaId: 'm-print',
+            status: 'generated',
+            qrValidations: [
+              {
+                id: 'qr-digital',
+                dokumenId: 'doc-digital',
+                source: 'digital',
+                isValid: true,
+              },
+            ],
+          },
+          {
+            id: 'doc-printed',
+            anggotaId: 'm-print',
+            status: 'generated',
+            qrValidations: [
+              {
+                id: 'qr-printed',
+                dokumenId: 'doc-printed',
+                source: 'printed',
+                isValid: true,
+              },
+            ],
+          },
+        ],
+        {
+          'm-print': {
+            tanggalTerbit: new Date('2026-01-01'),
+            tanggalBerlakuSampai: new Date('2029-01-01'),
+          },
+        },
+      );
+
+      const result = await revokeLegacyMemberKtaCards(prisma);
+
+      expect(result).toEqual({ documentsRevoked: 1, digitalQrsRevoked: 1, datesCleared: 0 });
+      expect(state.docs.find((doc) => doc.id === 'doc-printed')).toMatchObject({
+        status: 'generated',
+      });
+      expect(state.members['m-print'].tanggalTerbit).not.toBeNull();
+      expect(state.qrScanDeleteMany).not.toHaveBeenCalled();
+    });
+
+    it('is idempotent when rerun', async () => {
+      const { prisma } = createFakePrisma(
+        [
+          {
+            id: 'doc-digital',
+            anggotaId: 'm-digital',
+            status: 'generated',
+            qrValidations: [
+              {
+                id: 'qr-digital',
+                dokumenId: 'doc-digital',
+                source: 'digital',
+                isValid: true,
+              },
+            ],
+          },
+        ],
+        {
+          'm-digital': {
+            tanggalTerbit: new Date('2026-01-01'),
+            tanggalBerlakuSampai: new Date('2029-01-01'),
+          },
+        },
+      );
+
+      await revokeLegacyMemberKtaCards(prisma);
+      await expect(revokeLegacyMemberKtaCards(prisma)).resolves.toEqual({
+        documentsRevoked: 0,
+        digitalQrsRevoked: 0,
+        datesCleared: 0,
+      });
     });
   });
 });
