@@ -29,6 +29,8 @@ interface BuktiPreviewModalProps {
   /** Starting index when using images array */
   initialIndex?: number;
   anggotaName?: string;
+  displayName?: string;
+  downloadName?: string;
 }
 
 export default function BuktiPreviewModal({
@@ -38,6 +40,8 @@ export default function BuktiPreviewModal({
   images,
   initialIndex = 0,
   anggotaName,
+  displayName,
+  downloadName,
 }: BuktiPreviewModalProps) {
   // Build unified image list from either `images` or single `buktiPath`
   const allImages: BuktiImage[] =
@@ -132,7 +136,8 @@ export default function BuktiPreviewModal({
     if (!currentImage) return;
     const link = document.createElement('a');
     link.href = currentImage.path;
-    link.download = `bukti-pembayaran-${currentImage.name || anggotaName || 'upload'}`;
+    link.download =
+      downloadName || `bukti-pembayaran-${currentImage.name || anggotaName || 'upload'}`;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
@@ -369,7 +374,7 @@ export default function BuktiPreviewModal({
         {/* Fullscreen bottom info */}
         <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm z-10">
           <p className="text-xs text-white/50 font-mono truncate max-w-[60%]">
-            {currentImage?.path}
+            {displayName || currentImage?.path}
           </p>
           {currentImage?.name && (
             <p className="text-xs text-white/60 font-medium">{currentImage.name}</p>
@@ -577,7 +582,7 @@ export default function BuktiPreviewModal({
             className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate"
             title={currentImage.path}
           >
-            {currentImage.path}
+            {displayName || currentImage.path}
           </p>
         )}
       </div>
