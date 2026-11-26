@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { KtaReviewApplication } from '@/components/kta/types';
 import KtaDistrikProcessPage from '@/app/(dashboard)/kta/distrik-process/page';
 
@@ -82,15 +82,16 @@ function makeApplication(buktiBayarPath: string | null = '/api/uploads/kta-proof
   };
 }
 
-async function renderQueue(buktiBayarPath: string | null = '/api/uploads/kta-proofs/kta-proof-1.png') {
+async function renderQueue(applications: KtaReviewApplication[] = [makeApplication()]) {
   state.getMock.mockImplementation((url: string) => {
     if (url.includes('distrik-queue')) {
-      return Promise.resolve({ data: { success: true, data: [makeApplication(buktiBayarPath)] } });
+      return Promise.resolve({ data: { success: true, data: applications } });
     }
     return Promise.reject(new Error(`unexpected GET ${url}`));
   });
   render(<KtaDistrikProcessPage />);
-  return screen.findByRole('button', { name: 'Tinjau & Verifikasi' });
+  const triggers = await screen.findAllByRole('button', { name: 'Tinjau & Verifikasi' });
+  return triggers[0];
 }
 
 describe('verifikasi pembayaran di halaman distrik', () => {
@@ -137,15 +138,59 @@ describe('verifikasi pembayaran di halaman distrik', () => {
     expect(state.getMock.mock.calls.filter(([url]) => url.includes('distrik-queue'))).toHaveLength(2);
   });
 
-  it.each([null, '/api/uploads/other/bukti.png'])(
-    'menonaktifkan konfirmasi untuk bukti tidak valid: %s',
-    async (buktiBayarPath) => {
-      const trigger = await renderQueue(buktiBayarPath);
-      fireEvent.click(trigger);
+  it('menjaga modal aplikasi lain tetap terbuka saat verifikasi aplikasi sebelumnya selesai', async () => {
+    let resolvePost: (value: unknown) => void = () => {};
+    state.postMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePost = resolve;
+        }),
+    );
 
-      const confirm = await screen.findByRole('button', { name: /Verifikasi Pembayaran/i });
-      expect(confirm).toBeDisabled();
-      expect(state.postMock).not.toHaveBeenCalled();
-    },
-  );
+    const second = makeApplication('/api/uploads/kta-proofs/kta-proof-2.png');
+    second.id = 'app-2';
+    await renderQueue([makeApplication(), second]);
+
+    const triggers = screen.getAllByRole('button', { name: 'Tinjau & Verifikasi' });
+    fireEvent.click(triggers[0]);
+    fireEvent.change(await screen.findByLabelText('Catatan verifikasi'), { target: { value: 'Bukti cocok' } });
+    fireEvent.click(screen.getByRole('button', { name: /Verifikasi Pembayaran/i }));
+
+    await waitFor(() => {
+      expect(state.postMock).toHaveBeenCalledWith('/kta-applications/app-1/verify-payment', {
+        buktiPath: '',
+        catatan: 'Bukti cocok',
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Batal' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Tinjau & Verifikasi' })[1]);
+
+    const confirm = await screen.findByRole('button', { name: /Verifikasi Pembayaran|Memverifikasi/i });
+    expect(confirm).toBeEnabled();
+    expect(screen.getByLabelText('Catatan verifikasi')).toHaveValue('');
+
+    await act(async () => {
+      resolvePost({ data: { success: true, data: {} } });
+    });
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByTestId('proof-preview')).toHaveTextContent('/api/uploads/kta-proofs/kta-proof-2.png');
+    expect(state.postMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    null,
+    '/api/uploads/other/bukti.png',
+    '/api/uploads/kta-proofs/evil.png',
+    '/api/uploads/kta-proofs/kta-proof-1.exe',
+    '/api/uploads/kta-proofs/nested/kta-proof-1.png',
+  ])('menonaktifkan konfirmasi untuk bukti tidak valid: %s', async (buktiBayarPath) => {
+    const trigger = await renderQueue([makeApplication(buktiBayarPath)]);
+    fireEvent.click(trigger);
+
+    const confirm = await screen.findByRole('button', { name: /Verifikasi Pembayaran/i });
+    expect(confirm).toBeDisabled();
+    expect(state.postMock).not.toHaveBeenCalled();
+  });
 });

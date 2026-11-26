@@ -31,7 +31,7 @@ export default function KtaDistrikProcessPage() {
   const [applications, setApplications] = useState<KtaReviewApplication[]>([]);
   const [reviewApplication, setReviewApplication] = useState<KtaReviewApplication | null>(null);
   const [catatan, setCatatan] = useState('');
-  const [verifying, setVerifying] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,24 +73,26 @@ export default function KtaDistrikProcessPage() {
 
   const openReview = (application: KtaReviewApplication) => {
     setCatatan('');
+    setVerifyingId(null);
     setReviewApplication(application);
   };
 
   const handleVerifyPayment = async (note: string) => {
     if (!reviewApplication || !hasValidProof(reviewApplication.buktiBayarPath)) return;
-    setVerifying(true);
+    const verifyingApplicationId = reviewApplication.id;
+    setVerifyingId(verifyingApplicationId);
     try {
-      await apiClient.post(`/kta-applications/${reviewApplication.id}/verify-payment`, {
+      await apiClient.post(`/kta-applications/${verifyingApplicationId}/verify-payment`, {
         buktiPath: '',
         catatan: note,
       });
       toast('success', 'Pembayaran diverifikasi');
-      setReviewApplication(null);
+      setReviewApplication((current) => (current?.id === verifyingApplicationId ? null : current));
       await fetchQueue();
     } catch {
       toast('error', 'Gagal verifikasi pembayaran');
     } finally {
-      setVerifying(false);
+      setVerifyingId((current) => (current === verifyingApplicationId ? null : current));
     }
   };
 
@@ -248,7 +250,7 @@ export default function KtaDistrikProcessPage() {
               catatan={catatan}
               onCatatanChange={setCatatan}
               onVerify={handleVerifyPayment}
-              verifying={verifying}
+              verifying={verifyingId === reviewApplication.id}
             />
             <div className="mt-4 flex justify-end">
               <button
