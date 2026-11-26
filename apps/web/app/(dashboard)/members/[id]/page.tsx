@@ -97,11 +97,13 @@ interface MemberDetail {
   tanggalLahir: string | null;
   tempatDadar: string | null;
   tahunDadar: string | null;
+  pelantikan?: string | null;
   alamat: string | null;
   noHp: string | null;
   email: string | null;
   fotoPath: string | null;
   tanggalBerlakuSampai: string | null;
+  pekerjaan?: string | null;
   statusKeanggotaan: string;
   tingkat: string | null;
   statusData: string;
@@ -499,6 +501,8 @@ export default function MemberDetailPage() {
     qrCode: string;
     fotoDataUrl?: string | null;
     tanggalBerlakuSampai?: string | null;
+    tanggalPelantikan?: string | null;
+    pekerjaan?: string | null;
     verificationUrl?: string | null;
     signerName?: string;
     signerTitle?: string;
@@ -587,6 +591,8 @@ export default function MemberDetailPage() {
           qrCode: data.data.qrCode,
           fotoDataUrl: data.data.fotoDataUrl || null,
           tanggalBerlakuSampai: data.data.member?.tanggalBerlakuSampai || null,
+          tanggalPelantikan: data.data.member?.tanggalPelantikan || data.data.member?.pelantikan || null,
+          pekerjaan: data.data.member?.pekerjaan || null,
           verificationUrl: data.data.card?.verificationUrl || null,
           signerName: data.data.card?.signerName,
           signerTitle: data.data.card?.signerTitle,
@@ -1596,11 +1602,12 @@ export default function MemberDetailPage() {
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
                       tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
-                      pekerjaan: '',
+                      pekerjaan: cardData?.pekerjaan ?? member.pekerjaan ?? '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'Koordinator Distrik',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
+                      tanggalPelantikan: cardData?.tanggalPelantikan ?? member.pelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? ''),
                   }}
                 />
               </div>
@@ -1626,11 +1633,12 @@ export default function MemberDetailPage() {
                       qrImageUrl: cardData?.qrCode || undefined,
                       verifyUrl: cardData?.verificationUrl || undefined,
                       tempatTanggalLahir: formatTempatTanggalLahir(member.tempatLahir, member.tanggalLahir),
-                      pekerjaan: '',
+                      pekerjaan: cardData?.pekerjaan ?? member.pekerjaan ?? '',
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'Koordinator Distrik',
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
+                      tanggalPelantikan: cardData?.tanggalPelantikan ?? member.pelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? ''),
                   }}
                 />
               </div>

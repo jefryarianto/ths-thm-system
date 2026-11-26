@@ -40,6 +40,7 @@ interface ApiMember {
   tanggalLahir?: string | null;
   tempatDadar?: string | null;
   tahunDadar?: string | null;
+  pelantikan?: string | null;
   alamat?: string | null;
   pekerjaan?: string | null;
   statusKeanggotaan?: string | null;
@@ -58,8 +59,9 @@ interface ApiDigitalCard {
   qrCode?: string | null;
   signatureImage?: string | null;
   card?: { verificationUrl?: string | null; signerName?: string | null } | null;
-  member?: { 
-    pekerjaan?: string | null; 
+  member?: {
+    pekerjaan?: string | null;
+    pelantikan?: string | null;
     tanggalBerlakuSampai?: string | null;
     pelantikanTahun?: string | null;
     tanggalPelantikan?: string | null;
@@ -83,9 +85,16 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
   const fotoDataUrl = card?.fotoDataUrl?.trim();
   const tandaTangan = card?.signatureImage?.trim();
 
-  // Pelantikan data from card member data (fallback to dadar data handled in backend)
+  const pelantikanDadarFallback =
+    member.tempatDadar && member.tahunDadar
+      ? `${member.tempatDadar}, ${member.tahunDadar}`
+      : member.tahunDadar ?? '';
   const pelantikanTahun = card?.member?.pelantikanTahun ?? member.tahunDadar ?? '';
-  const tanggalPelantikan = card?.member?.tanggalPelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? '');
+  const tanggalPelantikan =
+    card?.member?.pelantikan ??
+    card?.member?.tanggalPelantikan ??
+    member.pelantikan ??
+    pelantikanDadarFallback;
 
   return {
     id: member.id,

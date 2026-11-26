@@ -54,6 +54,7 @@ function makeApplication(buktiBayarPath: string | null = '/api/uploads/kta-proof
         tempatDadar: null,
         tahunDadar: null,
         pekerjaan: null,
+        pelantikan: null,
         ranting: { id: 'r1', nama: 'Ranting Lama' },
         wilayah: null,
         distrik: null,

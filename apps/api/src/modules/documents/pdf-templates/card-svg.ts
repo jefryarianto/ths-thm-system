@@ -46,6 +46,8 @@ export interface CardSvgData {
     tingkat?: string | null;
     tempatDadar?: string | null;
     tahunDadar?: string | null;
+    pekerjaan?: string | null;
+    pelantikan?: string | null;
     ranting?: string | null;
     wilayah?: string | null;
     distrik?: string | null;
@@ -485,6 +487,7 @@ function backSide(d: CardSvgData): string {
   const { member } = d;
   const ttl = fmt.ttl(member.tempatLahir, member.tanggalLahir);
   const dadar = fmt.dadar(member.tempatDadar, member.tahunDadar);
+  const pelantikan = fmt.proper(member.pelantikan || dadar);
   const validUntilStr = fmt.validUntilText();
   const cfg = d.template?.overlayConfig || null;
   const guillocheOff = cfg?.guilloche?.enabledBack === false;
@@ -566,6 +569,8 @@ function backSide(d: CardSvgData): string {
   const rowsBack: Array<[string, string]> = [
     ['TTL', fmt.proper(ttl)],
     ['DADAR', fmt.proper(dadar)],
+    ['Pelantikan', pelantikan],
+    ['Pekerjaan', fmt.proper(member.pekerjaan || '-')],
     ['Status', fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')],
     ['Valid s/d', fmt.proper(validUntilStr)],
     ['Alamat', `THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`],

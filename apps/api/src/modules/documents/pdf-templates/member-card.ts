@@ -607,6 +607,8 @@ interface MemberCardPdfProps {
     tingkat?: string | null;
     tempatDadar?: string | null;
     tahunDadar?: string | null;
+    pekerjaan?: string | null;
+    pelantikan?: string | null;
     ranting?: string;
     wilayah?: string;
     distrik?: string;
@@ -946,6 +948,12 @@ function buildFrontSide(props: MemberCardPdfProps) {
         h(Text, { style: styles.infoLabel }, 'Wilayah'),
         h(Text, { style: styles.infoValue }, (member.wilayah || '-').toUpperCase()),
       ),
+      h(
+        View,
+        { key: 'r6', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'Pekerjaan'),
+        h(Text, { style: styles.infoValue }, (member.pekerjaan || '-').toUpperCase()),
+      ),
     ),
     // Bottom left — masa berlaku
     h(
@@ -1050,6 +1058,7 @@ function buildBackSide(props: MemberCardPdfProps) {
     : '-';
   const ttl = member.tempatLahir ? `${member.tempatLahir}, ${tanggalLahirStr}` : tanggalLahirStr;
   const dadar = [member.tempatDadar, member.tahunDadar].filter(Boolean).join(', ') || '-';
+  const pelantikan = fmt.proper(member.pelantikan || dadar);
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
   const validUntilStr = validUntil.toLocaleDateString('id-ID', {
@@ -1128,6 +1137,18 @@ function buildBackSide(props: MemberCardPdfProps) {
       h(
         View,
         { key: 'r3', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'Pelantikan'),
+        h(Text, { style: styles.backValue }, `: ${pelantikan}`),
+      ),
+      h(
+        View,
+        { key: 'r4', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'Pekerjaan'),
+        h(Text, { style: styles.backValue }, `: ${fmt.proper(member.pekerjaan || '-')}`),
+      ),
+      h(
+        View,
+        { key: 'r5', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Status'),
         h(
           Text,
@@ -1137,13 +1158,13 @@ function buildBackSide(props: MemberCardPdfProps) {
       ),
       h(
         View,
-        { key: 'r4', style: styles.backRow },
+        { key: 'r6', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Valid s/d'),
         h(Text, { style: styles.backValue }, `: ${fmt.proper(validUntilStr)}`),
       ),
       h(
         View,
-        { key: 'r5', style: styles.backRow },
+        { key: 'r7', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Alamat'),
         h(
           Text,

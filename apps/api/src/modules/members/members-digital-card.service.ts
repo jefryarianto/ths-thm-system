@@ -783,12 +783,12 @@ export class MembersDigitalCardService {
 
   /** Data anggota untuk render kartu (konsisten antar digital & fisik). */
   private buildMemberData(member: any) {
-    // Pelantikan: fallback ke data dadar bila tidak ada data pelantikan terpisah.
-    // Karena belum ada field pelantikan terpisah di schema, gunakan data dadar sebagai default.
+    const pelantikanDadarFallback =
+      member.tempatDadar && member.tahunDadar
+        ? `${member.tempatDadar}, ${member.tahunDadar}`
+        : member.tahunDadar || '';
+    const tanggalPelantikan = member.pelantikan || pelantikanDadarFallback;
     const pelantikanTahun = member.tahunDadar || '';
-    const tanggalPelantikan = member.tempatDadar && member.tahunDadar
-      ? `${member.tempatDadar}, ${member.tahunDadar}`
-      : member.tahunDadar || '';
 
     return {
       id: member.id,
@@ -805,11 +805,10 @@ export class MembersDigitalCardService {
       tingkat: member.tingkat,
       tempatDadar: member.tempatDadar,
       tahunDadar: member.tahunDadar,
-      // Data KTA lengkap (diisi saat generate pertama kali)
       pekerjaan: member.pekerjaan,
+      pelantikan: tanggalPelantikan,
       tanggalTerbit: member.tanggalTerbit?.toISOString() ?? null,
       tanggalBerlakuSampai: member.tanggalBerlakuSampai?.toISOString() ?? null,
-      // Pelantikan: fallback ke data dadar bila tidak ada data pelantikan terpisah.
       pelantikanTahun,
       tanggalPelantikan,
       ranting: member.ranting?.nama,

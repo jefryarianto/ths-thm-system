@@ -23,6 +23,7 @@ function makeMember(id = 'm1', namaLengkap = 'Budi Santoso') {
     tempatDadar: null,
     tahunDadar: null,
     pekerjaan: null,
+    pelantikan: '12 JULI 2020',
     ranting: {
       id: 'r1',
       nama: 'Ranting A',
@@ -91,6 +92,7 @@ describe('KTA submit snapshot', () => {
       expect.objectContaining({
         namaLengkap: 'Budi Santoso',
         tanggalLahir: '1990-01-02T00:00:00.000Z',
+        pelantikan: '12 JULI 2020',
         ranting: { id: 'r1', nama: 'Ranting A' },
         wilayah: { id: 'w1', nama: 'Wilayah B' },
         distrik: { id: 'd1', nama: 'Distrik C' },

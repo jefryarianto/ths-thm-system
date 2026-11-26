@@ -23,6 +23,7 @@ export type KtaSnapshotV1 = {
     tempatDadar: string | null;
     tahunDadar: string | null;
     pekerjaan: string | null;
+    pelantikan: string | null;
     ranting: { id: string; nama: string } | null;
     wilayah: { id: string; nama: string } | null;
     distrik: { id: string; nama: string } | null;
@@ -47,6 +48,7 @@ type KtaSnapshotMember = {
   tempatDadar?: string | null;
   tahunDadar?: string | null;
   pekerjaan?: string | null;
+  pelantikan?: string | null;
   ranting?: {
     id: string;
     nama: string;
@@ -99,6 +101,7 @@ export function buildKtaSnapshot(
       tempatDadar: member.tempatDadar ?? null,
       tahunDadar: member.tahunDadar ?? null,
       pekerjaan: member.pekerjaan ?? null,
+      pelantikan: member.pelantikan ?? null,
       ranting: ranting ? { id: ranting.id, nama: ranting.nama } : null,
       wilayah: wilayah ? { id: wilayah.id, nama: wilayah.nama } : null,
       distrik: distrik ? { id: distrik.id, nama: distrik.nama } : null,

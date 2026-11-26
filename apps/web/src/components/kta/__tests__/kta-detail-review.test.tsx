@@ -62,6 +62,7 @@ const detail: KtaReviewApplication = {
       tempatDadar: null,
       tahunDadar: null,
       pekerjaan: null,
+      pelantikan: null,
       ranting: { id: 'r1', nama: 'Ranting Lama' },
       wilayah: { id: 'w1', nama: 'Wilayah Lama' },
       distrik: { id: 'd1', nama: 'Distrik Lama' },

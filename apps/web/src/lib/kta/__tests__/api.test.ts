@@ -35,6 +35,8 @@ const memberRow = {
   tanggalLahir: '1990-01-01T00:00:00.000Z',
   tempatDadar: 'Malang',
   tahunDadar: '2015',
+  pelantikan: '12 JULI 2020',
+  pekerjaan: 'Guru',
   alamat: 'Jl. Melati No. 12',
   tingkat: 'Pratama',
   statusKeanggotaan: 'aktif',
@@ -51,7 +53,7 @@ const cardData = {
   qrCode: 'data:image/png;base64,QR',
   signatureImage: 'signature-1.png',
   card: { verificationUrl: 'https://ths-thm.cloud/verify/abc', signerName: 'Yoseph' },
-  member: { pekerjaan: 'Wiraswasta', tanggalBerlakuSampai: '2031-10-01T00:00:00.000Z' },
+  member: { pekerjaan: 'Guru', pelantikan: '12 JULI 2020', tanggalBerlakuSampai: '2031-10-01T00:00:00.000Z' },
 };
 
 describe('Anggota API Service', () => {
@@ -98,6 +100,8 @@ describe('Anggota API Service', () => {
       expect(member.verifyUrl).toBe('https://ths-thm.cloud/verify/abc');
       expect(member.tempatTanggalLahir).toBe('Malang, 01 Januari 1990');
       expect(member.distrik).toBe('Keuskupan Larantuka');
+      expect(member.pekerjaan).toBe('Guru');
+      expect(member.tanggalPelantikan).toBe('12 JULI 2020');
     });
 
     it('uses the real /members endpoint and attaches the bearer token', async () => {

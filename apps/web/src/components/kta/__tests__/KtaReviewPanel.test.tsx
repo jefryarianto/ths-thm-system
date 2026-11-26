@@ -39,6 +39,7 @@ const snapshot = {
     tempatDadar: 'Malang',
     tahunDadar: '2015',
     pekerjaan: 'Wiraswasta',
+    pelantikan: '12 JULI 2020',
     ranting: { id: 'r1', nama: 'Ranting Lama' },
     wilayah: { id: 'w1', nama: 'Wilayah Lama' },
     distrik: { id: 'd1', nama: 'Distrik Lama' },
