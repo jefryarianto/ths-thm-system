@@ -14,6 +14,7 @@ import '../../data/models/claim.dart';
 
 part 'claim_event.dart';
 part 'claim_state.dart';
+part 'claim_payload.dart';
 
 class ClaimBloc extends Bloc<ClaimEvent, ClaimState> {
   ClaimBloc() : super(const ClaimInitial()) {
@@ -51,10 +52,8 @@ class ClaimBloc extends Bloc<ClaimEvent, ClaimState> {
       );
       final dynamic raw = response.data['data'];
       final List<dynamic> list = raw is List ? raw : [];
-      final claims = list
-          .whereType<Map<String, dynamic>>()
-          .map(Claim.fromJson)
-          .toList();
+      final claims =
+          list.whereType<Map<String, dynamic>>().map(Claim.fromJson).toList();
       emit(ClaimLoaded(claims: claims));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
@@ -74,25 +73,19 @@ class ClaimBloc extends Bloc<ClaimEvent, ClaimState> {
   ) async {
     emit(const ClaimSubmitting());
     try {
-      final body = <String, dynamic>{
-        'tipe': event.tipe,
-      };
-      if (event.tipe == 'keanggotaan') {
-        if (event.namaLengkap != null) body['namaLengkap'] = event.namaLengkap;
-        if (event.jenisKelamin != null) body['jenisKelamin'] = event.jenisKelamin;
-        if (event.tempatLahir != null) body['tempatLahir'] = event.tempatLahir;
-        if (event.tanggalLahir != null) body['tanggalLahir'] = event.tanggalLahir;
-        if (event.tempatDadar != null) body['tempatDadar'] = event.tempatDadar;
-        if (event.tahunDadar != null) body['tahunDadar'] = event.tahunDadar;
-        if (event.alamat != null) body['alamat'] = event.alamat;
-        if (event.noHp != null) body['noHp'] = event.noHp;
-        if (event.email != null) body['email'] = event.email;
-        if (event.rantingId != null) body['rantingId'] = event.rantingId;
+      if (event.modeBukti == 'unggah') {
+        final formData = await buildClaimFormData(event);
+        await _api.dio.post(
+          AppConstants.claims,
+          data: formData,
+          options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        );
+      } else {
+        await _api.dio.post(
+          AppConstants.claims,
+          data: buildClaimFields(event),
+        );
       }
-      if (event.anggotaId != null) body['anggotaId'] = event.anggotaId;
-      if (event.catatan != null) body['catatan'] = event.catatan;
-
-      await _api.dio.post(AppConstants.claims, data: body);
       emit(const ClaimCreateSuccess());
     } on DioException catch (e) {
       emit(ClaimError(message: _api.messageFromError(e)));

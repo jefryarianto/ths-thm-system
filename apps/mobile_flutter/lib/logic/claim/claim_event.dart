@@ -29,7 +29,9 @@ class ClaimCreateRequested extends ClaimEvent {
   final String? noHp;
   final String? email;
   final String? rantingId;
-  final List<String>? buktiFileUrls;
+  final String modeBukti;
+  final String? ceritaHistori;
+  final List<String> buktiFilePaths;
   const ClaimCreateRequested({
     required this.tipe,
     this.anggotaId,
@@ -44,10 +46,19 @@ class ClaimCreateRequested extends ClaimEvent {
     this.noHp,
     this.email,
     this.rantingId,
-    this.buktiFileUrls,
+    this.modeBukti = 'unggah',
+    this.ceritaHistori,
+    this.buktiFilePaths = const [],
   });
   @override
-  List<Object?> get props => [tipe, anggotaId, namaLengkap];
+  List<Object?> get props => [
+        tipe,
+        anggotaId,
+        namaLengkap,
+        modeBukti,
+        ceritaHistori,
+        buktiFilePaths,
+      ];
 }
 
 class ClaimApproveRequested extends ClaimEvent {
