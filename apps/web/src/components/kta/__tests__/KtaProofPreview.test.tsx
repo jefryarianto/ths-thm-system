@@ -85,9 +85,33 @@ describe('KtaProofPreview', () => {
     expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:proof-url');
   });
 
+  it('dapat membuka kembali pratinjau gambar setelah ditutup', async () => {
+    getMock.mockResolvedValue(
+      response(new Blob(['gambar'], { type: 'image/png' }), {
+        'content-type': 'image/png',
+        'content-disposition': 'inline; filename="kta-proof-123.png"',
+      }),
+    );
+
+    render(<KtaProofPreview applicationId="app-1" buktiBayarPath="/api/uploads/kta-proofs/kta-proof-123.png" />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Lihat Bukti/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /Lihat Bukti/i }));
+    expect(await screen.findByTestId('bukti-preview-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tutup pratinjau' }));
+    await waitFor(() => expect(screen.queryByTestId('bukti-preview-modal')).not.toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: /Lihat Bukti/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Lihat Bukti/i }));
+
+    expect(await screen.findByTestId('bukti-preview-modal')).toBeInTheDocument();
+    expect(getMock).toHaveBeenCalledTimes(2);
+  });
+
   it('menampilkan iframe dan tautan unduh untuk PDF, bukan img', async () => {
     getMock.mockResolvedValue(
-      response(new Blob(['pdf'], { type: 'application/pdf' }), {
+      response(new Blob(['%PDF-1.4\n1 0 obj\n%%EOF'], { type: 'application/pdf' }), {
         'content-type': 'application/pdf',
         'content-disposition': 'inline; filename="kta-proof-123.pdf"',
       }),
@@ -104,8 +128,27 @@ describe('KtaProofPreview', () => {
     });
 
     expect(iframe).toHaveAttribute('src', 'blob:proof-url');
+    expect(iframe).toHaveAttribute('sandbox');
+    expect(iframe.getAttribute('sandbox') || '').not.toContain('allow-same-origin');
     expect(screen.getByRole('link', { name: /Unduh PDF/i })).toHaveAttribute('download', 'kta-proof-123.pdf');
     expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('menolak konten PDF tanpa magic bytes %PDF-', async () => {
+    getMock.mockResolvedValue(
+      response(new Blob(['<html><script>alert(1)</script></html>'], { type: 'application/pdf' }), {
+        'content-type': 'application/pdf',
+        'content-disposition': 'inline; filename="kta-proof-malicious.pdf"',
+      }),
+    );
+
+    const { container } = render(
+      <KtaProofPreview applicationId="app-4" buktiBayarPath="/api/uploads/kta-proofs/kta-proof-malicious.pdf" />,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Bukti PDF tidak valid');
+    expect(container.querySelector('iframe')).toBeNull();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
   it('menampilkan pesan error saat permintaan bukti gagal', async () => {

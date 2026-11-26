@@ -12,8 +12,16 @@ interface KtaProofPreviewProps {
 
 interface ProofPreviewState {
   url: string;
+}
+
+interface ProofDescriptor {
   mimeType: string;
   fileName: string;
+}
+
+async function hasPdfMagic(blob: Blob): Promise<boolean> {
+  const head = await blob.slice(0, 5).text();
+  return head === '%PDF-';
 }
 
 function readHeader(headers: unknown, key: string): string | undefined {
@@ -52,6 +60,7 @@ export default function KtaProofPreview({
   buktiBayarPath,
   anggotaName,
 }: KtaProofPreviewProps) {
+  const [descriptor, setDescriptor] = useState<ProofDescriptor | null>(null);
   const [preview, setPreview] = useState<ProofPreviewState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -82,11 +91,24 @@ export default function KtaProofPreview({
         fileNameFromDisposition(readHeader(response.headers, 'content-disposition')) ||
         buktiBayarPath.split('/').pop() ||
         'bukti-pembayaran';
+      const kind = previewKind(mimeType, fileName);
+
+      if (kind === 'pdf' && !(await hasPdfMagic(blob))) {
+        if (requestId !== requestRef.current) return;
+        release();
+        setPreview(null);
+        setDescriptor(null);
+        setModalOpen(false);
+        setError('Bukti PDF tidak valid');
+        return;
+      }
+      if (requestId !== requestRef.current) return;
 
       release();
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
-      setPreview({ url, mimeType, fileName });
+      setDescriptor({ mimeType, fileName });
+      setPreview({ url });
       if (openAfterLoadRef.current) {
         openAfterLoadRef.current = false;
         setModalOpen(true);
@@ -106,6 +128,7 @@ export default function KtaProofPreview({
       requestRef.current += 1;
       release();
       setPreview(null);
+      setDescriptor(null);
       setError(null);
       setModalOpen(false);
       return;
@@ -142,7 +165,7 @@ export default function KtaProofPreview({
     );
   }
 
-  const kind = preview ? previewKind(preview.mimeType, preview.fileName) : null;
+  const kind = descriptor ? previewKind(descriptor.mimeType, descriptor.fileName) : null;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-border p-6">
@@ -150,7 +173,7 @@ export default function KtaProofPreview({
         <div>
           <h3 className="text-sm font-semibold">Bukti Pembayaran</h3>
           <p className="text-xs text-muted font-mono truncate max-w-xs">
-            {preview?.fileName || buktiBayarPath.split('/').pop()}
+            {descriptor?.fileName || buktiBayarPath.split('/').pop()}
           </p>
         </div>
         {kind === 'image' && (
@@ -175,11 +198,12 @@ export default function KtaProofPreview({
           <iframe
             src={preview.url}
             title="Pratinjau Bukti PDF"
+            sandbox=""
             className="w-full h-96 rounded-lg border border-border"
           />
           <a
             href={preview.url}
-            download={preview.fileName}
+            download={descriptor?.fileName}
             className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
           >
             Unduh PDF
@@ -192,8 +216,8 @@ export default function KtaProofPreview({
           open={modalOpen}
           onClose={handleClose}
           buktiPath={preview.url}
-          displayName={preview.fileName}
-          downloadName={preview.fileName}
+          displayName={descriptor?.fileName}
+          downloadName={descriptor?.fileName}
           anggotaName={anggotaName}
         />
       )}
@@ -201,7 +225,7 @@ export default function KtaProofPreview({
       {preview && kind === 'other' && (
         <a
           href={preview.url}
-          download={preview.fileName}
+          download={descriptor?.fileName}
           className="mt-4 inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           Unduh Bukti
