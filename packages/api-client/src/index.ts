@@ -8489,6 +8489,10 @@ export interface components {
             modeBukti?: "unggah" | "cerita";
             /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
             ceritaHistori?: string;
+            /** @description Pekerjaan anggota */
+            pekerjaan?: string;
+            /** @description Pelantikan anggota */
+            pelantikan?: string;
             /** @description Bukti keanggotaan (max 3 files, image/PDF, 5MB each) */
             buktiFiles?: string[];
             /** @description Dokumen pendukung lain (max 3 files, image/PDF, 5MB each) */
@@ -12600,6 +12604,10 @@ export interface operations {
                     modeBukti?: "unggah" | "cerita";
                     /** @description Cerita singkat riwayat menjadi anggota (maksimal 1000 karakter) */
                     ceritaHistori?: string;
+                    /** @description Pekerjaan anggota */
+                    pekerjaan?: string;
+                    /** @description Pelantikan anggota */
+                    pelantikan?: string;
                     /**
                      * @description Tipe bukti keanggotaan
                      * @enum {string}
