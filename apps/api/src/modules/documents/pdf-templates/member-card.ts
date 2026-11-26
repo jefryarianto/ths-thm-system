@@ -957,7 +957,11 @@ function buildFrontSide(props: MemberCardPdfProps) {
         View,
         { key: 'r6', style: styles.infoRow },
         h(Text, { style: styles.infoLabel }, 'Pekerjaan'),
-        h(Text, { style: styles.infoValue }, truncate((member.pekerjaan || '-').toUpperCase(), 42)),
+        h(
+          Text,
+          { style: styles.infoValue },
+          truncate((member.pekerjaan || '-').toUpperCase(), 42),
+        ),
       ),
     ),
     // Bottom left — masa berlaku
@@ -1149,7 +1153,11 @@ function buildBackSide(props: MemberCardPdfProps) {
         View,
         { key: 'r4', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Pekerjaan'),
-        h(Text, { style: styles.backValue }, `: ${truncate(fmt.proper(member.pekerjaan || '-'), 34)}`),
+        h(
+          Text,
+          { style: styles.backValue },
+          `: ${truncate(fmt.proper(member.pekerjaan || '-'), 34)}`,
+        ),
       ),
       h(
         View,

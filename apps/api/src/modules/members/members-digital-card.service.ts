@@ -908,11 +908,13 @@ export class MembersDigitalCardService {
    */
   async issuePrintedCard(
     memberId: string,
-    opts: { reason?: string } = {},
+    opts: { reason?: string; internalAutoRegenerate?: boolean } = {},
     scope?: UserScope,
     user?: SelfScopeUser,
   ) {
-    await this.assertKtaIssuable(memberId);
+    if (!opts.internalAutoRegenerate) {
+      await this.assertKtaIssuable(memberId);
+    }
     const member = await this.loadMemberForScope(memberId, scope, user);
     let doc = await this.ensureKtaDokumen(member);
     if (doc.status === 'revoked') {
@@ -922,7 +924,9 @@ export class MembersDigitalCardService {
       });
     }
 
-    const replaceReason = ['replacement', 'hilang', 'rusak'].includes(opts.reason || '');
+    const replaceReason =
+      opts.internalAutoRegenerate === true ||
+      ['replacement', 'hilang', 'rusak'].includes(opts.reason || '');
     if (replaceReason) {
       await this.prisma.qRValidation.updateMany({
         where: { dokumenId: doc.id, source: 'printed', isValid: true },

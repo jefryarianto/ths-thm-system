@@ -313,6 +313,7 @@ function frontSide(d: CardSvgData): string {
     { label: 'Tempat, Tanggal Lahir', value: ttl.toUpperCase() },
     { label: 'Ranting', value: (member.ranting || '-').toUpperCase() },
     { label: 'Wilayah', value: (member.wilayah || '-').toUpperCase() },
+    { label: 'Pekerjaan', value: truncate((member.pekerjaan || '-').toUpperCase(), 42) },
   ];
   s += `<g>`;
   let infoY = infoTop;
@@ -576,9 +577,15 @@ function backSide(d: CardSvgData): string {
     ['DADAR', truncate(fmt.proper(dadar), 34)],
     ['Pelantikan', truncate(pelantikan, 34)],
     ['Pekerjaan', truncate(fmt.proper(member.pekerjaan || '-'), 34)],
-    ['Status', fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')],
+    [
+      'Status',
+      fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'),
+    ],
     ['Valid s/d', fmt.proper(validUntilStr)],
-    ['Alamat', truncate(`THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`, 34)],
+    [
+      'Alamat',
+      truncate(`THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`, 34),
+    ],
   ];
   rowsBack.forEach(([label, value]) => {
     s += `<g>`;

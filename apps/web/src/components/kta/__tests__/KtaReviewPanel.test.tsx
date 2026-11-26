@@ -123,6 +123,8 @@ describe('KtaReviewPanel', () => {
     expect(screen.getByText('Wilayah Lama')).toBeInTheDocument();
     expect(screen.getByText('Distrik Lama')).toBeInTheDocument();
     expect(screen.getByText('Pratama')).toBeInTheDocument();
+    expect(screen.getByText('Wiraswasta')).toBeInTheDocument();
+    expect(screen.getByText('12 JULI 2020')).toBeInTheDocument();
     expect(screen.getByText('anggota')).toBeInTheDocument();
     expect(screen.getByText(formatDateTime(snapshot.submittedAt))).toBeInTheDocument();
   });

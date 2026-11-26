@@ -1,4 +1,5 @@
-import { IsEmail, IsString, IsOptional, Matches } from 'class-validator';
+import { IsEmail, IsString, IsOptional, Matches, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
@@ -111,14 +112,18 @@ export class UpdateProfileDto {
   @IsString()
   tanggalLahir?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 120 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(120)
   pekerjaan?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 160 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(160)
   pelantikan?: string;
 }
 

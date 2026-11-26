@@ -1047,40 +1047,39 @@ export class KtaApplicationService implements OnModuleInit, OnModuleDestroy {
         statusPembayaran: true,
         biaya: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 1,
     });
 
-    if (apps.length === 0) {
+    const targetApp = apps[0];
+    if (!targetApp || !this.digitalCardService) {
       return { regenerated: 0, applicationIds: [] };
     }
 
-    const applicationIds: string[] = [];
-    for (const app of apps) {
-      if (this.digitalCardService) {
-        await this.digitalCardService.issuePrintedCard(
-          anggotaId,
-          { reason: 'member_update_approved' },
-          undefined,
-          { id: actor.id } as any,
-        );
-      }
+    await this.digitalCardService.issuePrintedCard(
+      anggotaId,
+      { reason: 'member_update_approved', internalAutoRegenerate: true },
+      undefined,
+      { id: actor.id } as any,
+    );
 
-      await this.prisma.ktaAppHistory.create({
-        data: {
-          ktaApplicationId: app.id,
-          level: 'DISTRIK',
-          action: 'CARD_GENERATED',
-          actorId: actor.id,
-          actorRole: actor.role,
-          catatan: 'Auto-regenerate after approved member_update',
-        },
-      });
+    await this.prisma.ktaAppHistory.create({
+      data: {
+        ktaApplicationId: targetApp.id,
+        level: 'DISTRIK',
+        action: 'CARD_GENERATED',
+        actorId: actor.id,
+        actorRole: actor.role,
+        catatan: 'Auto-regenerate after approved member_update',
+      },
+    });
 
-      applicationIds.push(app.id);
-      this.audit('KTA_AUTO_REGENERATE', app.id, actor.id, { anggotaId, reason: 'member_update_approved' });
-    }
+    this.audit('KTA_AUTO_REGENERATE', targetApp.id, actor.id, {
+      anggotaId,
+      reason: 'member_update_approved',
+    });
 
-    return { regenerated: applicationIds.length, applicationIds };
+    return { regenerated: 1, applicationIds: [targetApp.id] };
   }
 
   // ============================================================

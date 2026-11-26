@@ -71,6 +71,7 @@ export default function KtaReviewPanel({
               <Field label="Tempat Dadar" value={snapshot.anggota.tempatDadar} />
               <Field label="Tahun Dadar" value={snapshot.anggota.tahunDadar} />
               <Field label="Pekerjaan" value={snapshot.anggota.pekerjaan} />
+              <Field label="Pelantikan" value={snapshot.anggota.pelantikan} />
               <Field label="Email" value={snapshot.anggota.email} />
               <Field label="No HP" value={snapshot.anggota.noHp} />
               <Field label="Alamat" value={snapshot.anggota.alamat} />

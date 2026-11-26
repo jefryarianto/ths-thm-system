@@ -18736,10 +18736,12 @@
             "type": "string"
           },
           "pekerjaan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 120
           },
           "pelantikan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 160
           }
         }
       },
@@ -18924,10 +18926,12 @@
             "type": "string"
           },
           "pekerjaan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 120
           },
           "pelantikan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 160
           }
         },
         "required": [
@@ -18975,10 +18979,12 @@
             "type": "string"
           },
           "pekerjaan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 120
           },
           "pelantikan": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 160
           },
           "version": {
             "type": "number",

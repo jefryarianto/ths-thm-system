@@ -5,6 +5,7 @@ function makeService(overrides: Record<string, any> = {}) {
     ktaApplication: {
       findMany: jest.fn().mockResolvedValue([]),
       update: jest.fn().mockResolvedValue({}),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     ktaAppHistory: {
       create: jest.fn().mockResolvedValue({}),
@@ -38,20 +39,36 @@ function makeService(overrides: Record<string, any> = {}) {
   return { service, prisma, digitalCardService, eventBus, persistentAudit };
 }
 
+const generatedApp = (id: string, createdAt: string) => ({
+  id,
+  anggotaId: 'anggota-1',
+  status: 'CARD_GENERATED',
+  batchId: 'batch-1',
+  submittedSnapshot: { nama: 'before' },
+  statusPembayaran: 'LUNAS',
+  biaya: 50000,
+  createdAt: new Date(createdAt),
+});
+
 describe('KtaApplicationService.regenerateGeneratedKtaForMember', () => {
-  it('regenerates only CARD_GENERATED apps, writes history, keeps snapshot/batch/payment untouched', async () => {
-    const { service, prisma, digitalCardService } = makeService();
-    prisma.ktaApplication.findMany.mockResolvedValue([
+  it('regenerates exactly once against newest CARD_GENERATED app despite newer PAYMENT_PENDING app', async () => {
+    const { service, prisma, digitalCardService, persistentAudit } = makeService();
+    const older = generatedApp('app-old', '2026-01-01T00:00:00Z');
+    const newest = generatedApp('app-newest', '2026-02-01T00:00:00Z');
+    const allApps = [
       {
-        id: 'app-1',
-        anggotaId: 'anggota-1',
-        status: 'CARD_GENERATED',
-        batchId: 'batch-1',
-        submittedSnapshot: { nama: 'before' },
-        statusPembayaran: 'LUNAS',
-        biaya: 50000,
+        ...generatedApp('app-pending', '2026-03-01T00:00:00Z'),
+        status: 'PAYMENT_PENDING',
       },
-    ]);
+      older,
+      newest,
+    ];
+    prisma.ktaApplication.findMany.mockImplementation(async (args: any) =>
+      allApps
+        .filter((app) => app.anggotaId === args.where.anggotaId && app.status === args.where.status)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, args.take),
+    );
 
     const result = await service.regenerateGeneratedKtaForMember('anggota-1', {
       id: 'actor-1',
@@ -61,17 +78,20 @@ describe('KtaApplicationService.regenerateGeneratedKtaForMember', () => {
     expect(prisma.ktaApplication.findMany).toHaveBeenCalledWith({
       where: { anggotaId: 'anggota-1', status: 'CARD_GENERATED' },
       select: expect.objectContaining({ id: true, anggotaId: true, status: true }),
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 1,
     });
+    expect(digitalCardService.issuePrintedCard).toHaveBeenCalledTimes(1);
     expect(digitalCardService.issuePrintedCard).toHaveBeenCalledWith(
       'anggota-1',
-      { reason: 'member_update_approved' },
+      { reason: 'member_update_approved', internalAutoRegenerate: true },
       undefined,
       { id: 'actor-1' },
     );
+    expect(prisma.ktaAppHistory.create).toHaveBeenCalledTimes(1);
     expect(prisma.ktaAppHistory.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        ktaApplicationId: 'app-1',
+        ktaApplicationId: 'app-newest',
         level: 'DISTRIK',
         action: 'CARD_GENERATED',
         actorId: 'actor-1',
@@ -79,14 +99,23 @@ describe('KtaApplicationService.regenerateGeneratedKtaForMember', () => {
         catatan: 'Auto-regenerate after approved member_update',
       }),
     });
-    // No direct application mutation for snapshot/batch/payment/status
+    expect(persistentAudit.log).toHaveBeenCalledTimes(1);
+    expect(persistentAudit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'KTA_AUTO_REGENERATE',
+        entity: 'KtaApplication',
+        entityId: 'app-newest',
+        userId: 'actor-1',
+      }),
+    );
     expect(prisma.ktaApplication.update).not.toHaveBeenCalled();
+    expect(prisma.ktaApplication.updateMany).not.toHaveBeenCalled();
     expect(prisma.ktaBatch?.update).toBeUndefined();
-    expect(result).toEqual({ regenerated: 1, applicationIds: ['app-1'] });
+    expect(result).toEqual({ regenerated: 1, applicationIds: ['app-newest'] });
   });
 
   it('returns no-op when no CARD_GENERATED application exists', async () => {
-    const { service, digitalCardService, prisma } = makeService();
+    const { service, digitalCardService, prisma, persistentAudit } = makeService();
     prisma.ktaApplication.findMany.mockResolvedValue([]);
 
     const result = await service.regenerateGeneratedKtaForMember('anggota-1', {
@@ -96,6 +125,7 @@ describe('KtaApplicationService.regenerateGeneratedKtaForMember', () => {
 
     expect(digitalCardService.issuePrintedCard).not.toHaveBeenCalled();
     expect(prisma.ktaAppHistory.create).not.toHaveBeenCalled();
+    expect(persistentAudit.log).not.toHaveBeenCalled();
     expect(result).toEqual({ regenerated: 0, applicationIds: [] });
   });
 });

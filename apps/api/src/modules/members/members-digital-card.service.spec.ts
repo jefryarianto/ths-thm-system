@@ -741,6 +741,44 @@ describe('MembersDigitalCardService', () => {
         }),
       );
     });
+
+    it('internalAutoRegenerate mencabut QR fisik lama tanpa gate status terbaru', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status: 'PAYMENT_PENDING' });
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        status: 'generated',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        verificationUrl: 'http://localhost:3000/verify/digital-token',
+        qrValidations: [
+          {
+            id: 'qr-d1',
+            source: 'digital',
+            isValid: true,
+            verificationUrl: 'http://localhost:3000/verify/digital-token',
+          },
+        ],
+      } as any);
+
+      await service.issuePrintedCard('m-lrt-1', {
+        reason: 'member_update_approved',
+        internalAutoRegenerate: true,
+      });
+
+      expect(mockPrisma.ktaApplication.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.qRValidation.updateMany).toHaveBeenCalledWith({
+        where: { dokumenId: 'doc-1', source: 'printed', isValid: true },
+        data: { isValid: false },
+      });
+      expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            source: 'printed',
+            isValid: true,
+            reason: 'member_update_approved',
+          }),
+        }),
+      );
+    });
   });
 
   describe('getCardIssuances', () => {
@@ -904,6 +942,15 @@ describe('MembersDigitalCardService', () => {
         }
       },
     );
+
+    it('issuePrintedCard publik tetap menolak status terbaru PAYMENT_PENDING', async () => {
+      mockPrisma.ktaApplication.findFirst.mockResolvedValue({ id: 'a1', status: 'PAYMENT_PENDING' });
+
+      await expect(
+        service.issuePrintedCard('m-lrt-1', { reason: 'member_update_approved' }),
+      ).rejects.toThrow(/KTA/);
+      expect(mockPrisma.qRValidation.create).not.toHaveBeenCalled();
+    });
 
     it('issueCardsBatch menolak tanpa pengajuan KTA', async () => {
       mockPrisma.ktaApplication.findFirst.mockResolvedValue(null);

@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { StatusData, StatusKeanggotaan, StatusValidasi } from '@prisma/client';
 import { MemberSchema } from '@ths-thm/shared-types';
 import { z } from 'zod';
@@ -74,14 +74,18 @@ export class CreateMemberDto {
   @IsString()
   fotoPath?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 120 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(120)
   pekerjaan?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 160 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(160)
   pelantikan?: string;
 }
 
@@ -146,14 +150,18 @@ export class UpdateMemberDto {
   @IsString()
   fotoPath?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 120 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(120)
   pekerjaan?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ maxLength: 160 })
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
+  @MaxLength(160)
   pelantikan?: string;
 
   @ApiPropertyOptional({

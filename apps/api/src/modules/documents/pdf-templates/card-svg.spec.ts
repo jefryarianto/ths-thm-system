@@ -38,6 +38,13 @@ describe('buildCardSvg pekerjaan/pelantikan', () => {
     expect(svg.toUpperCase()).toContain('12 JULI 2020');
   });
 
+  it('renders pekerjaan on front to match PDF placement', () => {
+    const svg = buildCardSvg(makeData());
+    const front = svg.split('<g id="face-back"')[0];
+    expect(front).toContain('Pekerjaan');
+    expect(front).toContain('GURU');
+  });
+
   it('truncates long pekerjaan and pelantikan to avoid overflow', () => {
     const long = 'PEKERJAAN SANGAT PANJANG SEKALI YANG TIDAK BOLEH MELUBER KELUAR KARTU KTA';
     const svg = buildCardSvg(makeData({ pekerjaan: long, pelantikan: long }));
