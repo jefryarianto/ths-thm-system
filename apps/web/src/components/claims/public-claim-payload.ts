@@ -5,6 +5,8 @@ export interface PublicClaimFormValues {
   tanggalLahir: string;
   tempatDadar: string;
   tahunDadar: string;
+  pekerjaan: string;
+  pelantikan: string;
   alamat: string;
   noHp: string;
   email: string;
@@ -18,6 +20,7 @@ export interface PublicClaimFile {
 }
 
 const SKIPPED_TEXT_FIELDS = new Set(['modeBukti', 'ceritaHistori']);
+const TRIMMED_TEXT_FIELDS = new Set(['pekerjaan', 'pelantikan']);
 
 export function buildPublicClaimFormData(
   form: PublicClaimFormValues,
@@ -27,8 +30,10 @@ export function buildPublicClaimFormData(
   const data = new FormData();
 
   for (const [key, value] of Object.entries(form)) {
-    if (SKIPPED_TEXT_FIELDS.has(key) || !value) continue;
-    data.append(key, value);
+    if (SKIPPED_TEXT_FIELDS.has(key)) continue;
+    const text = TRIMMED_TEXT_FIELDS.has(key) ? value.trim() : value;
+    if (!text) continue;
+    data.append(key, text);
   }
 
   data.append('modeBukti', form.modeBukti);

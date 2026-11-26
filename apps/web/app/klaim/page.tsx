@@ -62,6 +62,8 @@ export default function KlaimPage() {
     tanggalLahir: '',
     tempatDadar: '',
     tahunDadar: '',
+    pekerjaan: '',
+    pelantikan: '',
     alamat: '',
     noHp: '',
     email: '',
@@ -541,6 +543,42 @@ export default function KlaimPage() {
                 {fieldErrors.tahunDadar && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors.tahunDadar}</p>
                 )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="pekerjaan"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Pekerjaan
+                </label>
+                <input
+                  id="pekerjaan"
+                  type="text"
+                  maxLength={120}
+                  value={form.pekerjaan}
+                  onChange={(e) => updateField('pekerjaan', e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="contoh: Guru"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="pelantikan"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Pelantikan
+                </label>
+                <input
+                  id="pelantikan"
+                  type="text"
+                  maxLength={160}
+                  value={form.pelantikan}
+                  onChange={(e) => updateField('pelantikan', e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="contoh: 12 JULI 2020"
+                />
               </div>
 
               {/* No HP */}

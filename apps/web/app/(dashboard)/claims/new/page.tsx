@@ -49,6 +49,8 @@ export default function NewClaimPage() {
   const [tanggalLahir, setTanggalLahir] = useState('');
   const [tempatDadar, setTempatDadar] = useState('');
   const [tahunDadar, setTahunDadar] = useState('');
+  const [pekerjaan, setPekerjaan] = useState('');
+  const [pelantikan, setPelantikan] = useState('');
   const [alamat, setAlamat] = useState('');
   const [noHp, setNoHp] = useState('');
   const [email, setEmail] = useState('');
@@ -137,6 +139,8 @@ export default function NewClaimPage() {
       formData.append('tanggalLahir', tanggalLahir);
       formData.append('tempatDadar', tempatDadar.trim());
       formData.append('tahunDadar', tahunDadar.trim());
+      if (pekerjaan.trim()) formData.append('pekerjaan', pekerjaan.trim());
+      if (pelantikan.trim()) formData.append('pelantikan', pelantikan.trim());
       formData.append('alamat', alamat);
       formData.append('noHp', noHp);
       formData.append('email', email.trim());
@@ -281,6 +285,43 @@ export default function NewClaimPage() {
                   required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                   placeholder="Contoh: 2015"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="pekerjaan"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Pekerjaan
+                </label>
+                <input
+                  id="pekerjaan"
+                  type="text"
+                  maxLength={120}
+                  value={pekerjaan}
+                  onChange={(e) => setPekerjaan(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  placeholder="contoh: Guru"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="pelantikan"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Pelantikan
+                </label>
+                <input
+                  id="pelantikan"
+                  type="text"
+                  maxLength={160}
+                  value={pelantikan}
+                  onChange={(e) => setPelantikan(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  placeholder="contoh: 12 JULI 2020"
                 />
               </div>
             </div>

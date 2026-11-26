@@ -11,6 +11,8 @@ const baseForm: PublicClaimFormValues = {
   tanggalLahir: '1990-01-01',
   tempatDadar: 'Jakarta',
   tahunDadar: '2012',
+  pekerjaan: '',
+  pelantikan: '',
   alamat: 'Jalan Contoh 1',
   noHp: '081234567890',
   email: 'andi@example.com',
@@ -67,5 +69,27 @@ describe('buildPublicClaimFormData', () => {
     expect(data.has('catatan')).toBe(false);
     expect(data.has('noHp')).toBe(false);
     expect(data.getAll('email')).toEqual(['andi@example.com']);
+  });
+
+  it('sends pekerjaan and pelantikan when filled', () => {
+    const data = buildPublicClaimFormData(
+      { ...baseForm, pekerjaan: 'Guru', pelantikan: '12 JULI 2020' },
+      'ranting-1',
+      [],
+    );
+
+    expect(data.get('pekerjaan')).toBe('Guru');
+    expect(data.get('pelantikan')).toBe('12 JULI 2020');
+  });
+
+  it('omits blank pekerjaan and pelantikan', () => {
+    const data = buildPublicClaimFormData(
+      { ...baseForm, pekerjaan: '   ', pelantikan: '' },
+      'ranting-1',
+      [],
+    );
+
+    expect(data.has('pekerjaan')).toBe(false);
+    expect(data.has('pelantikan')).toBe(false);
   });
 });

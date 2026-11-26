@@ -169,6 +169,21 @@ test.describe('Public Pages — middleware allowlist regression guard', () => {
     });
   }
 
+  test('formulir klaim publik menerima pekerjaan dan pelantikan', async ({ page }) => {
+    await page.goto(`${BASE}/klaim`);
+
+    const pekerjaan = page.getByLabel('Pekerjaan');
+    const pelantikan = page.getByLabel('Pelantikan');
+    await expect(pekerjaan).toBeVisible();
+    await expect(pelantikan).toBeVisible();
+    await expect(pelantikan).toHaveAttribute('placeholder', 'contoh: 12 JULI 2020');
+
+    await pekerjaan.fill('Guru');
+    await pelantikan.fill('12 JULI 2020');
+    await expect(pekerjaan).toHaveValue('Guru');
+    await expect(pelantikan).toHaveValue('12 JULI 2020');
+  });
+
   test('root / menjawab HTTP 200 dan menampilkan landing ke pengunjung anonim', async ({
     page,
   }) => {
