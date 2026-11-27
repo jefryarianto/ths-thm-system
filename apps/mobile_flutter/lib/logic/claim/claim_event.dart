@@ -23,6 +23,8 @@ class ClaimCreateRequested extends ClaimEvent {
   final String? jenisKelamin;
   final String? tempatLahir;
   final String? tanggalLahir;
+  final String? pekerjaan;
+  final String? pelantikan;
   final String? tempatDadar;
   final String? tahunDadar;
   final String? alamat;
@@ -40,6 +42,8 @@ class ClaimCreateRequested extends ClaimEvent {
     this.jenisKelamin,
     this.tempatLahir,
     this.tanggalLahir,
+    this.pekerjaan,
+    this.pelantikan,
     this.tempatDadar,
     this.tahunDadar,
     this.alamat,
@@ -55,6 +59,8 @@ class ClaimCreateRequested extends ClaimEvent {
         tipe,
         anggotaId,
         namaLengkap,
+        pekerjaan,
+        pelantikan,
         modeBukti,
         ceritaHistori,
         buktiFilePaths,

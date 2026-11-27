@@ -69,4 +69,45 @@ void main() {
       expect(e.message.toString(), contains('Maksimal 3 berkas bukti'));
     }
   });
+
+  test('buildClaimFields sends trimmed pekerjaan and pelantikan', () {
+    final event = ClaimCreateRequested(
+      tipe: 'keanggotaan',
+      modeBukti: 'cerita',
+      ceritaHistori: story,
+      pekerjaan: ' Guru ',
+      pelantikan: ' 12 JULI 2020 ',
+    );
+    final fields = buildClaimFields(event);
+    expect(fields['pekerjaan'], 'Guru');
+    expect(fields['pelantikan'], '12 JULI 2020');
+  });
+
+  test('buildClaimFormData sends pekerjaan and pelantikan in unggah mode', () async {
+    final event = ClaimCreateRequested(
+      tipe: 'keanggotaan',
+      modeBukti: 'unggah',
+      buktiFilePaths: paths,
+      pekerjaan: 'Guru',
+      pelantikan: '12 JULI 2020',
+    );
+    final formData = await buildClaimFormData(event);
+    expect(formData.fields.any((e) => e.key == 'pekerjaan' && e.value == 'Guru'), isTrue);
+    expect(formData.fields.any((e) => e.key == 'pelantikan' && e.value == '12 JULI 2020'), isTrue);
+  });
+
+  test('buildClaimFields omits blank pekerjaan and pelantikan', () {
+    final event = ClaimCreateRequested(
+      tipe: 'keanggotaan',
+      modeBukti: 'cerita',
+      ceritaHistori: story,
+      pekerjaan: '   ',
+      pelantikan: '\t\n',
+    );
+
+    final fields = buildClaimFields(event);
+
+    expect(fields.containsKey('pekerjaan'), isFalse);
+    expect(fields.containsKey('pelantikan'), isFalse);
+  });
 }

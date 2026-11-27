@@ -16,6 +16,14 @@ Map<String, dynamic> buildClaimFields(ClaimCreateRequested event) {
     if (event.noHp != null) body['noHp'] = event.noHp;
     if (event.email != null) body['email'] = event.email;
     if (event.rantingId != null) body['rantingId'] = event.rantingId;
+    final pekerjaan = event.pekerjaan?.trim();
+    if (pekerjaan != null && pekerjaan.isNotEmpty) {
+      body['pekerjaan'] = pekerjaan;
+    }
+    final pelantikan = event.pelantikan?.trim();
+    if (pelantikan != null && pelantikan.isNotEmpty) {
+      body['pelantikan'] = pelantikan;
+    }
   }
   if (event.anggotaId != null) body['anggotaId'] = event.anggotaId;
   if (event.catatan != null) body['catatan'] = event.catatan;
