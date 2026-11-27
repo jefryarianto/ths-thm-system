@@ -171,6 +171,7 @@ export default function NewClaimPage() {
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-5"
         >
           {/* Header Info */}
@@ -230,7 +231,7 @@ export default function NewClaimPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tempat Lahir
+                  Tempat Lahir <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -242,7 +243,7 @@ export default function NewClaimPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tanggal Lahir
+                  Tanggal Lahir <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -385,7 +386,7 @@ export default function NewClaimPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Alamat
+                Alamat <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={alamat}

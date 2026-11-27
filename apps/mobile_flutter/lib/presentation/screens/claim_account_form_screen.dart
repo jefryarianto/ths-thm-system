@@ -313,6 +313,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
         const SizedBox(height: 14),
         TextFormField(
             controller: _pekerjaanCtrl,
+            maxLength: 120,
             decoration: const InputDecoration(
                 labelText: 'Pekerjaan',
                 hintText: 'contoh: Guru',
@@ -320,6 +321,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
         const SizedBox(height: 14),
         TextFormField(
             controller: _pelantikanCtrl,
+            maxLength: 160,
             decoration: const InputDecoration(
                 labelText: 'Pelantikan',
                 hintText: 'contoh: 12 JULI 2020',

@@ -136,4 +136,20 @@ void main() {
     expect(find.text('Unggah minimal satu berkas bukti'), findsOneWidget);
     verifyNever(() => claimBloc.add(any<ClaimEvent>()));
   });
+
+  testWidgets('Pekerjaan dan Pelantikan memakai batas panjang form publik',
+      (tester) async {
+    setLargeSurface(tester);
+    await tester.pumpWidget(buildSubject());
+
+    for (final entry in {'Pekerjaan': 120, 'Pelantikan': 160}.entries) {
+      final textField = tester.widget<TextField>(
+        find.ancestor(
+          of: field(entry.key),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(textField.maxLength, entry.value);
+    }
+  });
 }
