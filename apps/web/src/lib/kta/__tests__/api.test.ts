@@ -52,7 +52,12 @@ const cardData = {
   fotoDataUrl: 'data:image/png;base64,PHOTO',
   qrCode: 'data:image/png;base64,QR',
   signatureImage: 'signature-1.png',
-  card: { verificationUrl: 'https://ths-thm.cloud/verify/abc', signerName: 'Yoseph' },
+  stampImage: 'stamp-1.png',
+  card: {
+    verificationUrl: 'https://ths-thm.cloud/verify/abc',
+    signerName: 'Yoseph',
+    signerTitle: 'Kepala Distrik',
+  },
   member: { pekerjaan: 'Guru', pelantikan: '12 JULI 2020', tanggalBerlakuSampai: '2031-10-01T00:00:00.000Z' },
 };
 
@@ -102,6 +107,19 @@ describe('Anggota API Service', () => {
       expect(member.distrik).toBe('Keuskupan Larantuka');
       expect(member.pekerjaan).toBe('Guru');
       expect(member.tanggalPelantikan).toBe('12 JULI 2020');
+      expect(member.koordinatorJabatan).toBe('Kepala Distrik');
+      expect(member.stempelUrl).toBe('/api/uploads/stamp-1.png');
+    });
+
+    it('leaves stempelUrl undefined when the card has no stamp image', async () => {
+      mockFetch({
+        member: { ok: true, body: { data: memberRow } },
+        card: { ok: true, body: { data: { ...cardData, stampImage: null } } },
+      });
+
+      const member = await fetchAnggota('member-1');
+
+      expect(member.stempelUrl).toBeUndefined();
     });
 
     it('falls back to current member data when card values are blank', async () => {

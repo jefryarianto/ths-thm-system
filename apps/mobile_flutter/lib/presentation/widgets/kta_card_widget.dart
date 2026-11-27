@@ -361,7 +361,10 @@ class _KtaFront extends StatelessWidget {
             height: KtaPositions.qrSize,
             child: ColoredBox(
               color: KtaColors.white,
-              child: _KtaQr(dataUrl: kta.qrImageUrl, verificationUrl: ''),
+              child: _KtaQr(
+                dataUrl: kta.qrImageUrl,
+                verificationUrl: kta.verificationUrl,
+              ),
             ),
           ),
           // `Positioned.fill` (bukan `left/top` + `SizedBox.expand`) agar
@@ -451,7 +454,7 @@ class _HeaderShadowPainter extends CustomPainter {
       text: TextSpan(
         text: value,
         style: TextStyle(
-          fontFamily: 'KtaDejaVu',
+          fontFamily: KtaSpec.fontFamily,
           fontWeight: FontWeight.w700,
           fontSize: fontSize,
           color: color,
@@ -562,7 +565,7 @@ class _FrontTextPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: 'KtaDejaVu',
+          fontFamily: KtaSpec.fontFamily,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
           fontSize: pt * 25.4 / 72 * KtaSpec.pxPerMm,
           color: KtaColors.darkText,
@@ -601,7 +604,7 @@ class _BackMicrotext extends CustomPainter {
     final textSpan = TextSpan(
       text: microtext * repeatCount,
       style: TextStyle(
-        fontFamily: 'KtaDejaVu',
+        fontFamily: KtaSpec.fontFamily,
         fontWeight: FontWeight.w400,
         fontSize: KtaText.ptMicrotext * 25.4 / 72 * KtaSpec.pxPerMm,
         color: KtaColors.microtextNavy,
@@ -626,6 +629,92 @@ class _BackMicrotext extends CustomPainter {
   bool shouldRepaint(covariant _BackMicrotext oldDelegate) => oldDelegate.isFront != isFront;
 }
 
+class _KtaSignerBlock extends StatelessWidget {
+  final MemberKta kta;
+
+  const _KtaSignerBlock({required this.kta});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = kta.signerTitle.trim().isEmpty
+        ? KtaSignerSpec.titleFallback
+        : kta.signerTitle.trim();
+    final name = kta.namaKoordinator.trim();
+    final textWidth = KtaSignerSpec.width - KtaSignerSpec.stampSize - 8;
+
+    return Stack(
+      children: [
+        Positioned(
+          right: KtaSignerSpec.titleRight,
+          top: KtaSignerSpec.titleTop,
+          width: textWidth,
+          child: Text(
+            title,
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: KtaSpec.fontFamily,
+              fontWeight: FontWeight.w700,
+              fontSize: KtaSignerSpec.titleFontSize,
+              color: KtaColors.primaryNavy,
+            ),
+          ),
+        ),
+        if (kta.tandaTanganUrl.isNotEmpty)
+          Positioned(
+            right: KtaSignerSpec.sigRight,
+            bottom: KtaSignerSpec.sigBottom,
+            width: KtaSignerSpec.sigWidth,
+            height: KtaSignerSpec.sigHeight,
+            child: Transform.rotate(
+              angle: KtaSignerSpec.sigRotate * math.pi / 180,
+              child: _KtaImage(url: kta.tandaTanganUrl, fit: BoxFit.contain),
+            ),
+          ),
+        if (name.isNotEmpty)
+          Positioned(
+            right: KtaSignerSpec.nameRight,
+            bottom: KtaSignerSpec.nameBottom,
+            width: textWidth,
+            child: Text(
+              name,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: KtaSpec.fontFamily,
+                fontWeight: FontWeight.w700,
+                fontSize: KtaSignerSpec.nameFontSize,
+                color: KtaColors.primaryNavy,
+                decoration: KtaSignerSpec.nameUnderline
+                    ? TextDecoration.underline
+                    : null,
+                decorationColor: KtaColors.signatureLine,
+              ),
+            ),
+          ),
+        if (kta.stampImageUrl.isNotEmpty)
+          Positioned(
+            right: KtaSignerSpec.stampRight,
+            bottom: KtaSignerSpec.stampBottom,
+            width: KtaSignerSpec.stampSize,
+            height: KtaSignerSpec.stampSize,
+            child: Opacity(
+              opacity: 0.85,
+              child: ClipOval(
+                child: Transform.rotate(
+                  angle: KtaSignerSpec.stampRotate * math.pi / 180,
+                  child: _KtaImage(url: kta.stampImageUrl, fit: BoxFit.contain),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _KtaBack extends StatelessWidget {
   final MemberKta kta;
   final KtaLayout layout;
@@ -634,8 +723,7 @@ class _KtaBack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final f = layout.fields;
-    final koorWidth = f['koordinator']?.widthMm ?? 0;
-    
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(KtaSpec.radiusPx),
       child: Stack(
@@ -651,30 +739,16 @@ class _KtaBack extends StatelessWidget {
               fit: BoxFit.fill,
             ),
           ),
-          if (kta.tandaTanganUrl.isNotEmpty)
-            Positioned(
-              left: mmToPx(48.1),
-              top: mmToPx(42.58),
-              width: mmToPx(19.5),
-              height: mmToPx(5.1),
-              child: _KtaImage(url: kta.tandaTanganUrl, fit: BoxFit.contain),
-            ),
-          if (kta.stampImageUrl.isNotEmpty)
-            Positioned(
-              left: mmToPx(53),
-              top: mmToPx(44.5),
-              width: mmToPx(11),
-              height: mmToPx(11),
-              child: Opacity(
-                opacity: 0.85,
-                child: ClipOval(
-                  child: _KtaImage(url: kta.stampImageUrl, fit: BoxFit.contain),
-                ),
-              ),
-            ),
+          Positioned(
+            left: KtaSpec.w - KtaSignerSpec.right - KtaSignerSpec.width,
+            top: KtaSpec.h - KtaSignerSpec.bottom - KtaSignerSpec.height,
+            width: KtaSignerSpec.width,
+            height: KtaSignerSpec.height,
+            child: _KtaSignerBlock(kta: kta),
+          ),
           Positioned.fill(
             child: CustomPaint(
-              painter: _BackTextPainter(kta: kta, layout: layout, fields: f, koorWidthMm: koorWidth),
+              painter: _BackTextPainter(kta: kta, layout: layout, fields: f),
             ),
           ),
           Positioned.fill(
@@ -692,13 +766,11 @@ class _BackTextPainter extends CustomPainter {
   final MemberKta kta;
   final KtaLayout layout;
   final Map<String, Fit> fields;
-  final double koorWidthMm;
-  
+
   _BackTextPainter({
     required this.kta,
     required this.layout,
     required this.fields,
-    required this.koorWidthMm,
   });
 
   /// Lima baris data sisi belakang: label di kiri, titik dua, lalu nilai.
@@ -727,8 +799,6 @@ class _BackTextPainter extends CustomPainter {
     }
     _paintText(canvas, 'ALAMAT', 4.4, 21.4, KtaText.ptBackFieldLabel, bold: true);
     _paintText(canvas, ':', 27.1, 21.4, KtaText.ptBackFieldLabel, bold: true);
-    _paintText(canvas, 'KOORDINATOR DISTRIK', 48.1, 12.2,
-        KtaText.ptBackFieldLabel, bold: true);
 
     final belakangNama = fields['belakangNama']!;
     _paintSingle(canvas, belakangNama, 29.2, 41.4, 2.4, bold: false);
@@ -743,22 +813,6 @@ class _BackTextPainter extends CustomPainter {
     _paintSingle(canvas, fields['pelantikan']!, 29.2, 25.4, 2.4, bold: false);
     _paintSingle(canvas, fields['alamat']!, 29.2, 21.4, 2.4, bold: false);
     _paintSingle(canvas, fields['terbit']!, 4.4, 3.5, 2.4, bold: false);
-    _paintSingle(canvas, fields['koordinator']!, 48.1, 3.5, 2.4, bold: false);
-
-    // Garis tanda tangan hanya digambar bila ada nama koordinator; tanpa nama
-    // panjangnya nol dan dengan `strokeCap.square` menyisakan titik kecil.
-    if (koorWidthMm > 0) {
-      final linePaint = Paint()
-        ..color = KtaColors.signatureLine
-        ..strokeWidth = 0.45 / 72 * 25.4 * KtaSpec.pxPerMm
-        ..strokeCap = StrokeCap.square;
-
-      canvas.drawLine(
-        Offset(mmToPx(48.1), mmToPx(48.28)),
-        Offset(mmToPx(48.1) + koorWidthMm * KtaSpec.pxPerMm, mmToPx(48.28)),
-        linePaint,
-      );
-    }
   }
 
   void _paintSingle(Canvas canvas, Fit fit, double x, double y, double leading,
@@ -785,7 +839,7 @@ class _BackTextPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: 'KtaDejaVu',
+          fontFamily: KtaSpec.fontFamily,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
           fontSize: pt * 25.4 / 72 * KtaSpec.pxPerMm,
           color: color ?? KtaColors.darkText,
@@ -864,7 +918,7 @@ class _KtaImage extends StatelessWidget {
     if (url.isEmpty) return _fallback();
     // Handle data: URIs (base64-encoded images).
     if (url.startsWith('data:')) {
-      final bytes = _tryDecodeDataUrl(url);
+      final bytes = ktaDecodeDataUrl(url);
       if (bytes == null) return const SizedBox.shrink();
       return Image.memory(bytes, fit: fit, gaplessPlayback: true);
     }
@@ -887,6 +941,15 @@ class _KtaImage extends StatelessWidget {
   }
 }
 
+final Map<String, Uint8List?> _decodedDataUrls = <String, Uint8List?>{};
+
+Uint8List? ktaDecodeDataUrl(String dataUrl) {
+  if (_decodedDataUrls.containsKey(dataUrl)) return _decodedDataUrls[dataUrl];
+  final decoded = _tryDecodeDataUrl(dataUrl);
+  _decodedDataUrls[dataUrl] = decoded;
+  return decoded;
+}
+
 class _KtaQr extends StatelessWidget {
   final String dataUrl;
   final String verificationUrl;
@@ -895,21 +958,42 @@ class _KtaQr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (dataUrl.startsWith('data:')) {
-      final bytes = _tryDecodeDataUrl(dataUrl);
+      final bytes = ktaDecodeDataUrl(dataUrl);
       if (bytes != null) {
         return Image.memory(bytes, fit: BoxFit.contain, gaplessPlayback: true);
       }
     }
     if (verificationUrl.isNotEmpty) {
-      return QrImageView(
-        data: verificationUrl,
-        version: QrVersions.auto,
-        size: KtaPositions.qrSize,
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          QrImageView(
+            data: verificationUrl,
+            version: QrVersions.auto,
+            size: KtaPositions.qrSize,
+          ),
+          Container(
+            width: KtaPositions.qrSize * 0.30,
+            height: KtaPositions.qrSize * 0.30,
+            decoration: const BoxDecoration(
+              color: KtaColors.qrWhite,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: KtaPositions.qrSize * 0.20,
+              height: KtaPositions.qrSize * 0.20,
+              child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+            ),
+          ),
+        ],
       );
     }
     return const SizedBox.shrink();
   }
-}Uint8List? _tryDecodeDataUrl(String dataUrl) {
+}
+
+Uint8List? _tryDecodeDataUrl(String dataUrl) {
   final comma = dataUrl.indexOf(',');
   if (comma <= 0) return null;
   try {

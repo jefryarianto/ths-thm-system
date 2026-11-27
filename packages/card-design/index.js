@@ -12,6 +12,8 @@
 
 'use strict';
 
+const { QR_STYLE, buildQrMarkup, buildStyledQrSvg } = require('./qr');
+
 // ─── Ukuran kanvas kartu (CR80 landscape) ───────────────────────────────────
 const CARD = Object.freeze({ W: 856, H: 540, RADIUS: 28 });
 
@@ -21,6 +23,7 @@ const FONTS = Object.freeze({
   openSansBold: 'OpenSans-Bold',
   robotoRegular: 'Roboto-Regular',
   robotoBold: 'Roboto-Bold',
+  plusJakarta: 'Plus Jakarta Sans',
 });
 
 // ─── Warna kanon ────────────────────────────────────────────────────────────
@@ -234,6 +237,16 @@ const BACK = Object.freeze({
     text: Object.freeze({ fontSize: 15, lineHeight: 22, opacity: 0.95 }),
     urlLabel: Object.freeze({ fontSize: 13, opacity: 0.8 }),
     urlValue: Object.freeze({ fontSize: 16, marginTop: 2 }),
+  }),
+  signer: Object.freeze({
+    right: 24,
+    bottom: 22,
+    w: 330,
+    h: 118,
+    title: Object.freeze({ right: 0, top: 0, fontSize: 12 }),
+    name: Object.freeze({ right: 0, bottom: 0, fontSize: 14, underline: true }),
+    sig: Object.freeze({ right: 150, bottom: 34, w: 175, h: 52, rotate: -8 }),
+    stamp: Object.freeze({ right: 4, bottom: 26, size: 88, rotate: -8 }),
   }),
   watermark: Object.freeze({ w: 480, h: 166, color: '#ffffff', opacity: 0.5 }),
 });
@@ -625,6 +638,9 @@ module.exports = {
   CARD,
   CAMERA,
   FONTS,
+  QR_STYLE,
+  buildQrMarkup,
+  buildStyledQrSvg,
   COLORS,
   PALETTES,
   FRONT,

@@ -20,7 +20,7 @@ class KtaSpec {
   static const double radiusMm = 3.18;
   static const double radiusPx = radiusMm * pxPerMm;
 
-  static const String fontFamily = 'KtaDejaVu';
+  static const String fontFamily = 'Plus Jakarta Sans';
 }
 
 /// Hasil penghitungan fit untuk satu teks.
@@ -70,12 +70,13 @@ class KtaLayoutCalculator {
 
   static bool _fontsLoaded = false;
 
-  /// Pastikan font KtaDejaVu (reguler + bold) sudah dimuat sebelum mengukur teks.
+  /// Pastikan font Plus Jakarta Sans (regular + semiBold + bold) sudah dimuat sebelum mengukur teks.
   static Future<void> ensureFonts() async {
     if (_fontsLoaded) return;
     final loader = FontLoader(KtaSpec.fontFamily)
-      ..addFont(rootBundle.load('assets/fonts/DejaVuSans.ttf'))
-      ..addFont(rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf'));
+      ..addFont(rootBundle.load('assets/fonts/PlusJakartaSans-Regular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/PlusJakartaSans-SemiBold.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/PlusJakartaSans-Bold.ttf'));
     await loader.load();
     _fontsLoaded = true;
   }

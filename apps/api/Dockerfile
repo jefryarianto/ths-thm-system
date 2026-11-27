@@ -54,6 +54,9 @@ COPY apps/web/public/fonts/roboto-regular.ttf /usr/share/fonts/ths/
 COPY apps/web/public/fonts/roboto-bold.ttf /usr/share/fonts/ths/
 COPY apps/web/public/fonts/open-sans-bold.ttf /usr/share/fonts/ths/
 COPY apps/web/public/fonts/ocr-a-extended.ttf /usr/share/fonts/ths/
+COPY apps/web/public/kta/fonts/PlusJakartaSans-Regular.ttf /usr/share/fonts/ths/
+COPY apps/web/public/kta/fonts/PlusJakartaSans-SemiBold.ttf /usr/share/fonts/ths/
+COPY apps/web/public/kta/fonts/PlusJakartaSans-Bold.ttf /usr/share/fonts/ths/
 RUN fc-cache -f /usr/share/fonts/ths
 
 WORKDIR /app

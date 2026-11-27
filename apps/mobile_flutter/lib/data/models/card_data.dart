@@ -106,6 +106,7 @@ class CardData {
   static String _resolveUploadUrl(String imagePath) {
     final p = imagePath.trim();
     if (p.isEmpty) return '';
+    if (p.startsWith('data:')) return p;
     if (p.startsWith('http://') || p.startsWith('https://')) return p;
     final path = p.startsWith('/') ? p : '/api/uploads/$p';
     return ApiClient.resolveAbsolute(path);

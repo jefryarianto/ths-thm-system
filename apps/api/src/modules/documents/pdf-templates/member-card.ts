@@ -12,8 +12,10 @@ const {
   LinearGradient,
   Stop,
   Rect,
+  Font,
 } = require('@react-pdf/renderer');
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
+const { PLUS_JAKARTA_FONT_DATA_URLS } = require('./plus-jakarta-font');
 const { MAP_INDONESIA_DATA_URL, MAP_INDONESIA_LIGHT_DATA_URL } = require('./map-indonesia');
 
 // ── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ──
@@ -22,6 +24,7 @@ const {
   COLORS,
   FRONT,
   BACK,
+  FONTS,
   PATTERN,
   fmt,
   getLevelVisual,
@@ -33,6 +36,15 @@ const BLUE_900 = COLORS.label; // #1e3a5f — garis & judul kartu
 const BLUE_800 = '#1e4a7a';
 const WHITE = COLORS.white;
 const SLATE_800 = COLORS.value; // #111827 — teks data
+
+Font.register({
+  family: FONTS.plusJakarta,
+  fonts: [
+    { src: PLUS_JAKARTA_FONT_DATA_URLS.regular, fontWeight: 400 },
+    { src: PLUS_JAKARTA_FONT_DATA_URLS.semiBold, fontWeight: 600 },
+    { src: PLUS_JAKARTA_FONT_DATA_URLS.bold, fontWeight: 700 },
+  ],
+});
 
 // Crop foto wajah ala SIM (kepala + bahu) — kalkulasi sama di semua renderer
 
@@ -58,6 +70,7 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: WHITE,
     position: 'relative',
+    fontFamily: FONTS.plusJakarta,
   },
   bgCircle1: {
     position: 'absolute',
@@ -251,7 +264,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: FRONT.info.label.letterSpacing,
     // Jenis huruf label berbeda dari data (serif Times vs data Helvetica)
-    fontFamily: 'Times-Bold',
+    fontFamily: FONTS.plusJakarta,
   },
   infoValue: {
     fontSize: FRONT.info.value.fontSize,
@@ -279,7 +292,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: FRONT.info.label.letterSpacing,
     // Samakan dengan infoLabel: gaya cetak PDF memakai serif utk semua label
-    fontFamily: 'Times-Bold',
+    fontFamily: FONTS.plusJakarta,
   },
   jkValue: {
     fontSize: FRONT.info.value.fontSize,
@@ -302,7 +315,7 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 15,
     opacity: 0.9,
-    fontFamily: 'Times-Bold',
+    fontFamily: FONTS.plusJakarta,
   },
   validUntilValue: {
     color: WHITE,
@@ -310,120 +323,6 @@ const styles = StyleSheet.create({
     fontWeight: 'heavy',
     marginTop: 2,
   },
-  // Stempel 110 px (50% dari 220 px ≈ 1,1 cm pada skala CR80 856 px = 8.56 cm), cap di-upload di dalamnya
-  // Blok penandatangan: teks RATA-KIRI — batas kanan ditentukan baris terpanjang
-  // (kotak di-anchor kanan right:-8 ≈ tepi kartu); teks KOORDINATOR/KEUSKUPAN (gelap,
-  // di atas area putih) → stempel (tdk ditebalkan) + ttd → nama (underline) + jabatan
-  // (putih, di atas pita biru bawah). Grup pengesahan dinaikkan (bottom 14 → bawah teks
-  // sejajar tanggal masa laku).
-  signature: {
-    position: 'absolute',
-    right: FRONT.signer.right,
-    bottom: FRONT.signer.bottom,
-    width: FRONT.signer.w,
-    height: FRONT.signer.h,
-    alignItems: 'flex-start',
-  },
-  // Teks KOORDINATORAT diturunkan: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel;
-  // rata kiri (left 0) sesuai spec FRONT.signer.title1/2 — baris terpanjang jadi batas kanan
-  sigTitle1: {
-    position: 'absolute',
-    left: FRONT.signer.title1.left,
-    top: FRONT.signer.title1.top,
-    color: COLORS.value,
-    fontSize: FRONT.signer.title1.fontSize,
-    fontWeight: 'heavy',
-    textAlign: 'left',
-    textTransform: 'uppercase',
-  },
-  sigTitle2: {
-    position: 'absolute',
-    left: FRONT.signer.title2.left,
-    top: FRONT.signer.title2.top,
-    color: COLORS.value,
-    fontSize: FRONT.signer.title2.fontSize,
-    fontWeight: 'heavy',
-    textAlign: 'left',
-    textTransform: 'uppercase',
-  },
-  sigWrap: {
-    position: 'absolute',
-    left: FRONT.signer.wrap.left,
-    top: FRONT.signer.wrap.top,
-    width: FRONT.signer.wrap.w,
-    height: FRONT.signer.wrap.h,
-  },
-  // ttd digeser kanan-bawah — posisi/ukuran dari spec
-  sigText: {
-    position: 'absolute',
-    left: FRONT.signer.sig.left,
-    top: FRONT.signer.sig.top,
-    fontSize: FRONT.signer.sig.fontSize,
-    fontStyle: 'italic',
-    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
-    color: FRONT.signer.sig.color,
-  },
-  sigImage: {
-    position: 'absolute',
-    left: FRONT.signer.sig.left,
-    top: FRONT.signer.sig.top,
-    width: FRONT.signer.sig.w,
-    height: FRONT.signer.sig.h,
-    opacity: 0.75,
-    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
-  },
-  // Salinan kedua di posisi sama — ttd ditebalkan (bukan berbayang)
-  sigImage2: {
-    position: 'absolute',
-    left: FRONT.signer.sig.left,
-    top: FRONT.signer.sig.top,
-    width: FRONT.signer.sig.w,
-    height: FRONT.signer.sig.h,
-    opacity: 0.75,
-    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
-  },
-  stamp: {
-    position: 'absolute',
-    left: FRONT.signer.stamp.left,
-    top: FRONT.signer.stamp.top,
-    width: FRONT.signer.stamp.size,
-    height: FRONT.signer.stamp.size,
-    borderRadius: FRONT.signer.stamp.radius,
-    borderWidth: FRONT.signer.stamp.border,
-    borderColor: COLORS.stampBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: `rotate(${FRONT.signer.stamp.rotate}deg)`,
-    overflow: 'hidden',
-  },
-  stampImg: {
-    width: '100%',
-    height: '100%',
-  },
-  stampText: {
-    fontSize: FRONT.signer.stamp.text.fontSize,
-    fontWeight: 'bold',
-    color: COLORS.stampText,
-    transform: 'rotate(-12deg)',
-  },
-  signerName: {
-    color: WHITE,
-    fontSize: 14,
-    fontWeight: 'heavy',
-    textAlign: 'left',
-    textTransform: 'uppercase',
-    textDecoration: 'underline',
-  },
-  signerTitle: {
-    color: WHITE,
-    fontSize: 12,
-    fontWeight: 'semibold',
-    opacity: 0.95,
-    marginTop: 1,
-    textAlign: 'left',
-    textTransform: 'uppercase',
-  },
-
   // ── Back Side ──
   pageBack: {
     width: CARD.W,
@@ -431,6 +330,59 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: BLUE_900,
     position: 'relative',
+    fontFamily: FONTS.plusJakarta,
+  },
+  signatureBack: {
+    position: 'absolute',
+    right: BACK.signer.right,
+    bottom: BACK.signer.bottom,
+    width: BACK.signer.w,
+    height: BACK.signer.h,
+    fontFamily: FONTS.plusJakarta,
+  },
+  sigBackTitle: {
+    position: 'absolute',
+    right: BACK.signer.title.right,
+    top: BACK.signer.title.top,
+    color: COLORS.value,
+    fontSize: BACK.signer.title.fontSize,
+    fontWeight: 'bold',
+    textAlign: 'right',
+    textTransform: 'uppercase',
+  },
+  sigBackName: {
+    position: 'absolute',
+    right: BACK.signer.name.right,
+    bottom: BACK.signer.name.bottom,
+    color: COLORS.value,
+    fontSize: BACK.signer.name.fontSize,
+    fontWeight: 'heavy',
+    textAlign: 'right',
+    textTransform: 'uppercase',
+    textDecoration: 'underline',
+  },
+  sigBackImage: {
+    position: 'absolute',
+    right: BACK.signer.sig.right,
+    bottom: BACK.signer.sig.bottom,
+    width: BACK.signer.sig.w,
+    height: BACK.signer.sig.h,
+    opacity: 0.75,
+    transform: `rotate(${BACK.signer.sig.rotate}deg)`,
+  },
+  sigBackStamp: {
+    position: 'absolute',
+    right: BACK.signer.stamp.right,
+    bottom: BACK.signer.stamp.bottom,
+    width: BACK.signer.stamp.size,
+    height: BACK.signer.stamp.size,
+    borderRadius: BACK.signer.stamp.size / 2,
+    overflow: 'hidden',
+    transform: `rotate(${BACK.signer.stamp.rotate}deg)`,
+  },
+  sigBackStampImg: {
+    width: '100%',
+    height: '100%',
   },
   backWatermarkLogo: {
     position: 'absolute',
@@ -636,7 +588,7 @@ interface MemberCardPdfProps {
   /** Data URL latar desain upload sisi depan/belakang (di-resolve service). */
   frontImageDataUrl?: string | null;
   backImageDataUrl?: string | null;
-  /** Data URL tanda tangan & stempel (cap) yang di-upload — opsional, fallback teks "ttd"/"STEMPEL". */
+  /** Data URL tanda tangan & stempel (cap) yang di-upload — opsional, disembunyikan bila kosong. */
   signatureDataUrl?: string | null;
   stampDataUrl?: string | null;
   /** Visual strip dari tabel tingkatan — bila kosong fallback ke mapping bawaan. */
@@ -653,6 +605,7 @@ function guillocheBorder(strokeColor: string) {
   return h(
     Svg,
     {
+      key: 'guilloche',
       width: 856,
       height: 540,
       viewBox: '0 0 856 540',
@@ -971,87 +924,6 @@ function buildFrontSide(props: MemberCardPdfProps) {
       h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
       h(Text, { style: styles.validUntilValue }, validUntilStr),
     ),
-    // Bottom right — penandatangan (1-3) + stempel
-    // Bottom right — stempel 4 cm (cap di-upload) + ttd di atasnya + nama/jabatan di bawah
-    h(
-      View,
-      { key: 'sig', style: styles.signature },
-      h(Text, { key: 'st1', style: styles.sigTitle1 }, `KOORDINATORAT DISTRIK THS-THM`),
-      h(
-        Text,
-        { key: 'st2', style: styles.sigTitle2 },
-        `KEUSKUPAN ${(member.distrik || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`,
-      ),
-      h(
-        View,
-        { key: 'sigwrap', style: styles.sigWrap },
-        h(
-          View,
-          { key: 'stamp', style: styles.stamp },
-          props.stampDataUrl
-            ? h(Image, { src: props.stampDataUrl, style: styles.stampImg })
-            : h(Text, { style: styles.stampText }, 'STEMPEL'),
-        ),
-        props.signatureDataUrl
-          ? [
-              h(Image, { src: props.signatureDataUrl, style: styles.sigImage }),
-              h(Image, { src: props.signatureDataUrl, style: styles.sigImage2 }),
-            ]
-          : h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
-      ),
-      ...(cardConfig.signers && cardConfig.signers.length > 0
-        ? cardConfig.signers
-            .filter((s) => s && (s.signerName || s.signerTitle))
-            .map((s, i) =>
-              h(
-                View,
-                {
-                  key: `sig-${i}`,
-                  style: {
-                    position: 'absolute',
-                    right: 0,
-                    bottom: i * 34,
-                    width: '100%',
-                    alignItems: 'flex-end',
-                  },
-                },
-                // Nama penandatangan (underline) + jabatan — keduanya tampil di bawah stempel, font sama dgn "Berlaku sampai"
-                s.signerName
-                  ? h(Text, { style: styles.signerName }, (s.signerName || '').toUpperCase())
-                  : null,
-                s.signerTitle
-                  ? h(Text, { style: styles.signerTitle }, s.signerTitle.toUpperCase())
-                  : null,
-              ),
-            )
-        : [
-            h(
-              View,
-              {
-                key: 'sig-fallback',
-                style: {
-                  position: 'absolute',
-                  right: 0,
-                  bottom: 0,
-                  width: '100%',
-                  alignItems: 'flex-end',
-                },
-              },
-              h(
-                Text,
-                { key: 'sig-n', style: styles.signerName },
-                (cardConfig.signerName || '').toUpperCase(),
-              ),
-              cardConfig.signerTitle
-                ? h(
-                    Text,
-                    { key: 'sig-nt', style: styles.signerTitle },
-                    cardConfig.signerTitle.toUpperCase(),
-                  )
-                : null,
-            ),
-          ]),
-    ),
   ];
 }
 
@@ -1202,6 +1074,39 @@ function buildBackSide(props: MemberCardPdfProps) {
         h(Text, { key: 'uv', style: styles.footerUrl }, cardConfig.verificationUrl),
       ),
     ),
+    // Penandatangan + stempel — kanan-bawah sisi belakang (BACK.signer).
+    h(
+      View,
+      { key: 'sig', style: styles.signatureBack },
+      h(
+        Text,
+        { key: 'sig-title', style: styles.sigBackTitle },
+        (
+          cardConfig.signers?.[0]?.signerTitle ||
+          cardConfig.signerTitle ||
+          'KOORDINATOR DISTRIK'
+        ).toUpperCase(),
+      ),
+      props.signatureDataUrl
+        ? h(Image, { key: 'sig-image', src: props.signatureDataUrl, style: styles.sigBackImage })
+        : null,
+      h(
+        Text,
+        { key: 'sig-name', style: styles.sigBackName },
+        (
+          cardConfig.signers?.[0]?.signerName ||
+          cardConfig.signerName ||
+          'Koordinator Distrik'
+        ).toUpperCase(),
+      ),
+      props.stampDataUrl
+        ? h(
+            View,
+            { key: 'stamp', style: styles.sigBackStamp },
+            h(Image, { key: 'stamp-img', src: props.stampDataUrl, style: styles.sigBackStampImg }),
+          )
+        : null,
+    ),
   ];
 }
 
@@ -1229,6 +1134,7 @@ export function buildMemberCardPdf(props: MemberCardPdfProps, opts?: { combined?
             padding: 0,
             position: 'relative',
             backgroundColor: WHITE,
+            fontFamily: FONTS.plusJakarta,
           },
         },
         // Front (top half)
@@ -1286,6 +1192,7 @@ export function buildMemberCardBatchPdf(propsArray: MemberCardPdfProps[]) {
             padding: 0,
             position: 'relative',
             backgroundColor: WHITE,
+            fontFamily: FONTS.plusJakarta,
           },
         },
         h(

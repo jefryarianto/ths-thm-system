@@ -1606,7 +1606,9 @@ export default function MemberDetailPage() {
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'Koordinator Distrik',
+                      koordinatorJabatan: cardData?.signerTitle || undefined,
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
+                      stempelUrl: cardData?.stampImage ? "/api/uploads/" + encodeURIComponent(cardData.stampImage) : undefined,
                       tanggalPelantikan: cardData?.tanggalPelantikan ?? member.pelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? ''),
                   }}
                 />
@@ -1637,7 +1639,9 @@ export default function MemberDetailPage() {
                       status: member.statusKeanggotaan || 'AKTIF',
                       alamat: member.alamat || '',
                       koordinator: cardData?.signerName || 'Koordinator Distrik',
+                      koordinatorJabatan: cardData?.signerTitle || undefined,
                       tandaTanganUrl: cardData?.signatureImage ? "/api/uploads/" + encodeURIComponent(cardData.signatureImage) : undefined,
+                      stempelUrl: cardData?.stampImage ? "/api/uploads/" + encodeURIComponent(cardData.stampImage) : undefined,
                       tanggalPelantikan: cardData?.tanggalPelantikan ?? member.pelantikan ?? (member.tempatDadar && member.tahunDadar ? `${member.tempatDadar}, ${member.tahunDadar}` : member.tahunDadar ?? ''),
                   }}
                 />

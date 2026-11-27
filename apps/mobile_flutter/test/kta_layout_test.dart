@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile_flutter/core/utils/kta_design.dart';
 import 'package:mobile_flutter/core/utils/kta_layout.dart';
 import 'package:mobile_flutter/data/models/member_kta.dart';
 
@@ -31,9 +32,9 @@ MemberKta sample({String berlakuSampai = ''}) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('font KtaDejaVu termuat', () async {
+  test('font Plus Jakarta Sans termuat', () async {
     await KtaLayoutCalculator.ensureFonts();
-    expect(KtaSpec.fontFamily, 'KtaDejaVu');
+    expect(KtaSpec.fontFamily, 'Plus Jakarta Sans');
   });
 
   test('calculate memproduksi field yang dibutuhkan', () async {
@@ -128,6 +129,35 @@ void main() {
         'EXP: 03/27',
       );
     });
+  });
+
+  test('KtaSignerSpec mencerminkan BACK.signer (blok kanan-bawah sisi belakang)', () {
+    expect(KtaSignerSpec.right, 24);
+    expect(KtaSignerSpec.bottom, 22);
+    expect(KtaSignerSpec.width, 330);
+    expect(KtaSignerSpec.height, 118);
+
+    expect(KtaSignerSpec.titleRight, 0);
+    expect(KtaSignerSpec.titleTop, 0);
+    expect(KtaSignerSpec.titleFontSize, 12);
+
+    expect(KtaSignerSpec.nameRight, 0);
+    expect(KtaSignerSpec.nameBottom, 0);
+    expect(KtaSignerSpec.nameFontSize, 14);
+    expect(KtaSignerSpec.nameUnderline, isTrue);
+
+    expect(KtaSignerSpec.sigRight, 150);
+    expect(KtaSignerSpec.sigBottom, 34);
+    expect(KtaSignerSpec.sigWidth, 175);
+    expect(KtaSignerSpec.sigHeight, 52);
+    expect(KtaSignerSpec.sigRotate, -8);
+
+    expect(KtaSignerSpec.stampRight, 4);
+    expect(KtaSignerSpec.stampBottom, 26);
+    expect(KtaSignerSpec.stampSize, 88);
+    expect(KtaSignerSpec.stampRotate, -8);
+
+    expect(KtaSignerSpec.titleFallback, 'KOORDINATOR DISTRIK');
   });
 
   test('KtaRank fallback ke MUDA untuk tingkat tak dikenal', () {

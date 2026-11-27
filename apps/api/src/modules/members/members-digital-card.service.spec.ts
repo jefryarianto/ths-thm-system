@@ -8,9 +8,8 @@ import { TingkatanService } from '../tingkatan/tingkatan.service';
 import { CacheService } from '../../common/services/cache.service';
 import { revokeLegacyMemberKtaCards } from './kta-card-revocation';
 
-// Mock QRCode — hindari generate PNG asli saat test
-jest.mock('qrcode', () => ({
-  toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,FAKEQR'),
+jest.mock('../documents/pdf-templates/styled-qr', () => ({
+  buildStyledQrDataUrl: jest.fn().mockResolvedValue('data:image/png;base64,FAKEQR'),
 }));
 
 describe('MembersDigitalCardService', () => {
@@ -352,10 +351,9 @@ describe('MembersDigitalCardService', () => {
         expect(url.replace('https://ths-thm.cloud/verify/', '').split('.')).toHaveLength(3);
 
         // QR juga digenerate dari URL publik, bukan endpoint JSON API
-        const { toDataURL } = jest.requireMock('qrcode');
-        expect(toDataURL).toHaveBeenCalledWith(
+        const { buildStyledQrDataUrl } = jest.requireMock('../documents/pdf-templates/styled-qr');
+        expect(buildStyledQrDataUrl).toHaveBeenCalledWith(
           expect.stringContaining('https://ths-thm.cloud/verify/'),
-          expect.anything(),
         );
       } finally {
         if (prevFrontend === undefined) delete process.env.FRONTEND_URL;
@@ -364,8 +362,8 @@ describe('MembersDigitalCardService', () => {
     });
 
     it('should generate QR dari verificationUrl', async () => {
-      const { toDataURL } = jest.requireMock('qrcode');
-      toDataURL.mockResolvedValue('data:image/png;base64,FAKEQR');
+      const { buildStyledQrDataUrl } = jest.requireMock('../documents/pdf-templates/styled-qr');
+      buildStyledQrDataUrl.mockResolvedValue('data:image/png;base64,FAKEQR');
       const existing = {
         id: 'doc-qr',
         nomorDokumen: 'KTA-LRT-0103-001-1994',
@@ -376,7 +374,7 @@ describe('MembersDigitalCardService', () => {
 
       const result = await service.getDigitalCard('m-lrt-1');
 
-      expect(toDataURL).toHaveBeenCalled();
+      expect(buildStyledQrDataUrl).toHaveBeenCalled();
       expect(result.data.qrCode).toBe('data:image/png;base64,FAKEQR');
     });
 

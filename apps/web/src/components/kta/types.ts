@@ -28,7 +28,9 @@ export interface Anggota {
   alamat: string;
   tanggalTerbit?: string;
   koordinator?: string;
+  koordinatorJabatan?: string;
   tandaTanganUrl?: string;
+  stempelUrl?: string;
 }
 
 export interface KtaSnapshotNamedRef {

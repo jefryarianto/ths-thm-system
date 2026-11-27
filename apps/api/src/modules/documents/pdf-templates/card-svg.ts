@@ -24,17 +24,19 @@ const {
   guillocheSvg,
 } = require('../../../common/utils/card-design');
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
+const { PLUS_JAKARTA_FONT_CSS } = require('./plus-jakarta-font');
 
-// Family yang dikenali fontconfig di container (nama internal TTF dari
-// packages/card-design → nama family sistem). Wajah bold/regular dipilih
-// lewat atribut font-weight pada SVG.
+// Semua family lama dipetakan ke Plus Jakarta Sans agar SVG, PNG, PDF, dan web
+// memakai satu family yang sama. Bobot regular/semi-bold/bold dipilih lewat
+// atribut font-weight pada SVG.
 const FAM: Record<string, string> = {
-  [FONTS.robotoBold]: 'Roboto',
-  [FONTS.robotoRegular]: 'Roboto',
-  [FONTS.openSansBold]: 'Open Sans',
-  [FONTS.ocrA]: 'OCR A Extended',
+  [FONTS.robotoBold]: FONTS.plusJakarta,
+  [FONTS.robotoRegular]: FONTS.plusJakarta,
+  [FONTS.openSansBold]: FONTS.plusJakarta,
+  [FONTS.ocrA]: FONTS.plusJakarta,
+  [FONTS.plusJakarta]: FONTS.plusJakarta,
 };
-const fam = (name: string) => FAM[name] ?? name;
+const fam = (name: string) => FAM[name] ?? FONTS.plusJakarta;
 
 export interface CardSvgData {
   member: {
@@ -99,7 +101,7 @@ function svgInner(str: string): string {
   return str.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
 }
 
-/** Teks SVG dengan font/bobot sesuai spec (family default = Roboto-Bold). */
+/** Teks SVG dengan font/bobot sesuai spec (family default = Plus Jakarta Sans). */
 function txt(
   x: number,
   y: number,
@@ -121,7 +123,7 @@ function txt(
   a.push(`x="${x}"`);
   a.push(`y="${y}"`);
   a.push(`text-anchor="${o.anchor || 'start'}"`);
-  a.push(`font-family="${fam(o.family || FONTS.robotoBold)}, sans-serif"`);
+  a.push(`font-family="${fam(o.family || FONTS.plusJakarta)}, sans-serif"`);
   a.push(`font-size="${o.size ?? 14}"`);
   a.push(`font-weight="${o.weight ?? 400}"`);
   a.push(`fill="${o.fill || '#111827'}"`);
@@ -198,16 +200,6 @@ function frontSide(d: CardSvgData): string {
   const cfg = d.template?.overlayConfig || null;
   const guillocheOff = cfg?.guilloche?.enabledFront === false;
   const guillocheStroke = cfg?.guilloche?.strokeFront || null;
-
-  const signers: Array<{ signerName?: string; signerTitle?: string }> =
-    d.signers && d.signers.length > 0
-      ? d.signers
-      : [
-          {
-            signerName: d.signerName || 'Koordinator Distrik',
-            signerTitle: d.signerTitle || 'THS-THM',
-          },
-        ];
 
   let s = '';
   // Latar: gambar upload template ATAU dekorasi bawaan (gradien/ombak/header/bottom)
@@ -402,89 +394,6 @@ function frontSide(d: CardSvgData): string {
   });
   s += `</g>`;
 
-  // Signer — teks RATA-KIRI: batas kanan ditentukan baris terpanjang. Kotak di-anchor
-  // kanan (right:-8 ≈ tepi kanan kartu); judul/stempel/nama sejajar kiri (x=0).
-  const sg = FRONT.signer;
-  const sgX0 = CARD.W - sg.right - sg.w;
-  const sgY0 = CARD.H - sg.bottom - sg.h;
-  s += `<g transform="translate(${sgX0} ${sgY0})">`;
-  s += txt(0, sg.title1.top + sg.title1.fontSize, 'KOORDINATORAT DISTRIK THS-THM', {
-    size: sg.title1.fontSize,
-    weight: 900,
-    fill: COLORS.value,
-    anchor: 'start',
-  });
-  s += txt(0, sg.title2.top + sg.title2.fontSize, `KEUSKUPAN ${distrik}`, {
-    size: sg.title2.fontSize,
-    weight: 700,
-    fill: COLORS.value,
-    anchor: 'start',
-  });
-  // Stempel
-  const wrapX = sg.wrap.left, // rata kiri (left 0)
-    wrapY = sg.wrap.top;
-  const stamX = wrapX + sg.stamp.left;
-  const stamY = wrapY + sg.stamp.top;
-  s += `<g transform="rotate(${sg.stamp.rotate} ${stamX + sg.stamp.size / 2} ${stamY + sg.stamp.size / 2})">`;
-  s += `<clipPath id="clipStamp"><circle cx="${stamX + sg.stamp.size / 2}" cy="${stamY + sg.stamp.size / 2}" r="${sg.stamp.size / 2}"/></clipPath>`;
-  s += `<circle cx="${stamX + sg.stamp.size / 2}" cy="${stamY + sg.stamp.size / 2}" r="${sg.stamp.size / 2}" fill="rgba(255,255,255,0.25)" stroke="${COLORS.stampBorder}" stroke-width="${sg.stamp.border}"/>`;
-  if (d.stampDataUrl) {
-    s += `<g clip-path="url(#clipStamp)"><image x="${stamX}" y="${stamY}" width="${sg.stamp.size}" height="${sg.stamp.size}" preserveAspectRatio="xMidYMid slice" href="${d.stampDataUrl}" xlink:href="${d.stampDataUrl}"/></g>`;
-  } else {
-    s += txt(stamX + sg.stamp.size / 2, stamY + sg.stamp.size / 2 + 4, 'STEMPEL', {
-      size: sg.stamp.text.fontSize,
-      weight: 900,
-      fill: COLORS.stampText,
-      anchor: 'middle',
-    });
-  }
-  s += `</g>`;
-  // Tanda tangan
-  const sigX = wrapX + sg.sig.left;
-  const sigY = wrapY + sg.sig.top;
-  if (d.signatureDataUrl) {
-    s += `<g transform="rotate(${sg.sig.rotate} ${sigX + sg.sig.w / 2} ${sigY + sg.sig.h / 2})" opacity="0.7">`;
-    for (let k = 0; k < 3; k++) {
-      s += `<image x="${sigX}" y="${sigY}" width="${sg.sig.w}" height="${sg.sig.h}" preserveAspectRatio="xMidYMid meet" href="${d.signatureDataUrl}" xlink:href="${d.signatureDataUrl}"/>`;
-    }
-    s += `</g>`;
-  } else {
-    s += txt(sigX + sg.sig.w / 2, sigY + sg.sig.h / 2 + 8, 'ttd', {
-      size: sg.sig.fontSize,
-      style: 'italic',
-      fill: sg.sig.color,
-      anchor: 'middle',
-      family: FONTS.robotoRegular,
-      transform: `rotate(${sg.sig.rotate} ${sigX + sg.sig.w / 2} ${sigY + sg.sig.h / 2})`,
-    });
-  }
-  // Nama + jabatan (bawah, rata kiri) — bisa lebih dari satu penandatangan
-  signers.forEach((sgn, i) => {
-    const rowBottom = sg.h - i * 34;
-    const nameBaseline = rowBottom - 4;
-    s += txt(0, nameBaseline, (sgn.signerName || 'Koordinator Distrik').toUpperCase(), {
-      size: sg.name.fontSize,
-      weight: 900,
-      fill: COLORS.value,
-      anchor: 'start',
-      decoration: 'underline',
-    });
-    if (sgn.signerTitle) {
-      s += txt(
-        0,
-        nameBaseline + sg.title.fontSize + sg.title.marginTop,
-        sgn.signerTitle.toUpperCase(),
-        {
-          size: sg.title.fontSize,
-          weight: 700,
-          fill: COLORS.value,
-          anchor: 'start',
-        },
-      );
-    }
-  });
-  s += `</g>`;
-
   return s;
 }
 
@@ -638,6 +547,52 @@ function backSide(d: CardSvgData): string {
     anchor: 'end',
   });
 
+  // Penandatangan + stempel — kanan-bawah sisi belakang (BACK.signer).
+  const sg = BACK.signer;
+  const signerLeft = CARD.W - sg.right - sg.w;
+  const signerTop = CARD.H - sg.bottom - sg.h;
+  const primary = d.signers?.[0] || {
+    signerName: d.signerName,
+    signerTitle: d.signerTitle,
+  };
+  const signerTitle = primary?.signerTitle || d.signerTitle || 'KOORDINATOR DISTRIK';
+  const signerName = primary?.signerName || d.signerName || 'Koordinator Distrik';
+  const titleX = CARD.W - sg.right - sg.title.right;
+  const titleY = signerTop + sg.title.top + sg.title.fontSize;
+  const nameX = CARD.W - sg.right - sg.name.right;
+  const nameY = CARD.H - sg.bottom - sg.name.bottom;
+  const sigX = signerLeft + sg.w - sg.sig.right - sg.sig.w;
+  const sigY = signerTop + sg.h - sg.sig.bottom - sg.sig.h;
+  const stampX = signerLeft + sg.w - sg.stamp.right - sg.stamp.size;
+  const stampY = signerTop + sg.h - sg.stamp.bottom - sg.stamp.size;
+
+  s += txt(titleX, titleY, signerTitle.toUpperCase(), {
+    size: sg.title.fontSize,
+    weight: 700,
+    fill: COLORS.value,
+    anchor: 'end',
+  });
+  s += txt(nameX, nameY, signerName.toUpperCase(), {
+    size: sg.name.fontSize,
+    weight: 900,
+    fill: COLORS.value,
+    anchor: 'end',
+    decoration: sg.name.underline ? 'underline' : undefined,
+  });
+  if (d.signatureDataUrl) {
+    s += `<g transform="rotate(${sg.sig.rotate} ${sigX + sg.sig.w / 2} ${sigY + sg.sig.h / 2})" opacity="0.7">`;
+    s += `<image x="${sigX}" y="${sigY}" width="${sg.sig.w}" height="${sg.sig.h}" preserveAspectRatio="xMidYMid meet" href="${d.signatureDataUrl}" xlink:href="${d.signatureDataUrl}"/>`;
+    s += `</g>`;
+  }
+  if (d.stampDataUrl) {
+    const cx = stampX + sg.stamp.size / 2;
+    const cy = stampY + sg.stamp.size / 2;
+    s += `<g transform="rotate(${sg.stamp.rotate} ${cx} ${cy})">`;
+    s += `<clipPath id="clipBackStamp"><circle cx="${cx}" cy="${cy}" r="${sg.stamp.size / 2}"/></clipPath>`;
+    s += `<g clip-path="url(#clipBackStamp)"><image x="${stampX}" y="${stampY}" width="${sg.stamp.size}" height="${sg.stamp.size}" preserveAspectRatio="xMidYMid slice" href="${d.stampDataUrl}" xlink:href="${d.stampDataUrl}"/></g>`;
+    s += `</g>`;
+  }
+
   return s;
 }
 
@@ -648,6 +603,7 @@ export function buildCardSvg(d: CardSvgData): string {
   return (
     `<svg width="${CARD.W}" height="${CARD.H * 2}" viewBox="0 0 ${CARD.W} ${CARD.H * 2}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">` +
     `<defs>` +
+    `<style>${PLUS_JAKARTA_FONT_CSS}</style>` +
     `<linearGradient id="backHeadGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${COLORS.header.from}"/><stop offset="100%" stop-color="${COLORS.header.to}"/></linearGradient>` +
     `<linearGradient id="imgFallbackGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3D5BE0"/><stop offset="100%" stop-color="#051C8A"/></linearGradient>` +
     `</defs>` +

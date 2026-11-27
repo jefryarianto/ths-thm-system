@@ -71,6 +71,35 @@ class KtaPositions {
   static const double expiryTextX = 733.5;
 }
 
+class KtaSignerSpec {
+  static const double right = 24;
+  static const double bottom = 22;
+  static const double width = 330;
+  static const double height = 118;
+
+  static const double titleRight = 0;
+  static const double titleTop = 0;
+  static const double titleFontSize = 12;
+
+  static const double nameRight = 0;
+  static const double nameBottom = 0;
+  static const double nameFontSize = 14;
+  static const bool nameUnderline = true;
+
+  static const double sigRight = 150;
+  static const double sigBottom = 34;
+  static const double sigWidth = 175;
+  static const double sigHeight = 52;
+  static const double sigRotate = -8;
+
+  static const double stampRight = 4;
+  static const double stampBottom = 26;
+  static const double stampSize = 88;
+  static const double stampRotate = -8;
+
+  static const String titleFallback = 'KOORDINATOR DISTRIK';
+}
+
 class KtaText {
   static const double ptOrgHeader1 = 5.2;
   static const double ptOrgHeader2 = 6.4;

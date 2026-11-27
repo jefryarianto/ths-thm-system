@@ -60,9 +60,18 @@ flutter:
   assets:
     - assets/images/kta/
     - assets/fonts/LICENSE-DejaVu.txt
+    - assets/fonts/LICENSE-PlusJakartaSans.txt
     - assets/images/
     - assets/videos/
   fonts:
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
     - family: KtaDejaVu
       fonts:
         - asset: assets/fonts/DejaVuSans.ttf

@@ -27,8 +27,10 @@ class MemberKta {
   /// Nilai mentah `tanggalBerlakuSampai` (ISO) untuk label "EXP: MM/YY".
   final String berlakuSampai;
   final String namaKoordinator;
+  final String signerTitle;
   final String tandaTanganUrl;
   final String stampImageUrl;
+  final String verificationUrl;
 
   const MemberKta({
     required this.nomorAnggota,
@@ -52,8 +54,10 @@ class MemberKta {
     required this.tanggalBerlakuSampai,
     this.berlakuSampai = '',
     required this.namaKoordinator,
+    this.signerTitle = '',
     required this.tandaTanganUrl,
     required this.stampImageUrl,
+    this.verificationUrl = '',
   });
 
   /// Bentuk `MemberKta` dari `Member` + `CardData` yang sudah dimuat.
@@ -98,8 +102,10 @@ class MemberKta {
           : '',
       berlakuSampai: cardData?.tanggalBerlakuSampai ?? '',
       namaKoordinator: cardData?.signerName ?? '',
-      tandaTanganUrl: cardData?.signatureImage ?? '',
-      stampImageUrl: cardData?.stampImage ?? '',
+      signerTitle: cardData?.signerTitle ?? '',
+      tandaTanganUrl: cardData?.signatureUrl ?? '',
+      stampImageUrl: cardData?.stampUrl ?? '',
+      verificationUrl: cardData?.verificationUrl ?? '',
     );
   }
 }

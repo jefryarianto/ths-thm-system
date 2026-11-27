@@ -5,6 +5,10 @@
   "private": true,
   "main": "index.js",
   "files": [
-    "index.js"
-  ]
+    "index.js",
+    "qr.js"
+  ],
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
 }

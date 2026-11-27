@@ -36,7 +36,9 @@ const MOCK_DIGITAL_CARD = {
   card: {
     verificationUrl: 'https://ths-thm.cloud/verify/test-member-1',
     signerName: 'Koordinator',
+    signerTitle: 'Koordinator Distrik',
   },
+  stampImage: null,
   member: {
     pekerjaan: 'Wiraswasta',
     tanggalBerlakuSampai: '2031-10-31',

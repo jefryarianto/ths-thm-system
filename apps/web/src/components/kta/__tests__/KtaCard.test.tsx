@@ -36,4 +36,56 @@ describe('KtaCard', () => {
     expect(container.textContent).toContain('FORTITER IN RE, SUAVITER IN MODO •');
     expect(container.textContent).not.toContain('Fortiter in Re');
   });
+
+  it('renders the dynamic signer title and stamp when both are present', () => {
+    const { container } = render(
+      <KtaCard
+        side="belakang"
+        anggota={{
+          ...anggota,
+          koordinator: 'Yoseph',
+          koordinatorJabatan: 'SEKRETARIS DISTRIK',
+          tandaTanganUrl: '/api/uploads/signature.png',
+          stempelUrl: '/api/uploads/stamp.png',
+        }}
+      />,
+    );
+
+    expect(container.textContent).toContain('SEKRETARIS DISTRIK');
+    expect(container.querySelector('image[href="/api/uploads/stamp.png"]')).not.toBeNull();
+  });
+
+  it('falls back to the default title and hides a missing stamp', () => {
+    const { container } = render(
+      <KtaCard side="belakang" anggota={{ ...anggota, koordinator: 'Yoseph' }} />,
+    );
+
+    expect(container.textContent).toContain('KOORDINATOR DISTRIK');
+    expect(container.querySelector('image[href="/api/uploads/stamp.png"]')).toBeNull();
+  });
+
+  it('uses the shared styled QR markup for a local verification QR', () => {
+    const { container } = render(
+      <KtaCard side="depan" anggota={{ ...anggota, verifyUrl: 'https://example.com/verify/1' }} />,
+    );
+
+    expect(container.querySelectorAll('.qr-eye')).toHaveLength(3);
+    expect(container.querySelector('.qr-logo-image')).not.toBeNull();
+  });
+
+  it('keeps qrImageUrl ahead of verifyUrl', () => {
+    const { container } = render(
+      <KtaCard
+        side="depan"
+        anggota={{
+          ...anggota,
+          qrImageUrl: 'data:image/png;base64,QR',
+          verifyUrl: 'https://example.com/verify/1',
+        }}
+      />,
+    );
+
+    expect(container.querySelector('image[href="data:image/png;base64,QR"]')).not.toBeNull();
+    expect(container.querySelectorAll('.qr-eye')).toHaveLength(0);
+  });
 });

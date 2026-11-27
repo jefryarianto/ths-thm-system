@@ -58,7 +58,12 @@ interface ApiDigitalCard {
   fotoDataUrl?: string | null;
   qrCode?: string | null;
   signatureImage?: string | null;
-  card?: { verificationUrl?: string | null; signerName?: string | null } | null;
+  stampImage?: string | null;
+  card?: {
+    verificationUrl?: string | null;
+    signerName?: string | null;
+    signerTitle?: string | null;
+  } | null;
   member?: {
     pekerjaan?: string | null;
     pelantikan?: string | null;
@@ -117,8 +122,12 @@ function toAnggota(member: ApiMember, card?: ApiDigitalCard | null): Anggota {
     status: member.statusKeanggotaan || 'AKTIF',
     alamat: member.alamat ?? '',
     koordinator: card?.card?.signerName ?? undefined,
+    koordinatorJabatan: card?.card?.signerTitle ?? undefined,
     tandaTanganUrl: tandaTangan
       ? `/api/uploads/${encodeURIComponent(tandaTangan)}`
+      : undefined,
+    stempelUrl: card?.stampImage?.trim()
+      ? `/api/uploads/${encodeURIComponent(card.stampImage.trim())}`
       : undefined,
     tanggalPelantikan,
     tahunPelantikan: pelantikanTahun,

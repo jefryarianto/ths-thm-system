@@ -15,10 +15,10 @@ async function rasterizeCardPng(svg:SVGSVGElement,assetBase='/kta'):Promise<Blob
   const images=Array.from(node.querySelectorAll('image'));
   await Promise.all(images.map(async image=>{const href=image.getAttribute('href');if(href)image.setAttribute('href',await embed(href));}));
   const base=assetBase.replace(/\/$/,'');
-  const [regular,bold]=await Promise.all([embed(`${base}/fonts/DejaVuSans.ttf`),embed(`${base}/fonts/DejaVuSans-Bold.ttf`)]);
+  const [regular,semiBold,bold]=await Promise.all([embed(`${base}/fonts/PlusJakartaSans-Regular.ttf`),embed(`${base}/fonts/PlusJakartaSans-SemiBold.ttf`),embed(`${base}/fonts/PlusJakartaSans-Bold.ttf`)]);
   const defs=node.querySelector('defs')||node.insertBefore(document.createElementNS('http://www.w3.org/2000/svg','defs'),node.firstChild);
   const style=document.createElementNS('http://www.w3.org/2000/svg','style');
-  style.textContent=`@font-face{font-family:KTADejaVu;src:url('${regular}') format('truetype');font-weight:400}@font-face{font-family:KTADejaVu;src:url('${bold}') format('truetype');font-weight:700}`;
+  style.textContent=`@font-face{font-family:'Plus Jakarta Sans';src:url('${regular}') format('truetype');font-weight:400}@font-face{font-family:'Plus Jakarta Sans';src:url('${semiBold}') format('truetype');font-weight:600}@font-face{font-family:'Plus Jakarta Sans';src:url('${bold}') format('truetype');font-weight:700}`;
   defs.appendChild(style);node.setAttribute('width','2022');node.setAttribute('height','1275');
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(node)],{type:'image/svg+xml;charset=utf-8'}));
   try{

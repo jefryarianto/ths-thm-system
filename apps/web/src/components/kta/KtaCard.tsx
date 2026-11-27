@@ -1,15 +1,15 @@
 'use client';
 import {useEffect,useId,useRef,useState, type RefObject} from 'react';
-import QRCode from 'qrcode';
 import type {Anggota} from './types';
 import {W,H,pt,y,u,fitSingle,wrap,expiry,type Measure} from './layout';
 import {getInitials} from '@/lib/initials';
 import {normalizeDistrict} from '@/lib/kta/district';
+import {BACK,buildQrMarkup} from '@/lib/card-design';
 
 type Props={side:'depan'|'belakang'; anggota:Anggota; assetBase?:string; svgRef?:{current:SVGSVGElement|null}; onWarnings?:(messages:string[])=>void};
 const rank:Record<Anggota['tingkatan'],{count:number;color:string}>={pratama:{count:1,color:'#185AB5'},tamtama:{count:2,color:'#185AB5'},muda:{count:1,color:'#E4B500'},madya:{count:2,color:'#E4B500'},utama:{count:3,color:'#E4B500'}};
 const fallback:Measure=(s,size)=>s.length*size*.72;
-const Text=(p:React.SVGProps<SVGTextElement>)=><text fontFamily="KTADejaVu, DejaVu Sans, sans-serif" {...p}/>;
+const Text=(p:React.SVGProps<SVGTextElement>)=><text fontFamily="Plus Jakarta Sans, sans-serif" {...p}/>;
 const v=(s?:string)=>s?.trim()?u(s):'[BELUM DIISI]';
 
 function HeaderText({x,baseline,size,text,yellow=false}:{x:number;baseline:number;size:number;text:string;yellow?:boolean}) {
@@ -19,19 +19,6 @@ function HeaderText({x,baseline,size,text,yellow=false}:{x:number;baseline:numbe
     <Text x={x} y={baseline} fill={yellow?'#F8DB38':'#DFEAF3'}>{text}</Text>
   </g>;
 }
-function Qr({data,logo,id}:{data:string;logo:string;id:string}) {
-  let qr:ReturnType<typeof QRCode.create>;
-  try{qr=QRCode.create(data,{errorCorrectionLevel:'H'});}catch{return null;}
-  const n=qr.modules.size, q=4, full=n+q*2, squares:React.ReactNode[]=[];
-  for(let row=0;row<n;row++) for(let col=0;col<n;col++) if(qr.modules.get(row,col)) squares.push(<rect key={`${row}-${col}`} x={col+q} y={row+q} width="1" height="1"/>);
-  const middle=full/2, logoWidth=Math.max(3,Math.round(n*.08));
-  return <svg x="641" y={y(22)} width="185" height="185" viewBox={`0 0 ${full} ${full}`}>
-    <defs><linearGradient id={id} x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#143B76"/><stop offset="1" stopColor="#3373AE"/></linearGradient></defs>
-    <rect width={full} height={full} fill="#fff"/><g shapeRendering="crispEdges" fill={`url(#${id})`}>{squares}</g>
-    <circle cx={middle} cy={middle} r={logoWidth*.70} fill="#fff"/><image href={logo} x={middle-logoWidth/2} y={middle-logoWidth/2} width={logoWidth} height={logoWidth} preserveAspectRatio="xMidYMid meet"/>
-  </svg>;
-}
-
 export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Props){
   const id=useId().replace(/:/g,'');const base=assetBase.replace(/\/$/,'');
   const [ready,setReady]=useState(false);
@@ -44,7 +31,7 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
     document.fonts.ready.then(()=>{
       if(!active)return;
       const ns='http://www.w3.org/2000/svg';
-      const makeProbe=()=>{const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('aria-hidden','true');svg.style.cssText='position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none;overflow:hidden';const text=document.createElementNS(ns,'text');text.setAttribute('font-family','KTADejaVu, DejaVu Sans, sans-serif');svg.appendChild(text);document.body.appendChild(svg);probes.push(svg);return {svg,text};};
+      const makeProbe=()=>{const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('aria-hidden','true');svg.style.cssText='position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none;overflow:hidden';const text=document.createElementNS(ns,'text');text.setAttribute('font-family','Plus Jakarta Sans, sans-serif');svg.appendChild(text);document.body.appendChild(svg);probes.push(svg);return {svg,text};};
       const preview=makeProbe(), exported=makeProbe();exported.svg.style.width='2022px';exported.svg.style.height=`${2022*H/W}px`;
       const update=()=>{if(!active)return;const width=localRef.current?.getBoundingClientRect().width||856;preview.svg.style.width=`${width}px`;preview.svg.style.height=`${width*H/W}px`;
         const get:Measure=(text,size,bold)=>{for(const el of [preview.text,exported.text]){el.setAttribute('font-size',String(size));el.setAttribute('font-weight',bold?'700':'400');el.textContent=text;}return Math.max(preview.text.getComputedTextLength(),exported.text.getComputedTextLength());};
@@ -67,8 +54,22 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
   const job=fitSingle(v(a.pekerjaan),520,pt(5.3),pt(4),measure,false);
   const status=fitSingle(v(a.status),520,pt(5.3),pt(4),measure,false);
   const pelantikan=fitSingle(v(a.tanggalPelantikan || a.tahunPelantikan),520,pt(5.3),pt(4),measure,false);
-  const coordinator=fitSingle(a.koordinator||'Koordinator Distrik',330,pt(5),pt(3.8),measure,false);
+  const signerTextMax=BACK.signer.w-BACK.signer.stamp.size-8;
+  const signerTitle=fitSingle(a.koordinatorJabatan||'KOORDINATOR DISTRIK',signerTextMax,BACK.signer.title.fontSize,9,measure,false);
+  const signerName=fitSingle(a.koordinator||'Koordinator Distrik',signerTextMax,BACK.signer.name.fontSize,9,measure,true);
+  const signerLeft=W-BACK.signer.right-BACK.signer.w;
+  const signerTop=H-BACK.signer.bottom-BACK.signer.h;
+  const signerTitleX=W-BACK.signer.right-BACK.signer.title.right;
+  const signerTitleY=signerTop+BACK.signer.title.top+BACK.signer.title.fontSize;
+  const signerNameX=W-BACK.signer.right-BACK.signer.name.right;
+  const signerNameY=H-BACK.signer.bottom-BACK.signer.name.bottom;
+  const signerNameWidth=measure(signerName.text,signerName.size,true);
+  const signatureX=signerLeft+BACK.signer.w-BACK.signer.sig.right-BACK.signer.sig.w;
+  const signatureY=signerTop+BACK.signer.h-BACK.signer.sig.bottom-BACK.signer.sig.h;
+  const stampX=signerLeft+BACK.signer.w-BACK.signer.stamp.right-BACK.signer.stamp.size;
+  const stampY=signerTop+BACK.signer.h-BACK.signer.stamp.bottom-BACK.signer.stamp.size;
   const issue=fitSingle('TANGGAL TERBIT : '+(a.tanggalTerbit||'...............'),360,pt(5),pt(3.6),measure,false);
+  let fallbackQr:{markup:string;viewBox:string}|null=null;
   const messages:string[]=[];
   if(name.overflow||backName.overflow)messages.push('Nama terlalu panjang; mohon ringkas atau atur layout secara manual.');
   if(dadar.overflow)messages.push('Tempat/tahun Dadar terlalu panjang.');
@@ -76,9 +77,9 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
   if(number.overflow)messages.push('Nomor anggota terlalu panjang.');
   if(address.overflow)messages.push('Alamat terlalu panjang untuk tiga baris.');
   if([birth,job,status,pelantikan].some(x=>x.overflow))messages.push('Salah satu data belakang terlalu panjang.');
-  if(coordinator.overflow||issue.overflow)messages.push('Teks footer belakang terlalu panjang.');
+  if(signerTitle.overflow||signerName.overflow||issue.overflow)messages.push('Teks footer belakang terlalu panjang.');
   if(a.berlakuSampai && expiry(a.berlakuSampai)==='FORMAT?')messages.push('Berlaku sampai harus berupa YYYY-MM.');
-  if(!a.qrImageUrl && a.verifyUrl){try{const uri=new URL(a.verifyUrl);if(!['http:','https:'].includes(uri.protocol))throw Error();QRCode.create(a.verifyUrl,{errorCorrectionLevel:'H'});}catch{messages.push('URL verifikasi tidak valid atau terlalu panjang untuk QR.');}}
+  if(!a.qrImageUrl && a.verifyUrl){try{const uri=new URL(a.verifyUrl);if(!['http:','https:'].includes(uri.protocol))throw Error();fallbackQr=buildQrMarkup({data:a.verifyUrl,logoHref:`${base}/logo.png`});}catch{messages.push('URL verifikasi tidak valid atau terlalu panjang untuk QR.');}}
   const messageKey=messages.join('\n');
   useEffect(()=>{if(ready)onWarnings?.(messageKey?messageKey.split('\n'):[]);},[ready,messageKey,onWarnings]);
   const badge=rank[a.tingkatan]||rank.pratama;
@@ -114,7 +115,7 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      <Text x="306" y={y(4.9)} fontSize={number.size} fontWeight="700">{number.text}</Text>
      <Text x="733.5" y={y(23.4)} textAnchor="middle" fontSize={pt(5)} fontWeight="700">EXP: {expiry(a.berlakuSampai)}</Text>
      <line x1="625" y1={y(20.99)} x2="625" y2={y(4.51)} stroke="#0B377B" strokeWidth="1.235"/>
-     {a.qrImageUrl ? <image href={a.qrImageUrl} x="641" y={y(22)} width="185" height="185" preserveAspectRatio="xMidYMid meet"/> : a.verifyUrl ? <Qr data={a.verifyUrl} logo={`${base}/logo.png`} id={`qr-${id}`}/> : null}
+      {a.qrImageUrl ? <image href={a.qrImageUrl} x="641" y={y(22)} width="185" height="185" preserveAspectRatio="xMidYMid meet"/> : fallbackQr ? <svg x="641" y={y(22)} width="185" height="185" viewBox={fallbackQr.viewBox} dangerouslySetInnerHTML={{__html:fallbackQr.markup}}/> : null}
     </>:<>
      <Text x="44" y={y(48.65)} fill="#F8DB38" fontWeight="700" fontSize={pt(7)}>DATA ANGGOTA</Text>
      {backRows.map(([label,value],i)=><g key={label}>
@@ -124,11 +125,12 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      </g>)}
      <Text x="44" y={y(21.4)} fontWeight="700" fontSize={pt(4)}>ALAMAT</Text><Text x="271" y={y(21.4)} fontWeight="700" fontSize={pt(4)}>:</Text>
      {address.lines.map((line,i)=><Text key={i} x="292" y={y(21.4)+24*i} fontSize={address.size}>{line}</Text>)}
-     <Text x="44" y={y(3.5)} fontSize={issue.size}>{issue.text}</Text>
-     <Text x="481" y={y(12.2)} fontSize={pt(4)} fontWeight="700">KOORDINATOR DISTRIK</Text>
-     {a.tandaTanganUrl && <image href={a.tandaTanganUrl} x="481" y="421" width="254" height="50" preserveAspectRatio="xMidYMid meet"/>}
-     <line x1="481" y1={y(5.7)} x2={481+measure(coordinator.text,coordinator.size,false)} y2={y(5.7)} stroke="#0B377B" strokeWidth="1.6"/>
-     <Text x="481" y={y(3.5)} fontSize={coordinator.size}>{coordinator.text}</Text>
+      <Text x="44" y={y(3.5)} fontSize={issue.size}>{issue.text}</Text>
+      <Text x={signerTitleX} y={signerTitleY} textAnchor="end" fontSize={signerTitle.size} fontWeight="700" fill="#0B377B">{signerTitle.text}</Text>
+      {a.tandaTanganUrl && <image href={a.tandaTanganUrl} x={signatureX} y={signatureY} width={BACK.signer.sig.w} height={BACK.signer.sig.h} preserveAspectRatio="xMidYMid meet" transform={`rotate(${BACK.signer.sig.rotate} ${signatureX+BACK.signer.sig.w/2} ${signatureY+BACK.signer.sig.h/2})`}/>}
+      <line x1={signerNameX-signerNameWidth} y1={signerNameY+4} x2={signerNameX} y2={signerNameY+4} stroke="#0B377B" strokeWidth="1.6"/>
+      <Text x={signerNameX} y={signerNameY} textAnchor="end" fontSize={signerName.size} fontWeight="900" fill="#0B377B">{signerName.text}</Text>
+      {a.stempelUrl && <image href={a.stempelUrl} x={stampX} y={stampY} width={BACK.signer.stamp.size} height={BACK.signer.stamp.size} preserveAspectRatio="xMidYMid meet" transform={`rotate(${BACK.signer.stamp.rotate} ${stampX+BACK.signer.stamp.size/2} ${stampY+BACK.signer.stamp.size/2})`}/>}
     </>}
     {/* Mikroteks adalah lapisan SVG; file gambar latar tetap tanpa tulisan.
         Diletakkan tepat di tengah pita guilloche bawah (inset 16) dan

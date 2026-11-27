@@ -6,7 +6,7 @@ import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { TingkatanService } from '../tingkatan/tingkatan.service';
 import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 import { CacheService } from '../../common/services/cache.service';
-import * as QRCode from 'qrcode';
+import { buildStyledQrDataUrl } from '../documents/pdf-templates/styled-qr';
 import { v4 as uuidv4 } from 'uuid';
 import { signQrToken, normalizeVerificationUrl } from '../../common/utils/qr-token.util';
 
@@ -640,11 +640,7 @@ export class MembersDigitalCardService {
   }
 
   private async buildQr(verificationUrl: string): Promise<string> {
-    return QRCode.toDataURL(verificationUrl, {
-      width: 300,
-      margin: 2,
-      color: { dark: '#1a365d', light: '#ffffff' },
-    });
+    return buildStyledQrDataUrl(verificationUrl);
   }
 
   /** Bangun object props untuk renderer PDF kartu (dipakai digital & cetak fisik/batch). */
