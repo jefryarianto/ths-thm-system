@@ -14,6 +14,7 @@ import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { FileUploadZone, FileWithPreview } from '@/components/claims/FileUploadZone';
 import { buildPublicClaimFormData } from '@/components/claims/public-claim-payload';
+import { validateClaimForm } from '@/components/claims/claim-form-validation';
 
 const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -245,28 +246,7 @@ export default function KlaimPage() {
   };
 
   const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-    if (form.namaLengkap.trim().length < 3) errs.namaLengkap = 'Nama lengkap minimal 3 karakter';
-    if (!selectedDistrikId) errs.distrikId = 'Pilih distrik';
-    if (!selectedWilayahId) errs.wilayahId = 'Pilih wilayah';
-    if (!rantingId) errs.rantingId = 'Pilih ranting';
-    if (!form.tempatLahir.trim()) errs.tempatLahir = 'Tempat lahir wajib diisi';
-    if (!form.tanggalLahir) errs.tanggalLahir = 'Tanggal lahir wajib diisi';
-    if (!form.tempatDadar.trim()) errs.tempatDadar = 'Tempat pendadaran wajib diisi';
-    if (!form.tahunDadar.trim()) errs.tahunDadar = 'Tahun pendadaran wajib diisi';
-    if (!form.alamat.trim()) errs.alamat = 'Alamat wajib diisi';
-    if (!form.email.trim()) errs.email = 'Email wajib diisi';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      errs.email = 'Format email tidak valid';
-    if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, '')))
-      errs.noHp = 'Format No. HP tidak valid (mulai 0 atau +62, 9-14 digit)';
-    if (form.modeBukti === 'unggah' && buktiFiles.length === 0)
-      errs.buktiFiles = 'Unggah minimal satu berkas bukti';
-    if (form.modeBukti === 'cerita') {
-      const panjang = form.ceritaHistori.trim().length;
-      if (panjang < 20 || panjang > 1000)
-        errs.ceritaHistori = 'Cerita histori harus antara 20 sampai 1000 karakter';
-    }
+    const errs = validateClaimForm(form, { distrikId: selectedDistrikId, wilayahId: selectedWilayahId, rantingId }, buktiFiles.length);
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
