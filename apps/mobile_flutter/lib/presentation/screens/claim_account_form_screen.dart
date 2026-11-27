@@ -26,6 +26,8 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   String _jenisKelamin = 'L';
   final _tempatLahirCtrl = TextEditingController();
   DateTime? _tanggalLahir;
+  final _pekerjaanCtrl = TextEditingController();
+  final _pelantikanCtrl = TextEditingController();
   final _tempatDadarCtrl = TextEditingController();
   final _tahunDadarCtrl = TextEditingController();
   final _alamatCtrl = TextEditingController();
@@ -36,12 +38,18 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   final _ceritaCtrl = TextEditingController();
   List<String> _buktiPaths = const [];
 
+  static final RegExp _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+  static final RegExp _noHpRegex = RegExp(r'^(\+?62|0)\d{8,13}$');
+  static final RegExp _noHpStripRegex = RegExp(r'[\s-]');
+
   @override
   void dispose() {
     _anggotaIdCtrl.dispose();
     _catatanCtrl.dispose();
     _namaCtrl.dispose();
     _tempatLahirCtrl.dispose();
+    _pekerjaanCtrl.dispose();
+    _pelantikanCtrl.dispose();
     _tempatDadarCtrl.dispose();
     _tahunDadarCtrl.dispose();
     _alamatCtrl.dispose();
@@ -92,34 +100,45 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
 
   void _submit() {
     if (_tipe == 'keanggotaan') {
-      if (_namaCtrl.text.trim().isEmpty) {
-        showCenteredSnackBar(context, 'Nama wajib diisi');
-        return;
+      final nama = _namaCtrl.text.trim();
+      final tempatLahir = _tempatLahirCtrl.text.trim();
+      final tempatDadar = _tempatDadarCtrl.text.trim();
+      final tahunDadar = _tahunDadarCtrl.text.trim();
+      final alamat = _alamatCtrl.text.trim();
+      final noHp = _noHpCtrl.text.trim();
+      final email = _emailCtrl.text.trim();
+      final cerita = _ceritaCtrl.text.trim();
+      String? error;
+      if (nama.length < 3) {
+        error = 'Nama lengkap minimal 3 karakter';
+      } else if (_selectedRantingId == null || _selectedRantingId!.isEmpty) {
+        error = 'Pilih ranting';
+      } else if (tempatLahir.isEmpty) {
+        error = 'Tempat lahir wajib diisi';
+      } else if (_tanggalLahir == null) {
+        error = 'Tanggal lahir wajib diisi';
+      } else if (tempatDadar.isEmpty) {
+        error = 'Tempat pendadaran wajib diisi';
+      } else if (tahunDadar.isEmpty) {
+        error = 'Tahun pendadaran wajib diisi';
+      } else if (alamat.isEmpty) {
+        error = 'Alamat wajib diisi';
+      } else if (email.isEmpty) {
+        error = 'Email wajib diisi';
+      } else if (!_emailRegex.hasMatch(email)) {
+        error = 'Format email tidak valid';
+      } else if (noHp.isNotEmpty &&
+          !_noHpRegex.hasMatch(noHp.replaceAll(_noHpStripRegex, ''))) {
+        error = 'Format No. HP tidak valid (mulai 0 atau +62, 9-14 digit)';
+      } else if (_modeBukti == 'unggah' && _buktiPaths.isEmpty) {
+        error = 'Unggah minimal satu berkas bukti';
+      } else if (_modeBukti == 'cerita' &&
+          (cerita.length < 20 || cerita.length > 1000)) {
+        error = 'Cerita histori harus antara 20 sampai 1000 karakter';
       }
-      if (_tempatDadarCtrl.text.trim().isEmpty) {
-        showCenteredSnackBar(context, 'Tempat dadar wajib diisi');
+      if (error != null) {
+        showCenteredSnackBar(context, error);
         return;
-      }
-      if (_tahunDadarCtrl.text.trim().isEmpty) {
-        showCenteredSnackBar(context, 'Tahun dadar wajib diisi');
-        return;
-      }
-      if (_emailCtrl.text.trim().isEmpty) {
-        showCenteredSnackBar(context, 'Email wajib diisi');
-        return;
-      }
-      if (_modeBukti == 'unggah' && _buktiPaths.isEmpty) {
-        showCenteredSnackBar(
-            context, 'Mode unggah memerlukan minimal satu berkas bukti');
-        return;
-      }
-      if (_modeBukti == 'cerita') {
-        final cerita = _ceritaCtrl.text.trim();
-        if (cerita.length < 20 || cerita.length > 1000) {
-          showCenteredSnackBar(
-              context, 'Cerita histori harus antara 20 sampai 1000 karakter');
-          return;
-        }
       }
     }
     context.read<ClaimBloc>().add(ClaimCreateRequested(
@@ -137,6 +156,14 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
               : _tempatLahirCtrl.text.trim(),
           tanggalLahir:
               _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
+          pekerjaan: _tipe == 'keanggotaan' &&
+                  _pekerjaanCtrl.text.trim().isNotEmpty
+              ? _pekerjaanCtrl.text.trim()
+              : null,
+          pelantikan: _tipe == 'keanggotaan' &&
+                  _pelantikanCtrl.text.trim().isNotEmpty
+              ? _pelantikanCtrl.text.trim()
+              : null,
           tempatDadar: _tempatDadarCtrl.text.trim().isEmpty
               ? null
               : _tempatDadarCtrl.text.trim(),
@@ -229,6 +256,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
             controller: _namaCtrl,
             decoration: const InputDecoration(
                 labelText: 'Nama Lengkap *',
+                hintText: 'Masukkan nama lengkap',
                 prefixIcon: Icon(Icons.person_outline))),
         const SizedBox(height: 14),
         DropdownButtonFormField<String>(
@@ -244,21 +272,18 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
               if (v != null) setState(() => _jenisKelamin = v);
             }),
         const SizedBox(height: 14),
-        OrgStructureFields(
-          onRantingChanged: (v) => setState(() => _selectedRantingId = v),
-        ),
-        const SizedBox(height: 14),
         TextFormField(
             controller: _tempatLahirCtrl,
             decoration: const InputDecoration(
-                labelText: 'Tempat Lahir',
+                labelText: 'Tempat Lahir *',
+                hintText: 'Kota lahir',
                 prefixIcon: Icon(Icons.location_city_outlined))),
         const SizedBox(height: 14),
         InkWell(
             onTap: _pickDate,
             child: InputDecorator(
                 decoration: const InputDecoration(
-                    labelText: 'Tanggal Lahir',
+                    labelText: 'Tanggal Lahir *',
                     prefixIcon: Icon(Icons.calendar_today_outlined)),
                 child: Text(
                     _tanggalLahir != null
@@ -274,62 +299,93 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
         TextFormField(
             controller: _tempatDadarCtrl,
             decoration: const InputDecoration(
-                labelText: 'Tempat Dadar *',
+                labelText: 'Tempat Pendadaran (Dadar) *',
+                hintText: 'Kota pendadaran',
                 prefixIcon: Icon(Icons.location_city_outlined))),
         const SizedBox(height: 14),
         TextFormField(
             controller: _tahunDadarCtrl,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
-                labelText: 'Tahun Dadar *',
+                labelText: 'Tahun Pendadaran (Dadar) *',
+                hintText: '2024',
                 prefixIcon: Icon(Icons.calendar_today_outlined))),
         const SizedBox(height: 14),
         TextFormField(
-            controller: _alamatCtrl,
-            maxLines: 2,
+            controller: _pekerjaanCtrl,
             decoration: const InputDecoration(
-                labelText: 'Alamat',
-                prefixIcon: Icon(Icons.home_outlined),
-                alignLabelWithHint: true)),
+                labelText: 'Pekerjaan',
+                hintText: 'contoh: Guru',
+                prefixIcon: Icon(Icons.work_outline))),
+        const SizedBox(height: 14),
+        TextFormField(
+            controller: _pelantikanCtrl,
+            decoration: const InputDecoration(
+                labelText: 'Pelantikan',
+                hintText: 'contoh: 12 JULI 2020',
+                prefixIcon: Icon(Icons.event_outlined))),
         const SizedBox(height: 14),
         TextFormField(
             controller: _noHpCtrl,
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
-                labelText: 'Nomor HP', prefixIcon: Icon(Icons.phone_outlined))),
+                labelText: 'No. HP',
+                hintText: '08123456789',
+                prefixIcon: Icon(Icons.phone_outlined))),
         const SizedBox(height: 14),
         TextFormField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(
-                labelText: 'Email *', prefixIcon: Icon(Icons.email_outlined))),
+                labelText: 'Email *',
+                hintText: 'email@contoh.com',
+                prefixIcon: Icon(Icons.email_outlined))),
+        const SizedBox(height: 14),
+        TextFormField(
+            controller: _alamatCtrl,
+            maxLines: 2,
+            decoration: const InputDecoration(
+                labelText: 'Alamat *',
+                hintText: 'Alamat lengkap',
+                prefixIcon: Icon(Icons.home_outlined),
+                alignLabelWithHint: true)),
+        const SizedBox(height: 14),
+        OrgStructureFields(
+          onRantingChanged: (v) => setState(() => _selectedRantingId = v),
+        ),
         const SizedBox(height: 14),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Cara Pembuktian Keanggotaan *',
                 style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: AppTheme.space12),
             RadioGroup<String>(
               groupValue: _modeBukti,
               onChanged: (v) {
                 if (v != null) setState(() => _modeBukti = v);
               },
-              child: const Column(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RadioListTile<String>(
-                    title: Text('Unggah bukti'),
+                  _proofCard(
                     value: 'unggah',
+                    title: 'Unggah bukti',
+                    helper: 'Sertifikat, kartu anggota, KTP, atau surat keterangan',
                   ),
-                  RadioListTile<String>(
-                    title: Text('Ceritakan histori'),
+                  const SizedBox(width: AppTheme.space12),
+                  _proofCard(
                     value: 'cerita',
+                    title: 'Ceritakan histori',
+                    helper: 'Tulis riwayat keanggotaan Anda (20–1000 karakter)',
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: AppTheme.space12),
             if (_modeBukti == 'unggah') ...[
               const Text(
-                  'Sertifikat, kartu anggota, KTP, atau surat keterangan'),
+                  'Bukti Keanggotaan & Dokumen Pendukung (Sertifikat, Kartu Anggota, KTP, Surat Keterangan, dll)'),
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: _pickBukti,
@@ -347,16 +403,75 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
               TextFormField(
                 controller: _ceritaCtrl,
                 maxLines: 5,
+                maxLength: 1000,
                 decoration: const InputDecoration(
-                  labelText:
-                      'Tulis riwayat keanggotaan Anda (20–1000 karakter)',
+                  labelText: 'Cerita Histori Keanggotaan *',
+                  hintText:
+                      'Ceritakan secara singkat mulai awal berlatih hingga di dadar dan informasi minimal 2 orang yang mendadarnya',
+                  helperText: 'Minimal 20 karakter, maksimal 1000 karakter',
                   prefixIcon: Icon(Icons.history),
                   alignLabelWithHint: true,
                 ),
               ),
           ],
         ),
+        const SizedBox(height: 14),
+        TextFormField(
+            controller: _catatanCtrl,
+            maxLines: 2,
+            decoration: const InputDecoration(
+                labelText: 'Catatan',
+                hintText: 'Catatan tambahan (opsional)',
+                prefixIcon: Icon(Icons.notes_outlined),
+                alignLabelWithHint: true)),
       ];
+
+  Widget _proofCard({
+    required String value,
+    required String title,
+    required String helper,
+  }) {
+    final selected = _modeBukti == value;
+    final colors = Theme.of(context).colorScheme;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _modeBukti = value),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
+            color: selected ? colors.primaryContainer : colors.surface,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Radio<String>(value: value),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(helper,
+                        style: TextStyle(
+                            fontSize: 11, color: colors.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   void _onStateChanged(BuildContext context, ClaimState state) {
     if (state is ClaimCreateSuccess) {
