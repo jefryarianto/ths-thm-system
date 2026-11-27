@@ -636,31 +636,34 @@ class _KtaSignerBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = kta.signerTitle.trim().isEmpty
-        ? KtaSignerSpec.titleFallback
-        : kta.signerTitle.trim();
-    final name = kta.namaKoordinator.trim();
+    final title = (kta.signerTitle.trim().isEmpty
+            ? KtaSignerSpec.titleFallback
+            : kta.signerTitle.trim())
+        .toUpperCase();
+    final name = kta.namaKoordinator.trim().toUpperCase();
     final textWidth = KtaSignerSpec.width - KtaSignerSpec.stampSize - 8;
+    final fontSize =
+        KtaText.ptBackFieldLabel * 25.4 / 72 * KtaSpec.pxPerMm;
 
     return Stack(
       children: [
-        Positioned(
-          right: KtaSignerSpec.titleRight,
-          top: KtaSignerSpec.titleTop,
-          width: textWidth,
-          child: Text(
-            title,
-            textAlign: TextAlign.right,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: KtaSpec.fontFamily,
-              fontWeight: FontWeight.w700,
-              fontSize: KtaSignerSpec.titleFontSize,
-              color: KtaColors.primaryNavy,
+          Positioned(
+            left: KtaSignerSpec.titleLeft,
+            top: KtaSignerSpec.titleTop,
+            width: textWidth,
+            child: Text(
+              title,
+              textAlign: TextAlign.left,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: KtaSpec.fontFamily,
+                fontWeight: FontWeight.w700,
+                fontSize: fontSize,
+                color: KtaColors.primaryNavy,
+              ),
             ),
           ),
-        ),
         if (kta.tandaTanganUrl.isNotEmpty)
           Positioned(
             right: KtaSignerSpec.sigRight,
@@ -674,18 +677,18 @@ class _KtaSignerBlock extends StatelessWidget {
           ),
         if (name.isNotEmpty)
           Positioned(
-            right: KtaSignerSpec.nameRight,
+            left: KtaSignerSpec.nameLeft,
             bottom: KtaSignerSpec.nameBottom,
             width: textWidth,
             child: Text(
               name,
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.left,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: KtaSpec.fontFamily,
                 fontWeight: FontWeight.w700,
-                fontSize: KtaSignerSpec.nameFontSize,
+                fontSize: fontSize,
                 color: KtaColors.primaryNavy,
                 decoration: KtaSignerSpec.nameUnderline
                     ? TextDecoration.underline

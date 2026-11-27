@@ -557,9 +557,9 @@ function backSide(d: CardSvgData): string {
   };
   const signerTitle = primary?.signerTitle || d.signerTitle || 'KOORDINATOR DISTRIK';
   const signerName = primary?.signerName || d.signerName || 'Koordinator Distrik';
-  const titleX = CARD.W - sg.right - sg.title.right;
+  const titleX = signerLeft + sg.title.left;
   const titleY = signerTop + sg.title.top + sg.title.fontSize;
-  const nameX = CARD.W - sg.right - sg.name.right;
+  const nameX = signerLeft + sg.name.left;
   const nameY = CARD.H - sg.bottom - sg.name.bottom;
   const sigX = signerLeft + sg.w - sg.sig.right - sg.sig.w;
   const sigY = signerTop + sg.h - sg.sig.bottom - sg.sig.h;
@@ -570,13 +570,13 @@ function backSide(d: CardSvgData): string {
     size: sg.title.fontSize,
     weight: 700,
     fill: COLORS.value,
-    anchor: 'end',
+    anchor: 'start',
   });
   s += txt(nameX, nameY, signerName.toUpperCase(), {
     size: sg.name.fontSize,
     weight: 900,
     fill: COLORS.value,
-    anchor: 'end',
+    anchor: 'start',
     decoration: sg.name.underline ? 'underline' : undefined,
   });
   if (d.signatureDataUrl) {

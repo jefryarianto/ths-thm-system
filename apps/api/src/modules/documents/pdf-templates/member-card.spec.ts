@@ -153,6 +153,18 @@ describe('buildMemberCardPdf pekerjaan/pelantikan', () => {
       height: BACK.signer.h,
     });
     expect(collectText(signer).join(' ').toUpperCase()).toContain('KOORDINATOR');
+    expect(findByKey(signer, 'sig-title').props.style).toMatchObject({
+      left: BACK.signer.title.left,
+      top: BACK.signer.title.top,
+      fontSize: BACK.signer.title.fontSize,
+      textAlign: 'left',
+    });
+    expect(findByKey(signer, 'sig-name').props.style).toMatchObject({
+      left: BACK.signer.name.left,
+      bottom: BACK.signer.name.bottom,
+      fontSize: BACK.signer.name.fontSize,
+      textAlign: 'left',
+    });
   });
 
   it('falls back to cardConfig.signerTitle when the first signer has no title', () => {

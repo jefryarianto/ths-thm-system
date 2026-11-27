@@ -77,13 +77,13 @@ class KtaSignerSpec {
   static const double width = 330;
   static const double height = 118;
 
-  static const double titleRight = 0;
+  static const double titleLeft = 0;
   static const double titleTop = 0;
-  static const double titleFontSize = 12;
+  static const double titleFontSize = KtaText.ptBackFieldLabel;
 
-  static const double nameRight = 0;
-  static const double nameBottom = 0;
-  static const double nameFontSize = 14;
+  static const double nameLeft = 0;
+  static const double nameBottom = 35;
+  static const double nameFontSize = KtaText.ptBackFieldLabel;
   static const bool nameUnderline = true;
 
   static const double sigRight = 150;

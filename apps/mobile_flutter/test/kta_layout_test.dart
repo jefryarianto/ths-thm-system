@@ -131,19 +131,19 @@ void main() {
     });
   });
 
-  test('KtaSignerSpec mencerminkan BACK.signer (blok kanan-bawah sisi belakang)', () {
+  test('KtaSignerSpec mencerminkan BACK.signer (blok kiri-bawah sisi belakang)', () {
     expect(KtaSignerSpec.right, 24);
     expect(KtaSignerSpec.bottom, 22);
     expect(KtaSignerSpec.width, 330);
     expect(KtaSignerSpec.height, 118);
 
-    expect(KtaSignerSpec.titleRight, 0);
+    expect(KtaSignerSpec.titleLeft, 0);
     expect(KtaSignerSpec.titleTop, 0);
-    expect(KtaSignerSpec.titleFontSize, 12);
+    expect(KtaSignerSpec.titleFontSize, KtaText.ptBackFieldLabel);
 
-    expect(KtaSignerSpec.nameRight, 0);
-    expect(KtaSignerSpec.nameBottom, 0);
-    expect(KtaSignerSpec.nameFontSize, 14);
+    expect(KtaSignerSpec.nameLeft, 0);
+    expect(KtaSignerSpec.nameBottom, 35);
+    expect(KtaSignerSpec.nameFontSize, KtaText.ptBackFieldLabel);
     expect(KtaSignerSpec.nameUnderline, isTrue);
 
     expect(KtaSignerSpec.sigRight, 150);

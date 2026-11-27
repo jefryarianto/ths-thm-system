@@ -37,8 +37,8 @@ module.exports = {
     extend: {
       /* ── Typography scale ── */
       fontFamily: {
-        sans: ['"Inter"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        serif: ['"Playfair Display"', 'Georgia', 'Cambria', 'serif'],
+        sans: ['"Inter"', '"Open Sans"', 'Roboto', 'system-ui', 'sans-serif'],
+        serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
         ocr: ['OCR A Extended', 'monospace'],
       },
       fontSize: {

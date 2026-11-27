@@ -64,15 +64,19 @@ describe('buildCardSvg pekerjaan/pelantikan', () => {
   it('places the signer block and stamp using BACK.signer on the back', () => {
     const svg = buildCardSvg({ ...makeData(), stampDataUrl: 'data:image/png;base64,STAMP' });
     const back = svg.split('<g id="face-back"')[1];
-    const titleX = CARD.W - BACK.signer.right - BACK.signer.title.right;
+    const signerLeft = CARD.W - BACK.signer.right - BACK.signer.w;
+    const titleX = signerLeft + BACK.signer.title.left;
     const titleY =
       CARD.H - BACK.signer.bottom - BACK.signer.h + BACK.signer.title.top + BACK.signer.title.fontSize;
+    const nameX = signerLeft + BACK.signer.name.left;
+    const nameY = CARD.H - BACK.signer.bottom - BACK.signer.name.bottom;
     const stampX =
       CARD.W - BACK.signer.right - BACK.signer.stamp.right - BACK.signer.stamp.size;
     const stampY =
       CARD.H - BACK.signer.bottom - BACK.signer.stamp.bottom - BACK.signer.stamp.size;
 
-    expect(back).toContain(`x="${titleX}" y="${titleY}"`);
+    expect(back).toContain(`x="${titleX}" y="${titleY}" text-anchor="start"`);
+    expect(back).toContain(`x="${nameX}" y="${nameY}" text-anchor="start"`);
     expect(back).toContain('>KOORDINATOR</text>');
     expect(back).toContain(`x="${stampX}" y="${stampY}"`);
   });

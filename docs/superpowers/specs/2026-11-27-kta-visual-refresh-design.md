@@ -21,5 +21,16 @@ Perbarui tampilan KTA lintas web, API PDF/PNG, dan Flutter agar konsisten, lebih
 ## Verification Expectations
 - QR hasil API harus bisa di-decode dengan `jsQR`.
 - Web, PDF/PNG, dan mobile harus menunjukkan QR, jabatan, tanda tangan, dan stempel opsional secara konsisten.
-- Golden Flutter sisi belakang harus menampilkan blok kanan-bawah.
+- Golden Flutter sisi belakang harus menampilkan blok kiri-bawah.
 - Semua test suite yang relevan harus hijau.
+
+## Typography and Preview Alignment Addendum
+- Font KTA tetap `Plus Jakarta Sans` di web, API PNG/PDF, dan Flutter.
+- Font UI website kembali ke stack sebelum `96ade8bd`: sans = `Inter`, `Open Sans`, `Roboto`, `system-ui`, `sans-serif`; serif = `Georgia`, `Cambria`, `Times New Roman`, `Times`, `serif`.
+- `@font-face` Plus Jakarta di `apps/web/app/globals.css` tetap ada hanya untuk KTA.
+- Blok signer sisi belakang memakai anchor kiri-bawah: judul dan nama rata kiri, nama sejajar dengan `TANGGAL TERBIT...`, serta underline nama dimulai dari tepi kiri.
+- `BACK.signer` menjadi satu-satunya sumber koordinat signer: `title.left=0`, `title.top=0`, `title.fontSize=18`, `name.left=0`, `name.bottom=35`, `name.fontSize=18`, `underline=true`.
+- Tanda tangan dan stempel tetap relatif terhadap blok signer; stempel hanya dirender bila datanya ada.
+- `previewKTA` tidak membangun HTML KTA sendiri; preview dan cetak memakai PNG endpoint `/api/members/{id}/digital-card/image` tanpa watermark.
+- Tombol `Unduh & Cetak Kartu` harus menghasilkan kartu yang sama dengan renderer API.
+- Prototipe `kta_mobile/` dan perilaku unduh PDF/`?watermark=1` tidak diubah.

@@ -55,20 +55,19 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
   const status=fitSingle(v(a.status),520,pt(5.3),pt(4),measure,false);
   const pelantikan=fitSingle(v(a.tanggalPelantikan || a.tahunPelantikan),520,pt(5.3),pt(4),measure,false);
   const signerTextMax=BACK.signer.w-BACK.signer.stamp.size-8;
-  const signerTitle=fitSingle(a.koordinatorJabatan||'KOORDINATOR DISTRIK',signerTextMax,BACK.signer.title.fontSize,9,measure,false);
-  const signerName=fitSingle(a.koordinator||'Koordinator Distrik',signerTextMax,BACK.signer.name.fontSize,9,measure,true);
+  const signerTitle=fitSingle(a.koordinatorJabatan||'KOORDINATOR DISTRIK',signerTextMax,pt(4),9,measure,false);
+  const signerName=fitSingle(a.koordinator||'Koordinator Distrik',signerTextMax,pt(4),9,measure,true);
   const signerLeft=W-BACK.signer.right-BACK.signer.w;
   const signerTop=H-BACK.signer.bottom-BACK.signer.h;
-  const signerTitleX=W-BACK.signer.right-BACK.signer.title.right;
-  const signerTitleY=signerTop+BACK.signer.title.top+BACK.signer.title.fontSize;
-  const signerNameX=W-BACK.signer.right-BACK.signer.name.right;
+  const signerTitleX=signerLeft+BACK.signer.title.left;
+  const signerTitleY=signerTop+BACK.signer.title.top+pt(4);
+  const signerNameX=signerLeft+BACK.signer.name.left;
   const signerNameY=H-BACK.signer.bottom-BACK.signer.name.bottom;
-  const signerNameWidth=measure(signerName.text,signerName.size,true);
   const signatureX=signerLeft+BACK.signer.w-BACK.signer.sig.right-BACK.signer.sig.w;
   const signatureY=signerTop+BACK.signer.h-BACK.signer.sig.bottom-BACK.signer.sig.h;
   const stampX=signerLeft+BACK.signer.w-BACK.signer.stamp.right-BACK.signer.stamp.size;
   const stampY=signerTop+BACK.signer.h-BACK.signer.stamp.bottom-BACK.signer.stamp.size;
-  const issue=fitSingle('TANGGAL TERBIT : '+(a.tanggalTerbit||'...............'),360,pt(5),pt(3.6),measure,false);
+  const issue=fitSingle('TANGGAL TERBIT : '+(a.tanggalTerbit||'...............'),360,pt(4),pt(3.6),measure,false);
   let fallbackQr:{markup:string;viewBox:string}|null=null;
   const messages:string[]=[];
   if(name.overflow||backName.overflow)messages.push('Nama terlalu panjang; mohon ringkas atau atur layout secara manual.');
@@ -125,11 +124,11 @@ export function KtaCard({side,anggota:a,assetBase='/kta',svgRef,onWarnings}:Prop
      </g>)}
      <Text x="44" y={y(21.4)} fontWeight="700" fontSize={pt(4)}>ALAMAT</Text><Text x="271" y={y(21.4)} fontWeight="700" fontSize={pt(4)}>:</Text>
      {address.lines.map((line,i)=><Text key={i} x="292" y={y(21.4)+24*i} fontSize={address.size}>{line}</Text>)}
-      <Text x="44" y={y(3.5)} fontSize={issue.size}>{issue.text}</Text>
-      <Text x={signerTitleX} y={signerTitleY} textAnchor="end" fontSize={signerTitle.size} fontWeight="700" fill="#0B377B">{signerTitle.text}</Text>
-      {a.tandaTanganUrl && <image href={a.tandaTanganUrl} x={signatureX} y={signatureY} width={BACK.signer.sig.w} height={BACK.signer.sig.h} preserveAspectRatio="xMidYMid meet" transform={`rotate(${BACK.signer.sig.rotate} ${signatureX+BACK.signer.sig.w/2} ${signatureY+BACK.signer.sig.h/2})`}/>}
-      <line x1={signerNameX-signerNameWidth} y1={signerNameY+4} x2={signerNameX} y2={signerNameY+4} stroke="#0B377B" strokeWidth="1.6"/>
-      <Text x={signerNameX} y={signerNameY} textAnchor="end" fontSize={signerName.size} fontWeight="900" fill="#0B377B">{signerName.text}</Text>
+       <Text x="44" y={y(3.5)} fontSize={issue.size}>{issue.text}</Text>
+       <Text x={signerTitleX} y={signerTitleY} textAnchor="start" fontSize={signerTitle.size} fontWeight="700" fill="#0B377B">{signerTitle.text}</Text>
+       {a.tandaTanganUrl && <image href={a.tandaTanganUrl} x={signatureX} y={signatureY} width={BACK.signer.sig.w} height={BACK.signer.sig.h} preserveAspectRatio="xMidYMid meet" transform={`rotate(${BACK.signer.sig.rotate} ${signatureX+BACK.signer.sig.w/2} ${signatureY+BACK.signer.sig.h/2})`}/>}
+       <line x1={signerNameX} y1={signerNameY+4} x2={signerNameX+BACK.signer.w} y2={signerNameY+4} stroke="#0B377B" strokeWidth="1.6"/>
+       <Text x={signerNameX} y={signerNameY} textAnchor="start" fontSize={signerName.size} fontWeight="900" fill="#0B377B">{signerName.text}</Text>
       {a.stempelUrl && <image href={a.stempelUrl} x={stampX} y={stampY} width={BACK.signer.stamp.size} height={BACK.signer.stamp.size} preserveAspectRatio="xMidYMid meet" transform={`rotate(${BACK.signer.stamp.rotate} ${stampX+BACK.signer.stamp.size/2} ${stampY+BACK.signer.stamp.size/2})`}/>}
     </>}
     {/* Mikroteks adalah lapisan SVG; file gambar latar tetap tanpa tulisan.

@@ -1,7 +1,9 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { KtaCard } from '@/components/kta/KtaCard';
+import { H, W, pt } from '@/components/kta/layout';
 import type { Anggota } from '@/components/kta/types';
+import { BACK } from '@/lib/card-design';
 
 const anggota: Anggota = {
   nama: 'Budi Santoso',
@@ -87,5 +89,55 @@ describe('KtaCard', () => {
 
     expect(container.querySelector('image[href="data:image/png;base64,QR"]')).not.toBeNull();
     expect(container.querySelectorAll('.qr-eye')).toHaveLength(0);
+  });
+
+  it('uses label typography for the issue date and signer text', () => {
+    const { container } = render(
+      <KtaCard
+        side="belakang"
+        anggota={{
+          ...anggota,
+          koordinator: 'Yoseph',
+          koordinatorJabatan: 'SEKRETARIS DISTRIK',
+        }}
+      />,
+    );
+    const byText = (text: string) =>
+      Array.from(container.querySelectorAll('text')).find((node) => node.textContent === text);
+
+    expect(byText('TANGGAL TERBIT : ...............')?.getAttribute('font-size')).toBe(String(pt(4)));
+    expect(byText('SEKRETARIS DISTRIK')?.getAttribute('font-size')).toBe(String(pt(4)));
+    expect(byText('YOSEPH')?.getAttribute('font-size')).toBe(String(pt(4)));
+  });
+
+  it('left-aligns the signer title and name inside the shared block', () => {
+    const { container } = render(
+      <KtaCard
+        side="belakang"
+        anggota={{
+          ...anggota,
+          koordinator: 'Yoseph',
+          koordinatorJabatan: 'SEKRETARIS DISTRIK',
+        }}
+      />,
+    );
+    const byText = (text: string) =>
+      Array.from(container.querySelectorAll('text')).find((node) => node.textContent === text);
+    const signerLeft = W - BACK.signer.right - BACK.signer.w;
+    const signerNameX = signerLeft + BACK.signer.name.left;
+    const title = byText('SEKRETARIS DISTRIK');
+    const name = byText('YOSEPH');
+
+    expect(title?.getAttribute('x')).toBe(String(signerLeft + BACK.signer.title.left));
+    expect(name?.getAttribute('x')).toBe(String(signerNameX));
+    expect(title?.getAttribute('text-anchor')).not.toBe('end');
+    expect(name?.getAttribute('text-anchor')).not.toBe('end');
+    expect(name?.getAttribute('y')).toBe(String(H - BACK.signer.bottom - BACK.signer.name.bottom));
+    expect(container.querySelector('line[stroke-width="1.6"]')?.getAttribute('x1')).toBe(
+      String(signerNameX),
+    );
+    expect(container.querySelector('line[stroke-width="1.6"]')?.getAttribute('x2')).toBe(
+      String(signerNameX + BACK.signer.w),
+    );
   });
 });
