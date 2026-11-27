@@ -42,7 +42,18 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.9
           cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-${{ hashFiles('apps/mobile_flutter/android/**/gradle-wrapper.properties', 'apps/mobile_flutter/android/**/*.gradle*', 'apps/mobile_flutter/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses
@@ -85,10 +96,19 @@ jobs:
         run: flutter analyze --no-pub || true
 
       - name: Run Flutter tests
-        run: flutter test || true
+        run: flutter test
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          for attempt in 1 2 3; do
+            if flutter build apk --release; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 30))
+            fi
+          done
+          exit 1
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
