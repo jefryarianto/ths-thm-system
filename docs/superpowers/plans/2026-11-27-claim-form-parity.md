@@ -301,7 +301,7 @@ In `claim_account_form_test.dart`:
 - Replace `RadioListTile` finders with finders for text `Unggah bukti` and `Ceritakan histori`.
 - Keep the `RadioGroup<String>` default assertion for `'unggah'`.
 - Update the no-file snackbar assertion to `expect(find.text('Unggah minimal satu berkas bukti'), findsOneWidget);`.
-- Update the cerita field finder to `findByLabelText('Cerita Histori Keanggotaan *')`.
+- Update the cerita field finder to `find.widgetWithText(InputDecorator, 'Cerita Histori Keanggotaan *')`.
 - Add assertion `expect(find.byType(RadioListTile<String>), findsNothing);`.
 - Add assertion that a captured `ClaimCreateRequested` includes `pekerjaan`, `pelantikan`, and `catatan` for keanggotaan.
 
