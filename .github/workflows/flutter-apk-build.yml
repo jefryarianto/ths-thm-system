@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       APK_PATH: apps/mobile_flutter/build/app/outputs/flutter-apk/app-release.apk
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -27,6 +27,7 @@ jobs:
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
     defaults:
       run:
+        shell: bash
         working-directory: apps/mobile_flutter
     steps:
       - name: Checkout repository
@@ -49,8 +50,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/wrapper/dists
+            ${{ env.USERPROFILE }}\.gradle\caches\modules-2
+            ${{ env.USERPROFILE }}\.gradle\wrapper\dists
           key: ${{ runner.os }}-gradle-${{ hashFiles('apps/mobile_flutter/android/**/gradle-wrapper.properties', 'apps/mobile_flutter/android/**/*.gradle*', 'apps/mobile_flutter/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
@@ -63,17 +64,18 @@ jobs:
           set -e
           if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEY_STORE_PASSWORD" ] && [ -n "$KEY_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
             # Decode base64 ke file .keystore (format PKCS12)
-            echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > /tmp/upload-keystore.keystore
+            KEYSTORE_PATH="$(cygpath -m "$RUNNER_TEMP")/upload-keystore.keystore"
+            echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > "$KEYSTORE_PATH"
             
             # Validasi apakah file berhasil di-decode dan tidak kosong
-            if [ ! -s /tmp/upload-keystore.keystore ]; then
+            if [ ! -s "$KEYSTORE_PATH" ]; then
               echo "ERROR: Keystore file is empty or invalid base64"
               exit 1
             fi
             
             # Tulis key.properties dengan path absolut ke file .keystore
-            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=/tmp/upload-keystore.keystore\n' \
-              "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
+              "$KEY_STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" "$KEYSTORE_PATH" > android/key.properties
             
             echo "✅ Release keystore configured successfully"
           else
@@ -131,6 +133,6 @@ jobs:
       - name: Clean up signing artifacts
         if: always()
         run: |
-          rm -f /tmp/upload-keystore.keystore
+          rm -f "$(cygpath -m "$RUNNER_TEMP")/upload-keystore.keystore"
           rm -f android/key.properties
           echo "🧹 Signing artifacts cleaned up"
