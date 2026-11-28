@@ -57,7 +57,9 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Accept Android licenses
-        run: yes | flutter doctor --android-licenses
+        run: |
+          printf 'y\ny\ny\ny\ny\ny\ny\ny\ny\ny\n' > "$(cygpath -m "$RUNNER_TEMP")/android-licenses-input.txt"
+          flutter doctor --android-licenses < "$(cygpath -m "$RUNNER_TEMP")/android-licenses-input.txt"
 
       - name: Setup release keystore (if secret exists)
         run: |
@@ -134,5 +136,6 @@ jobs:
         if: always()
         run: |
           rm -f "$(cygpath -m "$RUNNER_TEMP")/upload-keystore.keystore"
+          rm -f "$(cygpath -m "$RUNNER_TEMP")/android-licenses-input.txt"
           rm -f android/key.properties
           echo "🧹 Signing artifacts cleaned up"
